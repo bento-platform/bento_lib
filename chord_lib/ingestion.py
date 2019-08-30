@@ -7,9 +7,9 @@ from werkzeug.utils import secure_filename
 WORKFLOW_FILE_INPUT = "file"
 
 
-def file_with_suffix(file_path: str, suffix: int) -> str:
+def file_with_prefix(file_path: str, prefix: int) -> str:
     file_parts = os.path.splitext(file_path)
-    return "".join(("{}_{}".format(file_parts[0], suffix), file_parts[1]))
+    return "".join(("{}_{}".format(prefix, file_parts[0]), file_parts[1]))
 
 
 def output_file_name(file_name, output_params):
@@ -37,21 +37,21 @@ def make_output_params(workflow_name: str, workflow_params: dict, workflow_input
     return output_params
 
 
-def find_common_suffix(base_path: str, workflow_metadata: dict, output_params: dict) -> Optional[int]:
-    suffix = None
+def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: dict) -> Optional[int]:
+    prefix = None
     for file in workflow_metadata["outputs"]:
         file_path = os.path.join(base_path, output_file_name(file, output_params))
         if os.path.exists(file_path):
-            suffix = 1
+            prefix = 1
 
-    # Increase the suffix until a suitable one has been found
-    duplicate_exists = suffix is not None
+    # Increase the prefix until a suitable one has been found
+    duplicate_exists = prefix is not None
     while duplicate_exists:
         duplicate_exists = False
         for file in workflow_metadata["outputs"]:
             duplicate_exists = duplicate_exists or os.path.exists(
-                file_with_suffix(os.path.join(base_path, output_file_name(file, output_params)), suffix))
+                file_with_prefix(os.path.join(base_path, output_file_name(file, output_params)), prefix))
 
-        suffix += 1
+        prefix += 1
 
-    return suffix
+    return prefix
