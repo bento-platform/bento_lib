@@ -52,6 +52,7 @@ def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: d
             duplicate_exists = duplicate_exists or os.path.exists(
                 os.path.join(base_path, file_with_prefix(output_file_name(file, output_params), prefix)))
 
-        prefix += 1
+        if duplicate_exists:
+            prefix += 1
 
     return prefix
