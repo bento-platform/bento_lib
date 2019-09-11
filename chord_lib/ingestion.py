@@ -20,7 +20,7 @@ def namespaced_input(workflow_name: str, input_id: str) -> str:
     return "{}.{}".format(workflow_name, input_id)
 
 
-def make_output_params(workflow_name: str, workflow_params: dict, workflow_inputs: list):
+def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs: list):
     output_params = {}
 
     for i, input_spec in enumerate(workflow_inputs):
@@ -28,7 +28,7 @@ def make_output_params(workflow_name: str, workflow_params: dict, workflow_input
             # TODO: Handle non-file inputs
             continue
 
-        output_params[input_spec["id"]] = workflow_params[namespaced_input(workflow_name, input_spec["id"])]
+        output_params[input_spec["id"]] = workflow_params[namespaced_input(workflow_id, input_spec["id"])]
 
     return output_params
 
