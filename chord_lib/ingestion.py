@@ -28,7 +28,10 @@ def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs:
             # TODO: Handle non-file inputs
             continue
 
-        output_params[input_spec["id"]] = workflow_params[namespaced_input(workflow_id, input_spec["id"])]
+        # TODO: DOCS: Just file name without path...
+
+        output_params[input_spec["id"]] = os.path.basename(
+            workflow_params[namespaced_input(workflow_id, input_spec["id"])])
 
     return output_params
 
