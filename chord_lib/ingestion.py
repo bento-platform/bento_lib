@@ -14,12 +14,21 @@ def file_with_prefix(file_path: str, prefix: int) -> str:
     return "".join(("{}_{}".format(prefix, file_parts[0]), file_parts[1]))
 
 
-def output_file_name(file_name, output_params):
+def _output_file_name(file_name, output_params):
     return secure_filename(file_name.format(**output_params))
 
 
-def output_string(string, output_params):
+def _output_string(string, output_params):
     return string.format(**output_params)
+
+
+def formatted_output(output: dict, output_params: dict):
+    if output["type"] == WORKFLOW_TYPE_FILE:
+        return _output_file_name(output["value"], output_params)
+    elif output["type"] in (WORKFLOW_TYPE_STRING, WORKFLOW_TYPE_ENUM):
+        return _output_string(output["value"], output_params)
+    else:
+        raise NotImplementedError
 
 
 def namespaced_input(workflow_name: str, input_id: str) -> str:
@@ -46,7 +55,7 @@ def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs:
 def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: dict) -> Optional[int]:
     prefix = None
     for file in workflow_metadata["outputs"]:
-        file_path = os.path.join(base_path, output_file_name(file, output_params))
+        file_path = os.path.join(base_path, _output_file_name(file, output_params))
         if os.path.exists(file_path):
             prefix = 1
 
@@ -56,7 +65,7 @@ def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: d
         duplicate_exists = False
         for file in workflow_metadata["outputs"]:
             duplicate_exists = duplicate_exists or os.path.exists(
-                os.path.join(base_path, file_with_prefix(output_file_name(file, output_params), prefix)))
+                os.path.join(base_path, file_with_prefix(_output_file_name(file, output_params), prefix)))
 
         if duplicate_exists:
             prefix += 1
