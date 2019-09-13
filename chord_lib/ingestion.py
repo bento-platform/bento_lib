@@ -16,6 +16,10 @@ def output_file_name(file_name, output_params):
     return secure_filename(file_name.format(**output_params))
 
 
+def output_string(string, output_params):
+    return string.format(**output_params)
+
+
 def namespaced_input(workflow_name: str, input_id: str) -> str:
     return "{}.{}".format(workflow_name, input_id)
 
