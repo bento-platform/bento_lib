@@ -4,7 +4,9 @@ from typing import Optional
 from werkzeug.utils import secure_filename
 
 
-WORKFLOW_FILE_INPUT = "file"
+WORKFLOW_TYPE_FILE = "file"
+WORKFLOW_TYPE_STRING = "string"
+WORKFLOW_TYPE_ENUM = "enum"
 
 
 def file_with_prefix(file_path: str, prefix: int) -> str:
@@ -28,7 +30,7 @@ def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs:
     output_params = {}
 
     for i, input_spec in enumerate(workflow_inputs):
-        if input_spec["type"] != WORKFLOW_FILE_INPUT:
+        if input_spec["type"] != WORKFLOW_TYPE_FILE:
             # TODO: Handle non-file inputs
             continue
 
