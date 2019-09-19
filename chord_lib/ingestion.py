@@ -54,10 +54,11 @@ def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs:
 
 def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: dict) -> Optional[int]:
     prefix = None
-    for file in workflow_metadata["outputs"]:
-        file_path = os.path.join(base_path, _output_file_name(file, output_params))
-        if os.path.exists(file_path):
-            prefix = 1
+    for output in workflow_metadata["outputs"]:
+        if output["type"] == WORKFLOW_TYPE_FILE:
+            file_path = os.path.join(base_path, formatted_output(output, output_params))
+            if os.path.exists(file_path):
+                prefix = 1
 
     # Increase the prefix until a suitable one has been found
     duplicate_exists = prefix is not None
