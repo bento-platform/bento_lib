@@ -12,7 +12,7 @@ setuptools.setup(
     version=__version__,
 
     python_requires=">=3.6",
-    install_requires=["Werkzeug==0.15.6"],
+    install_requires=["Werkzeug>=0.16.0,<1.0"],
 
     author="David Lougheed",
     author_email="david.lougheed@mail.mcgill.ca",
