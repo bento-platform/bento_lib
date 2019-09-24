@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import chord_lib.version
 import setuptools
 
 with open("README.md", "r") as rf:
@@ -8,7 +7,7 @@ with open("README.md", "r") as rf:
 
 setuptools.setup(
     name="chord_lib",
-    version=chord_lib.version.version,
+    version="1.0.0",
 
     python_requires=">=3.6",
     install_requires=["Werkzeug>=0.16.0,<1.0"],
