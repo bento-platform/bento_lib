@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
+import chord_lib.version
 import setuptools
-
-from chord_lib import __version__
 
 with open("README.md", "r") as rf:
     long_description = rf.read()
 
 setuptools.setup(
     name="chord_lib",
-    version=__version__,
+    version=chord_lib.version.version,
 
     python_requires=">=3.6",
     install_requires=["Werkzeug>=0.16.0,<1.0"],
