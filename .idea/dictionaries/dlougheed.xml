@@ -5,6 +5,7 @@
       <w>microservices</w>
       <w>pytest</w>
       <w>werkzeug</w>
+      <w>workflows</w>
     </words>
   </dictionary>
 </component>
