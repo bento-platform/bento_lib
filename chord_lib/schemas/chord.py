@@ -1,4 +1,5 @@
 # TODO: URI schemas
+# TODO: Refactor this schema and semi-combine with workflow schema
 CHORD_INGEST_SCHEMA = {
     "$id": "TODO",
     "$schema": "http://json-schema.org/draft-07/schema#",
