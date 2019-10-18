@@ -136,7 +136,7 @@ def search_ast_to_postgres(ast, params):
     if not isinstance(ast, list):
         return "%s", (*params, ast)
 
-    print(ast)
+    print("AST:", ast)
 
     if len(ast) == 0 or ast[0][0] != "#":
         raise SyntaxError("AST Error: Invalid Expression: {}".format(ast))
@@ -185,7 +185,7 @@ def _prop(args, params):  # TODO
     obj, prop, schema = args
     # TODO: Prevent SQL injection on obj and prop explicitly instead of relying on schema
 
-    print(prop)
+    print(obj, ".", prop)
 
     if not isinstance(prop, str):
         raise NotImplementedError("Cannot currently use expressions as property values")  # TODO
@@ -194,7 +194,7 @@ def _prop(args, params):  # TODO
         # TODO: This will break since it should not be %s parameterized
         return "{}.{}".format(search_ast_to_postgres(obj, params)[0], prop), params
 
-    if schema["type"] == "object" and "search" in schema and "database" in schema["search"]:
+    elif schema["type"] == "object" and "search" in schema and "database" in schema["search"] and obj != "$root":
         # Another table (presumably), possibly with a connector table
 
         tbl_name = schema["search"]["database"]["relation"]
@@ -211,7 +211,8 @@ def _prop(args, params):  # TODO
         parent_primary_key = parent["search"]["database"]["primary_key"]
 
         if rel_type == "MANY_TO_ONE":
-            return f"SELECT {prop} FROM {tbl_name} WHERE {parent_relation}.{c_key} = {tbl_name}.{primary_key}", params
+            return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
+                   f"WHERE {parent_relation}.{c_key} = {tbl_name}.{primary_key}", params
 
         elif rel_type == "MANY_TO_MANY":
             mm_rel = schema["search"]["database"]["relationship"]["relation"]
@@ -219,21 +220,34 @@ def _prop(args, params):  # TODO
 
             # TODO: This is broken...
 
-            return f"SELECT {prop} FROM {tbl_name} WHERE {tbl_name}.{primary_key} IN (" \
+            return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
+                   f"WHERE {tbl_name}.{primary_key} IN (" \
                    f"SELECT {mm_rel}.{c_key} FROM {mm_rel} " \
                    f"WHERE {mm_rel}.{pc_key} = {parent_relation}.{parent_primary_key})", params
 
         # TODO
 
+    elif schema["type"] == "object" and obj == "$root":
+        # TODO: Other types of obj
+        tbl_name = schema["search"]["database"]["relation"]
+
+        if schema["properties"][prop]["type"] == "object":  # TODO: AND NOT JSON TYPE
+            child_rel = schema["properties"][prop]["search"]["database"]["relation"]
+            return child_rel, params
+
+        return f"SELECT {prop} FROM {tbl_name}", params  # TODO
+
     # TODO
 
-    print(schema["type"], schema.data)
+    print(schema["type"], schema.data, "!!!")
 
     return "", params
 
 
 def _item(args, params):  # TODO
-    return "", params
+    arr, schema = args
+    print("!!", arr, schema)
+    return f"SELECT TODO FROM TODO WHERE EXISTS ({search_ast_to_postgres(arr, params)[0]})", params
 
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
