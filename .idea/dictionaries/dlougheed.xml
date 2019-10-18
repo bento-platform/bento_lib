@@ -1,10 +1,16 @@
 <component name="ProjectDictionaryState">
   <dictionary name="dlougheed">
     <words>
+      <w>biosample</w>
+      <w>biosamples</w>
+      <w>karyotypic</w>
       <w>lougheed</w>
       <w>microservices</w>
       <w>ngmr</w>
       <w>nres</w>
+      <w>ontologies</w>
+      <w>phenopacket</w>
+      <w>phenopackets</w>
       <w>pytest</w>
       <w>werkzeug</w>
       <w>workflows</w>
