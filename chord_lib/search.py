@@ -144,6 +144,8 @@ def search_ast_to_postgres(ast, params):
     fn = ast[0]
     args = ast[1:]
 
+    # TODO: Somehow need to push down array access
+
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params)
 
 
@@ -244,6 +246,7 @@ def _prop(args, params):  # TODO
     return "", params
 
 
+# noinspection SqlDialectInspection
 def _item(args, params):  # TODO
     arr, schema = args
     print("!!", arr, schema)
@@ -292,4 +295,6 @@ TEST_AST = [
 #     ["#eq", ["#_prop", ["#_prop", "$root", "individual"], "karyotypic_sex"], "XO"]
 # ]
 
-print(search_ast_to_postgres(TEST_AST, ())[0])
+# TODO: PUSH DOWN COMPARISONS TO THE LOWEST LEVEL AND USE WHERE EXISTS
+
+print("SELECT * FROM phenopackets WHERE {}".format(search_ast_to_postgres(TEST_AST, ())[0]))
