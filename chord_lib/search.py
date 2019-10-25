@@ -45,7 +45,7 @@ TEST_SCHEMA = {
                                         "primary_key": "id",
                                         "relationship": {
                                             "type": "MANY_TO_ONE",
-                                            "child_key": "code_id"
+                                            "foreign_key": "code_id"
                                         }
                                     }
                                 }
@@ -57,7 +57,7 @@ TEST_SCHEMA = {
                                 "primary_key": "id",
                                 "relationship": {
                                     "type": "MANY_TO_ONE",
-                                    "child_key": "procedure_id"  # TODO: Wrong name?
+                                    "foreign_key": "procedure_id"  # TODO: Wrong name?
                                 }
                             }
                         }
@@ -70,8 +70,7 @@ TEST_SCHEMA = {
                         "relationship": {
                             "type": "MANY_TO_ONE",
                             "relation": "phenopacket_biosamples",
-                            "parent_key": "biosample_id",  # Key on M2M table
-                            "child_key": "biosample_id"  # Key on Biosample table
+                            "foreign_key": "biosample_id"  # M2M child key
                         }
                     }
                 }
@@ -81,8 +80,8 @@ TEST_SCHEMA = {
                     "relation": "phenopacket_biosamples",
                     "relationship": {
                         "type": "MANY_TO_MANY",
-                        "parent_key": "phenopacket_id",
-                        "child_key": "biosample_id"
+                        "parent_foreign_key": "phenopacket_id",
+                        "parent_primary_key": "phenopacket_id"
                     }
                 }
             }
@@ -98,7 +97,7 @@ TEST_SCHEMA = {
                     "primary_key": "individual_id",
                     "relationship": {
                         "type": "MANY_TO_ONE",
-                        "child_key": "subject_id"
+                        "foreign_key": "subject_id"
                     }
                 }
             }
@@ -112,24 +111,6 @@ TEST_SCHEMA = {
         }
     }
 }
-
-
-class SearchSchema:
-    def __init__(self, data, parent):
-        self.data = data
-        self.parent = parent
-
-    def __getitem__(self, item):
-        return self.data[item]
-
-    def __contains__(self, item):
-        return item in self.data
-
-    def __str__(self):
-        return "SearchSchema"
-
-    def __repr__(self):
-        return "<SearchSchema>"
 
 
 def _binary_op(op):
@@ -171,110 +152,91 @@ def _wildcard(args, params):
     return "%s", (*params, "%{}%".format(args[0]))
 
 
-def _get_schema(path, schema, parent):
-    # schema param is schema of the currently resolved portion (NOT in path).
-
-    if len(path) == 0:
-        return SearchSchema(schema, parent)
-    elif schema["type"] == "array" and path[0] == "[item]":
-        return _get_schema(path[1:] if len(path) > 1 else [], schema["items"], schema)
-    else:
-        return _get_schema(path[1:] if len(path) > 1 else [], schema["properties"][path[0]], schema)
-
-    # TODO: More error states
+def _get_relation(resolve):
+    return _collect_resolve_join_tables(resolve, TEST_SCHEMA)[-1][0][1]  # TODO: Schema
 
 
 def _resolve(args, params):
-    if len(args) == 0:
-        return "$root"
-    elif args[-1] == "[item]":
-        return ["#_item", _resolve(args[:-1], params), _get_schema(args[:-1], TEST_SCHEMA, None)]
-    else:
-        return ["#_prop", _resolve(args[:-1], params), args[-1], _get_schema(args[:-1], TEST_SCHEMA, None)]
+    return "{}.{}".format(_get_relation(["$root"] + args), args[-1]), params
 
 
-# noinspection SqlDialectInspection,SqlNoDataSourceInspection
-def _prop(args, params):  # TODO
-    if len(args) != 3:
-        raise SyntaxError("Invalid number of arguments for #_prop")
+def _collect_resolve_join_tables(resolve, schema, parent_relation=None) -> tuple:
+    """
+    Recursively collects tables to join for compiling the query.
+    :param resolve: The current resolve list, minus the command. Starts with $root to keep schema proper.
+    :param schema: The schema of the current element (first property.)
+    :return: Tuple of tables with joining properties.
+    """
 
-    obj, prop, schema = args
-    # TODO: Prevent SQL injection on obj and prop explicitly instead of relying on schema
+    # Many to one: child_key -> primary_key
+    # Many to many: primary_key -> parent_key (treat as just another through)
 
-    print(obj, ".", prop)
+    if len(resolve) == 0 or schema["type"] not in ("array", "object"):
+        return ()
 
-    if not isinstance(prop, str):
-        raise NotImplementedError("Cannot currently use expressions as property values")  # TODO
+    relations = ((parent_relation, schema["search"]["database"]["relation"]
+                  if "search" in schema and "database" in schema["search"] else None))
+    key_link = None
 
-    if schema["type"] not in ("object", "array"):
-        # TODO: This will break since it should not be %s parameterized
-        return "{}.{}".format(search_ast_to_postgres(obj, params)[0], prop), params
+    if "search" in schema and "database" in schema["search"] and "relationship" in schema["search"]["database"]:
+        rel_type = schema["search"]["database"]["relationship"]["type"]
+        if rel_type == "MANY_TO_ONE":
+            key_link = (schema["search"]["database"]["relationship"]["foreign_key"],
+                        schema["search"]["database"]["primary_key"])
+        elif rel_type == "MANY_TO_MANY":
+            key_link = (schema["search"]["database"]["relationship"]["parent_primary_key"],
+                        schema["search"]["database"]["relationship"]["parent_foreign_key"])
 
-    elif schema["type"] == "object" and "search" in schema and "database" in schema["search"] and obj != "$root":
-        # Another table (presumably), possibly with a connector table
+    if schema["type"] == "array":
+        if len(resolve) == 1:  # End result is array
+            return (relations, key_link),  # Return single tuple of relation
 
-        # tbl_name = schema["search"]["database"]["relation"]
-        # rel_type = schema["search"]["database"]["relationship"]["type"]
-        # primary_key = schema["search"]["database"]["primary_key"]
-        # c_key = schema["search"]["database"]["relationship"]["child_key"]
-        #
-        # parent = schema.parent
-        # if parent is None:
-        #     # TODO
-        #     return "", params
-        #
-        # parent_relation = parent["search"]["database"]["relation"]
-        # parent_primary_key = "TODO_PARENT_KEY"
-        #
-        # if rel_type == "MANY_TO_ONE":
-        #     print(parent["search"])
-        #     parent_primary_key = parent["search"]["database"]["primary_key"]
-        #
-        #     return f"SELECT {prop} FROM {tbl_name} " \
-        #            f"WHERE {parent_relation}.{parent_primary_key} = {tbl_name}.{primary_key} " \
-        #            f"AND {parent_relation}.{parent_primary_key} IN ({search_ast_to_postgres(obj, params)[0]})"
-        #     # return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
-        #     #        f"WHERE {parent_relation}.{c_key} = {tbl_name}.{primary_key}", params
-        #
-        # elif rel_type == "MANY_TO_MANY":
-        #     mm_rel = schema["search"]["database"]["relationship"]["relation"]
-        #     pc_key = schema["search"]["database"]["relationship"]["parent_key"]  # TODO: Rename these...
-        #
-        #     # TODO: This is broken...
-        #
-        #     return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
-        #            f"WHERE {tbl_name}.{primary_key} IN (" \
-        #            f"SELECT {mm_rel}.{c_key} FROM {mm_rel} " \
-        #            f"WHERE {mm_rel}.{pc_key} = {parent_relation}.{parent_primary_key})", params
+        elif resolve[1] != "[item]":
+            # print(resolve)
+            raise SyntaxError("Cannot get property of array in #resolve")
 
-        return "", params
+        else:
+            return ((relations, key_link),) + _collect_resolve_join_tables(resolve[1:], schema["items"], relations[1])
 
-        # TODO
+    elif schema["type"] == "object":
+        if len(resolve) == 1:
+            return (relations, key_link),
 
-    elif schema["type"] == "object" and obj == "$root":
-        # TODO: Other types of obj
-        tbl_name = schema["search"]["database"]["relation"]
-
-        print(prop, schema.data)
-
-        if schema["properties"][prop]["type"] == "object":  # TODO: AND NOT JSON TYPE
-            child_rel = schema["properties"][prop]["search"]["database"]["relation"]
-            return child_rel, params
-
-        return f"SELECT {prop} FROM {tbl_name}", params  # TODO
-
-    # TODO
-
-    print(prop, schema["type"], schema.data, "!!!")
-
-    return "", params
+        return ((relations, key_link),) + _collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
+                                                                       relations[1])
 
 
-# noinspection SqlDialectInspection
-def _item(args, params):  # TODO
-    arr, schema = args
-    print("!!", arr, schema)
-    return f"SELECT TODO FROM TODO WHERE EXISTS ({search_ast_to_postgres(arr, params)[0]})", params
+def _collect_join_tables(ast, terms: tuple):
+    if not isinstance(ast, list):
+        return terms
+
+    if ast[0] == "#resolve":
+        return terms + tuple(t for t in _collect_resolve_join_tables(["$root"] + ast[1:], TEST_SCHEMA)
+                             if t not in terms)  # TODO: Schema
+
+    new_terms = terms
+
+    for item in ast:
+        if isinstance(item, list):
+            new_terms = _collect_join_tables(item, new_terms)
+
+    return new_terms
+
+
+def join_fragment(ast):
+    terms = _collect_join_tables(ast, ())
+    if len(terms) == 0:
+        return ""
+
+    fragment = terms[0][0][1]
+
+    for term in terms[1:]:
+        # TODO: Sanitize
+        # TODO: Need to rename queries, maybe use sub-queries with joins
+        # TODO: Need to make sure ex. ontologies can be used in different situations
+        fragment += " LEFT JOIN {} ON {}.{} = {}.{}".format(term[0][1], term[0][0], term[1][0], term[0][1], term[1][1])
+
+    return fragment
 
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
@@ -291,16 +253,10 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
     "#co": lambda args, params: ("({}) LIKE ({})".format(search_ast_to_postgres(args[0], params)[0],
                                                          search_ast_to_postgres(["#_wc", args[1]], params)[0]), params),
 
-    "#resolve": lambda args, params: (search_ast_to_postgres(_resolve(args, params), params), params),
-
-    "#_prop": _prop,
-    "#_item": _item,
+    "#resolve": _resolve,
 
     "#_wc": _wildcard
 }
-
-
-# [#resolve "$root" "hello"] -> [#_prop $root hello]
 
 
 TEST_AST = [
@@ -311,40 +267,5 @@ TEST_AST = [
     ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"]
 ]
 
-# SELECT * FROM phenopackets AS t1 WHERE t1.phenopacket_id IN (
-#   SELECT t2.phenopacket_id FROM phenopacket_biosamples AS t2 WHERE t2.biosample_id IN (
-#     SELECT t3.biosample_id FROM biosamples AS t3 WHERE t3.procedure_id IN (
-#       SELECT t4.procedure_id FROM procedures AS t4 WHERE t4.code_id IN (
-#         SELECT t5.ontology_id FROM ontologies AS t5 WHERE t5.label = 'biopsy'
-#       )
-#     )
-#   )
-# ) AND t1.subject_id IN (  -- TODO: EXISTS OR IN? MANY TO ONE
-#   SELECT t6.id FROM individuals AS t6 WHERE t6.karyotypic_sex = 'XO'
-# )
-
-# SELECT DISTINCT t1.phenopacket_id FROM
-#   phenopackets AS t1,
-#   phenopacket_biosamples AS t2,
-#   biosamples AS t3,
-#   procedures AS t4,
-#   ontologies AS t5,
-#   individuals AS t6
-#  WHERE
-#   t1.phenopacket_id = t2.phenopacket_id AND
-#   t2.biosample_id = t3.biosample_id AND
-#   t3.procedure_id = t4.procedure_id AND
-#   t4.code_id = t5.ontology_id AND
-#   (t5.label = 'biopsy')  # TODO: THIS IS THE COOL BIT
-
-# TEST_AST = [
-#     "#and",
-#     ["#co",
-#      ["#_prop", ["#_prop", ["#_item", ["#_prop", "$root", "biosamples"]], "procedure"], "label"],
-#      "biopsy"],
-#     ["#eq", ["#_prop", ["#_prop", "$root", "individual"], "karyotypic_sex"], "XO"]
-# ]
-
-# TODO: PUSH DOWN COMPARISONS TO THE LOWEST LEVEL AND USE WHERE EXISTS
-
-print("SELECT * FROM phenopackets WHERE {}".format(search_ast_to_postgres(TEST_AST, ())[0]))
+# noinspection SqlDialectInspection,SqlNoDataSourceInspection
+print("SELECT * FROM {} WHERE {}".format(join_fragment(TEST_AST), search_ast_to_postgres(TEST_AST, ())[0]))
