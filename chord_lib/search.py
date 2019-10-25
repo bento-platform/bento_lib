@@ -52,11 +52,13 @@ TEST_SCHEMA = {
                             }
                         },
                         "search": {
-                            "relation": "procedures",
-                            "primary_key": "id",
-                            "relationship": {
-                                "type": "MANY_TO_ONE",
-                                "child_key": "procedure_id"  # TODO: Wrong name?
+                            "database": {
+                                "relation": "procedures",
+                                "primary_key": "id",
+                                "relationship": {
+                                    "type": "MANY_TO_ONE",
+                                    "child_key": "procedure_id"  # TODO: Wrong name?
+                                }
                             }
                         }
                     }
@@ -66,11 +68,21 @@ TEST_SCHEMA = {
                         "relation": "biosamples",
                         "primary_key": "biosample_id",
                         "relationship": {
-                            "type": "MANY_TO_MANY",
+                            "type": "MANY_TO_ONE",
                             "relation": "phenopacket_biosamples",
-                            "parent_key": "phenopacket_id",
-                            "child_key": "biosample_id"
+                            "parent_key": "biosample_id",  # Key on M2M table
+                            "child_key": "biosample_id"  # Key on Biosample table
                         }
+                    }
+                }
+            },
+            "search": {
+                "database": {
+                    "relation": "phenopacket_biosamples",
+                    "relationship": {
+                        "type": "MANY_TO_MANY",
+                        "parent_key": "phenopacket_id",
+                        "child_key": "biosample_id"
                     }
                 }
             }
@@ -160,12 +172,14 @@ def _wildcard(args, params):
 
 
 def _get_schema(path, schema, parent):
-    if len(path) <= 1:
+    # schema param is schema of the currently resolved portion (NOT in path).
+
+    if len(path) == 0:
         return SearchSchema(schema, parent)
-    elif schema["type"] == "array" and len(path) >= 2 and path[1] == "[item]":
-        return _get_schema(path[2:], schema["items"], parent)
+    elif schema["type"] == "array" and path[0] == "[item]":
+        return _get_schema(path[1:] if len(path) > 1 else [], schema["items"], schema)
     else:
-        return _get_schema(path[1:], schema["properties"][path[0]], schema)
+        return _get_schema(path[1:] if len(path) > 1 else [], schema["properties"][path[0]], schema)
 
     # TODO: More error states
 
@@ -174,9 +188,9 @@ def _resolve(args, params):
     if len(args) == 0:
         return "$root"
     elif args[-1] == "[item]":
-        return ["#_item", _resolve(args[:-1], params), _get_schema(args, TEST_SCHEMA, None)]
+        return ["#_item", _resolve(args[:-1], params), _get_schema(args[:-1], TEST_SCHEMA, None)]
     else:
-        return ["#_prop", _resolve(args[:-1], params), args[-1], _get_schema(args, TEST_SCHEMA, None)]
+        return ["#_prop", _resolve(args[:-1], params), args[-1], _get_schema(args[:-1], TEST_SCHEMA, None)]
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
@@ -199,39 +213,49 @@ def _prop(args, params):  # TODO
     elif schema["type"] == "object" and "search" in schema and "database" in schema["search"] and obj != "$root":
         # Another table (presumably), possibly with a connector table
 
-        tbl_name = schema["search"]["database"]["relation"]
-        rel_type = schema["search"]["database"]["relationship"]["type"]
-        primary_key = schema["search"]["database"]["primary_key"]
-        c_key = schema["search"]["database"]["relationship"]["child_key"]
+        # tbl_name = schema["search"]["database"]["relation"]
+        # rel_type = schema["search"]["database"]["relationship"]["type"]
+        # primary_key = schema["search"]["database"]["primary_key"]
+        # c_key = schema["search"]["database"]["relationship"]["child_key"]
+        #
+        # parent = schema.parent
+        # if parent is None:
+        #     # TODO
+        #     return "", params
+        #
+        # parent_relation = parent["search"]["database"]["relation"]
+        # parent_primary_key = "TODO_PARENT_KEY"
+        #
+        # if rel_type == "MANY_TO_ONE":
+        #     print(parent["search"])
+        #     parent_primary_key = parent["search"]["database"]["primary_key"]
+        #
+        #     return f"SELECT {prop} FROM {tbl_name} " \
+        #            f"WHERE {parent_relation}.{parent_primary_key} = {tbl_name}.{primary_key} " \
+        #            f"AND {parent_relation}.{parent_primary_key} IN ({search_ast_to_postgres(obj, params)[0]})"
+        #     # return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
+        #     #        f"WHERE {parent_relation}.{c_key} = {tbl_name}.{primary_key}", params
+        #
+        # elif rel_type == "MANY_TO_MANY":
+        #     mm_rel = schema["search"]["database"]["relationship"]["relation"]
+        #     pc_key = schema["search"]["database"]["relationship"]["parent_key"]  # TODO: Rename these...
+        #
+        #     # TODO: This is broken...
+        #
+        #     return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
+        #            f"WHERE {tbl_name}.{primary_key} IN (" \
+        #            f"SELECT {mm_rel}.{c_key} FROM {mm_rel} " \
+        #            f"WHERE {mm_rel}.{pc_key} = {parent_relation}.{parent_primary_key})", params
 
-        parent = schema.parent
-        if parent is None:
-            # TODO
-            return "", params
-
-        parent_relation = parent["search"]["database"]["relation"]
-        parent_primary_key = parent["search"]["database"]["primary_key"]
-
-        if rel_type == "MANY_TO_ONE":
-            return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
-                   f"WHERE {parent_relation}.{c_key} = {tbl_name}.{primary_key}", params
-
-        elif rel_type == "MANY_TO_MANY":
-            mm_rel = schema["search"]["database"]["relationship"]["relation"]
-            pc_key = schema["search"]["database"]["relationship"]["parent_key"]  # TODO: Rename these...
-
-            # TODO: This is broken...
-
-            return f"SELECT {prop} FROM ({search_ast_to_postgres(obj, params)[0]}) " \
-                   f"WHERE {tbl_name}.{primary_key} IN (" \
-                   f"SELECT {mm_rel}.{c_key} FROM {mm_rel} " \
-                   f"WHERE {mm_rel}.{pc_key} = {parent_relation}.{parent_primary_key})", params
+        return "", params
 
         # TODO
 
     elif schema["type"] == "object" and obj == "$root":
         # TODO: Other types of obj
         tbl_name = schema["search"]["database"]["relation"]
+
+        print(prop, schema.data)
 
         if schema["properties"][prop]["type"] == "object":  # TODO: AND NOT JSON TYPE
             child_rel = schema["properties"][prop]["search"]["database"]["relation"]
@@ -241,7 +265,7 @@ def _prop(args, params):  # TODO
 
     # TODO
 
-    print(schema["type"], schema.data, "!!!")
+    print(prop, schema["type"], schema.data, "!!!")
 
     return "", params
 
@@ -267,7 +291,7 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
     "#co": lambda args, params: ("({}) LIKE ({})".format(search_ast_to_postgres(args[0], params)[0],
                                                          search_ast_to_postgres(["#_wc", args[1]], params)[0]), params),
 
-    "#resolve": lambda args, params: search_ast_to_postgres(_resolve(args, params), params),
+    "#resolve": lambda args, params: (search_ast_to_postgres(_resolve(args, params), params), params),
 
     "#_prop": _prop,
     "#_item": _item,
@@ -282,10 +306,36 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
 TEST_AST = [
     "#and",
     ["#co",
-     ["#resolve", "biosamples", "procedure", "[item]", "label"],
+     ["#resolve", "biosamples", "[item]", "procedure", "code", "label"],
      "biopsy"],
     ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"]
 ]
+
+# SELECT * FROM phenopackets AS t1 WHERE t1.phenopacket_id IN (
+#   SELECT t2.phenopacket_id FROM phenopacket_biosamples AS t2 WHERE t2.biosample_id IN (
+#     SELECT t3.biosample_id FROM biosamples AS t3 WHERE t3.procedure_id IN (
+#       SELECT t4.procedure_id FROM procedures AS t4 WHERE t4.code_id IN (
+#         SELECT t5.ontology_id FROM ontologies AS t5 WHERE t5.label = 'biopsy'
+#       )
+#     )
+#   )
+# ) AND t1.subject_id IN (  -- TODO: EXISTS OR IN? MANY TO ONE
+#   SELECT t6.id FROM individuals AS t6 WHERE t6.karyotypic_sex = 'XO'
+# )
+
+# SELECT DISTINCT t1.phenopacket_id FROM
+#   phenopackets AS t1,
+#   phenopacket_biosamples AS t2,
+#   biosamples AS t3,
+#   procedures AS t4,
+#   ontologies AS t5,
+#   individuals AS t6
+#  WHERE
+#   t1.phenopacket_id = t2.phenopacket_id AND
+#   t2.biosample_id = t3.biosample_id AND
+#   t3.procedure_id = t4.procedure_id AND
+#   t4.code_id = t5.ontology_id AND
+#   (t5.label = 'biopsy')  # TODO: THIS IS THE COOL BIT
 
 # TEST_AST = [
 #     "#and",
