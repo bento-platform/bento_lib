@@ -116,15 +116,17 @@ TEST_SCHEMA = {
 
 def _binary_op(op) -> Callable[[list, tuple], Tuple[sql.Composable, tuple]]:
     # TODO: Sanitize op?
+    # TODO: Need to fix params!! Use named params
     return lambda args, params: (
         sql.SQL("({}) " + op + " ({})").format(search_ast_to_postgres(args[0], params)[0],
                                                search_ast_to_postgres(args[1], params)[0]),
-        params
+        params + search_ast_to_postgres(args[0], params)[1] + search_ast_to_postgres(args[1], params)[1]
     )
 
 
 def _not(args, params) -> Tuple[sql.Composable, tuple]:
-    return sql.SQL("NOT ({})").format(search_ast_to_postgres(args[0], params)[0]), params
+    return sql.SQL("NOT ({})").format(search_ast_to_postgres(args[0], params)[0]), \
+           params + search_ast_to_postgres(args[0], params)[1]
 
 
 def search_ast_to_postgres(ast, params) -> Tuple[sql.Composable, tuple]:
@@ -260,7 +262,9 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
     "#ge": _binary_op(">="),
 
     "#co": lambda args, params: (sql.SQL("({}) LIKE ({})").format(
-        search_ast_to_postgres(args[0], params)[0], search_ast_to_postgres(["#_wc", args[1]], params)[0]), params),
+        search_ast_to_postgres(args[0], params)[0], search_ast_to_postgres(["#_wc", args[1]], params)[0]),
+                                 params + search_ast_to_postgres(args[0], params)[1] +
+                                 search_ast_to_postgres(["#_wc", args[1]], params)[1]),
 
     "#resolve": _resolve,
 
