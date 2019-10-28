@@ -193,26 +193,28 @@ def _collect_resolve_join_tables(resolve: list, schema, parent_relation=None, re
             key_link = (schema["search"]["database"]["relationship"]["parent_primary_key"],
                         schema["search"]["database"]["relationship"]["parent_foreign_key"])
 
+        # TODO: ONE TO MANY
+
+    join_table_data = (relations, aliases, key_link)
+
     if schema["type"] == "array":
         if len(resolve) == 1:  # End result is array
-            return (relations, aliases, key_link),  # Return single tuple of relation
+            return join_table_data,  # Return single tuple of relation
 
         elif resolve[1] != "[item]":
             raise SyntaxError("Cannot get property of array in #resolve")
 
         else:
-            return ((relations, aliases, key_link),) + _collect_resolve_join_tables(resolve[1:], schema["items"],
+            return (join_table_data,) + _collect_resolve_join_tables(resolve[1:], schema["items"],
                                                                                     (relations[1], aliases[1]),
                                                                                     aliases[1])
 
     elif schema["type"] == "object":
         if len(resolve) == 1:
-            return (relations, aliases, key_link),
+            return join_table_data,
 
-        return ((relations, aliases, key_link),) + _collect_resolve_join_tables(resolve[1:],
-                                                                                schema["properties"][resolve[1]],
-                                                                                (relations[1], aliases[1]),
-                                                                                aliases[1])
+        return (join_table_data,) + _collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
+                                                                 (relations[1], aliases[1]), aliases[1])
 
 
 def _collect_join_tables(ast, terms: tuple):
