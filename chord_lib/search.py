@@ -23,6 +23,11 @@ def build_search_response(results: Union[Dict, List, Tuple], start_time: datetim
     }
 
 
+# Search Rules:
+#  - If an object or query doesn't match the schema, it's an error.
+#  - If an optional property isn't present, it's "False".
+
+
 TEST_SCHEMA = {
     "type": "object",
     "properties": {
@@ -251,6 +256,13 @@ def join_fragment(ast) -> sql.Composable:
     )
 
 
+def search_ast_to_psycopg2_sql(ast, connection) -> Tuple[sql.Composable, tuple]:
+    # TODO: Shift recursion to not have to add in the extra SELECT for the root?
+    sql_obj, params = search_ast_to_postgres(ast, ())
+    # noinspection SqlDialectInspection,SqlNoDataSourceInspection
+    return sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(ast), sql_obj).as_string(connection), params
+
+
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple], Tuple[sql.Composable, tuple]]] = {
     "#and": _binary_op("AND"),
     "#or": _binary_op("OR"),
@@ -283,8 +295,5 @@ TEST_AST = [
 
 # from psycopg2 import connect
 # conn = connect("dbname=metadata user=admin password=admin host=127.0.0.1 port=5432")
-#
-# # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-# print(sql.SQL("SELECT * FROM {} WHERE {}")
-#       .format(join_fragment(TEST_AST), search_ast_to_postgres(TEST_AST, ())[0])
-#       .as_string(conn))
+
+# print(search_ast_to_psycopg2_sql(TEST_AST, conn))
