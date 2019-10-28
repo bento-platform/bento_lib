@@ -123,12 +123,12 @@ def _binary_op(op) -> Callable[[list, tuple], Tuple[sql.Composable, tuple]]:
     )
 
 
-def _not(args, params) -> Tuple[sql.Composable, tuple]:
+def _not(args: list, params: tuple) -> Tuple[sql.Composable, tuple]:
     return sql.SQL("NOT ({})").format(search_ast_to_postgres(args[0], params)[0]), \
            params + search_ast_to_postgres(args[0], params)[1]
 
 
-def search_ast_to_postgres(ast, params) -> Tuple[sql.Composable, tuple]:
+def search_ast_to_postgres(ast: list, params: tuple) -> Tuple[sql.Composable, tuple]:
     if not isinstance(ast, list):
         return sql.Placeholder(), (*params, ast)
 
@@ -141,7 +141,7 @@ def search_ast_to_postgres(ast, params) -> Tuple[sql.Composable, tuple]:
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params)
 
 
-def _wildcard(args, params) -> Tuple[sql.Composable, tuple]:
+def _wildcard(args: list, params: tuple) -> Tuple[sql.Composable, tuple]:
     if len(args) != 1:
         raise SyntaxError("Invalid number of arguments for #_wc")
 
@@ -151,15 +151,15 @@ def _wildcard(args, params) -> Tuple[sql.Composable, tuple]:
     return sql.Placeholder(), (*params, "%{}%".format(args[0]))
 
 
-def _get_relation(resolve):
+def _get_relation(resolve: list):
     return _collect_resolve_join_tables(resolve, TEST_SCHEMA)[-1][1][1]  # TODO: Schema
 
 
-def _resolve(args, params) -> Tuple[sql.Composable, tuple]:
+def _resolve(args: list, params: tuple) -> Tuple[sql.Composable, tuple]:
     return sql.SQL("{}.{}").format(sql.Identifier(_get_relation(["$root"] + args)), sql.Identifier(args[-1])), params
 
 
-def _collect_resolve_join_tables(resolve, schema, parent_relation=None, resolve_path=None) -> tuple:
+def _collect_resolve_join_tables(resolve: list, schema, parent_relation=None, resolve_path=None) -> tuple:
     """
     Recursively collects tables to join for compiling the query.
     :param resolve: The current resolve list, minus the command. Starts with $root to keep schema proper.
@@ -249,7 +249,7 @@ def join_fragment(ast):
     )
 
 
-POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
+POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple], Tuple[sql.Composable, tuple]]] = {
     "#and": _binary_op("AND"),
     "#or": _binary_op("OR"),
     "#not": _not,
