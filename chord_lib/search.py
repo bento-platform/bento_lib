@@ -41,7 +41,7 @@ TEST_SCHEMA = {
                                 },
                                 "search": {
                                     "database": {
-                                        "relation": "ontologies",
+                                        "relation": "patients_ontology",
                                         "primary_key": "id",
                                         "relationship": {
                                             "type": "MANY_TO_ONE",
@@ -53,7 +53,7 @@ TEST_SCHEMA = {
                         },
                         "search": {
                             "database": {
-                                "relation": "procedures",
+                                "relation": "patients_procedure",
                                 "primary_key": "id",
                                 "relationship": {
                                     "type": "MANY_TO_ONE",
@@ -65,11 +65,11 @@ TEST_SCHEMA = {
                 },
                 "search": {
                     "database": {
-                        "relation": "biosamples",
+                        "relation": "patients_biosample",
                         "primary_key": "biosample_id",
                         "relationship": {
                             "type": "MANY_TO_ONE",
-                            "relation": "phenopacket_biosamples",
+                            "relation": "patients_phenopacket_biosamples",
                             "foreign_key": "biosample_id"  # M2M child key
                         }
                     }
@@ -77,7 +77,7 @@ TEST_SCHEMA = {
             },
             "search": {
                 "database": {
-                    "relation": "phenopacket_biosamples",
+                    "relation": "patients_phenopacket_biosamples",
                     "relationship": {
                         "type": "MANY_TO_MANY",
                         "parent_foreign_key": "phenopacket_id",
@@ -93,7 +93,7 @@ TEST_SCHEMA = {
             },
             "search": {
                 "database": {
-                    "relation": "individuals",
+                    "relation": "patients_individual",
                     "primary_key": "individual_id",
                     "relationship": {
                         "type": "MANY_TO_ONE",
@@ -106,7 +106,7 @@ TEST_SCHEMA = {
     },
     "search": {
         "database": {
-            "relation": "phenopackets",
+            "relation": "patients_phenopacket",
             "primary_key": "phenopacket_id"
         }
     }
