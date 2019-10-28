@@ -153,14 +153,14 @@ def _wildcard(args, params):
 
 
 def _get_relation(resolve):
-    return _collect_resolve_join_tables(resolve, TEST_SCHEMA)[-1][0][1]  # TODO: Schema
+    return _collect_resolve_join_tables(resolve, TEST_SCHEMA)[-1][1][1]  # TODO: Schema
 
 
 def _resolve(args, params):
     return "{}.{}".format(_get_relation(["$root"] + args), args[-1]), params
 
 
-def _collect_resolve_join_tables(resolve, schema, parent_relation=None) -> tuple:
+def _collect_resolve_join_tables(resolve, schema, parent_relation=None, resolve_path=None) -> tuple:
     """
     Recursively collects tables to join for compiling the query.
     :param resolve: The current resolve list, minus the command. Starts with $root to keep schema proper.
@@ -174,9 +174,16 @@ def _collect_resolve_join_tables(resolve, schema, parent_relation=None) -> tuple
     if len(resolve) == 0 or schema["type"] not in ("array", "object"):
         return ()
 
-    relations = ((parent_relation, schema["search"]["database"]["relation"]
-                  if "search" in schema and "database" in schema["search"] else None))
-    key_link = None
+    relations = (
+        parent_relation[0] if parent_relation is not None else None,
+        schema["search"]["database"]["relation"] if "search" in schema and "database" in schema["search"] else None
+    )
+    aliases = (
+        resolve_path if resolve_path is not None else None,
+        "{}_{}".format(resolve_path if resolve_path is not None else "",
+                       resolve[0]).replace("$", "").replace("[", "").replace("]", "")
+    )
+    key_link = None,
 
     if "search" in schema and "database" in schema["search"] and "relationship" in schema["search"]["database"]:
         rel_type = schema["search"]["database"]["relationship"]["type"]
@@ -189,21 +196,25 @@ def _collect_resolve_join_tables(resolve, schema, parent_relation=None) -> tuple
 
     if schema["type"] == "array":
         if len(resolve) == 1:  # End result is array
-            return (relations, key_link),  # Return single tuple of relation
+            return (relations, aliases, key_link),  # Return single tuple of relation
 
         elif resolve[1] != "[item]":
             # print(resolve)
             raise SyntaxError("Cannot get property of array in #resolve")
 
         else:
-            return ((relations, key_link),) + _collect_resolve_join_tables(resolve[1:], schema["items"], relations[1])
+            return ((relations, aliases, key_link),) + _collect_resolve_join_tables(resolve[1:], schema["items"],
+                                                                                    (relations[1], aliases[1]),
+                                                                                    aliases[1])
 
     elif schema["type"] == "object":
         if len(resolve) == 1:
-            return (relations, key_link),
+            return (relations, aliases, key_link),
 
-        return ((relations, key_link),) + _collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
-                                                                       relations[1])
+        return ((relations, aliases, key_link),) + _collect_resolve_join_tables(resolve[1:],
+                                                                                schema["properties"][resolve[1]],
+                                                                                (relations[1], aliases[1]),
+                                                                                aliases[1])
 
 
 def _collect_join_tables(ast, terms: tuple):
@@ -228,13 +239,20 @@ def join_fragment(ast):
     if len(terms) == 0:
         return ""
 
-    fragment = terms[0][0][1]
+    fragment = "{} AS {}".format(terms[0][0][1], terms[0][1][1])
 
     for term in terms[1:]:
         # TODO: Sanitize
         # TODO: Need to rename queries, maybe use sub-queries with joins
         # TODO: Need to make sure ex. ontologies can be used in different situations
-        fragment += " LEFT JOIN {} ON {}.{} = {}.{}".format(term[0][1], term[0][0], term[1][0], term[0][1], term[1][1])
+        print(term[0], term[1], term[2])
+        fragment += " LEFT JOIN {r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}".format(
+            r1=term[0][1],
+            a0=term[1][0],
+            a1=term[1][1],
+            f0=term[2][0],
+            f1=term[2][1]
+        )
 
     return fragment
 
