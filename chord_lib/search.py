@@ -234,10 +234,10 @@ def _collect_join_tables(ast, terms: tuple):
     return new_terms
 
 
-def join_fragment(ast):
+def join_fragment(ast) -> sql.Composable:
     terms = _collect_join_tables(ast, ())
     if len(terms) == 0:
-        return ""
+        return sql.SQL("")
 
     return sql.SQL(" LEFT JOIN ").join(
         [sql.SQL("{} AS {}").format(sql.Identifier(terms[0][0][1]), sql.Identifier(terms[0][1][1]))] +
