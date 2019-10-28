@@ -245,7 +245,6 @@ def join_fragment(ast):
         # TODO: Sanitize
         # TODO: Need to rename queries, maybe use sub-queries with joins
         # TODO: Need to make sure ex. ontologies can be used in different situations
-        print(term[0], term[1], term[2])
         fragment += " LEFT JOIN {r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}".format(
             r1=term[0][1],
             a0=term[1][0],
