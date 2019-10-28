@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from psycopg2 import sql
+from typing import Callable, Dict, List, Tuple, Union
 
 __all__ = ["SEARCH_OPERATIONS", "SQL_SEARCH_OPERATORS", "build_search_response"]
 
@@ -113,23 +114,22 @@ TEST_SCHEMA = {
 }
 
 
-def _binary_op(op):
+def _binary_op(op) -> Callable[[list, tuple], Tuple[sql.Composable, tuple]]:
+    # TODO: Sanitize op?
     return lambda args, params: (
-        "({}) {} ({})".format(search_ast_to_postgres(args[0], params)[0], op,
-                              search_ast_to_postgres(args[1], params)[0]),
+        sql.SQL("({}) " + op + " ({})").format(search_ast_to_postgres(args[0], params)[0],
+                                               search_ast_to_postgres(args[1], params)[0]),
         params
     )
 
 
-def _not(args, params):
-    return "NOT ({})".format(search_ast_to_postgres(args[0], params)[0]), params
+def _not(args, params) -> Tuple[sql.Composable, tuple]:
+    return sql.SQL("NOT ({})").format(search_ast_to_postgres(args[0], params)[0]), params
 
 
-def search_ast_to_postgres(ast, params):
+def search_ast_to_postgres(ast, params) -> Tuple[sql.Composable, tuple]:
     if not isinstance(ast, list):
-        return "%s", (*params, ast)
-
-    print("AST:", ast)
+        return sql.Placeholder(), (*params, ast)
 
     if len(ast) == 0 or ast[0][0] != "#":
         raise SyntaxError("AST Error: Invalid Expression: {}".format(ast))
@@ -137,27 +137,25 @@ def search_ast_to_postgres(ast, params):
     fn = ast[0]
     args = ast[1:]
 
-    # TODO: Somehow need to push down array access
-
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params)
 
 
-def _wildcard(args, params):
+def _wildcard(args, params) -> Tuple[sql.Composable, tuple]:
     if len(args) != 1:
         raise SyntaxError("Invalid number of arguments for #_wc")
 
     if isinstance(args[0], list):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
-    return "%s", (*params, "%{}%".format(args[0]))
+    return sql.Placeholder(), (*params, "%{}%".format(args[0]))
 
 
 def _get_relation(resolve):
     return _collect_resolve_join_tables(resolve, TEST_SCHEMA)[-1][1][1]  # TODO: Schema
 
 
-def _resolve(args, params):
-    return "{}.{}".format(_get_relation(["$root"] + args), args[-1]), params
+def _resolve(args, params) -> Tuple[sql.Composable, tuple]:
+    return sql.SQL("{}.{}").format(sql.Identifier(_get_relation(["$root"] + args)), sql.Identifier(args[-1])), params
 
 
 def _collect_resolve_join_tables(resolve, schema, parent_relation=None, resolve_path=None) -> tuple:
@@ -199,7 +197,6 @@ def _collect_resolve_join_tables(resolve, schema, parent_relation=None, resolve_
             return (relations, aliases, key_link),  # Return single tuple of relation
 
         elif resolve[1] != "[item]":
-            # print(resolve)
             raise SyntaxError("Cannot get property of array in #resolve")
 
         else:
@@ -239,21 +236,16 @@ def join_fragment(ast):
     if len(terms) == 0:
         return ""
 
-    fragment = "{} AS {}".format(terms[0][0][1], terms[0][1][1])
-
-    for term in terms[1:]:
-        # TODO: Sanitize
-        # TODO: Need to rename queries, maybe use sub-queries with joins
-        # TODO: Need to make sure ex. ontologies can be used in different situations
-        fragment += " LEFT JOIN {r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}".format(
-            r1=term[0][1],
-            a0=term[1][0],
-            a1=term[1][1],
-            f0=term[2][0],
-            f1=term[2][1]
-        )
-
-    return fragment
+    return sql.SQL(" LEFT JOIN ").join(
+        [sql.SQL("{} AS {}").format(sql.Identifier(terms[0][0][1]), sql.Identifier(terms[0][1][1]))] +
+        [sql.SQL("{r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}").format(
+            r1=sql.Identifier(term[0][1]),
+            a0=sql.Identifier(term[1][0]),
+            a1=sql.Identifier(term[1][1]),
+            f0=sql.Identifier(term[2][0]),
+            f1=sql.Identifier(term[2][1])
+        ) for term in terms[1:]]
+    )
 
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
@@ -267,8 +259,8 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS = {
     "#gt": _binary_op(">"),
     "#ge": _binary_op(">="),
 
-    "#co": lambda args, params: ("({}) LIKE ({})".format(search_ast_to_postgres(args[0], params)[0],
-                                                         search_ast_to_postgres(["#_wc", args[1]], params)[0]), params),
+    "#co": lambda args, params: (sql.SQL("({}) LIKE ({})").format(
+        search_ast_to_postgres(args[0], params)[0], search_ast_to_postgres(["#_wc", args[1]], params)[0]), params),
 
     "#resolve": _resolve,
 
@@ -284,5 +276,10 @@ TEST_AST = [
     ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"]
 ]
 
-# noinspection SqlDialectInspection,SqlNoDataSourceInspection
-print("SELECT * FROM {} WHERE {}".format(join_fragment(TEST_AST), search_ast_to_postgres(TEST_AST, ())[0]))
+# from psycopg2 import connect
+# conn = connect("dbname=metadata user=admin password=admin host=127.0.0.1 port=5432")
+#
+# # noinspection SqlDialectInspection,SqlNoDataSourceInspection
+# print(sql.SQL("SELECT * FROM {} WHERE {}")
+#       .format(join_fragment(TEST_AST), search_ast_to_postgres(TEST_AST, ())[0])
+#       .as_string(conn))
