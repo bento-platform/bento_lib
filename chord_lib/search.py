@@ -148,7 +148,7 @@ def _wildcard(args: list, params: tuple) -> Tuple[sql.Composable, tuple]:
     if isinstance(args[0], list):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
-    return sql.Placeholder(), (*params, "%{}%".format(args[0]))
+    return sql.Placeholder(), (*params, "%{}%".format(args[0].replace("%", r"\%")))
 
 
 def _get_relation(resolve: list):
