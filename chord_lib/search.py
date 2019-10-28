@@ -70,7 +70,6 @@ TEST_SCHEMA = {
                         "primary_key": "biosample_id",
                         "relationship": {
                             "type": "MANY_TO_ONE",
-                            "relation": "patients_phenopacket_biosamples",
                             "foreign_key": "biosample_id"  # M2M child key
                         }
                     }
