@@ -8,7 +8,7 @@ from typing import Callable, Dict, Optional, Tuple
 #  - If an optional property isn't present, it's "False".
 
 
-__all__ = ["search_ast_to_psycopg2_sql"]
+__all__ = ["search_query_to_psycopg2_sql"]
 
 
 TEST_SCHEMA = {
@@ -219,11 +219,11 @@ def search_ast_to_psycopg2_expr(ast: list, params: tuple, schema: dict) -> Tuple
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params, schema)
 
 
-def search_ast_to_psycopg2_sql(ast, schema: dict, connection) -> Tuple[sql.Composable, tuple]:
+def search_query_to_psycopg2_sql(query, schema: dict, connection) -> Tuple[sql.Composable, tuple]:
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
-    sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema)
+    sql_obj, params = search_ast_to_psycopg2_expr(query, (), schema)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-    return (sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj).as_string(connection),
+    return (sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(query, schema), sql_obj).as_string(connection),
             params)
 
 
