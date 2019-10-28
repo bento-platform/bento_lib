@@ -1,3 +1,5 @@
+import re
+
 from psycopg2 import sql
 from typing import Callable, Dict, Optional, Tuple
 
@@ -129,15 +131,10 @@ def collect_resolve_join_tables(
     if len(resolve) == 0 or schema["type"] not in ("array", "object"):
         return ()
 
-    relations = (
-        parent_relation[0] if parent_relation is not None else None,
-        schema["search"]["database"]["relation"] if "search" in schema and "database" in schema["search"] else None
-    )
-    aliases = (
-        resolve_path if resolve_path is not None else None,
-        "{}_{}".format(resolve_path if resolve_path is not None else "",
-                       resolve[0]).replace("$", "").replace("[", "").replace("]", "")
-    )
+    relations = (parent_relation[0] if parent_relation is not None else None,
+                 schema.get("search", {}).get("database", {}).get("relation", None))
+    aliases = (resolve_path if resolve_path is not None else None,
+               re.sub(r"[$\[\]]+", "", "{}_{}".format(resolve_path if resolve_path is not None else "", resolve[0])))
     key_link = None
 
     if "search" in schema and "database" in schema["search"] and "relationship" in schema["search"]["database"]:
@@ -177,8 +174,7 @@ def collect_join_tables(ast, terms: tuple, schema: dict):
         return terms
 
     if ast[0] == "#resolve":
-        return terms + tuple(t for t in collect_resolve_join_tables(["$root"] + ast[1:], schema)
-                             if t not in terms)
+        return terms + tuple(t for t in collect_resolve_join_tables(["$root"] + ast[1:], schema) if t not in terms)
 
     new_terms = terms
 
@@ -243,8 +239,8 @@ def _binary_op(op) -> Callable[[list, tuple, dict], Tuple[sql.Composable, tuple]
 
 
 def _not(args: list, params: tuple, schema: dict) -> Tuple[sql.Composable, tuple]:
-    return sql.SQL("NOT ({})").format(search_ast_to_psycopg2_expr(args[0], params, schema)[0]), \
-           params + search_ast_to_psycopg2_expr(args[0], params, schema)[1]
+    child_sql, child_params = search_ast_to_psycopg2_expr(args[0], params, schema)
+    return sql.SQL("NOT ({})").format(child_sql), params + child_params
 
 
 def _wildcard(args: list, params: tuple, _schema: dict) -> Tuple[sql.Composable, tuple]:
@@ -266,6 +262,12 @@ def _resolve(args: list, params: tuple, schema: dict) -> Tuple[sql.Composable, t
                                    sql.Identifier(args[-1])), params
 
 
+def _contains(args, params, schema):
+    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(["#_wc", args[1]], params, schema)
+    return sql.SQL("({}) LIKE ({})").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
+
+
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple, dict], Tuple[sql.Composable, tuple]]] = {
     "#and": _binary_op("AND"),
     "#or": _binary_op("OR"),
@@ -277,11 +279,7 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple, dict], Tupl
     "#gt": _binary_op(">"),
     "#ge": _binary_op(">="),
 
-    "#co": lambda args, params, schema: (
-        sql.SQL("({}) LIKE ({})").format(search_ast_to_psycopg2_expr(args[0], params, schema)[0],
-                                         search_ast_to_psycopg2_expr(["#_wc", args[1]], params, schema)[0]),
-        params + search_ast_to_psycopg2_expr(args[0], params, schema)[1] +
-        search_ast_to_psycopg2_expr(["#_wc", args[1]], params, schema)[1]),
+    "#co": _contains,
 
     "#resolve": _resolve,
 
