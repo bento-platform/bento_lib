@@ -1,22 +1,35 @@
 from jsonschema import validate, ValidationError
 from operator import and_, or_, not_, lt, le, eq, gt, ge
-from typing import Union
+from typing import Callable, Dict, Tuple, Union
 
 __all__ = ["check_query_against_data_structure"]
 
 
 Query = Union[list, str, int, float, bool]
-QueryableStructure = Union[dict, list, str, int, float, bool]
+BaseQueryableStructure = Union[dict, list, str, int, float, bool]
+QueryableStructure = Union[BaseQueryableStructure, Tuple['QueryableStructure']]
+BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]
 
 
-def evaluate(query: Query, ds, schema):
+def evaluate(query: Query, ds: QueryableStructure, schema: dict) -> QueryableStructure:
+    """
+    Evaluates a query expression into a value, populated by a passed data structure.
+    :param query: A query expression.
+    :param ds: A data structure from which to resolve values.
+    :param schema:
+    :return: A value (string, int, float, bool, array, or dict.)
+    """
+
     if not isinstance(query, list):
         return query  # Literal
 
     if len(query) == 0:
         raise SyntaxError("Invalid expression: []")
 
-    fn = query[0]
+    if not isinstance(query[0], str):
+        raise SyntaxError("Invalid function: {}".format(query[0]))
+
+    fn: str = query[0]
     args = query[1:]
 
     return QUERY_CHECK_SWITCH[fn](args, ds, schema)
@@ -42,7 +55,7 @@ def check_query_against_data_structure(query: Query, ds: QueryableStructure, sch
     return False
 
 
-def uncurried_binary_op(op, args, ds, schema):
+def uncurried_binary_op(op: BBOperator, args: list, ds: QueryableStructure, schema: dict) -> bool:
     lhs = evaluate(args[0], ds, schema)
     rhs = evaluate(args[1], ds, schema)
 
@@ -59,12 +72,14 @@ def uncurried_binary_op(op, args, ds, schema):
     return any(op(li, ri) for li in lhs for ri in rhs)
 
 
-def _binary_op(op):
+def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], bool]:
     return lambda args, ds, schema: uncurried_binary_op(op, args, ds, schema)
 
 
-def _contains(args, ds, schema):
+def _contains(args: list, ds: QueryableStructure, schema: dict) -> bool:
     # TODO: Standardize type safety / behaviour!!!
+    # TODO: Major rework
+
     lhs = evaluate(args[0], ds, schema)
     rhs = evaluate(args[1], ds, schema)
 
@@ -81,19 +96,20 @@ def _contains(args, ds, schema):
     return any(ri in li for li in lhs for ri in rhs)  # TODO: Very not type safe!!!
 
 
-def resolve_rec(resolve, ds, schema):
+def _resolve(resolve: list, ds: QueryableStructure, schema: dict) -> QueryableStructure:
     # Assume data structure has already been checked against schema
 
     if len(resolve) == 0:
+        # Resolve the root if it's an empty list
         return ds
 
     if schema["type"] == "object":
         if resolve[0] not in schema["properties"]:
             raise SyntaxError("Property {} not found in object".format(resolve[0]))
 
-        return resolve_rec(resolve[1:],
-                           ds[resolve[0]] if not isinstance(ds, tuple) else tuple(d[resolve[0]] for d in ds),
-                           schema["properties"][resolve[0]])
+        return _resolve(resolve[1:],
+                        ds[resolve[0]] if not isinstance(ds, tuple) else tuple(d[resolve[0]] for d in ds),
+                        schema["properties"][resolve[0]])
 
     elif schema["type"] == "array":
         if resolve[0] != "[item]":
@@ -101,17 +117,13 @@ def resolve_rec(resolve, ds, schema):
 
         # TODO: Multiple levels of tuple
 
-        return resolve_rec(resolve[1:], tuple(ds) if not isinstance(ds, tuple) else tuple(tuple(d) for d in ds),
-                           schema["items"])
+        return _resolve(resolve[1:], tuple(ds) if not isinstance(ds, tuple) else tuple(tuple(d) for d in ds),
+                        schema["items"])
 
     raise SyntaxError("Cannot get property of literal")
 
 
-def _resolve(args, ds, schema):
-    return resolve_rec(args, ds, schema)
-
-
-QUERY_CHECK_SWITCH = {
+QUERY_CHECK_SWITCH: Dict[str, Callable[[list, QueryableStructure, dict], QueryableStructure]] = {
     "#and": _binary_op(and_),
     "#or": _binary_op(or_),
     "#not": lambda args, ds, schema: not_(check_query_against_data_structure(args[0], ds, schema)),
