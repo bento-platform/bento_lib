@@ -127,11 +127,3 @@ QUERY_CHECK_SWITCH: Dict[str, Callable[[list, QueryableStructure, dict], Queryab
 
     "#resolve": _resolve
 }
-
-# print(evaluate(["#and",
-#                 ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"],
-#                 ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TE"]],
-#                {
-#                    "subject": {"karyotypic_sex": "XO"},
-#                    "biosamples": [{"procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}}}]
-#                }, TEST_SCHEMA))
