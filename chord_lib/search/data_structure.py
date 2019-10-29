@@ -2,10 +2,12 @@ from jsonschema import validate, ValidationError
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
 from typing import Callable, Dict, Tuple, Union
 
+from .custom_types import Query
+
+
 __all__ = ["check_query_against_data_structure"]
 
 
-Query = Union[list, str, int, float, bool]
 BaseQueryableStructure = Union[dict, list, str, int, float, bool]
 QueryableStructure = Union[BaseQueryableStructure, Tuple['QueryableStructure']]
 BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]

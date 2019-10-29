@@ -3,12 +3,18 @@ import re
 from psycopg2 import sql
 from typing import Callable, Dict, Optional, Tuple
 
+from .custom_types import Query
+
+
 # Search Rules:
 #  - If an object or query doesn't match the schema, it's an error.
 #  - If an optional property isn't present, it's "False".
 
 
 __all__ = ["search_query_to_psycopg2_sql"]
+
+
+SQLComposableWithParams = Tuple[sql.Composable, tuple]
 
 
 def collect_resolve_join_tables(
@@ -79,7 +85,7 @@ def collect_resolve_join_tables(
         raise ValueError("Property {} not found in object".format(resolve[1]))
 
 
-def collect_join_tables(ast, terms: tuple, schema: dict):
+def collect_join_tables(ast: Query, terms: tuple, schema: dict) -> tuple:
     if not isinstance(ast, list):
         return terms
 
@@ -95,7 +101,7 @@ def collect_join_tables(ast, terms: tuple, schema: dict):
     return new_terms
 
 
-def join_fragment(ast, schema: dict) -> sql.Composable:
+def join_fragment(ast: Query, schema: dict) -> sql.Composable:
     terms = collect_join_tables(ast, (), schema)
     if len(terms) == 0:
         return sql.SQL("")
@@ -112,7 +118,7 @@ def join_fragment(ast, schema: dict) -> sql.Composable:
     )
 
 
-def search_ast_to_psycopg2_expr(ast: list, params: tuple, schema: dict) -> Tuple[sql.Composable, tuple]:
+def search_ast_to_psycopg2_expr(ast: Query, params: tuple, schema: dict) -> SQLComposableWithParams:
     if isinstance(ast, dict):  # Error: dict has no meaning yet
         raise NotImplementedError("Cannot use objects as literals")
 
@@ -135,14 +141,14 @@ def search_ast_to_psycopg2_expr(ast: list, params: tuple, schema: dict) -> Tuple
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params, schema)
 
 
-def search_query_to_psycopg2_sql(query, schema: dict) -> Tuple[sql.Composable, tuple]:
+def search_query_to_psycopg2_sql(query, schema: dict) -> SQLComposableWithParams:
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
     sql_obj, params = search_ast_to_psycopg2_expr(query, (), schema)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
     return sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(query, schema), sql_obj), params
 
 
-def uncurried_binary_op(op, args, params, schema):
+def uncurried_binary_op(op: str, args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
     # TODO: Need to fix params!! Use named params
     try:
         lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
@@ -152,16 +158,16 @@ def uncurried_binary_op(op, args, params, schema):
         raise SyntaxError("Cannot use binary operator {} on less than two values".format(op))
 
 
-def _binary_op(op) -> Callable[[list, tuple, dict], Tuple[sql.Composable, tuple]]:
+def _binary_op(op) -> Callable[[list, tuple, dict], SQLComposableWithParams]:
     return lambda args, params, schema: uncurried_binary_op(op, args, params, schema)
 
 
-def _not(args: list, params: tuple, schema: dict) -> Tuple[sql.Composable, tuple]:
+def _not(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
     child_sql, child_params = search_ast_to_psycopg2_expr(args[0], params, schema)
     return sql.SQL("NOT ({})").format(child_sql), params + child_params
 
 
-def _wildcard(args: list, params: tuple, _schema: dict) -> Tuple[sql.Composable, tuple]:
+def _wildcard(args: list, params: tuple, _schema: dict) -> SQLComposableWithParams:
     if len(args) != 1:
         raise SyntaxError("Invalid number of arguments for #_wc")
 
@@ -178,19 +184,19 @@ def get_relation(resolve: list, schema: dict):
     return collect_resolve_join_tables(resolve, schema)[-1][1][1]  # TODO: Schema
 
 
-def _resolve(args: list, params: tuple, schema: dict) -> Tuple[sql.Composable, tuple]:
+def _resolve(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
 
     return sql.SQL("{}.{}").format(sql.Identifier(get_relation(["$root"] + args, schema)),
                                    sql.Identifier(args[-1]) if len(args) > 0 else sql.SQL("*")), params
 
 
-def _contains(args, params, schema):
+def _contains(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
     rhs_sql, rhs_params = search_ast_to_psycopg2_expr(["#_wc", args[1]], params, schema)
     return sql.SQL("({}) LIKE ({})").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
 
 
-POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple, dict], Tuple[sql.Composable, tuple]]] = {
+POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple, dict], SQLComposableWithParams]] = {
     "#and": _binary_op("AND"),
     "#or": _binary_op("OR"),
     "#not": _not,
