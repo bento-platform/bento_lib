@@ -155,7 +155,7 @@ def collect_resolve_join_tables(
             return join_table_data,  # Return single tuple of relation
 
         elif resolve[1] != "[item]":
-            raise SyntaxError("Cannot get property of array in #resolve")
+            raise TypeError("Cannot get property of array in #resolve")
 
         else:
             return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["items"],
@@ -165,8 +165,11 @@ def collect_resolve_join_tables(
         if len(resolve) == 1:
             return join_table_data,
 
-        return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
-                                                                (relations[1], aliases[1]), aliases[1])
+        try:
+            return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
+                                                                    (relations[1], aliases[1]), aliases[1])
+        except KeyError:
+            raise ValueError("Property {} not found in object".format(resolve[1]))
 
 
 def collect_join_tables(ast, terms: tuple, schema: dict):
@@ -229,9 +232,12 @@ def search_query_to_psycopg2_sql(query, schema: dict, connection) -> Tuple[sql.C
 
 def uncurried_binary_op(op, args, params, schema):
     # TODO: Need to fix params!! Use named params
-    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema)
-    return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
+    try:
+        lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
+        rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema)
+        return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
+    except IndexError:
+        raise SyntaxError("Cannot use binary operator {} on less than two values".format(op))
 
 
 def _binary_op(op) -> Callable[[list, tuple, dict], Tuple[sql.Composable, tuple]]:
@@ -250,7 +256,7 @@ def _wildcard(args: list, params: tuple, _schema: dict) -> Tuple[sql.Composable,
     if isinstance(args[0], list):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
-    return sql.Placeholder(), (*params, "%{}%".format(args[0].replace("%", r"\%")))
+    return sql.Placeholder(), (*params, "%{}%".format(str(args[0]).replace("%", r"\%")))
 
 
 def get_relation(resolve: list, schema: dict):
@@ -258,8 +264,9 @@ def get_relation(resolve: list, schema: dict):
 
 
 def _resolve(args: list, params: tuple, schema: dict) -> Tuple[sql.Composable, tuple]:
+
     return sql.SQL("{}.{}").format(sql.Identifier(get_relation(["$root"] + args, schema)),
-                                   sql.Identifier(args[-1])), params
+                                   sql.Identifier(args[-1]) if len(args) > 0 else sql.SQL("*")), params
 
 
 def _contains(args, params, schema):
