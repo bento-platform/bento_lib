@@ -128,7 +128,12 @@ def collect_resolve_join_tables(
     # Many to one: child_key -> primary_key
     # Many to many: primary_key -> parent_key (treat as just another through)
 
-    if len(resolve) == 0 or schema["type"] not in ("array", "object"):
+    if len(resolve) == 0:
+        return ()
+
+    if schema["type"] not in ("array", "object"):
+        if len(resolve) > 1:
+            raise TypeError("Cannot get property of literal")
         return ()
 
     relations = (parent_relation[0] if parent_relation is not None else None,
@@ -161,15 +166,16 @@ def collect_resolve_join_tables(
             return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["items"],
                                                                     (relations[1], aliases[1]), aliases[1])
 
-    elif schema["type"] == "object":
-        if len(resolve) == 1:
-            return join_table_data,
+    # Otherwise, type is object
 
-        try:
-            return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
-                                                                    (relations[1], aliases[1]), aliases[1])
-        except KeyError:
-            raise ValueError("Property {} not found in object".format(resolve[1]))
+    if len(resolve) == 1:
+        return join_table_data,
+
+    try:
+        return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1]],
+                                                                (relations[1], aliases[1]), aliases[1])
+    except KeyError:
+        raise ValueError("Property {} not found in object".format(resolve[1]))
 
 
 def collect_join_tables(ast, terms: tuple, schema: dict):
@@ -213,11 +219,17 @@ def search_ast_to_psycopg2_expr(ast: list, params: tuple, schema: dict) -> Tuple
         # Literal (string/number/boolean)
         return sql.Placeholder(), (*params, ast)
 
-    if len(ast) == 0 or ast[0][0] != "#":
-        raise SyntaxError("AST Error: Invalid Expression: {}".format(ast))
+    if len(ast) == 0:
+        raise SyntaxError("Invalid expression: []")
+
+    if not isinstance(ast[0], str):
+        raise SyntaxError("Invalid function: {}".format(ast[0]))
 
     fn = ast[0]
     args = ast[1:]
+
+    if fn not in POSTGRES_SEARCH_LANGUAGE_FUNCTIONS:
+        raise SyntaxError("Non-existent function: {}".format(fn))
 
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params, schema)
 
@@ -256,7 +268,10 @@ def _wildcard(args: list, params: tuple, _schema: dict) -> Tuple[sql.Composable,
     if isinstance(args[0], list):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
-    return sql.Placeholder(), (*params, "%{}%".format(str(args[0]).replace("%", r"\%")))
+    try:
+        return sql.Placeholder(), (*params, "%{}%".format(args[0].replace("%", r"\%")))
+    except AttributeError:  # Cast
+        raise TypeError("Type-invalid use of binary function #co")
 
 
 def get_relation(resolve: list, schema: dict):
