@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
-__all__ = ["SEARCH_OPERATIONS", "SQL_SEARCH_OPERATORS", "build_search_response"]
+from . import data_structure
+from . import postgres
+
+__all__ = ["SEARCH_OPERATIONS", "SQL_SEARCH_OPERATORS", "build_search_response", "data_structure", "postgres"]
 
 
 SEARCH_OPERATIONS = ("eq", "lt", "le", "gt", "ge", "co")
