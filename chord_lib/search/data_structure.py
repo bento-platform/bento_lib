@@ -53,24 +53,26 @@ def check_query_against_data_structure(query: Query, ds: QueryableStructure, sch
     except ValidationError:
         raise ValueError("Invalid data structure")
 
-    for e in tuple_flatten(evaluate(query, ds, schema)):
-        if isinstance(e, bool) and e:
-            return True
-
-    # TODO: What to do here? Should be standardized
-    return False
+    # TODO: What to do here? Should be standardized, esp. w/r/t False returns
+    return any(isinstance(e, bool) and e for e in tuple_flatten(evaluate(query, ds, schema)))
 
 
 def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], bool]:
     def uncurried_binary_op(args: list, ds: QueryableStructure, schema: dict) -> bool:
         # TODO: Standardize type safety / behaviour!!!
+        try:
+            lhs = tuple_flatten(evaluate(args[0], ds, schema))
+            rhs = tuple_flatten(evaluate(args[1], ds, schema))
 
-        lhs = tuple_flatten(evaluate(args[0], ds, schema))
-        rhs = tuple_flatten(evaluate(args[1], ds, schema))
+            # Either LHS or RHS could be a tuple of [item]
 
-        # Either LHS or RHS could be a tuple of [item]
+            return any(op(li, ri) for li in lhs for ri in rhs)  # TODO: Type safety checks ahead-of-time
 
-        return any(op(li, ri) for li in lhs for ri in rhs)  # TODO: Type safety
+        except IndexError:
+            raise SyntaxError("Cannot use binary operator {} on less than two values".format(op))
+
+        except TypeError:
+            raise TypeError("Type-invalid use of binary operator {}".format(op))
 
     return lambda args, ds, schema: uncurried_binary_op(args, ds, schema)
 
