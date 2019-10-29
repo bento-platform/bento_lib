@@ -234,12 +234,11 @@ def search_ast_to_psycopg2_expr(ast: list, params: tuple, schema: dict) -> Tuple
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[fn](args, params, schema)
 
 
-def search_query_to_psycopg2_sql(query, schema: dict, connection) -> Tuple[sql.Composable, tuple]:
+def search_query_to_psycopg2_sql(query, schema: dict) -> Tuple[sql.Composable, tuple]:
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
     sql_obj, params = search_ast_to_psycopg2_expr(query, (), schema)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-    return (sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(query, schema), sql_obj).as_string(connection),
-            params)
+    return sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(query, schema), sql_obj), params
 
 
 def uncurried_binary_op(op, args, params, schema):

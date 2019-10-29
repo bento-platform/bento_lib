@@ -263,25 +263,22 @@ def test_build_search_response():
 
 
 def test_postgres():
-    from psycopg2 import connect
-
     # TODO: This is sort of artificial; does this case actually arise?
     assert postgres.collect_resolve_join_tables([], {}, None, None) == ()
 
-    with connect("dbname=metadata user=admin password=admin host=127.0.0.1 port=5432") as conn:
-        with raises(SyntaxError):
-            postgres.search_query_to_psycopg2_sql(TEST_EXPR_8, TEST_INVALID_SCHEMA, conn)
+    with raises(SyntaxError):
+        postgres.search_query_to_psycopg2_sql(TEST_EXPR_8, TEST_INVALID_SCHEMA)
 
-        for e, p in PG_VALID_QUERIES:
-            _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, conn)
-            assert params == p
+    for e, p in PG_VALID_QUERIES:
+        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA)
+        assert params == p
 
-        for e, _v in DS_VALID_EXPRESSIONS:
-            postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, conn)
+    for e, _v in DS_VALID_EXPRESSIONS:
+        postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA)
 
-        for e, ex in PG_INVALID_EXPRESSIONS:
-            with raises(ex):
-                postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, conn)
+    for e, ex in PG_INVALID_EXPRESSIONS:
+        with raises(ex):
+            postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA)
 
 
 def test_data_structure_search():
