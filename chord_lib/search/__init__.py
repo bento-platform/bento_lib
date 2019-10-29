@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
-from . import psycopg2
+from . import postgres
 
-__all__ = ["SEARCH_OPERATIONS", "SQL_SEARCH_OPERATORS", "build_search_response", "psycopg2"]
+__all__ = ["SEARCH_OPERATIONS", "SQL_SEARCH_OPERATORS", "build_search_response", "postgres"]
 
 
 SEARCH_OPERATIONS = ("eq", "lt", "le", "gt", "ge", "co")
