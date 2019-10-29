@@ -35,7 +35,7 @@ def check_query_against_data_structure(query: Query, ds: QueryableStructure, sch
         ev = ev,
 
     for e in ev:
-        if isinstance(ev, bool) and e:
+        if isinstance(e, bool) and e:
             return True
 
     # TODO: What to do here? Should be standardized
