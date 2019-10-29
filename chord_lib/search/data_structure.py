@@ -22,14 +22,19 @@ def tuple_flatten(t) -> tuple:
     return t,
 
 
-def evaluate(query: Query, ds: QueryableStructure, schema: dict) -> QueryableStructure:
+def evaluate(query: Query, data_structure: QueryableStructure, schema: dict) -> QueryableStructure:
     """
     Evaluates a query expression into a value, populated by a passed data structure.
     :param query: A query expression.
-    :param ds: A data structure from which to resolve values.
+    :param data_structure: A data structure from which to resolve values.
     :param schema:
     :return: A value (string, int, float, bool, array, or dict.)
     """
+
+    try:
+        validate(data_structure, schema)
+    except ValidationError:
+        raise ValueError("Invalid data structure")
 
     if not isinstance(query, list):
         return query  # Literal
@@ -37,24 +42,22 @@ def evaluate(query: Query, ds: QueryableStructure, schema: dict) -> QueryableStr
     if len(query) == 0:
         raise SyntaxError("Invalid expression: []")
 
-    if not isinstance(query[0], str):
-        raise SyntaxError("Invalid function: {}".format(query[0]))
-
     fn: str = query[0]
     args = query[1:]
 
-    return QUERY_CHECK_SWITCH[fn](args, ds, schema)
+    if not isinstance(query[0], str):
+        raise SyntaxError("Invalid function: {}".format(query[0]))
+
+    if fn not in QUERY_CHECK_SWITCH:
+        raise SyntaxError("Non-existent function: {}".format(fn))
+
+    return QUERY_CHECK_SWITCH[fn](args, data_structure, schema)
 
 
 # TODO: More rigorous / defined rules
-def check_query_against_data_structure(query: Query, ds: QueryableStructure, schema: dict) -> bool:
-    try:
-        validate(ds, schema)
-    except ValidationError:
-        raise ValueError("Invalid data structure")
-
+def check_query_against_data_structure(query: Query, data_structure: QueryableStructure, schema: dict) -> bool:
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
-    return any(isinstance(e, bool) and e for e in tuple_flatten(evaluate(query, ds, schema)))
+    return any(isinstance(e, bool) and e for e in tuple_flatten(evaluate(query, data_structure, schema)))
 
 
 def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], bool]:
@@ -86,7 +89,7 @@ def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> Q
 
     if schema["type"] == "object":
         if resolve[0] not in schema["properties"]:
-            raise SyntaxError("Property {} not found in object".format(resolve[0]))
+            raise ValueError("Property {} not found in object".format(resolve[0]))
 
         # TODO: Should tuple_flatten be used here?
         return _resolve(
@@ -97,7 +100,7 @@ def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> Q
 
     elif schema["type"] == "array":
         if resolve[0] != "[item]":
-            raise SyntaxError("Cannot get property of array")
+            raise TypeError("Cannot get property of array")
 
         # TODO: Should tuple_flatten be used here?
         return _resolve(
@@ -106,7 +109,7 @@ def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> Q
              else tuple(tuple(d) for d in tuple_flatten(resolving_ds))),
             schema["items"])
 
-    raise SyntaxError("Cannot get property of literal")
+    raise TypeError("Cannot get property of literal")
 
 
 QUERY_CHECK_SWITCH: Dict[str, Callable[[list, QueryableStructure, dict], QueryableStructure]] = {
