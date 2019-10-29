@@ -1,5 +1,5 @@
 from jsonschema import validate, ValidationError
-from operator import and_, or_, not_, lt, le, eq, gt, ge
+from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
 from typing import Callable, Dict, Tuple, Union
 
 __all__ = ["check_query_against_data_structure"]
@@ -9,6 +9,17 @@ Query = Union[list, str, int, float, bool]
 BaseQueryableStructure = Union[dict, list, str, int, float, bool]
 QueryableStructure = Union[BaseQueryableStructure, Tuple['QueryableStructure']]
 BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]
+
+
+def tuple_flatten(t) -> tuple:
+    if isinstance(t, tuple):
+        flattened = ()
+        for v in t:
+            flattened += tuple_flatten(v)
+
+        return flattened
+
+    return t,
 
 
 def evaluate(query: Query, ds: QueryableStructure, schema: dict) -> QueryableStructure:
@@ -42,12 +53,7 @@ def check_query_against_data_structure(query: Query, ds: QueryableStructure, sch
     except ValidationError:
         raise ValueError("Invalid data structure")
 
-    ev = evaluate(query, ds, schema)
-
-    if not isinstance(ev, tuple):
-        ev = ev,
-
-    for e in ev:
+    for e in tuple_flatten(evaluate(query, ds, schema)):
         if isinstance(e, bool) and e:
             return True
 
@@ -55,70 +61,48 @@ def check_query_against_data_structure(query: Query, ds: QueryableStructure, sch
     return False
 
 
-def uncurried_binary_op(op: BBOperator, args: list, ds: QueryableStructure, schema: dict) -> bool:
-    lhs = evaluate(args[0], ds, schema)
-    rhs = evaluate(args[1], ds, schema)
-
-    # Either LHS or RHS could be a tuple of [item]
-
-    # TODO: Multiple levels of tuples!!
-
-    if not isinstance(lhs, tuple):
-        lhs = lhs,
-
-    if not isinstance(rhs, tuple):
-        rhs = rhs,
-
-    return any(op(li, ri) for li in lhs for ri in rhs)
-
-
 def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], bool]:
-    return lambda args, ds, schema: uncurried_binary_op(op, args, ds, schema)
+    def uncurried_binary_op(args: list, ds: QueryableStructure, schema: dict) -> bool:
+        # TODO: Standardize type safety / behaviour!!!
+
+        lhs = tuple_flatten(evaluate(args[0], ds, schema))
+        rhs = tuple_flatten(evaluate(args[1], ds, schema))
+
+        # Either LHS or RHS could be a tuple of [item]
+
+        return any(op(li, ri) for li in lhs for ri in rhs)  # TODO: Type safety
+
+    return lambda args, ds, schema: uncurried_binary_op(args, ds, schema)
 
 
-def _contains(args: list, ds: QueryableStructure, schema: dict) -> bool:
-    # TODO: Standardize type safety / behaviour!!!
-    # TODO: Major rework
-
-    lhs = evaluate(args[0], ds, schema)
-    rhs = evaluate(args[1], ds, schema)
-
-    # Either LHS or RHS could be a tuple of [item]
-
-    # TODO: Multiple levels of tuples!!
-
-    if not isinstance(lhs, tuple):
-        lhs = lhs,
-
-    if not isinstance(rhs, tuple):
-        rhs = rhs,
-
-    return any(ri in li for li in lhs for ri in rhs)  # TODO: Very not type safe!!!
-
-
-def _resolve(resolve: list, ds: QueryableStructure, schema: dict) -> QueryableStructure:
+def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> QueryableStructure:
     # Assume data structure has already been checked against schema
 
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
-        return ds
+        return resolving_ds
 
     if schema["type"] == "object":
         if resolve[0] not in schema["properties"]:
             raise SyntaxError("Property {} not found in object".format(resolve[0]))
 
-        return _resolve(resolve[1:],
-                        ds[resolve[0]] if not isinstance(ds, tuple) else tuple(d[resolve[0]] for d in ds),
-                        schema["properties"][resolve[0]])
+        # TODO: Should tuple_flatten be used here?
+        return _resolve(
+            resolve[1:],
+            (resolving_ds[resolve[0]] if not isinstance(resolving_ds, tuple)
+             else tuple(d[resolve[0]] for d in tuple_flatten(resolving_ds))),
+            schema["properties"][resolve[0]])
 
     elif schema["type"] == "array":
         if resolve[0] != "[item]":
             raise SyntaxError("Cannot get property of array")
 
-        # TODO: Multiple levels of tuple
-
-        return _resolve(resolve[1:], tuple(ds) if not isinstance(ds, tuple) else tuple(tuple(d) for d in ds),
-                        schema["items"])
+        # TODO: Should tuple_flatten be used here?
+        return _resolve(
+            resolve[1:],
+            (tuple(resolving_ds) if not isinstance(resolving_ds, tuple)
+             else tuple(tuple(d) for d in tuple_flatten(resolving_ds))),
+            schema["items"])
 
     raise SyntaxError("Cannot get property of literal")
 
@@ -134,7 +118,7 @@ QUERY_CHECK_SWITCH: Dict[str, Callable[[list, QueryableStructure, dict], Queryab
     "#gt": _binary_op(gt),
     "#ge": _binary_op(ge),
 
-    "#co": _contains,
+    "#co": _binary_op(contains),
 
     "#resolve": _resolve
 }
