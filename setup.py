@@ -10,7 +10,7 @@ setuptools.setup(
     version="0.1.0",
 
     python_requires=">=3.6",
-    install_requires=["Werkzeug>=0.16.0,<1.0", "psycopg2-binary>=2.7,<3.0"],
+    install_requires=["jsonschema>=3.1.1,<4", "psycopg2-binary>=2.7,<3.0", "Werkzeug>=0.16.0,<1.0"],
 
     author="David Lougheed",
     author_email="david.lougheed@mail.mcgill.ca",
