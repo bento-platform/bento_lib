@@ -38,16 +38,22 @@ def collect_resolve_join_tables(
     if len(resolve) == 0:
         return ()
 
+    relations = (parent_relation[0] if parent_relation is not None else None,
+                 schema.get("search", {}).get("database", {}).get("relation", None))
+
+    aliases = (resolve_path if resolve_path is not None else None,
+               re.sub(r"[$\[\]]+", "", "{}_{}".format(resolve_path if resolve_path is not None else "", resolve[0]))
+               if relations[1] is not None else None)
+
+    key_link = None
+    field_alias = None
+
     if schema["type"] not in ("array", "object"):
         if len(resolve) > 1:
             raise TypeError("Cannot get property of literal")
-        return ()
-
-    relations = (parent_relation[0] if parent_relation is not None else None,
-                 schema.get("search", {}).get("database", {}).get("relation", None))
-    aliases = (resolve_path if resolve_path is not None else None,
-               re.sub(r"[$\[\]]+", "", "{}_{}".format(resolve_path if resolve_path is not None else "", resolve[0])))
-    key_link = None
+        field_alias = schema.get("search", {}).get("database", {}).get("field",
+                                                                       resolve[0] if resolve[0] != "$root" else None)
+        return (relations, aliases, key_link, field_alias),
 
     if "search" in schema and "database" in schema["search"] and "relationship" in schema["search"]["database"]:
         rel_type = schema["search"]["database"]["relationship"]["type"]
@@ -60,7 +66,7 @@ def collect_resolve_join_tables(
         else:
             raise SyntaxError("Invalid relationship type: {}".format(rel_type))
 
-    join_table_data = (relations, aliases, key_link)
+    join_table_data = (relations, aliases, key_link, field_alias)
 
     if schema["type"] == "array":
         if len(resolve) == 1:  # End result is array
@@ -114,7 +120,7 @@ def join_fragment(ast: Query, schema: dict) -> sql.Composable:
             a1=sql.Identifier(term[1][1]),
             f0=sql.Identifier(term[2][0]),
             f1=sql.Identifier(term[2][1])
-        ) for term in terms[1:]]
+        ) for term in terms[1:] if term[2] is not None]  # Exclude terms without key-links
     )
 
 
@@ -145,7 +151,7 @@ def search_query_to_psycopg2_sql(query, schema: dict) -> SQLComposableWithParams
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
     sql_obj, params = search_ast_to_psycopg2_expr(query, (), schema)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-    return sql.SQL("SELECT * FROM {} WHERE {}").format(join_fragment(query, schema), sql_obj), params
+    return sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(query, schema), sql_obj), params
 
 
 def uncurried_binary_op(op: str, args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
@@ -181,13 +187,19 @@ def _wildcard(args: list, params: tuple, _schema: dict) -> SQLComposableWithPara
 
 
 def get_relation(resolve: list, schema: dict):
-    return collect_resolve_join_tables(resolve, schema)[-1][1][1]  # TODO: Schema
+    aliases = collect_resolve_join_tables(resolve, schema)[-1][1]
+    return aliases[1] if aliases[1] is not None else aliases[0]
+
+
+def get_field(resolve: list, schema: dict) -> Optional[str]:
+    return collect_resolve_join_tables(resolve, schema)[-1][3]
 
 
 def _resolve(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
-
-    return sql.SQL("{}.{}").format(sql.Identifier(get_relation(["$root"] + args, schema)),
-                                   sql.Identifier(args[-1]) if len(args) > 0 else sql.SQL("*")), params
+    r_id = get_relation(["$root"] + args, schema)
+    f_id = get_field(["$root"] + args, schema)
+    return sql.SQL("{}.{}").format(sql.Identifier(r_id),
+                                   sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
 def _contains(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:

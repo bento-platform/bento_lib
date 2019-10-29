@@ -6,6 +6,12 @@ from pytest import raises
 TEST_SCHEMA = {
     "type": "object",
     "properties": {
+        "id": {
+            "type": "string",
+            "search": {
+                "database": {"field": "phenopacket_id"}
+            }
+        },
         "biosamples": {
             "type": "array",
             "items": {
@@ -163,6 +169,7 @@ TEST_QUERY_3 = ["#and", TEST_QUERY_1, TEST_QUERY_2]
 TEST_QUERY_4 = ["#or", TEST_QUERY_3, False]
 TEST_QUERY_5 = ["#and", TEST_QUERY_3, False]
 TEST_QUERY_6 = "some_non_bool_value"
+TEST_QUERY_7 = ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f"]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -184,17 +191,18 @@ INVALID_EXPR_8 = [5, 5]
 
 
 TEST_DATA_1 = {
-   "subject": {"karyotypic_sex": "XO"},
-   "biosamples": [
-       {
-           "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
-           "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}]
-       },
-       {
+    "id": "1ac54805-4145-4829-93e2-f362de55f28f",
+    "subject": {"karyotypic_sex": "XO"},
+    "biosamples": [
+        {
+            "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
+            "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}]
+        },
+        {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
             "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}]
-       }
-   ]
+        }
+    ]
 }
 
 INVALID_DATA = [{True, False}]
@@ -218,6 +226,7 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_4, True),
     (TEST_QUERY_5, False),
     (TEST_QUERY_6, False),
+    (TEST_QUERY_7, True),
 )
 
 DS_INVALID_EXPRESSIONS = (
@@ -239,6 +248,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_4, ("XO", "%TE%", False)),
     (TEST_QUERY_5, ("XO", "%TE%", False)),
     (TEST_QUERY_6, ("some_non_bool_value",)),
+    (TEST_QUERY_7, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
 )
 
 PG_INVALID_EXPRESSIONS = (
