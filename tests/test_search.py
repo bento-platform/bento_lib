@@ -50,6 +50,26 @@ TEST_SCHEMA = {
                             "properties": {
                                 "id": {"type": "string"},
                                 "label": {"type": "string"}
+                            },
+                            "search": {
+                                "database": {
+                                    "relation": "patients_ontology",
+                                    "primary_key": "id",   # Ontology primary key
+                                    "relationship": {
+                                        "type": "MANY_TO_ONE",
+                                        "foreign_key": "code_id"  # M2M child key
+                                    }
+                                }
+                            }
+                        },
+                        "search": {
+                            "database": {
+                                "relation": "patients_biosample_tumor_grades",
+                                "relationship": {
+                                    "type": "MANY_TO_MANY",
+                                    "parent_foreign_key": "biosample_id",
+                                    "parent_primary_key": "biosample_id"
+                                }
                             }
                         }
                     }
@@ -103,6 +123,40 @@ TEST_SCHEMA = {
 }
 
 
+# TODO: Postgres module should validate instead of throwing errors...
+TEST_INVALID_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "biosamples": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            },
+            "search": {
+                "database": {
+                    "relation": "patients_phenopacket_biosamples",
+                    "relationship": {
+                        "type": "INVALID_RELATION_TYPE",
+                        "parent_foreign_key": "phenopacket_id",
+                        "parent_primary_key": "phenopacket_id"
+                    }
+                }
+            }
+        },
+        "subject": {
+            "type": "object"
+        }
+        # TODO: Metadata (one-to-one) example
+    },
+    "search": {
+        "database": {
+            "relation": "patients_phenopacket",
+            "primary_key": "phenopacket_id"
+        }
+    }
+}
+
+
 TEST_QUERY_1 = ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"]
 TEST_QUERY_2 = ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TE"]
 TEST_QUERY_3 = ["#and", TEST_QUERY_1, TEST_QUERY_2]
@@ -117,6 +171,7 @@ TEST_EXPR_4 = ["#resolve", "subject", "karyotypic_sex"]
 TEST_EXPR_5 = ["#resolve"]
 TEST_EXPR_6 = ["#not", True]
 TEST_EXPR_7 = ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"]
+TEST_EXPR_8 = ["#resolve", "biosamples"]
 
 INVALID_EXPR_1 = []
 INVALID_EXPR_2 = ["#and", True]
@@ -152,7 +207,8 @@ DS_VALID_EXPRESSIONS = (
     (TEST_EXPR_4, "XO"),
     (TEST_EXPR_5, TEST_DATA_1),
     (TEST_EXPR_6, False),
-    (TEST_EXPR_7, ("TG1", "TG2", "TG3", "TG4"))
+    (TEST_EXPR_7, ("TG1", "TG2", "TG3", "TG4")),
+    (TEST_EXPR_8, TEST_DATA_1["biosamples"])
 )
 
 DS_VALID_QUERIES = (
@@ -161,7 +217,7 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_3, True),
     (TEST_QUERY_4, True),
     (TEST_QUERY_5, False),
-    (TEST_QUERY_6, False)
+    (TEST_QUERY_6, False),
 )
 
 DS_INVALID_EXPRESSIONS = (
@@ -176,6 +232,23 @@ DS_INVALID_EXPRESSIONS = (
 )
 
 
+PG_VALID_QUERIES = (
+    (TEST_QUERY_1, ("XO",)),
+    (TEST_QUERY_2, ("%TE%",)),
+    (TEST_QUERY_3, ("XO", "%TE%")),
+    (TEST_QUERY_4, ("XO", "%TE%", False)),
+    (TEST_QUERY_5, ("XO", "%TE%", False)),
+    (TEST_QUERY_6, ("some_non_bool_value",)),
+)
+
+PG_INVALID_EXPRESSIONS = (
+    *DS_INVALID_EXPRESSIONS,
+    (["#_wc", "v1", "v2"], SyntaxError),
+    (["#_wc", ["#resolve", "biosamples"]], NotImplementedError),
+    ({"dict": True}, NotImplementedError),
+)
+
+
 def test_build_search_response():
     test_response = build_search_response({"some": "result"}, datetime.now())
 
@@ -187,6 +260,28 @@ def test_build_search_response():
 
     t = float(test_response["time"])
     assert t >= 0
+
+
+def test_postgres():
+    from psycopg2 import connect
+
+    # TODO: This is sort of artificial; does this case actually arise?
+    assert postgres.collect_resolve_join_tables([], {}, None, None) == ()
+
+    with connect("dbname=metadata user=admin password=admin host=127.0.0.1 port=5432") as conn:
+        with raises(SyntaxError):
+            postgres.search_query_to_psycopg2_sql(TEST_EXPR_8, TEST_INVALID_SCHEMA, conn)
+
+        for e, p in PG_VALID_QUERIES:
+            _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, conn)
+            assert params == p
+
+        for e, _v in DS_VALID_EXPRESSIONS:
+            postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, conn)
+
+        for e, ex in PG_INVALID_EXPRESSIONS:
+            with raises(ex):
+                postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, conn)
 
 
 def test_data_structure_search():
