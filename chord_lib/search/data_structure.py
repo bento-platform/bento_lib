@@ -12,6 +12,12 @@ BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]
 
 
 def tuple_flatten(t) -> tuple:
+    """
+    Flattens a possibly nested tuple or non-tuple into a 1-dimensional tuple.
+    :param t: The value to flatten and or expand into a 1-dimensional tuple.
+    :return: The flattened tuple.
+    """
+
     if isinstance(t, tuple):
         flattened = ()
         for v in t:
@@ -27,7 +33,7 @@ def evaluate(query: Query, data_structure: QueryableStructure, schema: dict) -> 
     Evaluates a query expression into a value, populated by a passed data structure.
     :param query: A query expression.
     :param data_structure: A data structure from which to resolve values.
-    :param schema:
+    :param schema: The JSON schema for data objects being queried.
     :return: A value (string, int, float, bool, array, or dict.)
     """
 
@@ -56,11 +62,25 @@ def evaluate(query: Query, data_structure: QueryableStructure, schema: dict) -> 
 
 # TODO: More rigorous / defined rules
 def check_query_against_data_structure(query: Query, data_structure: QueryableStructure, schema: dict) -> bool:
+    """
+    Checks a query against a data structure, returning True if the
+    :param query: A query to evaluate against the data object.
+    :param data_structure: The data object to evaluate the query against.
+    :param schema: A JSON schema representing valid data objects.
+    :return: A boolean representing whether or not the query matches the data object.
+    """
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
     return any(isinstance(e, bool) and e for e in tuple_flatten(evaluate(query, data_structure, schema)))
 
 
 def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], bool]:
+    """
+    Returns a lambda which will evaluate a boolean-returning binary operator on a pair of arguments against a
+    data structure/object of some type and return a Boolean result.
+    :param op: The operator the lambda is representing.
+    :return: Operator lambda for use in evaluating expressions.
+    """
+
     def uncurried_binary_op(args: list, ds: QueryableStructure, schema: dict) -> bool:
         # TODO: Standardize type safety / behaviour!!!
         try:
@@ -81,7 +101,14 @@ def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], boo
 
 
 def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> QueryableStructure:
-    # Assume data structure has already been checked against schema
+    """
+    Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
+    checked against its schema.
+    :param resolve: The current path to resolve, not including the current data structure.
+    :param resolving_ds: The data structure being resolved upon.
+    :param schema: The JSON schema representing the resolving data structure.
+    :return: The resolved value after exploring the resolve path.
+    """
 
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
