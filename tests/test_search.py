@@ -330,6 +330,11 @@ def test_build_search_response():
 
 
 def test_queries_and_ast():
+    assert queries.Literal(5) == queries.Literal(5)
+    assert queries.Literal("5") == queries.Literal("5")
+    assert queries.Literal(True) == queries.Literal(True)
+    assert queries.Literal(1.0) == queries.Literal(1.0)
+
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
         assert e.fn == f[0]

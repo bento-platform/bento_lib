@@ -106,6 +106,9 @@ class Literal:
         assert any(isinstance(value, t) for t in literal_types)
         self.value = value
 
+    def __eq__(self, other):
+        return self.value == other.value
+
     def __str__(self):
         return str(self.value)
 
