@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
-from . import custom_types
 from . import data_structure
 from . import postgres
+from . import queries
 
 __all__ = [
     "SEARCH_OPERATIONS",
@@ -11,9 +11,9 @@ __all__ = [
 
     "build_search_response",
 
-    "custom_types",
     "data_structure",
-    "postgres"
+    "postgres",
+    "queries",
 ]
 
 
@@ -24,7 +24,7 @@ SQL_SEARCH_OPERATORS = {
     "le": "<=",
     "gt": ">",
     "ge": ">=",
-    "co": "LIKE"
+    "co": "LIKE",
 }
 
 

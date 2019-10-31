@@ -163,6 +163,58 @@ TEST_INVALID_SCHEMA = {
 }
 
 
+TEST_FUNCTIONS = (
+    [queries.FUNCTION_AND, True, False],
+    [queries.FUNCTION_OR, False, True],
+    [queries.FUNCTION_NOT, False],
+    [queries.FUNCTION_LT, 5, 6],
+    [queries.FUNCTION_LE, 5, 6],
+    [queries.FUNCTION_EQ, 5, 6],
+    [queries.FUNCTION_GT, 5, 6],
+    [queries.FUNCTION_GE, 5, 6],
+    [queries.FUNCTION_CO, "hello", "h"],
+    [queries.FUNCTION_RESOLVE, "biosamples", "[item]", "procedure", "code", "id"],
+)
+
+TEST_INVALID_FUNCTIONS = (
+    ["eq", 5, 6],
+    ["#bad", 6, 7]
+)
+
+TEST_INVALID_EXPRESSION_SYNTAX = (
+    [],
+    [5, 6],
+    [True, False],
+    [queries.FUNCTION_AND, True],
+    [queries.FUNCTION_OR, True],
+    [queries.FUNCTION_NOT, True, False],
+    [queries.FUNCTION_LT, 5],
+    [queries.FUNCTION_LE, 5],
+    [queries.FUNCTION_EQ, 5],
+    [queries.FUNCTION_GT, 5],
+    [queries.FUNCTION_GE, 5],
+    [queries.FUNCTION_CO, "hello"],
+    *TEST_INVALID_FUNCTIONS
+)
+
+TEST_INVALID_LITERALS = (
+    dict(),
+    tuple(),
+    set(),
+    lambda x: x
+)
+
+REDUCE_NOT_1 = [queries.FUNCTION_NOT, [queries.FUNCTION_NOT, True]]
+REDUCE_NOT_2 = [queries.FUNCTION_NOT, REDUCE_NOT_1]
+REDUCE_NOT_3 = [queries.FUNCTION_AND, REDUCE_NOT_1, REDUCE_NOT_2]
+
+TEST_REDUCE_NOTS = (
+    (REDUCE_NOT_1, True),
+    (REDUCE_NOT_2, [queries.FUNCTION_NOT, True]),
+    (REDUCE_NOT_3, [queries.FUNCTION_AND, True, [queries.FUNCTION_NOT, True]])
+)
+
+
 TEST_QUERY_1 = ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"]
 TEST_QUERY_2 = ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TE"]
 TEST_QUERY_3 = ["#and", TEST_QUERY_1, TEST_QUERY_2]
@@ -270,6 +322,32 @@ def test_build_search_response():
 
     t = float(test_response["time"])
     assert t >= 0
+
+
+def test_queries_and_ast():
+    for f in TEST_FUNCTIONS:
+        e = queries.Expression(fn=f[0], args=f[1:])
+        assert e.fn == f[0]
+        assert str(e.args) == str(f[1:])
+
+    for f in TEST_INVALID_FUNCTIONS:
+        with raises(AssertionError):
+            queries.Expression(fn=f[0], args=f[1:])
+
+    for f in TEST_INVALID_EXPRESSION_SYNTAX:
+        with raises(SyntaxError):
+            queries.convert_to_ast(f)
+
+    for v in TEST_INVALID_LITERALS:
+        with raises(AssertionError):
+            queries.Literal(value=v)
+
+        with raises(ValueError):
+            queries.convert_to_ast(v)
+
+    for b, a in TEST_REDUCE_NOTS:
+        assert str(queries.convert_query_to_ast_and_preprocess(b)) == \
+            str(queries.convert_query_to_ast_and_preprocess(a))
 
 
 def test_postgres():

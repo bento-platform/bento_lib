@@ -2,7 +2,7 @@ from jsonschema import validate, ValidationError
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
 from typing import Callable, Dict, Tuple, Union
 
-from .custom_types import Query
+from .queries import *
 
 
 __all__ = ["check_query_against_data_structure"]
@@ -141,18 +141,18 @@ def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> Q
     raise TypeError("Cannot get property of literal")
 
 
-QUERY_CHECK_SWITCH: Dict[str, Callable[[list, QueryableStructure, dict], QueryableStructure]] = {
-    "#and": _binary_op(and_),
-    "#or": _binary_op(or_),
-    "#not": lambda args, ds, schema: not_(check_query_against_data_structure(args[0], ds, schema)),
+QUERY_CHECK_SWITCH: Dict[FunctionName, Callable[[list, QueryableStructure, dict], QueryableStructure]] = {
+    FUNCTION_AND: _binary_op(and_),
+    FUNCTION_OR: _binary_op(or_),
+    FUNCTION_NOT: lambda args, ds, schema: not_(check_query_against_data_structure(args[0], ds, schema)),
 
-    "#lt": _binary_op(lt),
-    "#le": _binary_op(le),
-    "#eq": _binary_op(eq),
-    "#gt": _binary_op(gt),
-    "#ge": _binary_op(ge),
+    FUNCTION_LT: _binary_op(lt),
+    FUNCTION_LE: _binary_op(le),
+    FUNCTION_EQ: _binary_op(eq),
+    FUNCTION_GT: _binary_op(gt),
+    FUNCTION_GE: _binary_op(ge),
 
-    "#co": _binary_op(contains),
+    FUNCTION_CO: _binary_op(contains),
 
-    "#resolve": _resolve
+    FUNCTION_RESOLVE: _resolve
 }

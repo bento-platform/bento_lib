@@ -3,7 +3,7 @@ import re
 from psycopg2 import sql
 from typing import Callable, Dict, Optional, Tuple
 
-from .custom_types import Query
+from .queries import *
 
 
 # Search Rules:
@@ -95,7 +95,7 @@ def collect_join_tables(ast: Query, terms: tuple, schema: dict) -> tuple:
     if not isinstance(ast, list):
         return terms
 
-    if ast[0] == "#resolve":
+    if ast[0] == FUNCTION_RESOLVE:
         return terms + tuple(t for t in collect_resolve_join_tables(["$root"] + ast[1:], schema) if t not in terms)
 
     new_terms = terms
@@ -204,24 +204,24 @@ def _resolve(args: list, params: tuple, schema: dict) -> SQLComposableWithParams
 
 def _contains(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(["#_wc", args[1]], params, schema)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr([FUNCTION_HELPER_WC, args[1]], params, schema)
     return sql.SQL("({}) LIKE ({})").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
 
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[list, tuple, dict], SQLComposableWithParams]] = {
-    "#and": _binary_op("AND"),
-    "#or": _binary_op("OR"),
-    "#not": _not,
+    FUNCTION_AND: _binary_op("AND"),
+    FUNCTION_OR: _binary_op("OR"),
+    FUNCTION_NOT: _not,
 
-    "#lt": _binary_op("<"),
-    "#le": _binary_op("<="),
-    "#eq": _binary_op("="),
-    "#gt": _binary_op(">"),
-    "#ge": _binary_op(">="),
+    FUNCTION_LT: _binary_op("<"),
+    FUNCTION_LE: _binary_op("<="),
+    FUNCTION_EQ: _binary_op("="),
+    FUNCTION_GT: _binary_op(">"),
+    FUNCTION_GE: _binary_op(">="),
 
-    "#co": _contains,
+    FUNCTION_CO: _contains,
 
-    "#resolve": _resolve,
+    FUNCTION_RESOLVE: _resolve,
 
-    "#_wc": _wildcard
+    FUNCTION_HELPER_WC: _wildcard
 }
