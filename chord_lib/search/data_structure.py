@@ -39,6 +39,9 @@ def evaluate(query: Query, data_structure: QueryableStructure, schema: dict) -> 
     :return: A value (string, int, float, bool, array, or dict.)
     """
 
+    # Try converting to AST for validation reasons, although this doesn't use the AST directly (for now)
+    convert_query_to_ast_and_preprocess(query)
+
     try:
         validate(data_structure, schema)
     except ValidationError:
@@ -47,17 +50,11 @@ def evaluate(query: Query, data_structure: QueryableStructure, schema: dict) -> 
     if not isinstance(query, list):
         return query  # Literal
 
-    if len(query) == 0:
-        raise SyntaxError("Invalid expression: []")
-
     fn: str = query[0]
     args = query[1:]
 
-    if not isinstance(query[0], str):
-        raise SyntaxError("Invalid function: {}".format(query[0]))
-
-    if fn not in QUERY_CHECK_SWITCH:
-        raise SyntaxError("Non-existent function: {}".format(fn))
+    if fn == FUNCTION_HELPER_WC:
+        raise NotImplementedError("Cannot use wildcard helper here")
 
     return QUERY_CHECK_SWITCH[fn](args, data_structure, schema)
 
@@ -92,9 +89,6 @@ def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], boo
             # Either LHS or RHS could be a tuple of [item]
 
             return any(op(li, ri) for li in lhs for ri in rhs)  # TODO: Type safety checks ahead-of-time
-
-        except IndexError:
-            raise SyntaxError("Cannot use binary operator {} on less than two values".format(op))
 
         except TypeError:
             raise TypeError("Type-invalid use of binary operator {}".format(op))

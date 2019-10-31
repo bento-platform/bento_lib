@@ -281,7 +281,7 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_7, True),
 )
 
-DS_INVALID_EXPRESSIONS = (
+COMMON_INVALID_EXPRESSIONS = (
     (INVALID_EXPR_1, SyntaxError),
     (INVALID_EXPR_2, SyntaxError),
     (INVALID_EXPR_3, TypeError),
@@ -290,6 +290,11 @@ DS_INVALID_EXPRESSIONS = (
     (INVALID_EXPR_6, TypeError),
     (INVALID_EXPR_7, SyntaxError),
     (INVALID_EXPR_8, SyntaxError),
+)
+
+DS_INVALID_EXPRESSIONS = (
+    *COMMON_INVALID_EXPRESSIONS,
+    (["#_wc", "v1"], NotImplementedError)
 )
 
 
@@ -304,10 +309,10 @@ PG_VALID_QUERIES = (
 )
 
 PG_INVALID_EXPRESSIONS = (
-    *DS_INVALID_EXPRESSIONS,
+    *COMMON_INVALID_EXPRESSIONS,
     (["#_wc", "v1", "v2"], SyntaxError),
     (["#_wc", ["#resolve", "biosamples"]], NotImplementedError),
-    ({"dict": True}, NotImplementedError),
+    ({"dict": True}, ValueError),
 )
 
 
