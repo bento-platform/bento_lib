@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+from itertools import chain
 from jsonschema import validate, ValidationError
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
 from typing import Callable, Dict, Tuple, Union
@@ -13,21 +15,21 @@ QueryableStructure = Union[BaseQueryableStructure, Tuple['QueryableStructure']]
 BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]
 
 
-def tuple_flatten(t) -> tuple:
+def _is_gen_flatten_compatible(t):
+    try:
+        iter(t)
+        return not isinstance(t, str) and not isinstance(t, list) and not isinstance(t, dict)
+    except TypeError:
+        return False
+
+
+def generator_flatten(t) -> Iterable:
     """
-    Flattens a possibly nested tuple or non-tuple into a 1-dimensional tuple.
-    :param t: The value to flatten and or expand into a 1-dimensional tuple.
-    :return: The flattened tuple.
+    Flattens a possibly nested tuple or base queryable structure into a 1-dimensional generator.
+    :param t: The value to flatten and or expand into a 1-dimensional generator.
+    :return: A generator of flattened values.
     """
-
-    if isinstance(t, tuple):
-        flattened = ()
-        for v in t:
-            flattened += tuple_flatten(v)
-
-        return flattened
-
-    return t,
+    return chain.from_iterable(generator_flatten(v) for v in t) if _is_gen_flatten_compatible(t) else (t,)
 
 
 def evaluate(query: Query, data_structure: QueryableStructure, schema: dict) -> QueryableStructure:
@@ -69,7 +71,7 @@ def check_query_against_data_structure(query: Query, data_structure: QueryableSt
     :return: A boolean representing whether or not the query matches the data object.
     """
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
-    return any(isinstance(e, bool) and e for e in tuple_flatten(evaluate(query, data_structure, schema)))
+    return any(isinstance(e, bool) and e for e in generator_flatten(evaluate(query, data_structure, schema)))
 
 
 def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], bool]:
@@ -83,17 +85,29 @@ def _binary_op(op: BBOperator) -> Callable[[list, QueryableStructure, dict], boo
     def uncurried_binary_op(args: list, ds: QueryableStructure, schema: dict) -> bool:
         # TODO: Standardize type safety / behaviour!!!
         try:
-            lhs = tuple_flatten(evaluate(args[0], ds, schema))
-            rhs = tuple_flatten(evaluate(args[1], ds, schema))
-
             # Either LHS or RHS could be a tuple of [item]
-
-            return any(op(li, ri) for li in lhs for ri in rhs)  # TODO: Type safety checks ahead-of-time
+            return any(
+                op(li, ri)
+                for li in generator_flatten(evaluate(args[0], ds, schema))  # LHS, Outer loop
+                for ri in generator_flatten(evaluate(args[1], ds, schema))  # RHS, Inner loop
+            )
 
         except TypeError:
             raise TypeError("Type-invalid use of binary operator {}".format(op))
 
     return lambda args, ds, schema: uncurried_binary_op(args, ds, schema)
+
+
+def preserved_tuple_apply(
+    v: QueryableStructure,
+    fn: Callable[[BaseQueryableStructure], QueryableStructure]
+) -> QueryableStructure:
+    # TODO: Should generator_flatten be used here?
+    return fn(v) if not isinstance(v, tuple) else tuple(fn(d) for d in generator_flatten(v))
+
+
+def curried_get(k) -> Callable:
+    return lambda v: v[k]
 
 
 def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> QueryableStructure:
@@ -110,29 +124,19 @@ def _resolve(resolve: list, resolving_ds: QueryableStructure, schema: dict) -> Q
         # Resolve the root if it's an empty list
         return resolving_ds
 
-    if schema["type"] == "object":
-        if resolve[0] not in schema["properties"]:
-            raise ValueError("Property {} not found in object".format(resolve[0]))
+    if schema["type"] not in ("object", "array"):
+        raise TypeError("Cannot get property of literal")
 
-        # TODO: Should tuple_flatten be used here?
-        return _resolve(
-            resolve[1:],
-            (resolving_ds[resolve[0]] if not isinstance(resolving_ds, tuple)
-             else tuple(d[resolve[0]] for d in tuple_flatten(resolving_ds))),
-            schema["properties"][resolve[0]])
+    elif schema["type"] == "object" and resolve[0] not in schema["properties"]:
+        raise ValueError("Property {} not found in object".format(resolve[0]))
 
-    elif schema["type"] == "array":
-        if resolve[0] != "[item]":
-            raise TypeError("Cannot get property of array")
+    elif schema["type"] == "array" and resolve[0] != "[item]":
+        raise TypeError("Cannot get property of array")
 
-        # TODO: Should tuple_flatten be used here?
-        return _resolve(
-            resolve[1:],
-            (tuple(resolving_ds) if not isinstance(resolving_ds, tuple)
-             else tuple(tuple(d) for d in tuple_flatten(resolving_ds))),
-            schema["items"])
-
-    raise TypeError("Cannot get property of literal")
+    return _resolve(
+        resolve[1:],
+        preserved_tuple_apply(resolving_ds, curried_get(resolve[0]) if schema["type"] == "object" else tuple),
+        schema["properties"][resolve[0]] if schema["type"] == "object" else schema["items"])
 
 
 QUERY_CHECK_SWITCH: Dict[FunctionName, Callable[[list, QueryableStructure, dict], QueryableStructure]] = {
