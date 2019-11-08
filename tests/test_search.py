@@ -105,7 +105,12 @@ TEST_SCHEMA = {
         "subject": {
             "type": "object",
             "properties": {
-                "karyotypic_sex": {"type": "string", "search": {}}
+                "karyotypic_sex": {"type": "string", "search": {}},
+                "sex": {
+                    "type": "string",
+                    "enum": ["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"],
+                    "search": {}
+                }
             },
             "search": {
                 "database": {
@@ -222,6 +227,7 @@ TEST_QUERY_4 = ["#or", TEST_QUERY_3, False]
 TEST_QUERY_5 = ["#and", TEST_QUERY_3, False]
 TEST_QUERY_6 = "some_non_bool_value"
 TEST_QUERY_7 = ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f"]
+TEST_QUERY_8 = ["#eq", ["#resolve", "subject", "sex"], "MALE"]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -242,9 +248,20 @@ INVALID_EXPR_7 = ["#fake_fn", 5]
 INVALID_EXPR_8 = [5, 5]
 
 
+TEST_LIST_ANDS = (
+    (TEST_QUERY_1, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),)),
+    (TEST_QUERY_2, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),)),
+    (TEST_QUERY_3, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
+                    queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2))),
+    (TEST_QUERY_5, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
+                    queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),
+                    queries.convert_query_to_ast_and_preprocess(False))),
+)
+
+
 TEST_DATA_1 = {
     "id": "1ac54805-4145-4829-93e2-f362de55f28f",
-    "subject": {"karyotypic_sex": "XO"},
+    "subject": {"karyotypic_sex": "XO", "sex": "MALE"},
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
@@ -254,7 +271,7 @@ TEST_DATA_1 = {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
             "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}]
         }
-    ]
+    ],
 }
 
 INVALID_DATA = [{True, False}]
@@ -279,6 +296,7 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_5, False),
     (TEST_QUERY_6, False),
     (TEST_QUERY_7, True),
+    (TEST_QUERY_8, True)
 )
 
 COMMON_INVALID_EXPRESSIONS = (
@@ -306,6 +324,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_5, ("XO", "%TE%", False)),
     (TEST_QUERY_6, ("some_non_bool_value",)),
     (TEST_QUERY_7, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
+    (TEST_QUERY_8, ("MALE",))
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -342,7 +361,7 @@ def test_queries_and_ast():
 
     for f in TEST_INVALID_FUNCTIONS:
         with raises(AssertionError):
-            queries.Expression(fn=f[0], args=f[1:])
+            queries.Expression(fn=f[0], args=[queries.Literal(a) for a in f[1:]])
 
     for f in TEST_INVALID_EXPRESSION_SYNTAX:
         with raises(SyntaxError):
@@ -358,6 +377,10 @@ def test_queries_and_ast():
     for b, a in TEST_REDUCE_NOTS:
         assert str(queries.convert_query_to_ast_and_preprocess(b)) == \
             str(queries.convert_query_to_ast_and_preprocess(a))
+
+    for b, a, in TEST_LIST_ANDS:
+        assert all(str(bi) == str(ai) for bi, ai in
+                   zip(queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b)), a))
 
 
 def test_postgres():

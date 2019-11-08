@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Tuple, Union
 
 
 __all__ = [
@@ -25,6 +25,7 @@ __all__ = [
     "Literal",
 
     "convert_query_to_ast_and_preprocess",
+    "ast_to_and_asts",
 ]
 
 
@@ -88,8 +89,11 @@ Query = Union[list, LiteralValue]
 # TODO: Argument types...
 
 
+AST = Union["Expression", "Literal"]
+
+
 class Expression:
-    def __init__(self, fn: str, args: list):
+    def __init__(self, fn: str, args: List[AST]):
         assert fn in VALID_FUNCTIONS
         self.fn = fn
 
@@ -113,9 +117,6 @@ class Literal:
         return str(self.value)
 
 
-AST = Union[Expression, Literal]
-
-
 def convert_to_ast(query: Query) -> AST:
     if isinstance(query, list):
         if len(query) == 0 or not isinstance(query[0], str) or query[0] not in VALID_FUNCTIONS:
@@ -135,15 +136,28 @@ def convert_to_ast(query: Query) -> AST:
 def simplify_nots(ast: AST) -> AST:
     # not (not a) => a
 
-    if isinstance(ast, Expression):
-        if ast.fn == FUNCTION_NOT and isinstance(ast.args[0], Expression) and ast.args[0].fn == FUNCTION_NOT:
-            return simplify_nots(ast.args[0].args[0])
-        else:
-            return Expression(fn=ast.fn, args=[simplify_nots(a) for a in ast.args])
+    if isinstance(ast, Literal):
+        return ast
 
-    return ast
+    if ast.fn == FUNCTION_NOT and isinstance(ast.args[0], Expression) and ast.args[0].fn == FUNCTION_NOT:
+        return simplify_nots(ast.args[0].args[0])
+
+    return Expression(fn=ast.fn, args=[simplify_nots(a) for a in ast.args])
 
 
 def convert_query_to_ast_and_preprocess(query: Query) -> AST:
     ast = convert_to_ast(query)
     return simplify_nots(ast)
+
+
+def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
+    # (and e1 e2) => <e1, e2>
+    # (and (and e1 e2) e3) => <e1, e2, e3>
+    # (and e1 (and e2 e3)) => <e1, e2, e3>
+    # (and (and e1 e2) (and e3 e4)) => <e1, e2, e3, e4>
+    # etc.
+
+    if not isinstance(ast, Expression) or ast.fn != FUNCTION_AND:
+        return ast,
+
+    return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
