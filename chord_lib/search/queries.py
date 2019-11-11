@@ -26,6 +26,7 @@ __all__ = [
 
     "convert_query_to_ast_and_preprocess",
     "ast_to_and_asts",
+    "and_asts_to_ast",
 ]
 
 
