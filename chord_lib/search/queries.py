@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 
 __all__ = [
@@ -101,6 +101,10 @@ class Expression:
         assert len(args) >= arg_range[0] and (arg_range[1] is None or len(args) <= arg_range[1])
         self.args = args
 
+    def __eq__(self, other):
+        return (isinstance(other, Expression) and self.fn == other.fn and
+                all(a == b for a, b in zip(self.args, other.args)))
+
     def __str__(self):
         return "[{}, {}]".format(self.fn, ", ".join(str(a) for a in self.args))
 
@@ -161,3 +165,15 @@ def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
         return ast,
 
     return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
+
+
+def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
+    # (e1, e2, e3, e4) => (and e1 (and e2 (and e3 e4)))
+
+    if len(asts) == 0:
+        return None
+
+    if len(asts) == 1:
+        return asts[0]
+
+    return Expression(FUNCTION_AND, [asts[0], and_asts_to_ast(asts[1:])])

@@ -248,6 +248,12 @@ INVALID_EXPR_7 = ["#fake_fn", 5]
 INVALID_EXPR_8 = [5, 5]
 
 
+TEST_QUERY_STR = (
+    (TEST_QUERY_1, "[#eq, [#resolve, subject, karyotypic_sex], XO]"),
+    (TEST_QUERY_2, "[#co, [#resolve, biosamples, [item], procedure, code, id], TE]"),
+)
+
+
 TEST_LIST_ANDS = (
     (TEST_QUERY_1, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),)),
     (TEST_QUERY_2, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),)),
@@ -256,6 +262,13 @@ TEST_LIST_ANDS = (
     (TEST_QUERY_5, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
                     queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),
                     queries.convert_query_to_ast_and_preprocess(False))),
+)
+
+TEST_UNLIST_ANDS = (
+    (TEST_QUERY_1, TEST_QUERY_1),
+    (TEST_QUERY_2, TEST_QUERY_2),
+    (TEST_QUERY_3, TEST_QUERY_3),
+    (TEST_QUERY_5, ["#and", TEST_QUERY_1, ["#and", TEST_QUERY_2, False]])
 )
 
 
@@ -375,12 +388,21 @@ def test_queries_and_ast():
             queries.convert_to_ast(v)
 
     for b, a in TEST_REDUCE_NOTS:
-        assert str(queries.convert_query_to_ast_and_preprocess(b)) == \
-            str(queries.convert_query_to_ast_and_preprocess(a))
+        assert queries.convert_query_to_ast_and_preprocess(b) == \
+            queries.convert_query_to_ast_and_preprocess(a)
+
+    for q, s in TEST_QUERY_STR:
+        assert str(queries.convert_query_to_ast_and_preprocess(q)) == s
 
     for b, a, in TEST_LIST_ANDS:
-        assert all(str(bi) == str(ai) for bi, ai in
+        assert all(bi == ai for bi, ai in
                    zip(queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b)), a))
+
+    assert queries.and_asts_to_ast(()) is None
+
+    for b, a in TEST_UNLIST_ANDS:
+        assert queries.and_asts_to_ast(queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b))) == \
+            queries.convert_query_to_ast_and_preprocess(a)
 
 
 def test_postgres():
