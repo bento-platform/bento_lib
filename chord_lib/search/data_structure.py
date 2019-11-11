@@ -7,7 +7,7 @@ from typing import Callable, Dict, List, Tuple, Union
 from .queries import *
 
 
-__all__ = ["check_query_against_data_structure"]
+__all__ = ["check_ast_against_data_structure"]
 
 
 BaseQueryableStructure = Union[dict, list, str, int, float, bool]
@@ -56,16 +56,14 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict) -> Quer
 
 
 # TODO: More rigorous / defined rules
-def check_query_against_data_structure(query: Query, data_structure: QueryableStructure, schema: dict) -> bool:
+def check_ast_against_data_structure(ast: AST, data_structure: QueryableStructure, schema: dict) -> bool:
     """
     Checks a query against a data structure, returning True if the
-    :param query: A query to evaluate against the data object.
+    :param ast: A query to evaluate against the data object.
     :param data_structure: The data object to evaluate the query against.
     :param schema: A JSON schema representing valid data objects.
     :return: A boolean representing whether or not the query matches the data object.
     """
-
-    ast = convert_query_to_ast_and_preprocess(query)
 
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
     return any(isinstance(e, bool) and e for e in generator_flatten(evaluate(ast, data_structure, schema)))

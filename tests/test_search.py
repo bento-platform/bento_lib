@@ -429,7 +429,8 @@ def test_data_structure_search():
         assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA) == v
 
     for q, v in DS_VALID_QUERIES:
-        assert data_structure.check_query_against_data_structure(q, TEST_DATA_1, TEST_SCHEMA) == v
+        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
+                                                               TEST_SCHEMA) == v
 
     for e, ex in DS_INVALID_EXPRESSIONS:
         with raises(ex):
