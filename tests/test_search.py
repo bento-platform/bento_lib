@@ -378,14 +378,14 @@ def test_queries_and_ast():
 
     for f in TEST_INVALID_EXPRESSION_SYNTAX:
         with raises(SyntaxError):
-            queries.convert_to_ast(f)
+            queries.convert_query_to_ast(f)
 
     for v in TEST_INVALID_LITERALS:
         with raises(AssertionError):
             queries.Literal(value=v)
 
         with raises(ValueError):
-            queries.convert_to_ast(v)
+            queries.convert_query_to_ast(v)
 
     for b, a in TEST_REDUCE_NOTS:
         assert queries.convert_query_to_ast_and_preprocess(b) == \
@@ -426,15 +426,15 @@ def test_postgres():
 
 def test_data_structure_search():
     for e, v in DS_VALID_EXPRESSIONS:
-        assert data_structure.evaluate(e, TEST_DATA_1, TEST_SCHEMA) == v
+        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA) == v
 
     for q, v in DS_VALID_QUERIES:
         assert data_structure.check_query_against_data_structure(q, TEST_DATA_1, TEST_SCHEMA) == v
 
     for e, ex in DS_INVALID_EXPRESSIONS:
         with raises(ex):
-            data_structure.evaluate(e, TEST_DATA_1, TEST_SCHEMA)
+            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA)
 
     # Invalid data
     with raises(ValueError):
-        data_structure.evaluate(TEST_EXPR_1, INVALID_DATA, TEST_SCHEMA)
+        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA)

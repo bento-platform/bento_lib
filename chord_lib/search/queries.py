@@ -24,6 +24,7 @@ __all__ = [
     "Expression",
     "Literal",
 
+    "convert_query_to_ast",
     "convert_query_to_ast_and_preprocess",
     "ast_to_and_asts",
     "and_asts_to_ast",
@@ -122,13 +123,13 @@ class Literal:
         return str(self.value)
 
 
-def convert_to_ast(query: Query) -> AST:
+def convert_query_to_ast(query: Query) -> AST:
     if isinstance(query, list):
         if len(query) == 0 or not isinstance(query[0], str) or query[0] not in VALID_FUNCTIONS:
             raise SyntaxError("Invalid expression: {}".format(query))
 
         try:
-            return Expression(query[0], [convert_to_ast(q) for q in query[1:]])
+            return Expression(query[0], [convert_query_to_ast(q) for q in query[1:]])
         except AssertionError:
             raise SyntaxError("Invalid number of arguments for function {}: {}".format(query[0], len(query[1:])))
 
@@ -151,7 +152,7 @@ def simplify_nots(ast: AST) -> AST:
 
 
 def convert_query_to_ast_and_preprocess(query: Query) -> AST:
-    ast = convert_to_ast(query)
+    ast = convert_query_to_ast(query)
     return simplify_nots(ast)
 
 
