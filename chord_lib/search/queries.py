@@ -117,7 +117,7 @@ class Literal:
         self.value = value
 
     def __eq__(self, other):
-        return self.value == other.value
+        return isinstance(other, Literal) and self.value == other.value
 
     def __str__(self):
         return str(self.value)
