@@ -44,7 +44,7 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict) -> Quer
     try:
         validate(data_structure, schema)
     except ValidationError:
-        raise ValueError("Invalid data structure")
+        raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
 
     if isinstance(ast, Literal):
         return ast.value
