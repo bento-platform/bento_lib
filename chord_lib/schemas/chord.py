@@ -54,7 +54,9 @@ CHORD_DATA_USE_SCHEMA = {
                         "$ref": "#/definitions/cc_secondary_category"
                     }
                 }
-            }
+            },
+            "required": ["primary_category", "secondary_categories"],
+            "additionalProperties": False
         },
         "data_use_requirements": {
             "type": "array",
@@ -63,6 +65,8 @@ CHORD_DATA_USE_SCHEMA = {
             }
         }
     },
+    "required": ["consent_code", "data_use_requirements"],
+    "additionalProperties": False,
     "definitions": {
         "cc_primary_category": {
             "type": "object",
