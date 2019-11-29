@@ -30,7 +30,16 @@ _connection_info = {"unix_socket_path": os.environ.get("REDIS_SOCKET")} if "REDI
 
 
 class EventBus:
+    """
+    Event bus for subscribing to and publishing events for other microservices.
+    """
+
     def __init__(self):
+        """
+        Sets up a Redis connection based on the REDIS_SOCKET environment variable (or defaults, if the variable is
+        not present.)
+        """
+
         self._rc = redis.Redis(**_connection_info)
         self._ps = self._rc.pubsub()
 
@@ -48,6 +57,13 @@ class EventBus:
         })
 
     def add_handler(self, pattern: str, callback: Callable[[dict], None]) -> bool:
+        """
+        Adds a channel pattern handler to the event bus if the event handling thread has not been started.
+        :param pattern: Channel pattern (Redis syntax) to subscribe to.
+        :param callback: Function to call (with message dictionary, see redis-py docs) when a matching event occurs.
+        :return: True if the handler was successfully added, False otherwise.
+        """
+
         if self._event_thread is not None:
             return False
 
@@ -55,10 +71,19 @@ class EventBus:
         return True
 
     def start_event_loop(self):
+        """
+        Starts the event handling loop in a new thread. Whichever handlers were previously added will be present.
+        The loop must be restarted if the handlers are changed.
+        """
+
         self._ps.psubscribe(**self._ps_handlers)
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001)
 
     def stop_event_loop(self):
+        """
+        Stops the event handling loop, if running. Otherwise, does nothing.
+        """
+
         if self._event_thread is None:
             return
 
@@ -87,15 +112,33 @@ class EventBus:
         return True
 
     def register_service_event_type(self, event_type: str, event_schema: dict) -> bool:
+        """
+        Registers a service event type with the event bus.
+        :param event_type: The type of event, which will be given a full path of service.[event_type]
+        :param event_schema: JSON schema which will be checked against any events submitted.
+        :return: True if the event type was successfully registered, False otherwise.
+        """
         return self._add_schema(self._service_event_types, event_type, event_schema)
 
     def register_data_type_event_type(self, event_type: str, event_schema: dict) -> bool:
+        """
+        Registers a service event type with the event bus.
+        :param event_type: The type of event, which will be given a full path of data_type.[event_type]
+        :param event_schema: JSON schema which will be checked against any events submitted.
+        :return: True if the event type was successfully registered, False otherwise.
+        """
         return self._add_schema(self._data_type_event_types, event_type, event_schema)
 
     def get_service_event_types(self) -> dict:
+        """
+        :return: A dictionary of registered service event types and their associated schemas.
+        """
         return {**self._service_event_types}
 
     def get_data_type_event_types(self) -> dict:
+        """
+        :return: A dictionary of registered data type event types and their associated schemas.
+        """
         return {**self._data_type_event_types}
 
     def _publish_event(
@@ -116,6 +159,13 @@ class EventBus:
         return True
 
     def publish_service_event(self, service_artifact: str, event_type: str, event_data: Serializable) -> bool:
+        """
+        Publishes a service event.
+        :param service_artifact: Service artifact associated with the event to publish.
+        :param event_type: The identifier for the event (not fully-qualified; without service.)
+        :param event_data: The data to send with the event; JSON-serializable.
+        :return: True if the event was successfully published, False otherwise.
+        """
         return self._publish_event(
             event_types=self._service_event_types,
             channel=_SERVICE_CHANNEL_TPL.format(service_artifact),
@@ -125,6 +175,13 @@ class EventBus:
         )
 
     def publish_data_type_event(self, data_type: str, event_type: str, event_data: Serializable) -> bool:
+        """
+        Publishes a data type event.
+        :param data_type: Data type associated with the event to publish.
+        :param event_type: The identifier for the event (not fully-qualified; without data_type.)
+        :param event_data: The data to send with the event; JSON-serializable.
+        :return: True if the event was successfully published, False otherwise.
+        """
         return self._publish_event(
             event_types=self._data_type_event_types,
             channel=_DATA_TYPE_CHANNEL_TPL.format(data_type),
