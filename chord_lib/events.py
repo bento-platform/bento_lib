@@ -40,11 +40,18 @@ class EventBus:
         self._service_event_types = {}
         self._data_type_event_types = {}
 
+    @staticmethod
+    def _callback_deserialize(callback: Callable[[dict], None]):
+        return lambda message: callback({
+            **message,
+            "data": json.loads(message["data"])
+        })
+
     def add_handler(self, pattern: str, callback: Callable[[dict], None]) -> bool:
         if self._event_thread is not None:
             return False
 
-        self._ps_handlers[pattern] = callback
+        self._ps_handlers[pattern] = self._callback_deserialize(callback)
         return True
 
     def start_event_loop(self):
@@ -125,6 +132,3 @@ class EventBus:
             event_data=event_data,
             attrs={"data_type": data_type}
         )
-
-
-# TODO: Wrapper for handlers which destructure event into an object?

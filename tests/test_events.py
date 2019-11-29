@@ -1,5 +1,4 @@
 import chord_lib.events
-import json
 import time
 
 TEST_SERVICE = "test_service"
@@ -42,7 +41,7 @@ def test_registration():
 def test_service_events():
     try:
         def handle_service_event(message):
-            event = json.loads(message["data"])
+            event = message["data"]
             assert event["service"] == TEST_SERVICE
             assert event["type"] == TEST_SERVICE_EVENT
             assert event["data"] == TEST_EVENT_BODY
@@ -70,7 +69,7 @@ def test_service_events():
 def test_data_type_events():
     try:
         def handle_data_type_event(message):
-            event = json.loads(message["data"])
+            event = message["data"]
             assert event["data_type"] == TEST_DATA_TYPE
             assert event["type"] == TEST_DATA_TYPE_EVENT
             assert event["data"] == TEST_EVENT_BODY
@@ -80,8 +79,6 @@ def test_data_type_events():
 
         r = event_bus.publish_data_type_event(TEST_DATA_TYPE, TEST_DATA_TYPE_EVENT, TEST_EVENT_BODY)
         assert r
-
-        # TODO: False r case
 
         time.sleep(0.1)
 
