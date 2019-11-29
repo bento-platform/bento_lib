@@ -149,6 +149,8 @@ class EventBus:
         event_data: Serializable,
         attrs: dict
     ) -> bool:
+        event_type = event_type.lower()
+
         if event_type not in event_types:
             return False
 
