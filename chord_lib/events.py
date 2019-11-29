@@ -21,7 +21,7 @@ _DATA_TYPE_CHANNEL_TPL = "data_type.{}"
 
 # Types
 
-Serializable = Union[bool, float, int, str, dict, list, tuple]
+Serializable = Union[bool, float, int, str, dict, list, tuple, None]
 
 
 # Redis
@@ -100,6 +100,8 @@ class EventBus:
 
     @staticmethod
     def _add_schema(event_types: dict, event_type: str, event_schema: dict) -> bool:
+        event_type = event_type.lower()
+
         if event_type in event_types:
             return False
 
@@ -108,7 +110,7 @@ class EventBus:
         except jsonschema.exceptions.SchemaError:
             return False
 
-        event_types[event_type.lower()] = event_schema
+        event_types[event_type] = event_schema
         return True
 
     def register_service_event_type(self, event_type: str, event_schema: dict) -> bool:
