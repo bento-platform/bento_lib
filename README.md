@@ -20,6 +20,9 @@ python3 -m pytest --cov=chord_lib --cov-branch
 `events` facilitates JSON-serialized message-passing between CHORD
 microservices. Serialized objects can be at most 512 MB.
 
+Events should have a lower-case type which is type-insensitively unique and
+adequately describes the associated data.
+
 ### `ingestion`
 
 `ingestion` contains common code used for handling ingestion routines in

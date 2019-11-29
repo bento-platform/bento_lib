@@ -114,7 +114,7 @@ class EventBus:
     def register_service_event_type(self, event_type: str, event_schema: dict) -> bool:
         """
         Registers a service event type with the event bus.
-        :param event_type: The type of event, which will be given a full path of service.[event_type]
+        :param event_type: The type of event, which will be included in message objects.
         :param event_schema: JSON schema which will be checked against any events submitted.
         :return: True if the event type was successfully registered, False otherwise.
         """
@@ -123,7 +123,7 @@ class EventBus:
     def register_data_type_event_type(self, event_type: str, event_schema: dict) -> bool:
         """
         Registers a service event type with the event bus.
-        :param event_type: The type of event, which will be given a full path of data_type.[event_type]
+        :param event_type: The type of event, which will be included in message objects.
         :param event_schema: JSON schema which will be checked against any events submitted.
         :return: True if the event type was successfully registered, False otherwise.
         """
@@ -164,7 +164,7 @@ class EventBus:
         """
         Publishes a service event.
         :param service_artifact: Service artifact associated with the event to publish.
-        :param event_type: The identifier for the event (not fully-qualified; without service.)
+        :param event_type: The identifier for the event (not to be confused with its channel.)
         :param event_data: The data to send with the event; JSON-serializable.
         :return: True if the event was successfully published, False otherwise.
         """
@@ -180,7 +180,7 @@ class EventBus:
         """
         Publishes a data type event.
         :param data_type: Data type associated with the event to publish.
-        :param event_type: The identifier for the event (not fully-qualified; without data_type.)
+        :param event_type: The identifier for the event (not to be confused with its channel.)
         :param event_data: The data to send with the event; JSON-serializable.
         :return: True if the event was successfully published, False otherwise.
         """
