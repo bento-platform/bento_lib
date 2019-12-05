@@ -23,6 +23,8 @@ microservices. Serialized objects can be at most 512 MB.
 Events should have a lower-case type which is type-insensitively unique and
 adequately describes the associated data.
 
+All CHORD channels are prefixed with `chord.`.
+
 ### `ingestion`
 
 `ingestion` contains common code used for handling ingestion routines in
