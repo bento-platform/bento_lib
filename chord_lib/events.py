@@ -12,11 +12,11 @@ __all__ = [
 ]
 
 
-ALL_SERVICE_EVENTS = "service.*"
-ALL_DATA_TYPE_EVENTS = "data_type.*"
+ALL_SERVICE_EVENTS = "chord.service.*"
+ALL_DATA_TYPE_EVENTS = "chord.data_type.*"
 
-_SERVICE_CHANNEL_TPL = "service.{}"
-_DATA_TYPE_CHANNEL_TPL = "data_type.{}"
+_SERVICE_CHANNEL_TPL = "chord.service.{}"
+_DATA_TYPE_CHANNEL_TPL = "chord.data_type.{}"
 
 
 # Types
@@ -53,7 +53,7 @@ class EventBus:
     def _callback_deserialize(callback: Callable[[dict], None]):
         return lambda message: callback({
             **message,
-            "data": json.loads(message["data"])
+            "data": json.loads(message["data"]) if message["type"] in ("message", "pmessage") else message["data"]
         })
 
     def add_handler(self, pattern: str, callback: Callable[[dict], None]) -> bool:
