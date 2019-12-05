@@ -53,7 +53,7 @@ class EventBus:
     def _callback_deserialize(callback: Callable[[dict], None]):
         return lambda message: callback({
             **message,
-            "data": json.loads(message["data"])
+            "data": json.loads(message["data"]) if message["type"] in ("message", "pmessage") else message["data"]
         })
 
     def add_handler(self, pattern: str, callback: Callable[[dict], None]) -> bool:
