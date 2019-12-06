@@ -5,6 +5,7 @@ import redis
 
 from typing import Callable, Optional, Union
 
+from . import notifications
 from . import types
 
 
@@ -12,6 +13,7 @@ __all__ = [
     "ALL_SERVICE_EVENTS",
     "ALL_DATA_TYPE_EVENTS",
     "EventBus",
+    "notifications",
     "types",
 ]
 

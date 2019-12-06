@@ -3,6 +3,9 @@ import pytest
 import redis
 import time
 
+from jsonschema import validate
+
+
 TEST_SERVICE = "test_service"
 TEST_SERVICE_EVENT = "test_service_event"
 
@@ -126,3 +129,14 @@ def test_fake_event_bus():
         event_bus.stop_event_loop()
 
 # TODO: Verify cross-talk
+
+
+def test_notification_format():
+    n = chord_lib.events.notifications.format_notification("test", "test2", "go_somewhere", "https://google.ca")
+    assert isinstance(n, dict)
+    assert len(list(n.keys())) == 4
+    assert n["title"] == "test"
+    assert n["description"] == "test2"
+    assert n["action_type"] == "go_somewhere"
+    assert n["action_target"] == "https://google.ca"
+    validate(n, chord_lib.events.types.EVENT_CREATE_NOTIFICATION_SCHEMA)
