@@ -5,7 +5,7 @@ import redis
 
 from typing import Callable, Optional, Union
 
-from . import event_types as types
+from . import types
 
 
 __all__ = [
