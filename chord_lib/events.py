@@ -3,7 +3,7 @@ import jsonschema
 import os
 import redis
 
-from typing import Callable, Union
+from typing import Callable, Optional, Union
 
 __all__ = [
     "ALL_SERVICE_EVENTS",
@@ -34,14 +34,27 @@ class EventBus:
     Event bus for subscribing to and publishing events for other microservices.
     """
 
-    def __init__(self):
+    @staticmethod
+    def _get_redis():
+        return redis.Redis(**_connection_info)
+
+    def __init__(self, allow_fake: bool = False):
         """
         Sets up a Redis connection based on the REDIS_SOCKET environment variable (or defaults, if the variable is
         not present.)
         """
 
-        self._rc = redis.Redis(**_connection_info)
-        self._ps = self._rc.pubsub()
+        self._rc: Optional[redis.Redis] = None
+
+        try:
+            self._rc = self._get_redis()
+            self._rc.get("")  # Dummy request to check connection
+        except redis.exceptions.ConnectionError as e:
+            self._rc = None
+            if not allow_fake:
+                raise e
+
+        self._ps = self._rc.pubsub() if self._rc is not None else None
 
         self._ps_handlers = {}
         self._event_thread = None
@@ -75,6 +88,9 @@ class EventBus:
         Starts the event handling loop in a new thread. Whichever handlers were previously added will be present.
         The loop must be restarted if the handlers are changed.
         """
+
+        if self._ps is None:
+            return
 
         self._ps.psubscribe(**self._ps_handlers)
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001)
@@ -157,6 +173,9 @@ class EventBus:
             return False
 
         if not jsonschema.validators.Draft7Validator(event_types[event_type]).is_valid(event_data):
+            return False
+
+        if self._rc is None:
             return False
 
         self._rc.publish(channel, self._make_event(event_type, event_data, attrs))
