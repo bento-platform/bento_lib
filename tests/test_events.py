@@ -1,4 +1,6 @@
 import chord_lib.events
+import pytest
+import redis
 import time
 
 TEST_SERVICE = "test_service"
@@ -98,5 +100,29 @@ def test_late_handler():
     finally:
         event_bus.stop_event_loop()
 
+
+def test_fake_event_bus():
+    global event_bus
+    chord_lib.events._connection_info = {"unix_socket_path": "/road/to/nowhere.sock"}
+
+    with pytest.raises(redis.exceptions.ConnectionError):
+        chord_lib.events.EventBus()
+
+    event_bus = chord_lib.events.EventBus(allow_fake=True)
+
+    test_registration()
+
+    try:
+        def handle_service_event(_message):
+            pass
+
+        event_bus.add_handler(chord_lib.events.ALL_SERVICE_EVENTS, handle_service_event)
+        event_bus.start_event_loop()
+
+        r = event_bus.publish_service_event(TEST_SERVICE, TEST_SERVICE_EVENT, TEST_EVENT_BODY)
+        assert not r
+
+    finally:
+        event_bus.stop_event_loop()
 
 # TODO: Verify cross-talk
