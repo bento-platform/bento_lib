@@ -137,6 +137,6 @@ def test_notification_format():
     assert len(list(n.keys())) == 4
     assert n["title"] == "test"
     assert n["description"] == "test2"
-    assert n["action_type"] == "go_somewhere"
+    assert n["notification_type"] == "go_somewhere"
     assert n["action_target"] == "https://google.ca"
     validate(n, chord_lib.events.types.EVENT_CREATE_NOTIFICATION_SCHEMA)
