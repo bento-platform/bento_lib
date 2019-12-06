@@ -10,6 +10,18 @@ EVENT_WES_RUN_FINISHED_SCHEMA = {
     # TODO
 }
 
+EVENT_CREATE_NOTIFICATION = "create_notification"
+EVENT_CREATE_NOTIFICATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "action_type": {"type": "string"},
+        "action_target": {"type": "string"},
+    },
+    "required": ["title", "description", "action_type", "action_target"]
+}
+
 EVENT_NOTIFICATION = "notification"
 EVENT_NOTIFICATION_SCHEMA = {
     "type": "object",
