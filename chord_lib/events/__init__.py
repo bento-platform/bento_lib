@@ -99,7 +99,7 @@ class EventBus:
             return
 
         self._ps.psubscribe(**self._ps_handlers)
-        self._event_thread = self._ps.run_in_thread(sleep_time=0.001)
+        self._event_thread = self._ps.run_in_thread(sleep_time=0.001, daemon=True)
 
     def stop_event_loop(self):
         """
