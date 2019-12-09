@@ -6,7 +6,14 @@ from . import postgres
 from . import queries
 
 __all__ = [
+    "SEARCH_OP_EQ",
+    "SEARCH_OP_LT",
+    "SEARCH_OP_LE",
+    "SEARCH_OP_GT",
+    "SEARCH_OP_GE",
+    "SEARCH_OP_CO",
     "SEARCH_OPERATIONS",
+    "SEARCH_OPS",
     "SQL_SEARCH_OPERATORS",
 
     "build_search_response",
@@ -17,14 +24,30 @@ __all__ = [
 ]
 
 
-SEARCH_OPERATIONS = ("eq", "lt", "le", "gt", "ge", "co")
+SEARCH_OP_EQ = "eq"
+SEARCH_OP_LT = "lt"
+SEARCH_OP_LE = "le"
+SEARCH_OP_GT = "gt"
+SEARCH_OP_GE = "ge"
+SEARCH_OP_CO = "co"
+
+SEARCH_OPERATIONS = (  # TODO: Remove in favour of SEARCH_OPS
+    SEARCH_OP_EQ,
+    SEARCH_OP_LT,
+    SEARCH_OP_LE,
+    SEARCH_OP_GT,
+    SEARCH_OP_GE,
+    SEARCH_OP_CO,
+)
+SEARCH_OPS = SEARCH_OPERATIONS
+
 SQL_SEARCH_OPERATORS = {
-    "eq": "=",
-    "lt": "<",
-    "le": "<=",
-    "gt": ">",
-    "ge": ">=",
-    "co": "LIKE",
+    SEARCH_OP_EQ: "=",
+    SEARCH_OP_LT: "<",
+    SEARCH_OP_LE: "<=",
+    SEARCH_OP_GT: ">",
+    SEARCH_OP_GE: ">=",
+    SEARCH_OP_CO: "LIKE",
 }
 
 
