@@ -11,7 +11,7 @@ __all__ = ["check_ast_against_data_structure"]
 
 
 BaseQueryableStructure = Union[dict, list, str, int, float, bool]
-QueryableStructure = Union[BaseQueryableStructure, Tuple['QueryableStructure']]
+QueryableStructure = Union[BaseQueryableStructure, Tuple["QueryableStructure"]]
 BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]
 
 
@@ -32,12 +32,13 @@ def generator_flatten(t) -> Iterable:
     return chain.from_iterable(generator_flatten(v) for v in t) if _is_gen_flatten_compatible(t) else (t,)
 
 
-def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict) -> QueryableStructure:
+def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict, internal: bool = False) -> QueryableStructure:
     """
     Evaluates a query expression into a value, populated by a passed data structure.
     :param ast: A query expression.
     :param data_structure: A data structure from which to resolve values.
     :param schema: The JSON schema for data objects being queried.
+    :param internal: Whether internal-only fields are allowed to be resolved.
     :return: A value (string, int, float, bool, array, or dict.)
     """
 
@@ -52,27 +53,36 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict) -> Quer
     if ast.fn == FUNCTION_HELPER_WC:
         raise NotImplementedError("Cannot use wildcard helper here")
 
-    check_operation_permissions(ast, schema,
-                                operations_getter=lambda rl, s: _resolve_with_ops(rl, data_structure, s)[1])
+    check_operation_permissions(
+        ast,
+        schema,
+        search_getter=lambda rl, s: _resolve_with_search(rl, data_structure, s, internal)[1],
+        internal=internal)
 
-    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema)
+    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, internal)
 
 
 # TODO: More rigorous / defined rules
-def check_ast_against_data_structure(ast: AST, data_structure: QueryableStructure, schema: dict) -> bool:
+def check_ast_against_data_structure(
+    ast: AST,
+    data_structure: QueryableStructure,
+    schema: dict,
+    internal: bool = False
+) -> bool:
     """
     Checks a query against a data structure, returning True if the
     :param ast: A query to evaluate against the data object.
     :param data_structure: The data object to evaluate the query against.
     :param schema: A JSON schema representing valid data objects.
+    :param internal: Whether internal-only fields are allowed to be resolved.
     :return: A boolean representing whether or not the query matches the data object.
     """
 
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
-    return any(isinstance(e, bool) and e for e in generator_flatten(evaluate(ast, data_structure, schema)))
+    return any(isinstance(e, bool) and e for e in generator_flatten(evaluate(ast, data_structure, schema, internal)))
 
 
-def _binary_op(op: BBOperator) -> Callable[[List[AST], QueryableStructure, dict], bool]:
+def _binary_op(op: BBOperator) -> Callable[[List[AST], QueryableStructure, dict, bool], bool]:
     """
     Returns a lambda which will evaluate a boolean-returning binary operator on a pair of arguments against a
     data structure/object of some type and return a Boolean result.
@@ -80,20 +90,20 @@ def _binary_op(op: BBOperator) -> Callable[[List[AST], QueryableStructure, dict]
     :return: Operator lambda for use in evaluating expressions.
     """
 
-    def uncurried_binary_op(args: List[AST], ds: QueryableStructure, schema: dict) -> bool:
+    def uncurried_binary_op(args: List[AST], ds: QueryableStructure, schema: dict, internal: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
         try:
             # Either LHS or RHS could be a tuple of [item]
             return any(
                 op(li, ri)
-                for li in generator_flatten(evaluate(args[0], ds, schema))  # LHS, Outer loop
-                for ri in generator_flatten(evaluate(args[1], ds, schema))  # RHS, Inner loop
+                for li in generator_flatten(evaluate(args[0], ds, schema, internal))  # LHS, Outer loop
+                for ri in generator_flatten(evaluate(args[1], ds, schema, internal))  # RHS, Inner loop
             )
 
         except TypeError:
             raise TypeError("Type-invalid use of binary operator {}".format(op))
 
-    return lambda args, ds, schema: uncurried_binary_op(args, ds, schema)
+    return lambda args, ds, schema, internal: uncurried_binary_op(args, ds, schema, internal)
 
 
 def preserved_tuple_apply(
@@ -108,47 +118,53 @@ def curried_get(k) -> Callable:
     return lambda v: v[k]
 
 
-def _resolve_with_ops(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict) \
-        -> Tuple[QueryableStructure, List[str]]:
+def _resolve_with_search(
+    resolve: List[Literal],
+    resolving_ds: QueryableStructure,
+    schema: dict,
+    internal: bool = False
+) -> Tuple[QueryableStructure, dict]:
     """
-    Resolves / evaluates a path (either object or array) into a value and its search operation constraints. Assumes the
+    Resolves / evaluates a path (either object or array) into a value and its search properties. Assumes the
     data structure has already been checked against its schema.
     :param resolve: The current path to resolve, not including the current data structure.
     :param resolving_ds: The data structure being resolved upon.
     :param schema: The JSON schema representing the resolving data structure.
+    :param internal: Whether internal-only fields are allowed to be resolved.
     :return: The resolved value after exploring the resolve path, and the search operations that can be performed on it.
     """
 
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
-        return resolving_ds, schema.get("search", {}).get("operations", [])
+        return resolving_ds, schema.get("search", {})
 
     if schema["type"] not in ("object", "array"):
         raise TypeError("Cannot get property of literal")
 
     elif schema["type"] == "object" and resolve[0].value not in schema["properties"]:
-        raise ValueError("Property {} not found in object".format(resolve[0].value))
+        raise ValueError("Property {} not found in object, {}".format(resolve[0].value, [x.value for x in resolve]))
 
     elif schema["type"] == "array" and resolve[0].value != "[item]":
         raise TypeError("Cannot get property of array")
 
-    return _resolve_with_ops(
+    return _resolve_with_search(
         resolve[1:],
         preserved_tuple_apply(resolving_ds, curried_get(resolve[0].value) if schema["type"] == "object" else tuple),
-        schema["properties"][resolve[0].value] if schema["type"] == "object" else schema["items"])
+        schema["properties"][resolve[0].value] if schema["type"] == "object" else schema["items"],
+        internal)
 
 
-def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict):
+def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict, internal: bool):
     """
     Does the same thing as _resolve_with_ops, but discards the search operations.
     """
-    return _resolve_with_ops(resolve, resolving_ds, schema)[0]
+    return _resolve_with_search(resolve, resolving_ds, schema, internal)[0]
 
 
-QUERY_CHECK_SWITCH: Dict[FunctionName, Callable[[List[AST], QueryableStructure, dict], QueryableStructure]] = {
+QUERY_CHECK_SWITCH: Dict[FunctionName, Callable[[List[AST], QueryableStructure, dict, bool], QueryableStructure]] = {
     FUNCTION_AND: _binary_op(and_),
     FUNCTION_OR: _binary_op(or_),
-    FUNCTION_NOT: lambda args, ds, schema: not_(evaluate(args[0], ds, schema)),
+    FUNCTION_NOT: lambda args, ds, schema, internal: not_(evaluate(args[0], ds, schema, internal)),
 
     FUNCTION_LT: _binary_op(lt),
     FUNCTION_LE: _binary_op(le),

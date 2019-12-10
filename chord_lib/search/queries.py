@@ -204,14 +204,30 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
     return Expression(FUNCTION_AND, [asts[0], and_asts_to_ast(asts[1:])])
 
 
-def check_operation_permissions(ast: AST, schema: dict, operations_getter: Callable[[List[Literal], dict], List[str]]):
-    if ast.fn not in FUNCTION_SEARCH_OP_MAP:
+def check_operation_permissions(ast: AST, schema: dict, search_getter: Callable[[List[Literal], dict], dict],
+                                internal: bool = False):
+    if isinstance(ast, Literal):
         return
+
+    if ast.fn == FUNCTION_RESOLVE:
+        search_properties = search_getter(ast.args, schema)
+
+        query_modes = ("internal", "all") if internal else ("all",)
+        query_mode = search_properties.get("queryable", "none")
+
+        # If resolving any field, make sure at least some operation is permitted
+        if query_mode not in query_modes:
+            # TODO: Custom exception?
+            raise ValueError("Cannot access field using {} (queryable: {}, allowed are {})".format(ast, query_mode,
+                                                                                                   query_modes))
 
     # Check to make sure the function's execution is permitted
 
+    if ast.fn not in FUNCTION_SEARCH_OP_MAP:
+        return
+
     # TODO: Make this check recursive (#11) or somehow deal with boolean values
-    if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in operations_getter(a.args, schema)
+    if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in search_getter(a.args, schema).get("operations", [])
            for a in ast.args if isinstance(a, Expression) and a.fn == FUNCTION_RESOLVE):
         # TODO: Custom exception?
         raise ValueError("Schema forbids using function: {}\nAST: {}\nSchema: \n{}".format(ast.fn, ast, schema))

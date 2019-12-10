@@ -17,7 +17,8 @@ __all__ = ["search_query_to_psycopg2_sql"]
 
 SQLComposableWithParams = Tuple[sql.Composable, tuple]
 
-JoinAndSelectData = namedtuple("JoinAndSelectData", ("relations", "aliases", "key_link", "field_alias", "operations"))
+JoinAndSelectData = namedtuple("JoinAndSelectData", ("relations", "aliases", "key_link", "field_alias",
+                                                     "search_properties"))
 
 
 def collect_resolve_join_tables(
@@ -51,7 +52,7 @@ def collect_resolve_join_tables(
 
     key_link = None
 
-    operations = schema.get("search", {}).get("operations", [])
+    search_properties = schema.get("search", {})
 
     if schema["type"] not in ("array", "object"):
         if len(resolve) > 1:
@@ -60,7 +61,7 @@ def collect_resolve_join_tables(
             schema.get("search", {})
                   .get("database", {})
                   .get("field", resolve[0].value if resolve[0].value != "$root" else None)
-        ), operations=operations),
+        ), search_properties=search_properties),
 
     if schema.get("search", {}).get("database", {}).get("relationship", None) is not None:
         relationship = schema["search"]["database"]["relationship"]
@@ -73,7 +74,7 @@ def collect_resolve_join_tables(
             raise SyntaxError("Invalid relationship type: {}".format(relationship_type))
 
     join_table_data = JoinAndSelectData(relations=relations, aliases=aliases, key_link=key_link, field_alias=None,
-                                        operations=operations)
+                                        search_properties=search_properties)
 
     if schema["type"] == "array":
         if len(resolve) == 1:  # End result is array
@@ -131,40 +132,42 @@ def join_fragment(ast: AST, schema: dict) -> sql.Composable:
     )
 
 
-def search_ast_to_psycopg2_expr(ast: AST, params: tuple, schema: dict) -> SQLComposableWithParams:
+def search_ast_to_psycopg2_expr(ast: AST, params: tuple, schema: dict, internal: bool = False) \
+        -> SQLComposableWithParams:
     if isinstance(ast, Literal):
         return sql.Placeholder(), (*params, ast.value)
 
-    check_operation_permissions(ast, schema, operations_getter=get_operations)
+    check_operation_permissions(ast, schema, search_getter=get_search_properties, internal=internal)
 
-    return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[ast.fn](ast.args, params, schema)
+    return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[ast.fn](ast.args, params, schema, internal)
 
 
-def search_query_to_psycopg2_sql(query, schema: dict) -> SQLComposableWithParams:
+def search_query_to_psycopg2_sql(query, schema: dict, internal: bool = False) -> SQLComposableWithParams:
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
     ast = convert_query_to_ast_and_preprocess(query)
-    sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema)
+    sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema, internal)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
     return sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj), params
 
 
-def uncurried_binary_op(op: str, args: List[AST], params: tuple, schema: dict) -> SQLComposableWithParams:
+def uncurried_binary_op(op: str, args: List[AST], params: tuple, schema: dict, internal: bool = False) \
+        -> SQLComposableWithParams:
     # TODO: Need to fix params!! Use named params
-    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema)
+    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema, internal)
     return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
 
 
-def _binary_op(op) -> Callable[[list, tuple, dict], SQLComposableWithParams]:
-    return lambda args, params, schema: uncurried_binary_op(op, args, params, schema)
+def _binary_op(op) -> Callable[[list, tuple, dict, bool], SQLComposableWithParams]:
+    return lambda args, params, schema, internal: uncurried_binary_op(op, args, params, schema, internal)
 
 
-def _not(args: list, params: tuple, schema: dict) -> SQLComposableWithParams:
-    child_sql, child_params = search_ast_to_psycopg2_expr(args[0], params, schema)
+def _not(args: list, params: tuple, schema: dict, internal: bool = False) -> SQLComposableWithParams:
+    child_sql, child_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     return sql.SQL("NOT ({})").format(child_sql), params + child_params
 
 
-def _wildcard(args: List[AST], params: tuple, _schema: dict) -> SQLComposableWithParams:
+def _wildcard(args: List[AST], params: tuple, _schema: dict, _internal: bool = False) -> SQLComposableWithParams:
     if isinstance(args[0], Expression):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
@@ -183,23 +186,24 @@ def get_field(resolve: List[Literal], schema: dict) -> Optional[str]:
     return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].field_alias
 
 
-def get_operations(resolve: List[Literal], schema: dict) -> List[str]:
-    return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].operations
+def get_search_properties(resolve: List[Literal], schema: dict) -> dict:
+    return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].search_properties
 
 
-def _resolve(args: List[AST], params: tuple, schema: dict) -> SQLComposableWithParams:
+def _resolve(args: List[AST], params: tuple, schema: dict, _internal: bool = False) -> SQLComposableWithParams:
     f_id = get_field(args, schema)
     return sql.SQL("{}.{}").format(sql.Identifier(get_relation(args, schema)),
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
-def _contains(args: List[AST], params: tuple, schema: dict) -> SQLComposableWithParams:
-    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(Expression(fn=FUNCTION_HELPER_WC, args=[args[1]]), params, schema)
+def _contains(args: List[AST], params: tuple, schema: dict, internal: bool = False) -> SQLComposableWithParams:
+    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(Expression(fn=FUNCTION_HELPER_WC, args=[args[1]]), params, schema,
+                                                      internal)
     return sql.SQL("({}) LIKE ({})").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
 
 
-POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[List[AST], tuple, dict], SQLComposableWithParams]] = {
+POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[List[AST], tuple, dict, bool], SQLComposableWithParams]] = {
     FUNCTION_AND: _binary_op("AND"),
     FUNCTION_OR: _binary_op("OR"),
     FUNCTION_NOT: _not,

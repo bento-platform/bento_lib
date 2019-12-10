@@ -10,6 +10,7 @@ TEST_SCHEMA = {
             "type": "string",
             "search": {
                 "operations": [operations.SEARCH_OP_EQ],
+                "queryable": "internal",
                 "database": {"field": "phenopacket_id"}
             }
         },
@@ -27,7 +28,8 @@ TEST_SCHEMA = {
                                     "id": {
                                         "type": "string",
                                         "search": {
-                                            "operations": [operations.SEARCH_OP_CO]
+                                            "operations": [operations.SEARCH_OP_CO],
+                                            "queryable": "all"
                                         }
                                     },
                                     "label": {"type": "string"}
@@ -60,7 +62,13 @@ TEST_SCHEMA = {
                         "items": {
                             "type": "object",
                             "properties": {
-                                "id": {"type": "string"},
+                                "id": {
+                                    "type": "string",
+                                    "search": {
+                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "queryable": "all"
+                                    }
+                                },
                                 "label": {"type": "string"}
                             },
                             "search": {
@@ -98,6 +106,7 @@ TEST_SCHEMA = {
                 }
             },
             "search": {
+                "queryable": "all",
                 "database": {
                     "relation": "patients_phenopacket_biosamples",
                     "relationship": {
@@ -111,17 +120,26 @@ TEST_SCHEMA = {
         "subject": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "string",
+                    "search": {
+                        "operations": [operations.SEARCH_OP_EQ],
+                        "queryable": "internal"
+                    }
+                },
                 "karyotypic_sex": {
                     "type": "string",
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ]
+                        "operations": [operations.SEARCH_OP_EQ],
+                        "queryable": "all"
                     }
                 },
                 "sex": {
                     "type": "string",
                     "enum": ["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"],
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ]
+                        "operations": [operations.SEARCH_OP_EQ],
+                        "queryable": "all"
                     }
                 }
             },
@@ -139,6 +157,8 @@ TEST_SCHEMA = {
         # TODO: Metadata (one-to-one) example
     },
     "search": {
+        "operations": [],
+        "queryable": "all",
         "database": {
             "relation": "patients_phenopacket",
             "primary_key": "phenopacket_id"
@@ -260,6 +280,8 @@ INVALID_EXPR_6 = ["#resolve", "subject", "karyotypic_sex", "literal_property"]
 INVALID_EXPR_7 = ["#fake_fn", 5]
 INVALID_EXPR_8 = [5, 5]
 INVALID_EXPR_9 = ["#gt", ["#resolve", "subject", "sex"], "MALE"]
+INVALID_EXPR_10 = ["#resolve", "subject", "id"]  # Invalid with bad permissions
+INVALID_EXPR_11 = ["#resolve", "subject"]  # Invalid with bad permissions
 
 
 TEST_QUERY_STR = (
@@ -288,7 +310,7 @@ TEST_UNLIST_ANDS = (
 
 TEST_DATA_1 = {
     "id": "1ac54805-4145-4829-93e2-f362de55f28f",
-    "subject": {"karyotypic_sex": "XO", "sex": "MALE"},
+    "subject": {"id": "S1", "karyotypic_sex": "XO", "sex": "MALE"},
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
@@ -304,62 +326,68 @@ TEST_DATA_1 = {
 INVALID_DATA = [{True, False}]
 
 
+# Expression, Internal, Result
 DS_VALID_EXPRESSIONS = (
-    (TEST_EXPR_1, TEST_EXPR_1),
-    (TEST_EXPR_2, TEST_EXPR_2),
-    (TEST_EXPR_3, ("TEST", "DUMMY")),
-    (TEST_EXPR_4, "XO"),
-    (TEST_EXPR_5, TEST_DATA_1),
-    (TEST_EXPR_6, False),
-    (TEST_EXPR_7, ("TG1", "TG2", "TG3", "TG4")),
-    (TEST_EXPR_8, TEST_DATA_1["biosamples"])
+    (TEST_EXPR_1, False, TEST_EXPR_1),
+    (TEST_EXPR_2, False, TEST_EXPR_2),
+    (TEST_EXPR_3, False, ("TEST", "DUMMY")),
+    (TEST_EXPR_4, False, "XO"),
+    (TEST_EXPR_5, False, TEST_DATA_1),
+    (TEST_EXPR_6, False, False),
+    (TEST_EXPR_7, False, ("TG1", "TG2", "TG3", "TG4")),
+    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"])
 )
 
+# Query, Internal, Result
 DS_VALID_QUERIES = (
-    (TEST_QUERY_1, True),
-    (TEST_QUERY_2, True),
-    (TEST_QUERY_3, True),
-    (TEST_QUERY_4, True),
-    (TEST_QUERY_5, False),
-    (TEST_QUERY_6, False),
-    (TEST_QUERY_7, True),
-    (TEST_QUERY_8, True)
+    (TEST_QUERY_1, False, True),
+    (TEST_QUERY_2, False, True),
+    (TEST_QUERY_3, False, True),
+    (TEST_QUERY_4, False, True),
+    (TEST_QUERY_5, False, False),
+    (TEST_QUERY_6, False, False),
+    (TEST_QUERY_7, True, True),
+    (TEST_QUERY_8, False, True)
 )
 
+# Query, Internal, Exception
 COMMON_INVALID_EXPRESSIONS = (
-    (INVALID_EXPR_1, SyntaxError),
-    (INVALID_EXPR_2, SyntaxError),
-    (INVALID_EXPR_3, TypeError),
-    (INVALID_EXPR_4, ValueError),
-    (INVALID_EXPR_5, TypeError),
-    (INVALID_EXPR_6, TypeError),
-    (INVALID_EXPR_7, SyntaxError),
-    (INVALID_EXPR_8, SyntaxError),
-    (INVALID_EXPR_9, ValueError)
+    (INVALID_EXPR_1, False, SyntaxError),
+    (INVALID_EXPR_2, False, SyntaxError),
+    (INVALID_EXPR_3, False, TypeError),
+    (INVALID_EXPR_4, False, ValueError),
+    (INVALID_EXPR_5, False, TypeError),
+    (INVALID_EXPR_6, False, TypeError),
+    (INVALID_EXPR_7, False, SyntaxError),
+    (INVALID_EXPR_8, False, SyntaxError),
+    (INVALID_EXPR_9, False, ValueError),
+    (INVALID_EXPR_10, False, ValueError),
+    (INVALID_EXPR_11, True, ValueError),
 )
 
 DS_INVALID_EXPRESSIONS = (
     *COMMON_INVALID_EXPRESSIONS,
-    (["#_wc", "v1"], NotImplementedError)
+    (["#_wc", "v1"], False, NotImplementedError)
 )
 
 
+# Query, Internal, Parameters
 PG_VALID_QUERIES = (
-    (TEST_QUERY_1, ("XO",)),
-    (TEST_QUERY_2, ("%TE%",)),
-    (TEST_QUERY_3, ("XO", "%TE%")),
-    (TEST_QUERY_4, ("XO", "%TE%", False)),
-    (TEST_QUERY_5, ("XO", "%TE%", False)),
-    (TEST_QUERY_6, ("some_non_bool_value",)),
-    (TEST_QUERY_7, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
-    (TEST_QUERY_8, ("MALE",))
+    (TEST_QUERY_1, False, ("XO",)),
+    (TEST_QUERY_2, False, ("%TE%",)),
+    (TEST_QUERY_3, False, ("XO", "%TE%")),
+    (TEST_QUERY_4, False, ("XO", "%TE%", False)),
+    (TEST_QUERY_5, False, ("XO", "%TE%", False)),
+    (TEST_QUERY_6, False, ("some_non_bool_value",)),
+    (TEST_QUERY_7, True, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
+    (TEST_QUERY_8, False, ("MALE",))
 )
 
 PG_INVALID_EXPRESSIONS = (
     *COMMON_INVALID_EXPRESSIONS,
-    (["#_wc", "v1", "v2"], SyntaxError),
-    (["#_wc", ["#resolve", "biosamples"]], NotImplementedError),
-    ({"dict": True}, ValueError),
+    (["#_wc", "v1", "v2"], False, SyntaxError),
+    (["#_wc", ["#resolve", "biosamples"]], False, NotImplementedError),
+    ({"dict": True}, False, ValueError),
 )
 
 
@@ -427,30 +455,38 @@ def test_postgres():
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(TEST_EXPR_8, TEST_INVALID_SCHEMA)
 
-    for e, p in PG_VALID_QUERIES:
-        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA)
+    for e, i, p in PG_VALID_QUERIES:
+        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
         assert params == p
 
-    for e, _v in DS_VALID_EXPRESSIONS:
-        postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA)
+    for e, i, _v in DS_VALID_EXPRESSIONS:
+        postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
-    for e, ex in PG_INVALID_EXPRESSIONS:
+    for e, i, ex in PG_INVALID_EXPRESSIONS:
         with raises(ex):
-            postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA)
+            postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
 
 def test_data_structure_search():
-    for e, v in DS_VALID_EXPRESSIONS:
+    for e, i, v in DS_VALID_EXPRESSIONS:
         assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA) == v
 
-    for q, v in DS_VALID_QUERIES:
+    for q, i, v in DS_VALID_QUERIES:
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
-                                                               TEST_SCHEMA) == v
+                                                               TEST_SCHEMA, i) == v
 
-    for e, ex in DS_INVALID_EXPRESSIONS:
+    for e, i, ex in DS_INVALID_EXPRESSIONS:
         with raises(ex):
-            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA)
+            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, i)
 
     # Invalid data
     with raises(ValueError):
         data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA)
+
+
+# noinspection PyProtectedMember
+def test_check_operation_permissions():
+    for e, i, _v in DS_VALID_EXPRESSIONS:
+        queries.check_operation_permissions(
+            queries.convert_query_to_ast(e),
+            TEST_SCHEMA, search_getter=lambda rl, s: data_structure._resolve_with_search(rl, TEST_DATA_1, s)[1])
