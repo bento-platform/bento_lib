@@ -17,7 +17,7 @@ __all__ = ["search_query_to_psycopg2_sql"]
 
 SQLComposableWithParams = Tuple[sql.Composable, tuple]
 
-JoinAndSelectData = namedtuple("JoinAndSelectData", ("relations", "aliases", "key_link", "field_alias"))
+JoinAndSelectData = namedtuple("JoinAndSelectData", ("relations", "aliases", "key_link", "field_alias", "operations"))
 
 
 def collect_resolve_join_tables(
@@ -51,6 +51,8 @@ def collect_resolve_join_tables(
 
     key_link = None
 
+    operations = schema.get("search", {}).get("operations", [])
+
     if schema["type"] not in ("array", "object"):
         if len(resolve) > 1:
             raise TypeError("Cannot get property of literal")
@@ -58,21 +60,20 @@ def collect_resolve_join_tables(
             schema.get("search", {})
                   .get("database", {})
                   .get("field", resolve[0].value if resolve[0].value != "$root" else None)
-        )),
+        ), operations=operations),
 
-    if "search" in schema and "database" in schema["search"] and "relationship" in schema["search"]["database"]:
-        rel_type = schema["search"]["database"]["relationship"]["type"]
-        if rel_type == "MANY_TO_ONE":
-            key_link = (schema["search"]["database"]["relationship"]["foreign_key"],
-                        schema["search"]["database"]["primary_key"])
-        elif rel_type in ("MANY_TO_MANY", "ONE_TO_MANY"):
-            key_link = (schema["search"]["database"]["relationship"]["parent_primary_key"],
-                        schema["search"]["database"]["relationship"]["parent_foreign_key"])
+    if schema.get("search", {}).get("database", {}).get("relationship", None) is not None:
+        relationship = schema["search"]["database"]["relationship"]
+        relationship_type = relationship["type"]
+        if relationship_type == "MANY_TO_ONE":
+            key_link = (relationship["foreign_key"], schema["search"]["database"]["primary_key"])
+        elif relationship_type in ("MANY_TO_MANY", "ONE_TO_MANY"):
+            key_link = (relationship["parent_primary_key"], relationship["parent_foreign_key"])
         else:
-            raise SyntaxError("Invalid relationship type: {}".format(rel_type))
+            raise SyntaxError("Invalid relationship type: {}".format(relationship_type))
 
-    # relations, aliases, key_link, field_alias
-    join_table_data = JoinAndSelectData(relations=relations, aliases=aliases, key_link=key_link, field_alias=None)
+    join_table_data = JoinAndSelectData(relations=relations, aliases=aliases, key_link=key_link, field_alias=None,
+                                        operations=operations)
 
     if schema["type"] == "array":
         if len(resolve) == 1:  # End result is array
@@ -102,7 +103,7 @@ def collect_join_tables(ast: AST, terms: tuple, schema: dict) -> Tuple[JoinAndSe
         return terms
 
     if ast.fn == FUNCTION_RESOLVE:
-        return terms + tuple(t for t in collect_resolve_join_tables([Literal("$root")] + ast.args, schema)
+        return terms + tuple(t for t in collect_resolve_join_tables([Literal("$root"), *ast.args], schema)
                              if t not in terms)
 
     new_terms = terms
@@ -133,6 +134,8 @@ def join_fragment(ast: AST, schema: dict) -> sql.Composable:
 def search_ast_to_psycopg2_expr(ast: AST, params: tuple, schema: dict) -> SQLComposableWithParams:
     if isinstance(ast, Literal):
         return sql.Placeholder(), (*params, ast.value)
+
+    check_operation_permissions(ast, schema, operations_getter=get_operations)
 
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[ast.fn](ast.args, params, schema)
 
@@ -172,18 +175,21 @@ def _wildcard(args: List[AST], params: tuple, _schema: dict) -> SQLComposableWit
 
 
 def get_relation(resolve: List[Literal], schema: dict):
-    aliases = collect_resolve_join_tables(resolve, schema)[-1].aliases
+    aliases = collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].aliases
     return aliases[1] if aliases[1] is not None else aliases[0]
 
 
 def get_field(resolve: List[Literal], schema: dict) -> Optional[str]:
-    return collect_resolve_join_tables(resolve, schema)[-1].field_alias
+    return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].field_alias
+
+
+def get_operations(resolve: List[Literal], schema: dict) -> List[str]:
+    return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].operations
 
 
 def _resolve(args: List[AST], params: tuple, schema: dict) -> SQLComposableWithParams:
-    r_id = get_relation([Literal("$root")] + args, schema)
-    f_id = get_field([Literal("$root")] + args, schema)
-    return sql.SQL("{}.{}").format(sql.Identifier(r_id),
+    f_id = get_field(args, schema)
+    return sql.SQL("{}.{}").format(sql.Identifier(get_relation(args, schema)),
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 

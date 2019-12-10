@@ -52,6 +52,9 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict) -> Quer
     if ast.fn == FUNCTION_HELPER_WC:
         raise NotImplementedError("Cannot use wildcard helper here")
 
+    check_operation_permissions(ast, schema,
+                                operations_getter=lambda rl, s: _resolve_with_ops(rl, data_structure, s)[1])
+
     return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema)
 
 
@@ -105,19 +108,20 @@ def curried_get(k) -> Callable:
     return lambda v: v[k]
 
 
-def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict) -> QueryableStructure:
+def _resolve_with_ops(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict) \
+        -> Tuple[QueryableStructure, List[str]]:
     """
-    Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
-    checked against its schema.
+    Resolves / evaluates a path (either object or array) into a value and its search operation constraints. Assumes the
+    data structure has already been checked against its schema.
     :param resolve: The current path to resolve, not including the current data structure.
     :param resolving_ds: The data structure being resolved upon.
     :param schema: The JSON schema representing the resolving data structure.
-    :return: The resolved value after exploring the resolve path.
+    :return: The resolved value after exploring the resolve path, and the search operations that can be performed on it.
     """
 
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
-        return resolving_ds
+        return resolving_ds, schema.get("search", {}).get("operations", [])
 
     if schema["type"] not in ("object", "array"):
         raise TypeError("Cannot get property of literal")
@@ -128,10 +132,17 @@ def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: d
     elif schema["type"] == "array" and resolve[0].value != "[item]":
         raise TypeError("Cannot get property of array")
 
-    return _resolve(
+    return _resolve_with_ops(
         resolve[1:],
         preserved_tuple_apply(resolving_ds, curried_get(resolve[0].value) if schema["type"] == "object" else tuple),
         schema["properties"][resolve[0].value] if schema["type"] == "object" else schema["items"])
+
+
+def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict):
+    """
+    Does the same thing as _resolve_with_ops, but discards the search operations.
+    """
+    return _resolve_with_ops(resolve, resolving_ds, schema)[0]
 
 
 QUERY_CHECK_SWITCH: Dict[FunctionName, Callable[[List[AST], QueryableStructure, dict], QueryableStructure]] = {

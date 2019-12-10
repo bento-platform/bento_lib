@@ -1,4 +1,13 @@
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
+
+from .operations import (
+    SEARCH_OP_LT,
+    SEARCH_OP_LE,
+    SEARCH_OP_EQ,
+    SEARCH_OP_GT,
+    SEARCH_OP_GE,
+    SEARCH_OP_CO
+)
 
 
 __all__ = [
@@ -16,6 +25,8 @@ __all__ = [
 
     "VALID_FUNCTIONS",
 
+    "FUNCTION_SEARCH_OP_MAP",
+
     "LiteralValue",
     "FunctionName",
     "Query",
@@ -28,6 +39,7 @@ __all__ = [
     "convert_query_to_ast_and_preprocess",
     "ast_to_and_asts",
     "and_asts_to_ast",
+    "check_operation_permissions",
 ]
 
 
@@ -75,6 +87,17 @@ FUNCTION_ARGUMENTS = {
     FUNCTION_CO: BINARY_RANGE,
     FUNCTION_RESOLVE: (0, None),
     FUNCTION_HELPER_WC: (1, 1),
+}
+
+
+FUNCTION_SEARCH_OP_MAP = {
+    FUNCTION_LT: SEARCH_OP_LT,
+    FUNCTION_LE: SEARCH_OP_LE,
+    FUNCTION_EQ: SEARCH_OP_EQ,
+    FUNCTION_GT: SEARCH_OP_GT,
+    FUNCTION_GE: SEARCH_OP_GE,
+
+    FUNCTION_CO: SEARCH_OP_CO,
 }
 
 
@@ -179,3 +202,16 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
         return asts[0]
 
     return Expression(FUNCTION_AND, [asts[0], and_asts_to_ast(asts[1:])])
+
+
+def check_operation_permissions(ast: AST, schema: dict, operations_getter: Callable[[List[Literal], dict], List[str]]):
+    if ast.fn not in FUNCTION_SEARCH_OP_MAP:
+        return
+
+    # Check to make sure the function's execution is permitted
+
+    # TODO: Make this check recursive (#11)
+    if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in operations_getter(a.args, schema)
+           for a in ast.args if isinstance(a, Expression) and a.fn == FUNCTION_RESOLVE):
+        # TODO: Custom exception?
+        raise ValueError("Schema forbids using function: {}\nAST: {}\nSchema: \n{}".format(ast.fn, ast, schema))

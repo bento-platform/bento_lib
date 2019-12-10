@@ -9,6 +9,7 @@ TEST_SCHEMA = {
         "id": {
             "type": "string",
             "search": {
+                "operations": [operations.SEARCH_OP_EQ],
                 "database": {"field": "phenopacket_id"}
             }
         },
@@ -23,7 +24,12 @@ TEST_SCHEMA = {
                             "code": {
                                 "type": "object",
                                 "properties": {
-                                    "id": {"type": "string"},
+                                    "id": {
+                                        "type": "string",
+                                        "search": {
+                                            "operations": [operations.SEARCH_OP_CO]
+                                        }
+                                    },
                                     "label": {"type": "string"}
                                 },
                                 "search": {
@@ -105,11 +111,18 @@ TEST_SCHEMA = {
         "subject": {
             "type": "object",
             "properties": {
-                "karyotypic_sex": {"type": "string", "search": {}},
+                "karyotypic_sex": {
+                    "type": "string",
+                    "search": {
+                        "operations": [operations.SEARCH_OP_EQ]
+                    }
+                },
                 "sex": {
                     "type": "string",
                     "enum": ["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"],
-                    "search": {}
+                    "search": {
+                        "operations": [operations.SEARCH_OP_EQ]
+                    }
                 }
             },
             "search": {
@@ -246,6 +259,7 @@ INVALID_EXPR_5 = ["#resolve", "biosamples", "array_property"]
 INVALID_EXPR_6 = ["#resolve", "subject", "karyotypic_sex", "literal_property"]
 INVALID_EXPR_7 = ["#fake_fn", 5]
 INVALID_EXPR_8 = [5, 5]
+INVALID_EXPR_9 = ["#gt", ["#resolve", "subject", "sex"], "MALE"]
 
 
 TEST_QUERY_STR = (
@@ -321,6 +335,7 @@ COMMON_INVALID_EXPRESSIONS = (
     (INVALID_EXPR_6, TypeError),
     (INVALID_EXPR_7, SyntaxError),
     (INVALID_EXPR_8, SyntaxError),
+    (INVALID_EXPR_9, ValueError)
 )
 
 DS_INVALID_EXPRESSIONS = (
