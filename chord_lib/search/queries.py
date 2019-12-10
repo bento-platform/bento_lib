@@ -210,7 +210,7 @@ def check_operation_permissions(ast: AST, schema: dict, operations_getter: Calla
 
     # Check to make sure the function's execution is permitted
 
-    # TODO: Make this check recursive (#11)
+    # TODO: Make this check recursive (#11) or somehow deal with boolean values
     if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in operations_getter(a.args, schema)
            for a in ast.args if isinstance(a, Expression) and a.fn == FUNCTION_RESOLVE):
         # TODO: Custom exception?
