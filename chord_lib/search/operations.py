@@ -1,0 +1,45 @@
+__all__ = [
+    "SEARCH_OP_NOT",
+
+    "SEARCH_OP_EQ",
+    "SEARCH_OP_LT",
+    "SEARCH_OP_LE",
+    "SEARCH_OP_GT",
+    "SEARCH_OP_GE",
+
+    "SEARCH_OP_CO",
+
+    "SEARCH_OPERATIONS",
+    "SQL_SEARCH_OPERATORS",
+]
+
+
+SEARCH_OP_NOT = "not"
+
+SEARCH_OP_EQ = "eq"
+SEARCH_OP_LT = "lt"
+SEARCH_OP_LE = "le"
+SEARCH_OP_GT = "gt"
+SEARCH_OP_GE = "ge"
+
+SEARCH_OP_CO = "co"
+
+SEARCH_OPERATIONS = (
+    SEARCH_OP_NOT,
+    SEARCH_OP_EQ,
+    SEARCH_OP_LT,
+    SEARCH_OP_LE,
+    SEARCH_OP_GT,
+    SEARCH_OP_GE,
+    SEARCH_OP_CO,
+)
+
+SQL_SEARCH_OPERATORS = {
+    SEARCH_OP_NOT: "NOT",
+    SEARCH_OP_EQ: "=",
+    SEARCH_OP_LT: "<",
+    SEARCH_OP_LE: "<=",
+    SEARCH_OP_GT: ">",
+    SEARCH_OP_GE: ">=",
+    SEARCH_OP_CO: "LIKE",
+}
