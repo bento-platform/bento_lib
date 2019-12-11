@@ -80,6 +80,8 @@ def test_data_type_events():
             assert event["data"] == TEST_EVENT_BODY
 
         event_bus.add_handler(chord_lib.events.ALL_DATA_TYPE_EVENTS, handle_data_type_event)
+        r = event_bus.add_handler(chord_lib.events.ALL_DATA_TYPE_EVENTS, handle_data_type_event)
+        assert not r
         event_bus.start_event_loop()
 
         r = event_bus.publish_data_type_event(TEST_DATA_TYPE, TEST_DATA_TYPE_EVENT, TEST_EVENT_BODY)

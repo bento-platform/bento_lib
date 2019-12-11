@@ -86,6 +86,9 @@ class EventBus:
         if self._event_thread is not None:
             return False
 
+        if pattern in self._ps_handlers:
+            return False
+
         self._ps_handlers[pattern] = self._callback_deserialize(callback)
         return True
 
