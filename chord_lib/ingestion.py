@@ -6,8 +6,11 @@ from werkzeug.utils import secure_filename
 
 __all__ = [
     "WORKFLOW_TYPE_FILE",
+    "WORKFLOW_TYPE_FILE_ARRAY",
     "WORKFLOW_TYPE_STRING",
+    "WORKFLOW_TYPE_STRING_ARRAY",
     "WORKFLOW_TYPE_ENUM",
+    "WORKFLOW_TYPE_ENUM_ARRAY",
 
     "file_with_prefix",
     "formatted_output",
