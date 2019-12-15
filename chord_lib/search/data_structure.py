@@ -1,6 +1,6 @@
+import jsonschema
 from collections.abc import Iterable
 from itertools import chain
-from jsonschema import validate, ValidationError
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
 from typing import Callable, Dict, List, Tuple, Union
 
@@ -32,20 +32,23 @@ def generator_flatten(t) -> Iterable:
     return chain.from_iterable(generator_flatten(v) for v in t) if _is_gen_flatten_compatible(t) else (t,)
 
 
-def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict, internal: bool = False) -> QueryableStructure:
+def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict, internal: bool = False,
+             validate: bool = True) -> QueryableStructure:
     """
     Evaluates a query expression into a value, populated by a passed data structure.
     :param ast: A query expression.
     :param data_structure: A data structure from which to resolve values.
     :param schema: The JSON schema for data objects being queried.
     :param internal: Whether internal-only fields are allowed to be resolved.
+    :param validate: Whether to validate the structure against the schema. Typically called only once per evaluate.
     :return: A value (string, int, float, bool, array, or dict.)
     """
 
-    try:
-        validate(data_structure, schema)
-    except ValidationError:
-        raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
+    if validate:
+        try:
+            jsonschema.validate(data_structure, schema)
+        except jsonschema.ValidationError:
+            raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
 
     if isinstance(ast, Literal):
         return ast.value
@@ -96,8 +99,8 @@ def _binary_op(op: BBOperator) -> Callable[[List[AST], QueryableStructure, dict,
             # Either LHS or RHS could be a tuple of [item]
             return any(
                 op(li, ri)
-                for li in generator_flatten(evaluate(args[0], ds, schema, internal))  # LHS, Outer loop
-                for ri in generator_flatten(evaluate(args[1], ds, schema, internal))  # RHS, Inner loop
+                for li in generator_flatten(evaluate(args[0], ds, schema, internal, validate=False))  # LHS, Outer loop
+                for ri in generator_flatten(evaluate(args[1], ds, schema, internal, validate=False))  # RHS, Inner loop
             )
 
         except TypeError:
@@ -164,7 +167,7 @@ def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: d
 QUERY_CHECK_SWITCH: Dict[FunctionName, Callable[[List[AST], QueryableStructure, dict, bool], QueryableStructure]] = {
     FUNCTION_AND: _binary_op(and_),
     FUNCTION_OR: _binary_op(or_),
-    FUNCTION_NOT: lambda args, ds, schema, internal: not_(evaluate(args[0], ds, schema, internal)),
+    FUNCTION_NOT: lambda args, ds, schema, internal: not_(evaluate(args[0], ds, schema, internal, validate=False)),
 
     FUNCTION_LT: _binary_op(lt),
     FUNCTION_LE: _binary_op(le),
