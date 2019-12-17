@@ -132,21 +132,34 @@ def collect_resolve_join_tables(
             raise SyntaxError("Cannot determine or synthesize current relation")
 
         # TODO: Additional conditions to check if it's actually JSON
-        # TODO: JSON as well as JSONB
+        # TODO: HStore support?
         structure_type = search_database_properties.get("type", None)
-        if structure_type == "jsonb" and schema["type"] == "array":
-            current_relation = sql.SQL("jsonb_array_elements({}.{}})").format(parent_relation[1],
-                                                                              sql.Identifier(db_field))
-            # TODO: What is alias here???
-            # TODO: Need to inject .value SOMEWHERE...
+        if structure_type in ("json", "jsonb"):
+            if schema["type"] == "array":  # JSON(B) array or object
+                current_relation = sql.SQL("{}_array_elements({}})").format(
+                    sql.SQL(structure_type),
+                    sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
+                                      if db_field != "[item]" else (parent_relation[1],)))
+                # TODO: What is alias here???
+                # TODO: Need to inject .value SOMEWHERE...
+                current_alias = sql.Identifier(new_resolve_path)
+                current_alias_str = new_resolve_path
+            else:  # object
+                # TODO: Need to map to a schema for a relation... see alias below
+                current_relation = sql.SQL("{}_to_record({})").format(
+                    sql.SQL(structure_type),
+                    sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
+                                      if db_field != "[item]" else (parent_relation[1],)))
+                current_alias, current_alias_str = json_schema_to_postgres_schema(new_resolve_path, schema)
+
+        elif structure_type == "array" and schema["type"] == "array":  # Postgres array
+            print(parent_relation, db_field)
+            current_relation = sql.SQL("unnest({}.{})").format(parent_relation[1], sql.Identifier(db_field))
+
+            # TODO: What are these?
             current_alias = sql.Identifier(new_resolve_path)
             current_alias_str = new_resolve_path
-        elif structure_type == "jsonb" and schema["type"] == "object":
-            # TODO: Need to map to a schema for a relation... see alias below
-            current_relation = sql.SQL("jsonb_to_record({}.{})").format(parent_relation[1], sql.Identifier(db_field))
-            current_alias, current_alias_str = json_schema_to_postgres_schema(new_resolve_path, schema)
-        elif structure_type == "array" and schema["type"] == "array":
-            current_relation = sql.SQL("unnest({0}.{0})").format(parent_relation[1])  # TODO: Is this correct?
+
         else:
             raise ValueError("Structure type / schema type mismatch: {} / {}".format(structure_type, schema["type"]))
 

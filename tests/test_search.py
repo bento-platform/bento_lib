@@ -92,6 +92,33 @@ TEST_SCHEMA = {
                                 }
                             }
                         }
+                    },
+
+                    # lazy
+                    "test_postgres_array": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "test": {
+                                    "type": "string",
+                                    "search": {
+                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "queryable": "all"
+                                    }
+                                }
+                            },
+                            "search": {
+                                "database": {
+                                    "type": "json"
+                                }
+                            }
+                        },
+                        "search": {
+                            "database": {
+                                "type": "array"
+                            }
+                        }
                     }
                 },
                 "search": {
@@ -214,7 +241,6 @@ TEST_INVALID_SCHEMA = {
                 }
             }
         }
-        # TODO: Metadata (one-to-one) example
     },
     "search": {
         "database": {
@@ -286,6 +312,7 @@ TEST_QUERY_6 = "some_non_bool_value"
 TEST_QUERY_7 = ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f"]
 TEST_QUERY_8 = ["#eq", ["#resolve", "subject", "sex"], "MALE"]
 TEST_QUERY_9 = ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:9606"]
+TEST_QUERY_10 = ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -347,11 +374,13 @@ TEST_DATA_1 = {
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
-            "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}]
+            "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}],
+            "test_postgres_array": [{"test": "test_value"}]
         },
         {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
-            "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}]
+            "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}],
+            "test_postgres_array": [{"test": "test_value"}]
         }
     ],
 }
@@ -416,6 +445,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_7, True, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
     (TEST_QUERY_8, False, ("MALE",)),
     (TEST_QUERY_9, False, ("NCBITaxon:9606",)),
+    (TEST_QUERY_10, False, ("test_value",)),
 )
 
 PG_INVALID_EXPRESSIONS = (
