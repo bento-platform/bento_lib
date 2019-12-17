@@ -153,7 +153,6 @@ def collect_resolve_join_tables(
                 current_alias, current_alias_str = json_schema_to_postgres_schema(new_resolve_path, schema)
 
         elif structure_type == "array" and schema["type"] == "array":  # Postgres array
-            print(parent_relation, db_field)
             current_relation = sql.SQL("unnest({}.{})").format(parent_relation[1], sql.Identifier(db_field))
 
             # TODO: What are these?

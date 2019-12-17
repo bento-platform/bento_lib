@@ -539,8 +539,6 @@ def test_postgres():
 
     for e, i, p in PG_VALID_QUERIES:
         q, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
-        print(q)
-        print()
         assert params == p
 
     for e, i, _v in DS_VALID_EXPRESSIONS:
