@@ -71,6 +71,15 @@ def test_service_events():
         event_bus.stop_event_loop()
 
 
+def test_double_start():
+    try:
+        event_bus.start_event_loop()
+        event_bus.start_event_loop()
+        time.sleep(0.1)
+    finally:
+        event_bus.stop_event_loop()
+
+
 def test_data_type_events():
     try:
         def handle_data_type_event(message):
