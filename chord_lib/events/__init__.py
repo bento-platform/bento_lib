@@ -60,7 +60,7 @@ class EventBus:
             if not allow_fake:
                 raise e
 
-        self._ps = self._rc.pubsub() if self._rc is not None else None
+        self._ps = None
 
         self._ps_handlers = {}
         self._event_thread = None
@@ -98,9 +98,13 @@ class EventBus:
         The loop must be restarted if the handlers are changed.
         """
 
-        if self._ps is None:
+        if self._rc is None:
             return
 
+        if self._event_thread is not None:
+            return
+
+        self._ps = self._rc.pubsub()
         self._ps.psubscribe(**self._ps_handlers)
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001, daemon=True)
 
@@ -114,6 +118,7 @@ class EventBus:
 
         self._event_thread.stop()
         self._event_thread = None
+        self._ps = None
 
     @staticmethod
     def _make_event(event_type: str, event_data, attrs: dict):
