@@ -133,6 +133,9 @@ class Expression:
     def __str__(self):
         return "[{}, {}]".format(self.fn, ", ".join(str(a) for a in self.args))
 
+    def __repr__(self):  # pragma: no cover
+        return f"<Expression {self.fn} [{', '.join(repr(a) for a in self.args)}]>"
+
 
 class Literal:
     def __init__(self, value: LiteralValue):
@@ -144,6 +147,9 @@ class Literal:
 
     def __str__(self):
         return str(self.value)
+
+    def __repr__(self):  # pragma: no cover
+        return f"<Literal {self.value}>"
 
 
 def convert_query_to_ast(query: Query) -> AST:
