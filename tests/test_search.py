@@ -119,6 +119,33 @@ TEST_SCHEMA = {
                                 "type": "array"
                             }
                         }
+                    },
+
+                    # lazy
+                    "test_json_array": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "test": {
+                                    "type": "string",
+                                    "search": {
+                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "queryable": "all"
+                                    }
+                                }
+                            },
+                            "search": {
+                                "database": {
+                                    "type": "json"
+                                }
+                            }
+                        },
+                        "search": {
+                            "database": {
+                                "type": "json"
+                            }
+                        }
                     }
                 },
                 "search": {
@@ -313,6 +340,7 @@ TEST_QUERY_7 = ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f
 TEST_QUERY_8 = ["#eq", ["#resolve", "subject", "sex"], "MALE"]
 TEST_QUERY_9 = ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:9606"]
 TEST_QUERY_10 = ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"]
+TEST_QUERY_11 = ["#eq", ["#resolve", "biosamples", "[item]", "test_json_array", "[item]", "test"], "test_value"]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -375,12 +403,14 @@ TEST_DATA_1 = {
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
             "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}],
-            "test_postgres_array": [{"test": "test_value"}]
+            "test_postgres_array": [{"test": "test_value"}],
+            "test_json_array": [{"test": "test_value"}],
         },
         {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
             "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}],
-            "test_postgres_array": [{"test": "test_value"}]
+            "test_postgres_array": [{"test": "test_value"}],
+            "test_json_array": [{"test": "test_value"}],
         }
     ],
 }
@@ -411,6 +441,8 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_7, True, True),
     (TEST_QUERY_8, False, True),
     (TEST_QUERY_9, False, True),
+    (TEST_QUERY_10, False, True),
+    (TEST_QUERY_11, False, True),
 )
 
 # Query, Internal, Exception
@@ -446,6 +478,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_8, False, ("MALE",)),
     (TEST_QUERY_9, False, ("NCBITaxon:9606",)),
     (TEST_QUERY_10, False, ("test_value",)),
+    (TEST_QUERY_11, False, ("test_value",)),
 )
 
 PG_INVALID_EXPRESSIONS = (

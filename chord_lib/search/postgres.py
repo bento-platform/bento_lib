@@ -136,7 +136,7 @@ def collect_resolve_join_tables(
         structure_type = search_database_properties.get("type", None)
         if structure_type in ("json", "jsonb"):
             if schema["type"] == "array":  # JSON(B) array or object
-                current_relation = sql.SQL("{}_array_elements({}})").format(
+                current_relation = sql.SQL("{}_array_elements({})").format(
                     sql.SQL(structure_type),
                     sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
                                       if db_field != "[item]" else (parent_relation[1],)))
