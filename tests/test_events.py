@@ -47,7 +47,7 @@ def test_service_events():
     try:
         def handle_service_event(message):
             event = message["data"]
-            assert event["service"] == TEST_SERVICE
+            assert event["service_artifact"] == TEST_SERVICE
             assert event["type"] == TEST_SERVICE_EVENT
             assert event["data"] == TEST_EVENT_BODY
 
