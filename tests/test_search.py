@@ -92,6 +92,60 @@ TEST_SCHEMA = {
                                 }
                             }
                         }
+                    },
+
+                    # lazy
+                    "test_postgres_array": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "test": {
+                                    "type": "string",
+                                    "search": {
+                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "queryable": "all"
+                                    }
+                                }
+                            },
+                            "search": {
+                                "database": {
+                                    "type": "json"
+                                }
+                            }
+                        },
+                        "search": {
+                            "database": {
+                                "type": "array"
+                            }
+                        }
+                    },
+
+                    # lazy
+                    "test_json_array": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "test": {
+                                    "type": "string",
+                                    "search": {
+                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "queryable": "all"
+                                    }
+                                }
+                            },
+                            "search": {
+                                "database": {
+                                    "type": "json"
+                                }
+                            }
+                        },
+                        "search": {
+                            "database": {
+                                "type": "json"
+                            }
+                        }
                     }
                 },
                 "search": {
@@ -141,6 +195,25 @@ TEST_SCHEMA = {
                         "operations": [operations.SEARCH_OP_EQ],
                         "queryable": "all"
                     }
+                },
+                "taxonomy": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "search": {
+                                "operations": [operations.SEARCH_OP_EQ],
+                                "queryable": "all"
+                            }
+                        },
+                        "label": {"type": "string"}
+                    },
+                    "required": ["id", "label"],
+                    "search": {
+                        "database": {
+                            "type": "jsonb"
+                        }
+                    }
                 }
             },
             "search": {
@@ -188,15 +261,30 @@ TEST_INVALID_SCHEMA = {
             }
         },
         "subject": {
-            "type": "object"
+            "type": "object",
+            "search": {
+                "database": {
+                    "relation": "patients_individual"
+                }
+            }
+        },
+        "bad_array": {
+            "type": "array",
+            "items": {"type": "string"}
         }
-        # TODO: Metadata (one-to-one) example
     },
     "search": {
         "database": {
             "relation": "patients_phenopacket",
             "primary_key": "phenopacket_id"
         }
+    }
+}
+
+TEST_INVALID_SCHEMA_2 = {
+    "type": "array",
+    "items": {
+        "type": "string"
     }
 }
 
@@ -261,6 +349,9 @@ TEST_QUERY_5 = ["#and", TEST_QUERY_3, False]
 TEST_QUERY_6 = "some_non_bool_value"
 TEST_QUERY_7 = ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f"]
 TEST_QUERY_8 = ["#eq", ["#resolve", "subject", "sex"], "MALE"]
+TEST_QUERY_9 = ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:9606"]
+TEST_QUERY_10 = ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"]
+TEST_QUERY_11 = ["#eq", ["#resolve", "biosamples", "[item]", "test_json_array", "[item]", "test"], "test_value"]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -310,15 +401,27 @@ TEST_UNLIST_ANDS = (
 
 TEST_DATA_1 = {
     "id": "1ac54805-4145-4829-93e2-f362de55f28f",
-    "subject": {"id": "S1", "karyotypic_sex": "XO", "sex": "MALE"},
+    "subject": {
+        "id": "S1",
+        "karyotypic_sex": "XO",
+        "sex": "MALE",
+        "taxonomy": {
+            "id": "NCBITaxon:9606",
+            "label": "Homo sapiens"
+        }
+    },
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
-            "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}]
+            "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}],
+            "test_postgres_array": [{"test": "test_value"}],
+            "test_json_array": [{"test": "test_value"}],
         },
         {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
-            "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}]
+            "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}],
+            "test_postgres_array": [{"test": "test_value"}],
+            "test_json_array": [{"test": "test_value"}],
         }
     ],
 }
@@ -335,7 +438,7 @@ DS_VALID_EXPRESSIONS = (
     (TEST_EXPR_5, False, TEST_DATA_1),
     (TEST_EXPR_6, False, False),
     (TEST_EXPR_7, False, ("TG1", "TG2", "TG3", "TG4")),
-    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"])
+    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"]),
 )
 
 # Query, Internal, Result
@@ -347,7 +450,10 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_5, False, False),
     (TEST_QUERY_6, False, False),
     (TEST_QUERY_7, True, True),
-    (TEST_QUERY_8, False, True)
+    (TEST_QUERY_8, False, True),
+    (TEST_QUERY_9, False, True),
+    (TEST_QUERY_10, False, True),
+    (TEST_QUERY_11, False, True),
 )
 
 # Query, Internal, Exception
@@ -380,7 +486,10 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_5, False, ("XO", "%TE%", False)),
     (TEST_QUERY_6, False, ("some_non_bool_value",)),
     (TEST_QUERY_7, True, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
-    (TEST_QUERY_8, False, ("MALE",))
+    (TEST_QUERY_8, False, ("MALE",)),
+    (TEST_QUERY_9, False, ("NCBITaxon:9606",)),
+    (TEST_QUERY_10, False, ("test_value",)),
+    (TEST_QUERY_11, False, ("test_value",)),
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -389,6 +498,9 @@ PG_INVALID_EXPRESSIONS = (
     (["#_wc", ["#resolve", "biosamples"]], False, NotImplementedError),
     ({"dict": True}, False, ValueError),
 )
+
+JSON_SCHEMA_TYPES = ("string", "integer", "number", "object", "array", "boolean", "null")
+POSTGRES_TYPES = ("TEXT", "INTEGER", "DOUBLE PRECISION", "JSON", "JSON", "BOOLEAN", "TEXT")
 
 
 def test_build_search_response():
@@ -449,11 +561,31 @@ def test_queries_and_ast():
 
 
 def test_postgres():
+    null_schema = postgres.json_schema_to_postgres_schema("test", {"type": "integer"})
+    assert null_schema[0] is None and null_schema[1] is None
+
+    for s, p in zip(JSON_SCHEMA_TYPES, POSTGRES_TYPES):
+        assert postgres.json_schema_to_postgres_schema("test", {
+            "type": "object",
+            "properties": {
+                "test2": {"type": s}
+            }
+        })[1] == f"test(test2 {p})"
+
     # TODO: This is sort of artificial; does this case actually arise?
-    assert postgres.collect_resolve_join_tables([], {}, None, None) == ()
+    assert postgres.collect_resolve_join_tables((), {}, None, None) == ()
+
+    with raises(SyntaxError):
+        postgres.search_query_to_psycopg2_sql(TEST_EXPR_4, TEST_INVALID_SCHEMA)
 
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(TEST_EXPR_8, TEST_INVALID_SCHEMA)
+
+    with raises(ValueError):
+        postgres.search_query_to_psycopg2_sql(["#resolve", "bad_array", "[item]"], TEST_INVALID_SCHEMA)
+
+    with raises(SyntaxError):
+        postgres.search_query_to_psycopg2_sql(["#resolve", "[item]"], TEST_INVALID_SCHEMA_2)
 
     for e, i, p in PG_VALID_QUERIES:
         _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)

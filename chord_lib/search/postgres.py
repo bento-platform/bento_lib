@@ -1,6 +1,5 @@
 import re
 
-from collections import namedtuple
 from psycopg2 import sql
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -17,14 +16,87 @@ __all__ = ["search_query_to_psycopg2_sql"]
 
 SQLComposableWithParams = Tuple[sql.Composable, tuple]
 
-JoinAndSelectData = namedtuple("JoinAndSelectData", ("relations", "aliases", "key_link", "field_alias",
-                                                     "search_properties"))
+
+# TODO: Python 3.7: Data Class
+class OptionalComposablePair:
+    def __init__(self, parent: Optional[sql.Composable], current: Optional[sql.Composable]):
+        self.parent: Optional[sql.Composable] = parent
+        self.current: Optional[sql.Composable] = current
+
+    def __repr__(self):  # pragma: no cover
+        return f"<OptionalComposablePair parent={self.parent} current={self.current}>"
+
+
+# TODO: Python 3.7: Data Class
+class JoinAndSelectData:
+    def __init__(
+        self,
+        relations: OptionalComposablePair,
+        aliases: OptionalComposablePair,
+        current_alias_str: Optional[str],
+        key_link: Optional[Tuple[str, str]],
+        field_alias: Optional[str],
+        search_properties: dict,
+        unresolved: Tuple[Literal, ...]
+    ):
+        self.relations: OptionalComposablePair = relations
+        self.aliases: OptionalComposablePair = aliases
+        self.current_alias_str: Optional[str] = current_alias_str
+        self.key_link: Optional[Tuple[str, str]] = key_link
+        self.field_alias: Optional[str] = field_alias
+        self.search_properties: dict = search_properties
+        self.unresolved: Tuple[Literal, ...] = unresolved
+
+    def __repr__(self):  # pragma: no cover
+        return f"<JoinAndSelectData relations={self.relations} aliases={self.aliases}>"
+
+
+def json_schema_to_postgres_type(schema: dict) -> str:
+    """
+    Maps a JSON schema to a Postgres type for on the fly mapping.
+    :param schema: JSON schema to map.
+    """
+    if schema["type"] == "string":
+        return "TEXT"
+    elif schema["type"] == "integer":
+        return "INTEGER"
+    elif schema["type"] == "number":
+        return "DOUBLE PRECISION"
+    elif schema["type"] == "object":
+        return "JSON"  # TODO: JSON or JSONB
+    elif schema["type"] == "array":
+        return "JSON"  # TODO: JSON or JSONB
+    elif schema["type"] == "boolean":
+        return "BOOLEAN"
+    else:
+        # null
+        return "TEXT"  # TODO
+
+
+def json_schema_to_postgres_schema(name: str, schema: dict) -> Tuple[Optional[sql.Composable], Optional[str]]:
+    """
+    Maps a JSON object schema to a Postgres schema for on-the-fly mapping.
+    :param name: the name to give the fake table.
+    :param schema: JSON schema to map.
+    """
+
+    if schema["type"] != "object":
+        return None, None
+
+    return (
+        sql.SQL("{}({})").format(
+            sql.Identifier(name),
+            sql.SQL(", ").join(sql.SQL("{} {}").format(sql.Identifier(p), sql.SQL(json_schema_to_postgres_type(s)))
+                               for p, s in schema["properties"].items())),
+        "{}({})".format(name, ", ".join("{} {}".format(p, json_schema_to_postgres_type(s))
+                                        for p, s in schema["properties"].items()))
+    )
 
 
 def collect_resolve_join_tables(
-    resolve: List[Literal],
+    resolve: Tuple[Literal, ...],
     schema: dict,
-    parent_relation: Optional[Tuple[Optional[str], Optional[str]]] = None,
+    parent_relation: Optional[Tuple[Optional[sql.Composable], Optional[sql.Composable]]] = None,
     resolve_path: Optional[str] = None
 ) -> Tuple[JoinAndSelectData, ...]:
     """
@@ -42,29 +114,69 @@ def collect_resolve_join_tables(
     if len(resolve) == 0:
         return ()
 
-    relations = (parent_relation[0] if parent_relation is not None else None,
-                 schema.get("search", {}).get("database", {}).get("relation", None))
+    search_properties = schema.get("search", {})
+    search_database_properties = search_properties.get("database", {})
 
-    aliases = (resolve_path if resolve_path is not None else None,
-               re.sub(r"[$\[\]]+", "", "{}_{}".format(resolve_path if resolve_path is not None else "",
-                                                      resolve[0].value))
-               if relations[1] is not None else None)
+    # TODO: might be able to inject .value under some circumstances here
+    schema_field = resolve[0].value
+    db_field = search_database_properties.get("field", schema_field if schema_field != "$root" else None)
+    current_relation = search_database_properties.get("relation", None)
+
+    new_resolve_path = re.sub(r"[$\[\]]+", "", "{}_{}".format(resolve_path if resolve_path is not None else "",
+                                                              schema_field))
+    current_alias = None
+    current_alias_str = None
+
+    if current_relation is None and schema["type"] in ("array", "object"):
+        if db_field is None:
+            raise SyntaxError("Cannot determine or synthesize current relation")
+
+        # TODO: Additional conditions to check if it's actually JSON
+        # TODO: HStore support?
+        structure_type = search_database_properties.get("type", None)
+        if structure_type in ("json", "jsonb"):
+            if schema["type"] == "array":  # JSON(B) array or object
+                current_relation = sql.SQL("{}_array_elements({})").format(
+                    sql.SQL(structure_type),
+                    sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
+                                      if db_field != "[item]" else (parent_relation[1],)))
+                # TODO: What is alias here???
+                # TODO: Need to inject .value SOMEWHERE...
+                current_alias = sql.Identifier(new_resolve_path)
+                current_alias_str = new_resolve_path
+            else:  # object
+                # TODO: Need to map to a schema for a relation... see alias below
+                current_relation = sql.SQL("{}_to_record({})").format(
+                    sql.SQL(structure_type),
+                    sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
+                                      if db_field != "[item]" else (parent_relation[1],)))
+                current_alias, current_alias_str = json_schema_to_postgres_schema(new_resolve_path, schema)
+
+        elif structure_type == "array" and schema["type"] == "array":  # Postgres array
+            current_relation = sql.SQL("unnest({}.{})").format(parent_relation[1], sql.Identifier(db_field))
+
+            # TODO: What are these?
+            current_alias = sql.Identifier(new_resolve_path)
+            current_alias_str = new_resolve_path
+
+        else:
+            raise ValueError("Structure type / schema type mismatch: {} / {}".format(structure_type, schema["type"]))
+
+    elif current_relation is not None:
+        current_relation = sql.Identifier(current_relation)
+        current_alias = sql.Identifier(new_resolve_path)
+        current_alias_str = new_resolve_path
+
+    relations = OptionalComposablePair(parent_relation[0] if parent_relation is not None else None, current_relation)
+
+    # Parent, Current
+    aliases = OptionalComposablePair(parent=sql.Identifier(resolve_path) if resolve_path is not None else None,
+                                     current=current_alias)
+    # TODO: May need to add a table mapping to this alias if we're inferring a schema from JSON objects
 
     key_link = None
-
-    search_properties = schema.get("search", {})
-
-    if schema["type"] not in ("array", "object"):
-        if len(resolve) > 1:
-            raise TypeError("Cannot get property of literal")
-        return JoinAndSelectData(relations=relations, aliases=aliases, key_link=key_link, field_alias=(
-            schema.get("search", {})
-                  .get("database", {})
-                  .get("field", resolve[0].value if resolve[0].value != "$root" else None)
-        ), search_properties=search_properties),
-
-    if schema.get("search", {}).get("database", {}).get("relationship", None) is not None:
-        relationship = schema["search"]["database"]["relationship"]
+    if "relationship" in search_database_properties:
+        relationship = search_database_properties["relationship"]
         relationship_type = relationship["type"]
         if relationship_type == "MANY_TO_ONE":
             key_link = (relationship["foreign_key"], schema["search"]["database"]["primary_key"])
@@ -73,30 +185,32 @@ def collect_resolve_join_tables(
         else:
             raise SyntaxError("Invalid relationship type: {}".format(relationship_type))
 
-    join_table_data = JoinAndSelectData(relations=relations, aliases=aliases, key_link=key_link, field_alias=None,
-                                        search_properties=search_properties)
-
-    if schema["type"] == "array":
-        if len(resolve) == 1:  # End result is array
-            return join_table_data,  # Return single tuple of relation
-
-        elif resolve[1].value != "[item]":
-            raise TypeError("Cannot get property of array in #resolve")
-
-        else:
-            return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["items"],
-                                                                    (relations[1], aliases[1]), aliases[1])
-
-    # Otherwise, type is object
+    join_table_data = JoinAndSelectData(relations=relations, aliases=aliases, current_alias_str=current_alias_str,
+                                        key_link=key_link, field_alias=db_field, search_properties=search_properties,
+                                        unresolved=resolve[1:])
 
     if len(resolve) == 1:
-        return join_table_data,
+        # We're at the end of the resolve list
+        return join_table_data,  # Return single tuple of relation
 
-    try:
-        return (join_table_data,) + collect_resolve_join_tables(resolve[1:], schema["properties"][resolve[1].value],
-                                                                (relations[1], aliases[1]), aliases[1])
-    except KeyError:
-        raise ValueError("Property {} not found in object".format(resolve[1]))
+    if schema["type"] not in ("array", "object"):
+        # Primitive type, len(resolve) > 1
+        # TODO: Handle invalid schema types?
+        raise TypeError("Cannot get property of primitive")
+
+    if schema["type"] == "array" and resolve[1].value != "[item]":
+        raise TypeError("Cannot get property of array in #resolve")
+    elif schema["type"] == "object":  # Object
+        if "properties" not in schema:
+            raise SyntaxError("Searchable objects in schemas must have all properties described")
+        if resolve[1].value not in schema["properties"]:
+            raise ValueError("Property {} not found in object".format(resolve[1]))
+
+    return (join_table_data,) + collect_resolve_join_tables(
+        resolve=resolve[1:],
+        schema=schema["items"] if schema["type"] == "array" else schema["properties"][resolve[1].value],
+        parent_relation=(relations.current, aliases.current),
+        resolve_path=new_resolve_path if current_relation is not None else None)
 
 
 def collect_join_tables(ast: AST, terms: tuple, schema: dict) -> Tuple[JoinAndSelectData, ...]:
@@ -104,8 +218,15 @@ def collect_join_tables(ast: AST, terms: tuple, schema: dict) -> Tuple[JoinAndSe
         return terms
 
     if ast.fn == FUNCTION_RESOLVE:
-        return terms + tuple(t for t in collect_resolve_join_tables([Literal("$root"), *ast.args], schema)
-                             if t not in terms)
+        terms = list(terms)
+        collected_joins = collect_resolve_join_tables((Literal("$root"), *ast.args), schema)
+
+        for j in collected_joins:
+            existing_aliases = set(t.current_alias_str for t in terms if t is not None)
+            if j.current_alias_str is not None and j.current_alias_str not in existing_aliases:
+                terms.append(j)
+
+        return tuple(terms)
 
     new_terms = terms
 
@@ -118,18 +239,24 @@ def collect_join_tables(ast: AST, terms: tuple, schema: dict) -> Tuple[JoinAndSe
 def join_fragment(ast: AST, schema: dict) -> sql.Composable:
     terms = collect_join_tables(ast, (), schema)
     if len(terms) == 0:
-        return sql.SQL("")
+        # TODO: Don't hard-code _root?
+        return sql.SQL("(SELECT NULL) AS {}").format(sql.Identifier("_root"))
 
-    return sql.SQL(" LEFT JOIN ").join(
-        [sql.SQL("{} AS {}").format(sql.Identifier(terms[0].relations[1]), sql.Identifier(terms[0].aliases[1]))] +
-        [sql.SQL("{r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}").format(
-            r1=sql.Identifier(term.relations[1]),
-            a0=sql.Identifier(term.aliases[0]),
-            a1=sql.Identifier(term.aliases[1]),
-            f0=sql.Identifier(term.key_link[0]),
-            f1=sql.Identifier(term.key_link[1])
-        ) for term in terms[1:] if term.key_link is not None]  # Exclude terms without key-links
-    )
+    # TODO: Use comma instead of left join if we're dealing with JSON/Array-expanded fields
+    return sql.SQL(", ").join((
+        sql.SQL(" LEFT JOIN ").join((
+            sql.SQL("{} AS {}").format(terms[0].relations.current, terms[0].aliases.current),
+            *(sql.SQL("{r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}").format(
+                r1=term.relations.current,
+                a0=term.aliases.parent,
+                a1=term.aliases.current,
+                f0=sql.Identifier(term.key_link[0]),
+                f1=sql.Identifier(term.key_link[1])
+            ) for term in terms[1:] if term.key_link is not None),  # Exclude terms without key-links
+        )),
+        *(sql.SQL("{r1} AS {a1}").format(r1=term.relations.current, a1=term.aliases.current)
+          for term in terms[1:] if term.key_link is None and term.relations.current is not None),
+    ))
 
 
 def search_ast_to_psycopg2_expr(ast: AST, params: tuple, schema: dict, internal: bool = False) \
@@ -146,6 +273,7 @@ def search_query_to_psycopg2_sql(query, schema: dict, internal: bool = False) ->
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
     ast = convert_query_to_ast_and_preprocess(query)
     sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema, internal)
+    # print(query, sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj))
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
     return sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj), params
 
@@ -178,21 +306,21 @@ def _wildcard(args: List[AST], params: tuple, _schema: dict, _internal: bool = F
 
 
 def get_relation(resolve: List[Literal], schema: dict):
-    aliases = collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].aliases
-    return aliases[1] if aliases[1] is not None else aliases[0]
+    aliases = collect_resolve_join_tables((Literal("$root"), *resolve), schema)[-1].aliases
+    return aliases.current if aliases.current is not None else aliases.parent
 
 
 def get_field(resolve: List[Literal], schema: dict) -> Optional[str]:
-    return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].field_alias
+    return collect_resolve_join_tables((Literal("$root"), *resolve), schema)[-1].field_alias
 
 
 def get_search_properties(resolve: List[Literal], schema: dict) -> dict:
-    return collect_resolve_join_tables([Literal("$root"), *resolve], schema)[-1].search_properties
+    return collect_resolve_join_tables((Literal("$root"), *resolve), schema)[-1].search_properties
 
 
 def _resolve(args: List[AST], params: tuple, schema: dict, _internal: bool = False) -> SQLComposableWithParams:
     f_id = get_field(args, schema)
-    return sql.SQL("{}.{}").format(sql.Identifier(get_relation(args, schema)),
+    return sql.SQL("{}.{}").format(get_relation(args, schema),
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
