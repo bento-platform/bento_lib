@@ -179,7 +179,7 @@ def collect_resolve_join_tables(
         relationship = search_database_properties["relationship"]
         relationship_type = relationship["type"]
         if relationship_type == "MANY_TO_ONE":
-            key_link = (relationship["foreign_key"], schema["search"]["database"]["primary_key"])
+            key_link = (relationship["foreign_key"], search_database_properties["primary_key"])
         elif relationship_type in ("MANY_TO_MANY", "ONE_TO_MANY"):
             key_link = (relationship["parent_primary_key"], relationship["parent_foreign_key"])
         else:
