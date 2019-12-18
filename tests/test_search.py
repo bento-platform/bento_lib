@@ -267,6 +267,10 @@ TEST_INVALID_SCHEMA = {
                     "relation": "patients_individual"
                 }
             }
+        },
+        "bad_array": {
+            "type": "array",
+            "items": {"type": "string"}
         }
     },
     "search": {
@@ -274,6 +278,13 @@ TEST_INVALID_SCHEMA = {
             "relation": "patients_phenopacket",
             "primary_key": "phenopacket_id"
         }
+    }
+}
+
+TEST_INVALID_SCHEMA_2 = {
+    "type": "array",
+    "items": {
+        "type": "string"
     }
 }
 
@@ -570,8 +581,14 @@ def test_postgres():
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(TEST_EXPR_8, TEST_INVALID_SCHEMA)
 
+    with raises(ValueError):
+        postgres.search_query_to_psycopg2_sql(["#resolve", "bad_array", "[item]"], TEST_INVALID_SCHEMA)
+
+    with raises(SyntaxError):
+        postgres.search_query_to_psycopg2_sql(["#resolve", "[item]"], TEST_INVALID_SCHEMA_2)
+
     for e, i, p in PG_VALID_QUERIES:
-        q, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
+        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
         assert params == p
 
     for e, i, _v in DS_VALID_EXPRESSIONS:
