@@ -2,8 +2,16 @@ import os
 
 from flask import request
 from functools import wraps
+from typing import Union
 
 from ..responses.flask_errors import flask_forbidden_error
+
+
+__all__ = [
+    "flask_permissions",
+    "flask_permissions_any_user",
+    "flask_permissions_owner",
+]
 
 
 # TODO: Centralize this
@@ -11,23 +19,22 @@ from ..responses.flask_errors import flask_forbidden_error
 CHORD_DEBUG = os.environ.get("CHORD_DEBUG", "True") == "True"
 
 
-def _check_roles(headers, roles):
-    return CHORD_DEBUG or len(roles) == 0 or all(("X-User" in headers, headers.get("X-User-Role", "") in roles))
+def _check_roles(headers, roles: Union[set, dict]):
+    method_roles = roles if not isinstance(roles, dict) else roles.get(request.method, set())
+    return CHORD_DEBUG or len(method_roles) == 0 or all(("X-User" in headers,
+                                                         headers.get("X-User-Role", "") in method_roles))
 
 
-def flask_permissions_any_user(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not _check_roles(request.headers, {"user", "owner"}):
-            return flask_forbidden_error()
-        return func(*args, **kwargs)
-    return wrapper
+def flask_permissions(method_roles):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not _check_roles(request.headers, method_roles):
+                return flask_forbidden_error()
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
-def flask_permissions_owner(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not _check_roles(request.headers, {"owner"}):
-            return flask_forbidden_error()
-        return func(*args, **kwargs)
-    return wrapper
+flask_permissions_any_user = flask_permissions({"user", "owner"})
+flask_permissions_owner = flask_permissions({"owner"})
