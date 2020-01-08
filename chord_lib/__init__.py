@@ -1,5 +1,6 @@
 from pkg_resources import get_distribution
 
+from . import auth
 from . import events
 from . import ingestion
 from . import schemas
@@ -9,4 +10,4 @@ from . import workflows
 
 name = "chord_lib"
 __version__ = get_distribution(name).version
-__all__ = ["__version__", "events", "ingestion", "schemas", "search", "utils", "workflows"]
+__all__ = ["__version__", "auth", "events", "ingestion", "schemas", "search", "utils", "workflows"]
