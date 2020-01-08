@@ -7,7 +7,8 @@ from ..responses.flask_errors import flask_forbidden_error
 
 
 # TODO: Centralize this
-CHORD_DEBUG = os.environ.get("CHORD_DEBUG", "True")
+# TODO: Separate permissions check flag from debug flag?
+CHORD_DEBUG = os.environ.get("CHORD_DEBUG", "True") == "True"
 
 
 def _check_roles(headers, roles):
