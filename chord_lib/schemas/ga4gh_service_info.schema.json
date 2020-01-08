@@ -1,0 +1,32 @@
+{
+  "$id": "https://raw.githubusercontent.com/c3g/chord_lib/master/chord_lib/schemas/ga4gh_service_info.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string"},
+    "name": {"type": "string"},
+    "type": {"type": "string"},
+    "description": {"type": "string"},
+    "organization": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "url": {"type": "string"}
+      },
+      "required": ["name", "url"]
+    },
+    "contactUrl": {"type": "string"},
+    "documentationUrl": {"type": "string"},
+    "createdAt": {"type": "string"},
+    "updatedAt": {"type": "string"},
+    "environment": {"type": "string"},
+    "version": {"type": "string"}
+  },
+  "required": [
+    "id",
+    "name",
+    "type",
+    "organization",
+    "version"
+  ]
+}

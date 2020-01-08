@@ -1,0 +1,77 @@
+{
+  "$id": "https://raw.githubusercontent.com/c3g/chord_lib/master/chord_lib/schemas/chord_data_use.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CHORD Data Use File",
+  "description": "Schema defining data usage conditions from the GA4GH DUO ontology.",
+  "type": "object",
+  "properties": {
+    "consent_code": {
+      "type": "object",
+      "properties": {
+        "primary_category": {
+          "$ref": "#/definitions/cc_primary_category"
+        },
+        "secondary_categories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cc_secondary_category"
+          }
+        }
+      },
+      "required": ["primary_category", "secondary_categories"],
+      "additionalProperties": false
+    },
+    "data_use_requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/data_use_requirement"
+      }
+    }
+  },
+  "required": ["consent_code", "data_use_requirements"],
+  "additionalProperties": false,
+  "definitions": {
+    "cc_primary_category": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["GRU", "GRU-CC", "HMB", "HMB-CC", "DS", "DS-CC", "POA", "NRES"]
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": ["code"],
+      "additionalProperties": false
+    },
+    "cc_secondary_category": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["GSO", "NGMR", "RS", "RU"]
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": ["code"],
+      "additionalProperties": false
+    },
+    "data_use_requirement": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["COL", "IRB", "GS", "IS", "NPU", "PS", "MOR", "PUB", "RTN", "TS", "US"]
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": ["code"],
+      "additionalProperties": false
+    }
+  }
+}
