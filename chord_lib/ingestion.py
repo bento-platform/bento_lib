@@ -34,13 +34,11 @@ WORKFLOW_TYPE_STRING_ARRAY = array_of_type("string")
 WORKFLOW_TYPE_ENUM = "enum"
 WORKFLOW_TYPE_ENUM_ARRAY = array_of_type("enum")
 
+WORKFLOW_FILE_TYPES = {WORKFLOW_TYPE_FILE, WORKFLOW_TYPE_FILE_ARRAY}
 
-def file_with_prefix(file_path: str, prefix: Optional[int]) -> str:
-    if prefix is None:
-        return file_path
 
-    file_parts = os.path.splitext(file_path)
-    return "".join(("{}_{}".format(prefix, file_parts[0]), file_parts[1]))
+def file_with_prefix(file_name: str, prefix: Optional[int]) -> str:
+    return f"{prefix}_{file_name}" if prefix is not None else file_name
 
 
 def _output_file_name(file_name, output_params):
@@ -73,14 +71,14 @@ def formatted_output(output: dict, output_params: dict):
 
 
 def namespaced_input(workflow_name: str, input_id: str) -> str:
-    return "{}.{}".format(workflow_name, input_id)
+    return f"{workflow_name}.{input_id}"
 
 
 def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs: list):
     output_params = {}
 
     for i, input_spec in enumerate(workflow_inputs):
-        if input_spec["type"] in (WORKFLOW_TYPE_FILE, WORKFLOW_TYPE_FILE_ARRAY):
+        if input_spec["type"] in WORKFLOW_FILE_TYPES:
             # TODO: DOCS: Just file name without path...
             # TODO: Separate params for full path / path without drop_box stuff?
 
@@ -99,10 +97,9 @@ def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs:
     return output_params
 
 
-def get_file_paths_from_output(base_path, output, output_params, prefix=None):
+def _get_file_paths_from_output(base_path, output, output_params, prefix=None):
     fo = formatted_output(output, output_params)
-    return [os.path.join(base_path, file_with_prefix(fo, prefix))] if not isinstance(fo, list) \
-        else [os.path.join(base_path, file_with_prefix(f, prefix)) for f in fo]
+    return (os.path.join(base_path, file_with_prefix(f, prefix)) for f in (fo if isinstance(fo, list) else [fo]))
 
 
 def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: dict) -> Optional[int]:
@@ -118,10 +115,10 @@ def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: d
                 break
 
             # It only makes sense to deal with file outputs TODO: IS THIS TRUE?
-            if output["type"] not in (WORKFLOW_TYPE_FILE, WORKFLOW_TYPE_FILE_ARRAY):
+            if output["type"] not in WORKFLOW_FILE_TYPES:
                 continue
 
-            for file_path in get_file_paths_from_output(base_path, output, output_params, prefix):
+            for file_path in _get_file_paths_from_output(base_path, output, output_params, prefix):
                 duplicate_exists = duplicate_exists or os.path.exists(file_path)
 
         if duplicate_exists:
