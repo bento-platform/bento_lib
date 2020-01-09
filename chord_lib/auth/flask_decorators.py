@@ -5,6 +5,7 @@ from functools import wraps
 from typing import Union
 
 from ..responses.flask_errors import flask_forbidden_error
+from .roles import *
 
 
 __all__ = [
@@ -36,5 +37,5 @@ def flask_permissions(method_roles):
     return decorator
 
 
-flask_permissions_any_user = flask_permissions({"user", "owner"})
-flask_permissions_owner = flask_permissions({"owner"})
+flask_permissions_any_user = flask_permissions({ROLE_USER, ROLE_OWNER})
+flask_permissions_owner = flask_permissions({ROLE_OWNER})
