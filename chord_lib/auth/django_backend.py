@@ -2,6 +2,9 @@ from django.contrib.auth.backends import RemoteUserBackend
 from .roles import *
 
 
+__all__ = ["CHORDRemoteUserBackend"]
+
+
 class CHORDRemoteUserBackend(RemoteUserBackend):
     header = "HTTP_X_USER"
 
