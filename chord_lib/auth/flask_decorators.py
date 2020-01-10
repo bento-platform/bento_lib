@@ -17,7 +17,7 @@ __all__ = [
 
 # TODO: Centralize this
 # TODO: Separate permissions check flag from debug flag?
-CHORD_DEBUG = os.environ.get("CHORD_DEBUG", "True") == "True"
+CHORD_DEBUG = os.environ.get("CHORD_DEBUG", "true").lower() == "true"
 
 
 def _check_roles(headers, roles: Union[set, dict]):
