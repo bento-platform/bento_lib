@@ -13,7 +13,7 @@ setuptools.setup(
     install_requires=["jsonschema>=3.1.1,<4", "psycopg2-binary>=2.7,<3.0", "redis>=3.3,<4.0", "Werkzeug>=0.16.0,<1.0"],
     extras_require={
         "flask": ["Flask>=1.1,<2.0"],
-        "django": ["Django>=2.2,<3.0"]
+        "django": ["Django>=2.2,<3.0", "djangorestframework>=3.10,<3.11"]
     },
 
     author="David Lougheed",

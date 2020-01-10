@@ -1,16 +1,25 @@
 from django.contrib.auth.backends import RemoteUserBackend
 from django.contrib.auth.middleware import RemoteUserMiddleware
+from rest_framework.authentication import RemoteUserAuthentication
 from .roles import *
 
 
 __all__ = [
+    "CHORDRemoteUserAuthentication",
     "CHORDRemoteUserBackend",
     "CHORDRemoteUserMiddleware",
 ]
 
 
+USER_HEADER = "HTTP_X_USER"
+
+
+class CHORDRemoteUserAuthentication(RemoteUserAuthentication):
+    header = USER_HEADER
+
+
 class CHORDRemoteUserMiddleware(RemoteUserMiddleware):
-    header = "HTTP_X_USER"
+    header = USER_HEADER
 
 
 class CHORDRemoteUserBackend(RemoteUserBackend):
