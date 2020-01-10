@@ -6,11 +6,11 @@ django.setup()
 
 
 def test_remote_auth_backend():
-    import chord_lib.auth.django_backend
+    import chord_lib.auth.django_remote_user
     from django.contrib.auth.models import User
     from django.http.request import HttpRequest
 
-    b = chord_lib.auth.django_backend.CHORDRemoteUserBackend()
+    b = chord_lib.auth.django_remote_user.CHORDRemoteUserBackend()
     r = HttpRequest()
     r.META = {
         "HTTP_X_USER": "test",
