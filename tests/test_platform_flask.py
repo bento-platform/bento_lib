@@ -28,8 +28,8 @@ def flask_client():
 
 
 def test_flask_forbidden_error(flask_client):
-    # Turn debug mode off to make sure we're getting real permissions checks
-    fd.CHORD_DEBUG = False
+    # Turn CHORD permissions mode on to make sure we're getting real permissions checks
+    fd.CHORD_PERMISSIONS = True
 
     # /test1
 
