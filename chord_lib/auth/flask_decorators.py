@@ -20,13 +20,8 @@ CHORD_DEBUG = os.environ.get("CHORD_DEBUG", "true").lower() == "true"
 CHORD_PERMISSIONS = os.environ.get("CHORD_PERMISSIONS", str(not CHORD_DEBUG)).lower() == "true"
 
 
-print("CHORD_DEBUG =", CHORD_DEBUG)
-print("CHORD_PERMISSIONS =", CHORD_PERMISSIONS)
-
-
 def _check_roles(headers, roles: Union[set, dict]):
     method_roles = roles if not isinstance(roles, dict) else roles.get(request.method, set())
-    print(headers)
     return not CHORD_PERMISSIONS or len(method_roles) == 0 or all(("X-User" in headers,
                                                                    headers.get("X-User-Role", "") in method_roles))
 
