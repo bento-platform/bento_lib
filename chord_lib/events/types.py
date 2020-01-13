@@ -1,7 +1,15 @@
 EVENT_WES_RUN_UPDATED = "wes_run_updated"
 EVENT_WES_RUN_UPDATED_SCHEMA = {
     "type": "object",
-    # TODO
+    "properties": {
+        "run_id": {"type": "string"},
+        "request": {"type": "object"},  # TODO
+        "state": {"type": "string"},  # TODO: Enum
+        "run_log": {"type": "object"},  # TODO
+        "task_logs": {"type": "array"},  # TODO
+        "outputs": {"type": "object"},  # TODO
+    },
+    # TODO: deduplicate this schema
 }
 
 EVENT_WES_RUN_FINISHED = "wes_run_finished"
