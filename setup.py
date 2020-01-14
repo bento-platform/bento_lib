@@ -26,7 +26,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
 
-    url="TODO",
+    url="https://github.com/c3g/chord_lib",
     license="LGPLv3",
     classifiers=[
         "Programming Language :: Python :: 3",
