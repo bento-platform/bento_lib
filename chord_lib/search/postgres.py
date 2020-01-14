@@ -136,26 +136,20 @@ def collect_resolve_join_tables(
         structure_type = search_database_properties.get("type", None)
         if structure_type in ("json", "jsonb"):
             if schema["type"] == "array":  # JSON(B) array or object
-                current_relation = sql.SQL("{}_array_elements({})").format(
-                    sql.SQL(structure_type),
-                    sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
-                                      if db_field != "[item]" else (parent_relation[1],)))
-                # TODO: What is alias here???
-                # TODO: Need to inject .value SOMEWHERE...
+                relation_template = "{}_array_elements({})"
                 current_alias = sql.Identifier(new_resolve_path)
                 current_alias_str = new_resolve_path
             else:  # object
-                # TODO: Need to map to a schema for a relation... see alias below
-                current_relation = sql.SQL("{}_to_record({})").format(
-                    sql.SQL(structure_type),
-                    sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
-                                      if db_field != "[item]" else (parent_relation[1],)))
+                relation_template = "{}_to_record({})"
                 current_alias, current_alias_str = json_schema_to_postgres_schema(new_resolve_path, schema)
+
+            current_relation = sql.SQL(relation_template).format(
+                sql.SQL(structure_type),
+                sql.SQL(".").join((parent_relation[1], sql.Identifier(db_field))
+                                  if db_field != "[item]" else (parent_relation[1],)))
 
         elif structure_type == "array" and schema["type"] == "array":  # Postgres array
             current_relation = sql.SQL("unnest({}.{})").format(parent_relation[1], sql.Identifier(db_field))
-
-            # TODO: What are these?
             current_alias = sql.Identifier(new_resolve_path)
             current_alias_str = new_resolve_path
 
@@ -172,7 +166,6 @@ def collect_resolve_join_tables(
     # Parent, Current
     aliases = OptionalComposablePair(parent=sql.Identifier(resolve_path) if resolve_path is not None else None,
                                      current=current_alias)
-    # TODO: May need to add a table mapping to this alias if we're inferring a schema from JSON objects
 
     key_link = None
     if "relationship" in search_database_properties:
@@ -242,7 +235,6 @@ def join_fragment(ast: AST, schema: dict) -> sql.Composable:
         # TODO: Don't hard-code _root?
         return sql.SQL("(SELECT NULL) AS {}").format(sql.Identifier("_root"))
 
-    # TODO: Use comma instead of left join if we're dealing with JSON/Array-expanded fields
     return sql.SQL(", ").join((
         sql.SQL(" LEFT JOIN ").join((
             sql.SQL("{} AS {}").format(terms[0].relations.current, terms[0].aliases.current),
@@ -273,7 +265,6 @@ def search_query_to_psycopg2_sql(query, schema: dict, internal: bool = False) ->
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
     ast = convert_query_to_ast_and_preprocess(query)
     sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema, internal)
-    # print(query, sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj))
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
     return sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj), params
 
