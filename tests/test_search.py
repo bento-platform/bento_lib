@@ -86,7 +86,7 @@ TEST_SCHEMA = {
                             "database": {
                                 "relation": "patients_biosample_tumor_grades",
                                 "relationship": {
-                                    "type": "MANY_TO_MANY",
+                                    "type": "ONE_TO_MANY",
                                     "parent_foreign_key": "biosample_id",
                                     "parent_primary_key": "biosample_id"
                                 }
@@ -164,7 +164,7 @@ TEST_SCHEMA = {
                 "database": {
                     "relation": "patients_phenopacket_biosamples",
                     "relationship": {
-                        "type": "MANY_TO_MANY",
+                        "type": "ONE_TO_MANY",
                         "parent_foreign_key": "phenopacket_id",
                         "parent_primary_key": "phenopacket_id"
                     }
