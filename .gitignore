@@ -2,6 +2,9 @@
 .idea/dataSources*
 .coverage
 .pytest_cache
+build
+dist
 htmlcov
 env
 __pycache__
+*.egg-info
