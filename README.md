@@ -2,6 +2,7 @@
 
 ![Build Status](https://api.travis-ci.org/c3g/chord_lib.svg?branch=master)
 [![codecov](https://codecov.io/gh/c3g/chord_lib/branch/master/graph/badge.svg)](https://codecov.io/gh/c3g/chord_lib)
+[![PyPI version](https://badge.fury.io/py/chord-lib.svg)](https://badge.fury.io/py/chord-lib)
 
 Common utilities and helpers for CHORD services.
 
