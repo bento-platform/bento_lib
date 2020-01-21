@@ -3,6 +3,6 @@ pull_request_rules:
     conditions:
       - base=master
       - head!=develop
-    action:
+    actions:
       close:
         message: Please merge into develop
