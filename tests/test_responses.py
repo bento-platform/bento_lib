@@ -8,9 +8,9 @@ def test_errors():
     assert e["code"] == 500  # Internal server error
     assert len(e["errors"]) == 1
 
-    e = responses.errors.http_error(200)
+    e = responses.errors.http_error(200, "test")
     assert e["code"] == 500  # Internal server error
-    assert len(e["errors"]) == 1
+    assert len(e["errors"]) == 2
 
     e = responses.errors.forbidden_error()
     assert len(list(e.keys())) == 3
