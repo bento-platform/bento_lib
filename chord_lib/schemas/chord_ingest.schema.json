@@ -4,14 +4,14 @@
   "description": "CHORD Ingestion Endpoint",
   "type": "object",
   "required": [
-    "dataset_id",
+    "table_id",
     "workflow_id",
     "workflow_metadata",
     "workflow_outputs",
     "workflow_params"
   ],
   "properties": {
-    "dataset_id": {"type": "string"},
+    "table_id": {"type": "string"},
     "workflow_id": {"type": "string"},
     "workflow_metadata": {
       "type": "object",
