@@ -32,5 +32,12 @@ def http_error(code: int, *errors):
 
 
 _e = partial(partial, http_error)
+
+bad_request_error = _e(400)
+unauthorized_error = _e(401)
+payment_required_error = _e(402)
 forbidden_error = _e(403)
 not_found_error = _e(404)
+
+internal_server_error = _e(500)
+not_implemented_error = _e(501)
