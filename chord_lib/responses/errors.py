@@ -3,7 +3,17 @@ from functools import partial
 from werkzeug.http import HTTP_STATUS_CODES
 
 
-__all__ = ["http_error", "forbidden_error", "not_found_error"]
+__all__ = [
+    "http_error",
+
+    "bad_request_error",
+    "unauthorized_error",
+    "forbidden_error",
+    "not_found_error",
+
+    "internal_server_error",
+    "not_implemented_error",
+]
 
 
 def _error_message(message):
@@ -35,7 +45,6 @@ _e = partial(partial, http_error)
 
 bad_request_error = _e(400)
 unauthorized_error = _e(401)
-payment_required_error = _e(402)
 forbidden_error = _e(403)
 not_found_error = _e(404)
 
