@@ -619,10 +619,7 @@ def test_postgres():
         postgres.search_query_to_psycopg2_sql(["#resolve", "[item]"], TEST_INVALID_SCHEMA_2)
 
     for e, i, p in PG_VALID_QUERIES:
-        q, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
-        from psycopg2 import connect
-        with connect("dbname=metadata user=admin password=admin host=localhost") as conn:
-            print(q.as_string(conn))
+        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
         assert params == p
 
     for e, i, _v, _ic in DS_VALID_EXPRESSIONS:
