@@ -632,11 +632,9 @@ def test_postgres():
 
 def test_data_structure_search():
     for e, i, v, ic in DS_VALID_EXPRESSIONS:
-        print(e, i, v, ic)
         assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
 
     for q, i, v in DS_VALID_QUERIES:
-        print("DS_VALID_QUERIES", q, v)
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
                                                                TEST_SCHEMA, i) == v
 
