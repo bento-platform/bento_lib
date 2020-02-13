@@ -16,6 +16,12 @@ python3 -m pytest --cov=chord_lib --cov-branch
 
 ## Modules
 
+### `auth`
+
+`auth` provides Python service decorators and Django / DRF backends for dealing
+with the CHORD container authentication headers (derived from
+`lua-resty-openidc`, set by the internal container NGINX instance.)
+
 ### `events`
 
 `events` facilitates JSON-serialized message-passing between CHORD
