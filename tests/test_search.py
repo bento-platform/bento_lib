@@ -353,6 +353,23 @@ TEST_QUERY_9 = ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:960
 TEST_QUERY_10 = ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"]
 TEST_QUERY_11 = ["#eq", ["#resolve", "biosamples", "[item]", "test_json_array", "[item]", "test"], "test_value"]
 
+# Test array item access - [item] at a certain path point should mean the same object across the whole query.
+TEST_QUERY_12 = [
+    "#and",
+    ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TEST"],
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG4"]
+]  # False with TEST_DATA_1 - different [item]s!
+TEST_QUERY_13 = [
+    "#and",
+    ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TEST"],
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
+]  # True with TEST_DATA_1 - same [item]s!
+TEST_QUERY_14 = [
+    "#or",
+    ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "DUMMY"],
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
+]  # True with TEST_DATA_1 - different [item]s but one of them is correct in both
+
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
 TEST_EXPR_3 = ["#resolve", "biosamples", "[item]", "procedure", "code", "id"]
@@ -431,14 +448,18 @@ INVALID_DATA = [{True, False}]
 
 # Expression, Internal, Result
 DS_VALID_EXPRESSIONS = (
-    (TEST_EXPR_1, False, TEST_EXPR_1),
-    (TEST_EXPR_2, False, TEST_EXPR_2),
-    (TEST_EXPR_3, False, ("TEST", "DUMMY")),
-    (TEST_EXPR_4, False, "XO"),
-    (TEST_EXPR_5, False, TEST_DATA_1),
-    (TEST_EXPR_6, False, False),
-    (TEST_EXPR_7, False, ("TG1", "TG2", "TG3", "TG4")),
-    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"]),
+    (TEST_EXPR_1, False, TEST_EXPR_1, None),
+    (TEST_EXPR_2, False, TEST_EXPR_2, None),
+    (TEST_EXPR_3, False, "TEST", {"_root.biosamples": 0}),
+    (TEST_EXPR_3, False, "DUMMY", {"_root.biosamples": 1}),
+    (TEST_EXPR_4, False, "XO", None),
+    (TEST_EXPR_5, False, TEST_DATA_1, None),
+    (TEST_EXPR_6, False, False, None),
+    (TEST_EXPR_7, False, "TG1", {"_root.biosamples": 0, "_root.biosamples.[item].tumor_grade": 0}),
+    (TEST_EXPR_7, False, "TG2", {"_root.biosamples": 0, "_root.biosamples.[item].tumor_grade": 1}),
+    (TEST_EXPR_7, False, "TG3", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 0}),
+    (TEST_EXPR_7, False, "TG4", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 1}),
+    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"], None),
 )
 
 # Query, Internal, Result
@@ -454,6 +475,9 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_9, False, True),
     (TEST_QUERY_10, False, True),
     (TEST_QUERY_11, False, True),
+    (TEST_QUERY_12, False, False),
+    (TEST_QUERY_13, False, True),
+    (TEST_QUERY_14, False, True),
 )
 
 # Query, Internal, Exception
@@ -472,8 +496,14 @@ COMMON_INVALID_EXPRESSIONS = (
 )
 
 DS_INVALID_EXPRESSIONS = (
-    *COMMON_INVALID_EXPRESSIONS,
-    (["#_wc", "v1"], False, NotImplementedError)
+    *((*i, None) for i in COMMON_INVALID_EXPRESSIONS),
+    # Missing index combinations
+    (TEST_EXPR_7, False, Exception, {"_root.biosamples": 0}),
+    (TEST_EXPR_7, False, Exception, {}),
+    (TEST_EXPR_7, False, Exception, None),
+    (["#_wc", "v1"], False, NotImplementedError, None),
+    (["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"],
+      ["#_wc", "v1"]], False, NotImplementedError, {"_root.biosamples": 0})
 )
 
 
@@ -490,6 +520,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_9, False, ("NCBITaxon:9606",)),
     (TEST_QUERY_10, False, ("test_value",)),
     (TEST_QUERY_11, False, ("test_value",)),
+    (TEST_QUERY_12, False, ("%TEST%", "TG4")),
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -588,10 +619,13 @@ def test_postgres():
         postgres.search_query_to_psycopg2_sql(["#resolve", "[item]"], TEST_INVALID_SCHEMA_2)
 
     for e, i, p in PG_VALID_QUERIES:
-        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
+        q, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
+        from psycopg2 import connect
+        with connect("dbname=metadata user=admin password=admin host=localhost") as conn:
+            print(q.as_string(conn))
         assert params == p
 
-    for e, i, _v in DS_VALID_EXPRESSIONS:
+    for e, i, _v, _ic in DS_VALID_EXPRESSIONS:
         postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
     for e, i, ex in PG_INVALID_EXPRESSIONS:
@@ -600,25 +634,27 @@ def test_postgres():
 
 
 def test_data_structure_search():
-    for e, i, v in DS_VALID_EXPRESSIONS:
-        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA) == v
+    for e, i, v, ic in DS_VALID_EXPRESSIONS:
+        print(e, i, v, ic)
+        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
 
     for q, i, v in DS_VALID_QUERIES:
+        print("DS_VALID_QUERIES", q, v)
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
                                                                TEST_SCHEMA, i) == v
 
-    for e, i, ex in DS_INVALID_EXPRESSIONS:
+    for e, i, ex, ic in DS_INVALID_EXPRESSIONS:
         with raises(ex):
-            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, i)
+            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i)
 
     # Invalid data
     with raises(ValueError):
-        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA)
+        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {})
 
 
 # noinspection PyProtectedMember
 def test_check_operation_permissions():
-    for e, i, _v in DS_VALID_EXPRESSIONS:
+    for e, i, _v, ic in DS_VALID_EXPRESSIONS:
         queries.check_operation_permissions(
             queries.convert_query_to_ast(e),
-            TEST_SCHEMA, search_getter=lambda rl, s: data_structure._resolve_with_search(rl, TEST_DATA_1, s)[1])
+            TEST_SCHEMA, search_getter=lambda rl, s: data_structure._resolve_with_properties(rl, TEST_DATA_1, s, ic)[1])
