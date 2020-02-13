@@ -1,6 +1,6 @@
 import jsonschema
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
-from typing import Callable, Dict, List, Tuple, Union, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from .queries import *
 
