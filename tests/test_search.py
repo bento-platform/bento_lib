@@ -400,17 +400,11 @@ TEST_QUERY_14 = [
     ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
 ]  # True with TEST_DATA_1 - different [item]s but one of them is correct in both
 TEST_QUERY_15 = ["#gt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]]
-TEST_QUERY_16 = [
-    "#and",
-    ["#lt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]],
-    ["#eq", ["#resolve", "test_op_2", "[item]"], 11],
-]
-TEST_QUERY_17 = [
-    "#and",
-    ["#lt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]],
-    ["#eq", ["#resolve", "test_op_1", "[item]"], 7],
-]
-TEST_QUERY_18 = ["#and", TEST_QUERY_13, TEST_QUERY_17]
+TEST_QUERY_16 = ["#lt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]]
+TEST_QUERY_17 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_2", "[item]"], 11]]
+TEST_QUERY_18 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_1", "[item]"], 7]]
+TEST_QUERY_19 = ["#and", TEST_QUERY_13, TEST_QUERY_17]
+TEST_QUERY_20 = ["#and", TEST_QUERY_13, TEST_QUERY_18]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -530,7 +524,9 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_15, False, False, 9),  # Accessing 3 elements in test_op_n array
     (TEST_QUERY_16, False, True,  9),  # "
     (TEST_QUERY_17, False, True,  9),  # "
-    (TEST_QUERY_18, False, True, 45),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
+    (TEST_QUERY_18, False, True,  9),  # "
+    (TEST_QUERY_19, False, True, 45),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
+    (TEST_QUERY_20, False, True, 45),  # "
 )
 
 # Query, Internal, Exception
@@ -578,9 +574,10 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_13, False, ("%TEST%", "TG2")),
     (TEST_QUERY_14, False, ("%DUMMY%", "TG2")),
     (TEST_QUERY_15, False, ()),
-    (TEST_QUERY_16, False, (11,)),
-    (TEST_QUERY_17, False, (7,)),
-    (TEST_QUERY_18, False, ("%TEST%", "TG2", 7)),
+    (TEST_QUERY_17, False, (11,)),
+    (TEST_QUERY_18, False, (7,)),
+    (TEST_QUERY_19, False, ("%TEST%", "TG2", 11)),
+    (TEST_QUERY_20, False, ("%TEST%", "TG2", 7)),
 )
 
 PG_INVALID_EXPRESSIONS = (
