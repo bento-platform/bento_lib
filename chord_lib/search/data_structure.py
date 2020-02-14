@@ -200,6 +200,9 @@ def _binary_op(op: BBOperator)\
                             internal: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
+        # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
+        # override it with a custom-message type error.
+
         lhs = evaluate(args[0], ds, schema, ic, internal, validate=False)
         rhs = evaluate(args[1], ds, schema, ic, internal, validate=False)
 
@@ -249,15 +252,17 @@ def _resolve_array_lengths(
 
     _resolve_checks(resolve, schema)
 
+    new_path = f"{path}.{resolve[0].value}"
+
+    # The current data structure is an array, so return its length and recurse on its (potential) child arrays.
     if resolve[0].value == "[item]":
         return (path,
                 len(resolving_ds),
-                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"],
-                                                       f"{path}.{resolve[0].value}")))
+                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path)))
 
     # Otherwise, it's an object, so keep traversing without doing anything
     return _resolve_array_lengths(resolve[1:], resolving_ds[resolve[0].value], schema["properties"][resolve[0].value],
-                                  f"{path}.{resolve[0].value}")
+                                  new_path)
 
 
 def _resolve_with_properties(
