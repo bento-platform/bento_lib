@@ -8,9 +8,8 @@ from .queries import *
 __all__ = ["check_ast_against_data_structure"]
 
 
-BaseQueryableStructure = Union[dict, list, str, int, float, bool]
-QueryableStructure = Union[BaseQueryableStructure, Tuple["QueryableStructure"]]
-BBOperator = Callable[[BaseQueryableStructure, BaseQueryableStructure], bool]
+QueryableStructure = Union[dict, list, str, int, float, bool]
+BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
 ResolveDict = Dict[str, Tuple[int, "ResolveDict"]]
 IndexCombination = Dict[str, int]
