@@ -547,25 +547,33 @@ def test_build_search_response():
     assert t >= 0
 
 
-def test_queries_and_ast():
+def test_literal_equality():
     assert queries.Literal(5) == queries.Literal(5)
     assert queries.Literal("5") == queries.Literal("5")
     assert queries.Literal(True) == queries.Literal(True)
     assert queries.Literal(1.0) == queries.Literal(1.0)
 
+
+def test_valid_function_construction():
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
         assert e.fn == f[0]
         assert str(e.args) == str(f[1:])
 
+
+def test_invalid_function_construction():
     for f in TEST_INVALID_FUNCTIONS:
         with raises(AssertionError):
             queries.Expression(fn=f[0], args=[queries.Literal(a) for a in f[1:]])
 
+
+def test_invalid_expression_syntax():
     for f in TEST_INVALID_EXPRESSION_SYNTAX:
         with raises(SyntaxError):
             queries.convert_query_to_ast(f)
 
+
+def test_invalid_literals():
     for v in TEST_INVALID_LITERALS:
         with raises(AssertionError):
             queries.Literal(value=v)
@@ -573,10 +581,14 @@ def test_queries_and_ast():
         with raises(ValueError):
             queries.convert_query_to_ast(v)
 
+
+def test_query_not_preprocessing():
     for b, a in TEST_REDUCE_NOTS:
         assert queries.convert_query_to_ast_and_preprocess(b) == \
             queries.convert_query_to_ast_and_preprocess(a)
 
+
+def test_queries_and_ast():
     for q, s in TEST_QUERY_STR:
         assert str(queries.convert_query_to_ast_and_preprocess(q)) == s
 
