@@ -17,6 +17,13 @@ IndexCombination = Dict[str, int]
 
 
 def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: dict):
+    """
+    Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
+    because (assuming the schema is correct) it allows methods to make more assumptions about the integrity of the
+    data structure while traversing it.
+    :param data_structure: The data structure to validate
+    :param schema: The JSON schema to validate the data structure against
+    """
     try:
         jsonschema.validate(data_structure, schema)
     except jsonschema.ValidationError:
@@ -24,6 +31,11 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
 
 
 def _validate_not_wc(e: Expression):
+    """
+    The #_wc expression function is a helper for converting the queries into the Postgres IR. If we encounter this
+    function in a query being evaluated against a data structure, it's meaningless and should raise an error.
+    :param e: The expression (function) to check
+    """
     if e.fn == FUNCTION_HELPER_WC:
         raise NotImplementedError("Cannot use wildcard helper here")
 
@@ -42,32 +54,60 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict,
     :return: A value (string, int, float, bool, array, or dict.)
     """
 
+    # The validate flag is used to avoid redundantly validating the integrity of child data structures
     if validate:
         _validate_data_structure_against_schema(data_structure, schema)
 
+    # A literal (e.g. <Literal value=5>) evaluates to its own value (5)
     if isinstance(ast, Literal):
         return ast.value
 
+    # Prevents the Postgres internal-only #_wc function from being used in expressions being evaluated against Python
+    # data structures. See the documentation for _validate_not_wc.
     _validate_not_wc(ast)
 
+    # Check that the current permissions (internal or not) allow us to perform the current operation on any resolved
+    # fields. Internal queries are used for joins, etc. by services, or are performed by someone with unrestricted
+    # access to the data.
+    # TODO: This could be made more granular (some people could be given access to specific objects / tables)
     check_operation_permissions(
         ast,
         schema,
         search_getter=lambda rl, s: _resolve_with_properties(rl, data_structure, s, index_combination, internal)[1],
         internal=internal)
 
+    # Evaluate the non-literal expression recursively.
     return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal)
 
 
 def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict) -> Dict[str, Tuple[int, dict]]:
+    """
+    To evaluate a query in a manner consistent with the Postgres evaluator (and facilitate richer queries), each array
+    item needs to be fixed in a particular evaluation of a query that involves array accesses. This helper function
+    collects the lengths of arrays for each different array used in the field; it does this by traversing the data
+    structure. These can be later used by _create_all_index_combinations to create all possible combinations of accesses
+    to fix them in an evaluation run.
+    :param ast: The AST-ified query
+    :param data_structure: The FULL data structure the query is being evaluated against
+    :param schema: The JSON schema of the full data structure
+    :return: A recursive dictionary with keys being array paths and values being a tuple of (length, children dict)
+    """
+
+    # Literals are not arrays (currently), so they will not have any specified lengths
     if isinstance(ast, Literal):
         return {}
 
+    # Standard validation to prevent Postgres internal-style queries from being passed in (see _validate_not_wc docs)
     _validate_not_wc(ast)
 
+    # Resolves are where the magic happens w/r/t array access. Capture any array accesses with their lengths and child
+    # array accesses and store them in the recursive dictionary.
     if ast.fn == FUNCTION_RESOLVE:
         r = _resolve_array_lengths(ast.args, data_structure, schema)
         return {r[0]: r[1:]} if r is not None else {}
+
+    # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
+    # accesses; then, store them in the recursive dictionary.
 
     array_lengths = {}
     for e in ast.args:
