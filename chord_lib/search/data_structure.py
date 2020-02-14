@@ -1,6 +1,7 @@
 import jsonschema
+from itertools import chain, product
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
 from .queries import *
 
@@ -11,8 +12,8 @@ __all__ = ["check_ast_against_data_structure"]
 QueryableStructure = Union[dict, list, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
-ResolveDict = Dict[str, Tuple[int, "ResolveDict"]]
 IndexCombination = Dict[str, int]
+ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
 
 
 def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: dict):
@@ -79,7 +80,7 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict,
     return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal)
 
 
-def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict) -> Dict[str, Tuple[int, dict]]:
+def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict) -> Iterable[ArrayLengthData]:
     """
     To evaluate a query in a manner consistent with the Postgres evaluator (and facilitate richer queries), each array
     item needs to be fixed in a particular evaluation of a query that involves array accesses. This helper function
@@ -94,42 +95,54 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
 
     # Literals are not arrays (currently), so they will not have any specified lengths
     if isinstance(ast, Literal):
-        return {}
+        return
 
     # Standard validation to prevent Postgres internal-style queries from being passed in (see _validate_not_wc docs)
     _validate_not_wc(ast)
 
     # Resolves are where the magic happens w/r/t array access. Capture any array accesses with their lengths and child
-    # array accesses and store them in the recursive dictionary.
+    # array accesses.
     if ast.fn == FUNCTION_RESOLVE:
         r = _resolve_array_lengths(ast.args, data_structure, schema)
-        return {r[0]: r[1:]} if r is not None else {}
+        if r is not None:
+            yield r
+        return
 
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
-    # accesses; then, store them in the recursive dictionary.
-
-    array_lengths = {}
-    for e in ast.args:
-        al = _collect_array_lengths(e, data_structure, schema)
-        for k, v in al.items():
-            if k not in array_lengths:
-                array_lengths[k] = v
-            else:
-                array_lengths[k] = (array_lengths[k][0], {**array_lengths[k][1], **v[1]})
-
-    return array_lengths
+    # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
+    als = list(chain.from_iterable(_collect_array_lengths(e, data_structure, schema) for e in ast.args))
+    yield from (a for a in als if not any(a[0] == a2[0] and len(a[2]) < len(a2[2]) for a2 in als))
 
 
-def _create_all_index_combinations(array_data: Dict[str, Tuple[int, Dict]], parent_template):
-    if len(array_data) == 0:
-        # Add in the finished list of indexes as the base case
-        yield parent_template
+def _dict_combine(dicts):
+    c = {}
+    for d in dicts:
+        c.update(d)
+    return c
 
-    # Otherwise, loop through and recurse
-    for c_path, c_resolve in array_data.items():
-        for i in range(c_resolve[0]):
-            item_template = {**parent_template, c_path: i}
-            yield from _create_all_index_combinations(c_resolve[1], item_template)
+
+def _create_index_combinations(array_data: ArrayLengthData, parent_template: IndexCombination) \
+        -> Iterable[IndexCombination]:
+    for i in range(array_data[1]):
+        item_template = {**parent_template, array_data[0]: i}
+
+        if len(array_data[2]) == 0:  # TODO: Don't like this logic...
+            yield item_template  # What if this is overridden elsewhere?
+            continue
+
+        # TODO: Don't like the mono-tuple-ing stuff
+        yield from _create_all_index_combinations((array_data[2][i],), item_template)
+
+
+def _create_all_index_combinations(arrays_data: Iterable[ArrayLengthData], parent_template: IndexCombination) \
+        -> Iterable[IndexCombination]:
+    # Loop through and recurse
+    combination_sets = (_create_index_combinations(array_data, parent_template) for array_data in arrays_data)
+
+    # Combine index mappings from different combination sets into a final list of array index combinations
+    # TODO: Do we need the combination superset replacement logic still?
+    #  combinations = [c for c in combinations if not any(c.items() < c2.items() for c2 in combinations)]
+    yield from map(_dict_combine, product(*combination_sets))
 
 
 # TODO: More rigorous / defined rules
@@ -148,6 +161,7 @@ def check_ast_against_data_structure(
     :return: A boolean representing whether or not the query matches the data object.
     """
 
+    # Validate data structure against JSON schema here to avoid having to repetitively do it with evaluate()
     _validate_data_structure_against_schema(data_structure, schema)
 
     # Collect all array resolves and their lengths in order to properly cross-product arrays
@@ -191,7 +205,13 @@ def _binary_op(op: BBOperator)\
     return lambda args, ds, schema, ic, internal: uncurried_binary_op(args, ds, schema, ic, internal)
 
 
-def _resolve_checks(resolve, schema):
+def _resolve_checks(resolve: List[Literal], schema: dict):
+    """
+    Performs standard checks while going through any type of "resolve"-based function (where a #resolve call is being
+    processed) to prevent access errors.
+    :param resolve: The list of resolve terms currently being processed
+    :param schema: The JSON schema of the data sub-structure currently being processed
+    """
     if schema["type"] not in ("object", "array"):
         raise TypeError("Cannot get property of literal")
 
@@ -202,27 +222,34 @@ def _resolve_checks(resolve, schema):
         raise TypeError("Cannot get property of array")
 
 
+def _get_child_resolve_array_lengths(new_resolve: List[Literal], resolving_ds: List, item_schema: dict, new_path: str) \
+        -> Iterable[ArrayLengthData]:
+    for i in range(len(resolving_ds)):
+        r = _resolve_array_lengths(new_resolve, resolving_ds[i], item_schema, new_path)
+        # Unwrap the optional
+        if r is not None:
+            yield r
+
+
 def _resolve_array_lengths(
     resolve: List[Literal],
     resolving_ds: QueryableStructure,
     schema: dict,
     path="_root",
-) -> Tuple[str, int, ResolveDict]:
+) -> Optional[ArrayLengthData]:
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
-        return (path, len(resolving_ds), {}) if schema["type"] == "array" else None
+        return (path, len(resolving_ds), ()) if schema["type"] == "array" else None
 
     _resolve_checks(resolve, schema)
 
     if resolve[0].value == "[item]":
-        resolves = {}
-        for i in range(len(resolving_ds)):
-            r = _resolve_array_lengths(resolve[1:], resolving_ds[i], schema["items"], f"{path}.{resolve[0].value}")
-            if r is not None and r[0] not in resolves:
-                resolves[r[0]] = r[1:]
+        return (path,
+                len(resolving_ds),
+                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"],
+                                                       f"{path}.{resolve[0].value}")))
 
-        return path, len(resolving_ds), resolves
-
+    # Otherwise, it's an object, so keep traversing without doing anything
     return _resolve_array_lengths(resolve[1:], resolving_ds[resolve[0].value], schema["properties"][resolve[0].value],
                                   f"{path}.{resolve[0].value}")
 

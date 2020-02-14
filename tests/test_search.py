@@ -226,7 +226,27 @@ TEST_SCHEMA = {
                     }
                 }
             }
-        }
+        },
+        "test_op_1": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "search": {
+                    "operations": [operations.SEARCH_OP_LT, operations.SEARCH_OP_GT],
+                    "queryable": "all"
+                },
+            },
+        },
+        "test_op_2": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "search": {
+                    "operations": [operations.SEARCH_OP_LT, operations.SEARCH_OP_GT],
+                    "queryable": "all"
+                },
+            },
+        },
         # TODO: Metadata (one-to-one) example
     },
     "search": {
@@ -369,6 +389,7 @@ TEST_QUERY_14 = [
     ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "DUMMY"],
     ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
 ]  # True with TEST_DATA_1 - different [item]s but one of them is correct in both
+TEST_QUERY_15 = ["#gt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -427,6 +448,8 @@ TEST_DATA_1 = {
             "label": "Homo sapiens"
         }
     },
+    "test_op_1": [5, 6, 7],
+    "test_op_2": [9, 10, 11],
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
@@ -436,7 +459,11 @@ TEST_DATA_1 = {
         },
         {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
-            "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}],
+            "tumor_grade": [
+                {"id": "TG3", "label": "TG3 LABEL"},
+                {"id": "TG4", "label": "TG4 LABEL"},
+                {"id": "TG5", "label": "TG5 LABEL"},
+            ],
             "test_postgres_array": [{"test": "test_value"}],
             "test_json_array": [{"test": "test_value"}],
         }
@@ -446,7 +473,7 @@ TEST_DATA_1 = {
 INVALID_DATA = [{True, False}]
 
 
-# Expression, Internal, Result
+# Expression, Internal, Result, Index Combination
 DS_VALID_EXPRESSIONS = (
     (TEST_EXPR_1, False, TEST_EXPR_1, None),
     (TEST_EXPR_2, False, TEST_EXPR_2, None),
@@ -459,45 +486,48 @@ DS_VALID_EXPRESSIONS = (
     (TEST_EXPR_7, False, "TG2", {"_root.biosamples": 0, "_root.biosamples.[item].tumor_grade": 1}),
     (TEST_EXPR_7, False, "TG3", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 0}),
     (TEST_EXPR_7, False, "TG4", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 1}),
+    (TEST_EXPR_7, False, "TG5", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 2}),
     (TEST_EXPR_8, False, TEST_DATA_1["biosamples"], None),
 )
 
-# Query, Internal, Result
+# Query, Internal, Result, Number of Index Combinations (against TEST_DATA_1)
 DS_VALID_QUERIES = (
-    (TEST_QUERY_1, False, True),
-    (TEST_QUERY_2, False, True),
-    (TEST_QUERY_3, False, True),
-    (TEST_QUERY_4, False, True),
-    (TEST_QUERY_5, False, False),
-    (TEST_QUERY_6, False, False),
-    (TEST_QUERY_7, True, True),
-    (TEST_QUERY_8, False, True),
-    (TEST_QUERY_9, False, True),
-    (TEST_QUERY_10, False, True),
-    (TEST_QUERY_11, False, True),
-    (TEST_QUERY_12, False, False),
-    (TEST_QUERY_13, False, True),
-    (TEST_QUERY_14, False, True),
+    (TEST_QUERY_1,  False, True,  1),  # No index accesses
+    (TEST_QUERY_2,  False, True,  2),  # Accessing 2 biosamples
+    (TEST_QUERY_3,  False, True,  2),  # "
+    (TEST_QUERY_4,  False, True,  2),  # "
+    (TEST_QUERY_5,  False, False, 2),  # "
+    (TEST_QUERY_6,  False, False, 1),  # No index accesses
+    (TEST_QUERY_7,  True,  True,  1),  # "
+    (TEST_QUERY_8,  False, True,  1),  # "
+    (TEST_QUERY_9,  False, True,  1),  # "
+    (TEST_QUERY_10, False, True,  2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
+    (TEST_QUERY_11, False, True,  2),  # Accessing 2 biosamples, each with 1 test_json_array item
+    (TEST_QUERY_12, False, False, 5),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
+    (TEST_QUERY_13, False, True,  5),  # "
+    (TEST_QUERY_14, False, True,  5),  # "
+    (TEST_QUERY_15, False, False, 9),  # Accessing 3 elements in test_op_n array
 )
 
 # Query, Internal, Exception
 COMMON_INVALID_EXPRESSIONS = (
-    (INVALID_EXPR_1, False, SyntaxError),
-    (INVALID_EXPR_2, False, SyntaxError),
-    (INVALID_EXPR_3, False, TypeError),
-    (INVALID_EXPR_4, False, ValueError),
-    (INVALID_EXPR_5, False, TypeError),
-    (INVALID_EXPR_6, False, TypeError),
-    (INVALID_EXPR_7, False, SyntaxError),
-    (INVALID_EXPR_8, False, SyntaxError),
-    (INVALID_EXPR_9, False, ValueError),
+    (INVALID_EXPR_1,  False, SyntaxError),
+    (INVALID_EXPR_2,  False, SyntaxError),
+    (INVALID_EXPR_3,  False, TypeError),
+    (INVALID_EXPR_4,  False, ValueError),
+    (INVALID_EXPR_5,  False, TypeError),
+    (INVALID_EXPR_6,  False, TypeError),
+    (INVALID_EXPR_7,  False, SyntaxError),
+    (INVALID_EXPR_8,  False, SyntaxError),
+    (INVALID_EXPR_9,  False, ValueError),
     (INVALID_EXPR_10, False, ValueError),
-    (INVALID_EXPR_11, True, ValueError),
+    (INVALID_EXPR_11, True,  ValueError),
 )
 
+# Expression, Internal, Exception Raised, Index Combination
 DS_INVALID_EXPRESSIONS = (
     *((*i, None) for i in COMMON_INVALID_EXPRESSIONS),
-    # Missing index combinations
+    # Missing index combinations:
     (TEST_EXPR_7, False, Exception, {"_root.biosamples": 0}),
     (TEST_EXPR_7, False, Exception, {}),
     (TEST_EXPR_7, False, Exception, None),
@@ -642,13 +672,19 @@ def test_postgres():
             postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
 
+# noinspection PyProtectedMember
 def test_data_structure_search():
     for e, i, v, ic in DS_VALID_EXPRESSIONS:
         assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
 
-    for q, i, v in DS_VALID_QUERIES:
+    for q, i, v, _ni in DS_VALID_QUERIES:
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
                                                                TEST_SCHEMA, i) == v
+
+    for q, i, _v, ni in DS_VALID_QUERIES:
+        als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA)
+        ics = tuple(data_structure._create_all_index_combinations(als, {}))
+        assert len(ics) == ni
 
     for e, i, ex, ic in DS_INVALID_EXPRESSIONS:
         with raises(ex):
