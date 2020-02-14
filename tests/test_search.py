@@ -660,7 +660,7 @@ def test_queries_and_ast():
             queries.convert_query_to_ast_and_preprocess(a)
 
 
-def test_postgres():
+def test_postgres_schemas():
     null_schema = postgres.json_schema_to_postgres_schema("test", {"type": "integer"})
     assert null_schema[0] is None and null_schema[1] is None
 
@@ -672,9 +672,13 @@ def test_postgres():
             }
         })[1] == f"test(test2 {p})"
 
+
+def test_postgres_collect_resolve_join_tables():
     # TODO: This is sort of artificial; does this case actually arise?
     assert postgres.collect_resolve_join_tables((), {}, None, None) == ()
 
+
+def test_postgres_invalid_schemas():
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(TEST_EXPR_4, TEST_INVALID_SCHEMA)
 
@@ -687,13 +691,19 @@ def test_postgres():
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(["#resolve", "[item]"], TEST_INVALID_SCHEMA_2)
 
+
+def test_postgres_valid_queries():
     for e, i, p in PG_VALID_QUERIES:
         _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
         assert params == p
 
+
+def test_postgres_valid_expressions():
     for e, i, _v, _ic in DS_VALID_EXPRESSIONS:
         postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
+
+def test_postgres_invalid_expressions():
     for e, i, ex in PG_INVALID_EXPRESSIONS:
         with raises(ex):
             postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
