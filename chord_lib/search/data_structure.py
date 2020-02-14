@@ -111,7 +111,13 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
     # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
     als = list(chain.from_iterable(_collect_array_lengths(e, data_structure, schema) for e in ast.args))
-    yield from (a for a in als if not any(a[0] == a2[0] and len(a[2]) < len(a2[2]) for a2 in als))
+    yield from (
+        a1 for i1, a1 in enumerate(als)
+        if not any(
+            a1[0] == a2[0] and len(a1[2]) <= len(a2[2]) and i1 < i2  # Deduplicate identical or subset items
+            for i2, a2 in enumerate(als)
+        )
+    )
 
 
 def _dict_combine(dicts):
