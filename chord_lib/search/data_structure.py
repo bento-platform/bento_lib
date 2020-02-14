@@ -122,19 +122,15 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
 
 
 def _create_all_index_combinations(array_data: Dict[str, Tuple[int, Dict]], parent_template):
-    combinations = []
-
     if len(array_data) == 0:
         # Add in the finished list of indexes as the base case
-        combinations.append(parent_template)
+        yield parent_template
 
     # Otherwise, loop through and recurse
     for c_path, c_resolve in array_data.items():
         for i in range(c_resolve[0]):
             item_template = {**parent_template, c_path: i}
-            combinations.extend(_create_all_index_combinations(c_resolve[1], item_template))
-
-    return tuple(combinations)
+            yield from _create_all_index_combinations(c_resolve[1], item_template)
 
 
 # TODO: More rigorous / defined rules
