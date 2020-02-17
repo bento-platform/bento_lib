@@ -136,6 +136,13 @@ def _dict_combine(dicts: Iterable[dict]):
 
 def _create_index_combinations(array_data: ArrayLengthData, parent_template: IndexCombination) \
         -> Iterable[IndexCombination]:
+    """
+    Creates combinations of array indices from a particular array (including children, NOT including siblings.)
+    :param array_data: Information about an array's length and its children's lengths
+    :param parent_template: A dictionary with information about the array's parent's current fixed indexed configuration
+    :return: An iterable of different combinations of fixed indices for the array and it's children (for later search)
+    """
+
     for i in range(array_data[1]):
         item_template = {**parent_template, array_data[0]: i}
 
@@ -149,10 +156,19 @@ def _create_index_combinations(array_data: ArrayLengthData, parent_template: Ind
 
 def _create_all_index_combinations(arrays_data: Iterable[ArrayLengthData], parent_template: IndexCombination) \
         -> Iterable[IndexCombination]:
+    """
+    Creates combinations of array indexes for all siblings in an iterable of arrays' length data.
+    :param arrays_data: An iterable of arrays' length data
+    :param parent_template: A dictionary with information about the arrays' parent's current fixed indexed configuration
+    :return: An iterable of different combinations of fixed indices for the arrays and their children (for later search)
+    """
+
     # Loop through and recurse
     combination_sets = (_create_index_combinations(array_data, parent_template) for array_data in arrays_data)
 
     # Combine index mappings from different combination sets into a final list of array index combinations
+    # Takes the cross product of the combination sets, since they're parallel fixations and there may be inter-item
+    # comparisons between the two sets.
     # TODO: Do we need the combination superset replacement logic still?
     #  combinations = [c for c in combinations if not any(c.items() < c2.items() for c2 in combinations)]
     yield from map(_dict_combine, product(*combination_sets))
@@ -253,6 +269,8 @@ def _resolve_array_lengths(
     schema: dict,
     path="_root",
 ) -> Optional[ArrayLengthData]:
+    # TODO: yield multiple for children instead of having child tuple?
+
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
         return (path, len(resolving_ds), ()) if schema["type"] == "array" else None
