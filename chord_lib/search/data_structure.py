@@ -257,6 +257,14 @@ _is_not_none = partial(is_not, None)
 
 def _get_child_resolve_array_lengths(new_resolve: List[Literal], resolving_ds: List, item_schema: dict, new_path: str) \
         -> Iterable[ArrayLengthData]:
+    """
+    Recursively resolve array lengths for all children of elements of an array using the _resolve_array_length function.
+    :param new_resolve: The resolve path starting after the item access of the array being processed
+    :param resolving_ds: The array data structure whose elements we're resolving child array accesses of
+    :param item_schema: The JSON schema of the array's items
+    :param new_path: The string representation of the path followed so far, including the most recent item access
+    :return: A tuple of the current array's element-wise array length data
+    """
     return filter(_is_not_none, (
         _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path)
         for array_item_ds in resolving_ds
@@ -269,6 +277,17 @@ def _resolve_array_lengths(
     schema: dict,
     path="_root",
 ) -> Optional[ArrayLengthData]:
+    """
+    Given a resolve path and a data structure, find lengths of any arrays in the current data structure and any
+    descendents it may have.
+    :param resolve: The current resolve path, where the first element is the next thing to resolve on the data structure
+    :param resolving_ds: The data structure we're resolving on
+    :param schema: A JSON schema modeling the current data structure
+    :param path: A string representation of the path followed so far, including the most recent access
+    :return: Either none (if no arrays were accessed) or a tuple of the current array's path, its length, and the
+             lengths of any child array accesses
+    """
+
     # TODO: yield multiple for children instead of having child tuple?
 
     if len(resolve) == 0:
