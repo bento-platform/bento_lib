@@ -120,7 +120,12 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
     )
 
 
-def _dict_combine(dicts):
+def _dict_combine(dicts: Iterable[dict]):
+    """
+    Utility function to combine an iterable of dictionaries into a single dictionary via d.update(d2)
+    :param dicts: Iterable of dictionaries
+    :return: A single, combined dictionary
+    """
     c = {}
     for d in dicts:
         c.update(d)
