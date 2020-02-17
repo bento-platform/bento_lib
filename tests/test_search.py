@@ -484,7 +484,7 @@ TEST_DATA_1 = {
     },
     "test_op_1": [5, 6, 7],
     "test_op_2": [9, 10, 11],
-    "test_op_3": [[1, 2, 3], [4, 5], [6, 7, 8, 9]],
+    "test_op_3": [[1, 2, 3], [4, 5], [], [6, 7, 8, 9]],
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
