@@ -16,6 +16,12 @@ python3 -m pytest --cov=chord_lib --cov-branch
 
 ## Modules
 
+### `auth`
+
+`auth` provides Python service decorators and Django / DRF backends for dealing
+with the CHORD container authentication headers (derived from
+`lua-resty-openidc`, set by the internal container NGINX instance.)
+
 ### `events`
 
 `events` facilitates JSON-serialized message-passing between CHORD
@@ -43,6 +49,24 @@ GA4GH-standardized schemas (possibly not exactly to spec.)
 
 `search` contains definitions, validators, and transformations for the query
 syntax for CHORD, as well as a transpiler to the `psycopg2` PostgreSQL IR.
+
+The query syntax for CHORD takes advantage of JSON schemas augmented with
+additional properties about the field's accessibility and, in the case of
+Postgres, how the field maps to a table column (or JSON column sub-field.)
+
+`search.data_structure` contains code for evaluating a CHORD query against a
+Python data structure.
+
+`search.operations` contains constants representing valid search operations one
+can allow against particular fields from within an augmented JSON schema.
+
+`search.postgres` contains a "transpiler" from the CHORD query syntax to the
+`psycopg2`-provided
+[intermediate representation (IR)](https://www.psycopg.org/docs/sql.html) for
+PostgreSQL, allowing safe queries against a Postgres database.
+
+`search.queries` provides definitions for the CHORD query AST and some helper
+methods for creating and processing ASTs.
 
 ### `utils`
 

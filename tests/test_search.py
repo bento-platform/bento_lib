@@ -3,6 +3,24 @@ from datetime import datetime
 from pytest import raises
 
 
+NUMBER_SEARCH = {
+    "operations": [
+        operations.SEARCH_OP_LT,
+        operations.SEARCH_OP_LE,
+        operations.SEARCH_OP_GT,
+        operations.SEARCH_OP_GE,
+        operations.SEARCH_OP_EQ,
+    ],
+    "queryable": "all"
+}
+
+JSONB_DB_SEARCH = {
+    "database": {
+        "type": "jsonb"
+    }
+}
+
+
 TEST_SCHEMA = {
     "type": "object",
     "properties": {
@@ -209,11 +227,7 @@ TEST_SCHEMA = {
                         "label": {"type": "string"}
                     },
                     "required": ["id", "label"],
-                    "search": {
-                        "database": {
-                            "type": "jsonb"
-                        }
-                    }
+                    "search": JSONB_DB_SEARCH
                 }
             },
             "search": {
@@ -226,7 +240,35 @@ TEST_SCHEMA = {
                     }
                 }
             }
-        }
+        },
+        "test_op_1": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "search": NUMBER_SEARCH,
+            },
+            "search": JSONB_DB_SEARCH
+        },
+        "test_op_2": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "search": NUMBER_SEARCH,
+            },
+            "search": JSONB_DB_SEARCH
+        },
+        "test_op_3": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "number",
+                    "search": NUMBER_SEARCH
+                },
+                "search": JSONB_DB_SEARCH
+            },
+            "search": JSONB_DB_SEARCH
+        },
         # TODO: Metadata (one-to-one) example
     },
     "search": {
@@ -353,6 +395,36 @@ TEST_QUERY_9 = ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:960
 TEST_QUERY_10 = ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"]
 TEST_QUERY_11 = ["#eq", ["#resolve", "biosamples", "[item]", "test_json_array", "[item]", "test"], "test_value"]
 
+# Test array item access - [item] at a certain path point should mean the same object across the whole query.
+TEST_QUERY_12 = [
+    "#and",
+    ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TEST"],
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG4"]
+]  # False with TEST_DATA_1 - different [item]s!
+TEST_QUERY_13 = [
+    "#and",
+    ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TEST"],
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
+]  # True with TEST_DATA_1 - same [item]s!
+TEST_QUERY_14 = [
+    "#or",
+    ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "DUMMY"],
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
+]  # True with TEST_DATA_1 - different [item]s but one of them is correct in both
+TEST_QUERY_15 = ["#gt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]]
+TEST_QUERY_16 = ["#lt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]]
+TEST_QUERY_17 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_2", "[item]"], 11]]
+TEST_QUERY_18 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_1", "[item]"], 7]]
+TEST_QUERY_19 = ["#and", TEST_QUERY_13, TEST_QUERY_17]
+TEST_QUERY_20 = ["#and", TEST_QUERY_13, TEST_QUERY_18]
+TEST_QUERY_21 = ["#eq", ["#resolve", "test_op_2", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]]
+TEST_QUERY_22 = ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]]
+TEST_QUERY_23 = [
+    "#and",
+    ["#eq", ["#resolve", "test_op_1", "[item]"], 6],
+    ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], 8]
+]
+
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
 TEST_EXPR_3 = ["#resolve", "biosamples", "[item]", "procedure", "code", "id"]
@@ -410,6 +482,9 @@ TEST_DATA_1 = {
             "label": "Homo sapiens"
         }
     },
+    "test_op_1": [5, 6, 7],
+    "test_op_2": [9, 10, 11],
+    "test_op_3": [[1, 2, 3], [4, 5], [], [6, 7, 8, 9]],
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
@@ -419,7 +494,11 @@ TEST_DATA_1 = {
         },
         {
             "procedure": {"code": {"id": "DUMMY", "label": "DUMMY LABEL"}},
-            "tumor_grade": [{"id": "TG3", "label": "TG3 LABEL"}, {"id": "TG4", "label": "TG4 LABEL"}],
+            "tumor_grade": [
+                {"id": "TG3", "label": "TG3 LABEL"},
+                {"id": "TG4", "label": "TG4 LABEL"},
+                {"id": "TG5", "label": "TG5 LABEL"},
+            ],
             "test_postgres_array": [{"test": "test_value"}],
             "test_json_array": [{"test": "test_value"}],
         }
@@ -429,67 +508,102 @@ TEST_DATA_1 = {
 INVALID_DATA = [{True, False}]
 
 
-# Expression, Internal, Result
+# Expression, Internal, Result, Index Combination
 DS_VALID_EXPRESSIONS = (
-    (TEST_EXPR_1, False, TEST_EXPR_1),
-    (TEST_EXPR_2, False, TEST_EXPR_2),
-    (TEST_EXPR_3, False, ("TEST", "DUMMY")),
-    (TEST_EXPR_4, False, "XO"),
-    (TEST_EXPR_5, False, TEST_DATA_1),
-    (TEST_EXPR_6, False, False),
-    (TEST_EXPR_7, False, ("TG1", "TG2", "TG3", "TG4")),
-    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"]),
+    (TEST_EXPR_1, False, TEST_EXPR_1, None),
+    (TEST_EXPR_2, False, TEST_EXPR_2, None),
+    (TEST_EXPR_3, False, "TEST", {"_root.biosamples": 0}),
+    (TEST_EXPR_3, False, "DUMMY", {"_root.biosamples": 1}),
+    (TEST_EXPR_4, False, "XO", None),
+    (TEST_EXPR_5, False, TEST_DATA_1, None),
+    (TEST_EXPR_6, False, False, None),
+    (TEST_EXPR_7, False, "TG1", {"_root.biosamples": 0, "_root.biosamples.[item].tumor_grade": 0}),
+    (TEST_EXPR_7, False, "TG2", {"_root.biosamples": 0, "_root.biosamples.[item].tumor_grade": 1}),
+    (TEST_EXPR_7, False, "TG3", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 0}),
+    (TEST_EXPR_7, False, "TG4", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 1}),
+    (TEST_EXPR_7, False, "TG5", {"_root.biosamples": 1, "_root.biosamples.[item].tumor_grade": 2}),
+    (TEST_EXPR_8, False, TEST_DATA_1["biosamples"], None),
 )
 
-# Query, Internal, Result
+# Query, Internal, Result, Number of Index Combinations (against TEST_DATA_1)
 DS_VALID_QUERIES = (
-    (TEST_QUERY_1, False, True),
-    (TEST_QUERY_2, False, True),
-    (TEST_QUERY_3, False, True),
-    (TEST_QUERY_4, False, True),
-    (TEST_QUERY_5, False, False),
-    (TEST_QUERY_6, False, False),
-    (TEST_QUERY_7, True, True),
-    (TEST_QUERY_8, False, True),
-    (TEST_QUERY_9, False, True),
-    (TEST_QUERY_10, False, True),
-    (TEST_QUERY_11, False, True),
+    (TEST_QUERY_1,  False, True,  1),  # No index accesses
+    (TEST_QUERY_2,  False, True,  2),  # Accessing 2 biosamples
+    (TEST_QUERY_3,  False, True,  2),  # "
+    (TEST_QUERY_4,  False, True,  2),  # "
+    (TEST_QUERY_5,  False, False, 2),  # "
+    (TEST_QUERY_6,  False, False, 1),  # No index accesses
+    (TEST_QUERY_7,  True,  True,  1),  # "
+    (TEST_QUERY_8,  False, True,  1),  # "
+    (TEST_QUERY_9,  False, True,  1),  # "
+    (TEST_QUERY_10, False, True,  2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
+    (TEST_QUERY_11, False, True,  2),  # Accessing 2 biosamples, each with 1 test_json_array item
+    (TEST_QUERY_12, False, False, 5),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
+    (TEST_QUERY_13, False, True,  5),  # "
+    (TEST_QUERY_14, False, True,  5),  # "
+    (TEST_QUERY_15, False, False, 9),  # Accessing 3 elements in test_op_n array
+    (TEST_QUERY_16, False, True,  9),  # "
+    (TEST_QUERY_17, False, True,  9),  # "
+    (TEST_QUERY_18, False, True,  9),  # "
+    (TEST_QUERY_19, False, True, 45),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
+    (TEST_QUERY_20, False, True, 45),  # "
+    (TEST_QUERY_21, False, True, 27),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
+    (TEST_QUERY_22, False, True,  9),  # Accessing 9 in test_op_3 and checking them against itself
+    (TEST_QUERY_23, False, True, 27),  # test_op_3: 9, test_op_1: 3
 )
 
 # Query, Internal, Exception
 COMMON_INVALID_EXPRESSIONS = (
-    (INVALID_EXPR_1, False, SyntaxError),
-    (INVALID_EXPR_2, False, SyntaxError),
-    (INVALID_EXPR_3, False, TypeError),
-    (INVALID_EXPR_4, False, ValueError),
-    (INVALID_EXPR_5, False, TypeError),
-    (INVALID_EXPR_6, False, TypeError),
-    (INVALID_EXPR_7, False, SyntaxError),
-    (INVALID_EXPR_8, False, SyntaxError),
-    (INVALID_EXPR_9, False, ValueError),
+    (INVALID_EXPR_1,  False, SyntaxError),
+    (INVALID_EXPR_2,  False, SyntaxError),
+    (INVALID_EXPR_3,  False, TypeError),
+    (INVALID_EXPR_4,  False, ValueError),
+    (INVALID_EXPR_5,  False, TypeError),
+    (INVALID_EXPR_6,  False, TypeError),
+    (INVALID_EXPR_7,  False, SyntaxError),
+    (INVALID_EXPR_8,  False, SyntaxError),
+    (INVALID_EXPR_9,  False, ValueError),
     (INVALID_EXPR_10, False, ValueError),
-    (INVALID_EXPR_11, True, ValueError),
+    (INVALID_EXPR_11, True,  ValueError),
 )
 
+# Expression, Internal, Exception Raised, Index Combination
 DS_INVALID_EXPRESSIONS = (
-    *COMMON_INVALID_EXPRESSIONS,
-    (["#_wc", "v1"], False, NotImplementedError)
+    *((*i, None) for i in COMMON_INVALID_EXPRESSIONS),
+    # Missing index combinations:
+    (TEST_EXPR_7, False, Exception, {"_root.biosamples": 0}),
+    (TEST_EXPR_7, False, Exception, {}),
+    (TEST_EXPR_7, False, Exception, None),
+    (["#_wc", "v1"], False, NotImplementedError, None),
+    (["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"],
+      ["#_wc", "v1"]], False, NotImplementedError, {"_root.biosamples": 0})
 )
 
 
 # Query, Internal, Parameters
 PG_VALID_QUERIES = (
-    (TEST_QUERY_1, False, ("XO",)),
-    (TEST_QUERY_2, False, ("%TE%",)),
-    (TEST_QUERY_3, False, ("XO", "%TE%")),
-    (TEST_QUERY_4, False, ("XO", "%TE%", False)),
-    (TEST_QUERY_5, False, ("XO", "%TE%", False)),
-    (TEST_QUERY_6, False, ("some_non_bool_value",)),
-    (TEST_QUERY_7, True, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
-    (TEST_QUERY_8, False, ("MALE",)),
-    (TEST_QUERY_9, False, ("NCBITaxon:9606",)),
+    (TEST_QUERY_1,  False, ("XO",)),
+    (TEST_QUERY_2,  False, ("%TE%",)),
+    (TEST_QUERY_3,  False, ("XO", "%TE%")),
+    (TEST_QUERY_4,  False, ("XO", "%TE%", False)),
+    (TEST_QUERY_5,  False, ("XO", "%TE%", False)),
+    (TEST_QUERY_6,  False, ("some_non_bool_value",)),
+    (TEST_QUERY_7,  True,  ("1ac54805-4145-4829-93e2-f362de55f28f",)),
+    (TEST_QUERY_8,  False, ("MALE",)),
+    (TEST_QUERY_9,  False, ("NCBITaxon:9606",)),
     (TEST_QUERY_10, False, ("test_value",)),
     (TEST_QUERY_11, False, ("test_value",)),
+    (TEST_QUERY_12, False, ("%TEST%", "TG4")),
+    (TEST_QUERY_13, False, ("%TEST%", "TG2")),
+    (TEST_QUERY_14, False, ("%DUMMY%", "TG2")),
+    (TEST_QUERY_15, False, ()),
+    (TEST_QUERY_17, False, (11,)),
+    (TEST_QUERY_18, False, (7,)),
+    (TEST_QUERY_19, False, ("%TEST%", "TG2", 11)),
+    (TEST_QUERY_20, False, ("%TEST%", "TG2", 7)),
+    (TEST_QUERY_21, False, ()),
+    (TEST_QUERY_22, False, ()),
+    (TEST_QUERY_23, False, (6, 8)),
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -516,25 +630,33 @@ def test_build_search_response():
     assert t >= 0
 
 
-def test_queries_and_ast():
+def test_literal_equality():
     assert queries.Literal(5) == queries.Literal(5)
     assert queries.Literal("5") == queries.Literal("5")
     assert queries.Literal(True) == queries.Literal(True)
     assert queries.Literal(1.0) == queries.Literal(1.0)
 
+
+def test_valid_function_construction():
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
         assert e.fn == f[0]
         assert str(e.args) == str(f[1:])
 
+
+def test_invalid_function_construction():
     for f in TEST_INVALID_FUNCTIONS:
         with raises(AssertionError):
             queries.Expression(fn=f[0], args=[queries.Literal(a) for a in f[1:]])
 
+
+def test_invalid_expression_syntax():
     for f in TEST_INVALID_EXPRESSION_SYNTAX:
         with raises(SyntaxError):
             queries.convert_query_to_ast(f)
 
+
+def test_invalid_literals():
     for v in TEST_INVALID_LITERALS:
         with raises(AssertionError):
             queries.Literal(value=v)
@@ -542,10 +664,14 @@ def test_queries_and_ast():
         with raises(ValueError):
             queries.convert_query_to_ast(v)
 
+
+def test_query_not_preprocessing():
     for b, a in TEST_REDUCE_NOTS:
         assert queries.convert_query_to_ast_and_preprocess(b) == \
             queries.convert_query_to_ast_and_preprocess(a)
 
+
+def test_queries_and_ast():
     for q, s in TEST_QUERY_STR:
         assert str(queries.convert_query_to_ast_and_preprocess(q)) == s
 
@@ -560,7 +686,7 @@ def test_queries_and_ast():
             queries.convert_query_to_ast_and_preprocess(a)
 
 
-def test_postgres():
+def test_postgres_schemas():
     null_schema = postgres.json_schema_to_postgres_schema("test", {"type": "integer"})
     assert null_schema[0] is None and null_schema[1] is None
 
@@ -572,9 +698,13 @@ def test_postgres():
             }
         })[1] == f"test(test2 {p})"
 
+
+def test_postgres_collect_resolve_join_tables():
     # TODO: This is sort of artificial; does this case actually arise?
     assert postgres.collect_resolve_join_tables((), {}, None, None) == ()
 
+
+def test_postgres_invalid_schemas():
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(TEST_EXPR_4, TEST_INVALID_SCHEMA)
 
@@ -587,38 +717,50 @@ def test_postgres():
     with raises(SyntaxError):
         postgres.search_query_to_psycopg2_sql(["#resolve", "[item]"], TEST_INVALID_SCHEMA_2)
 
+
+def test_postgres_valid_queries():
     for e, i, p in PG_VALID_QUERIES:
         _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
         assert params == p
 
-    for e, i, _v in DS_VALID_EXPRESSIONS:
+
+def test_postgres_valid_expressions():
+    for e, i, _v, _ic in DS_VALID_EXPRESSIONS:
         postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
+
+def test_postgres_invalid_expressions():
     for e, i, ex in PG_INVALID_EXPRESSIONS:
         with raises(ex):
             postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
 
 
+# noinspection PyProtectedMember
 def test_data_structure_search():
-    for e, i, v in DS_VALID_EXPRESSIONS:
-        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA) == v
+    for e, i, v, ic in DS_VALID_EXPRESSIONS:
+        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
 
-    for q, i, v in DS_VALID_QUERIES:
+    for q, i, v, _ni in DS_VALID_QUERIES:
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
                                                                TEST_SCHEMA, i) == v
 
-    for e, i, ex in DS_INVALID_EXPRESSIONS:
+    for q, i, _v, ni in DS_VALID_QUERIES:
+        als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA)
+        ics = tuple(data_structure._create_all_index_combinations(als, {}))
+        assert len(ics) == ni
+
+    for e, i, ex, ic in DS_INVALID_EXPRESSIONS:
         with raises(ex):
-            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, i)
+            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i)
 
     # Invalid data
     with raises(ValueError):
-        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA)
+        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {})
 
 
 # noinspection PyProtectedMember
 def test_check_operation_permissions():
-    for e, i, _v in DS_VALID_EXPRESSIONS:
+    for e, i, _v, ic in DS_VALID_EXPRESSIONS:
         queries.check_operation_permissions(
             queries.convert_query_to_ast(e),
-            TEST_SCHEMA, search_getter=lambda rl, s: data_structure._resolve_with_search(rl, TEST_DATA_1, s)[1])
+            TEST_SCHEMA, search_getter=lambda rl, s: data_structure._resolve_with_properties(rl, TEST_DATA_1, s, ic)[1])

@@ -6,10 +6,12 @@
       <w>composable</w>
       <w>dateutil</w>
       <w>djangorestframework</w>
+      <w>ified</w>
       <w>jsonschema</w>
       <w>karyotypic</w>
       <w>lougheed</w>
       <w>microservices</w>
+      <w>nginx</w>
       <w>ngmr</w>
       <w>nots</w>
       <w>nres</w>
@@ -18,6 +20,7 @@
       <w>phenopackets</w>
       <w>pmessage</w>
       <w>postgre</w>
+      <w>preprocessing</w>
       <w>pytest</w>
       <w>sapiens</w>
       <w>taxon</w>
