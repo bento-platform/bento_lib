@@ -419,6 +419,11 @@ TEST_QUERY_19 = ["#and", TEST_QUERY_13, TEST_QUERY_17]
 TEST_QUERY_20 = ["#and", TEST_QUERY_13, TEST_QUERY_18]
 TEST_QUERY_21 = ["#eq", ["#resolve", "test_op_2", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]]
 TEST_QUERY_22 = ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]]
+TEST_QUERY_23 = [
+    "#and",
+    ["#eq", ["#resolve", "test_op_1", "[item]"], 6],
+    ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], 8]
+]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -544,6 +549,7 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_20, False, True, 45),  # "
     (TEST_QUERY_21, False, True, 27),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
     (TEST_QUERY_22, False, True,  9),  # Accessing 9 in test_op_3 and checking them against itself
+    (TEST_QUERY_23, False, True, 27),  # test_op_3: 9, test_op_1: 3
 )
 
 # Query, Internal, Exception
@@ -597,6 +603,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_20, False, ("%TEST%", "TG2", 7)),
     (TEST_QUERY_21, False, ()),
     (TEST_QUERY_22, False, ()),
+    (TEST_QUERY_23, False, (6, 8)),
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -713,10 +720,7 @@ def test_postgres_invalid_schemas():
 
 def test_postgres_valid_queries():
     for e, i, p in PG_VALID_QUERIES:
-        q, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
-        from psycopg2 import connect
-        with connect("dbname=metadata user=admin password=admin host=localhost") as conn:
-            print(q.as_string(conn))
+        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
         assert params == p
 
 
