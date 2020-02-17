@@ -3,6 +3,24 @@ from datetime import datetime
 from pytest import raises
 
 
+NUMBER_SEARCH = {
+    "operations": [
+        operations.SEARCH_OP_LT,
+        operations.SEARCH_OP_LE,
+        operations.SEARCH_OP_GT,
+        operations.SEARCH_OP_GE,
+        operations.SEARCH_OP_EQ,
+    ],
+    "queryable": "all"
+}
+
+JSONB_DB_SEARCH = {
+    "database": {
+        "type": "jsonb"
+    }
+}
+
+
 TEST_SCHEMA = {
     "type": "object",
     "properties": {
@@ -209,11 +227,7 @@ TEST_SCHEMA = {
                         "label": {"type": "string"}
                     },
                     "required": ["id", "label"],
-                    "search": {
-                        "database": {
-                            "type": "jsonb"
-                        }
-                    }
+                    "search": JSONB_DB_SEARCH
                 }
             },
             "search": {
@@ -231,31 +245,29 @@ TEST_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "number",
-                "search": {
-                    "operations": [operations.SEARCH_OP_LT, operations.SEARCH_OP_GT, operations.SEARCH_OP_EQ],
-                    "queryable": "all"
-                },
+                "search": NUMBER_SEARCH,
             },
-            "search": {
-                "database": {
-                    "type": "jsonb"
-                }
-            }
+            "search": JSONB_DB_SEARCH
         },
         "test_op_2": {
             "type": "array",
             "items": {
                 "type": "number",
-                "search": {
-                    "operations": [operations.SEARCH_OP_LT, operations.SEARCH_OP_GT, operations.SEARCH_OP_EQ],
-                    "queryable": "all"
-                },
+                "search": NUMBER_SEARCH,
             },
-            "search": {
-                "database": {
-                    "type": "jsonb"
-                }
-            }
+            "search": JSONB_DB_SEARCH
+        },
+        "test_op_3": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "number",
+                    "search": NUMBER_SEARCH
+                },
+                "search": JSONB_DB_SEARCH
+            },
+            "search": JSONB_DB_SEARCH
         },
         # TODO: Metadata (one-to-one) example
     },
@@ -405,6 +417,8 @@ TEST_QUERY_17 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_2", "[item
 TEST_QUERY_18 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_1", "[item]"], 7]]
 TEST_QUERY_19 = ["#and", TEST_QUERY_13, TEST_QUERY_17]
 TEST_QUERY_20 = ["#and", TEST_QUERY_13, TEST_QUERY_18]
+TEST_QUERY_21 = ["#eq", ["#resolve", "test_op_2", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]]
+TEST_QUERY_22 = ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]]
 
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
@@ -465,6 +479,7 @@ TEST_DATA_1 = {
     },
     "test_op_1": [5, 6, 7],
     "test_op_2": [9, 10, 11],
+    "test_op_3": [[1, 2, 3], [4, 5], [6, 7, 8, 9]],
     "biosamples": [
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
@@ -527,6 +542,8 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_18, False, True,  9),  # "
     (TEST_QUERY_19, False, True, 45),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
     (TEST_QUERY_20, False, True, 45),  # "
+    (TEST_QUERY_21, False, True, 27),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
+    (TEST_QUERY_22, False, True,  9),  # Accessing 9 in test_op_3 and checking them against itself
 )
 
 # Query, Internal, Exception
@@ -559,15 +576,15 @@ DS_INVALID_EXPRESSIONS = (
 
 # Query, Internal, Parameters
 PG_VALID_QUERIES = (
-    (TEST_QUERY_1, False, ("XO",)),
-    (TEST_QUERY_2, False, ("%TE%",)),
-    (TEST_QUERY_3, False, ("XO", "%TE%")),
-    (TEST_QUERY_4, False, ("XO", "%TE%", False)),
-    (TEST_QUERY_5, False, ("XO", "%TE%", False)),
-    (TEST_QUERY_6, False, ("some_non_bool_value",)),
-    (TEST_QUERY_7, True, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
-    (TEST_QUERY_8, False, ("MALE",)),
-    (TEST_QUERY_9, False, ("NCBITaxon:9606",)),
+    (TEST_QUERY_1,  False, ("XO",)),
+    (TEST_QUERY_2,  False, ("%TE%",)),
+    (TEST_QUERY_3,  False, ("XO", "%TE%")),
+    (TEST_QUERY_4,  False, ("XO", "%TE%", False)),
+    (TEST_QUERY_5,  False, ("XO", "%TE%", False)),
+    (TEST_QUERY_6,  False, ("some_non_bool_value",)),
+    (TEST_QUERY_7,  True,  ("1ac54805-4145-4829-93e2-f362de55f28f",)),
+    (TEST_QUERY_8,  False, ("MALE",)),
+    (TEST_QUERY_9,  False, ("NCBITaxon:9606",)),
     (TEST_QUERY_10, False, ("test_value",)),
     (TEST_QUERY_11, False, ("test_value",)),
     (TEST_QUERY_12, False, ("%TEST%", "TG4")),
@@ -578,6 +595,8 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_18, False, (7,)),
     (TEST_QUERY_19, False, ("%TEST%", "TG2", 11)),
     (TEST_QUERY_20, False, ("%TEST%", "TG2", 7)),
+    (TEST_QUERY_21, False, ()),
+    (TEST_QUERY_22, False, ()),
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -694,7 +713,10 @@ def test_postgres_invalid_schemas():
 
 def test_postgres_valid_queries():
     for e, i, p in PG_VALID_QUERIES:
-        _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
+        q, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
+        from psycopg2 import connect
+        with connect("dbname=metadata user=admin password=admin host=localhost") as conn:
+            print(q.as_string(conn))
         assert params == p
 
 
