@@ -1,6 +1,7 @@
 import jsonschema
+from functools import partial
 from itertools import chain, product
-from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
+from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
 from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
 from .queries import *
@@ -201,13 +202,10 @@ def check_ast_against_data_structure(
 
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
     # Loop through all combinations of array indices to freeze "[item]"s at particular indices across the whole query.
-    for ic in index_combinations:
-        # Don't need to re-validate data structure
-        e = evaluate(ast, data_structure, schema, ic, internal, validate=False)
-        if isinstance(e, bool) and e:
-            return True
-
-    return False
+    return any((isinstance(e, bool) and e for e in (
+        evaluate(ast, data_structure, schema, ic, internal, validate=False)
+        for ic in index_combinations
+    )))
 
 
 def _binary_op(op: BBOperator)\
@@ -254,13 +252,15 @@ def _resolve_checks(resolve: List[Literal], schema: dict):
         raise TypeError("Cannot get property of array")
 
 
+_is_not_none = partial(is_not, None)
+
+
 def _get_child_resolve_array_lengths(new_resolve: List[Literal], resolving_ds: List, item_schema: dict, new_path: str) \
         -> Iterable[ArrayLengthData]:
-    for i in range(len(resolving_ds)):
-        r = _resolve_array_lengths(new_resolve, resolving_ds[i], item_schema, new_path)
-        # Unwrap the optional
-        if r is not None:
-            yield r
+    return filter(_is_not_none, (
+        _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path)
+        for array_item_ds in resolving_ds
+    ))
 
 
 def _resolve_array_lengths(
