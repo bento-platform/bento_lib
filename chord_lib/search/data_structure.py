@@ -12,6 +12,8 @@ __all__ = ["check_ast_against_data_structure"]
 QueryableStructure = Union[dict, list, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
+FunctionArgs = List[AST]
+
 IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
 
@@ -193,7 +195,7 @@ def check_ast_against_data_structure(
 
 
 def _binary_op(op: BBOperator)\
-        -> Callable[[List[AST], QueryableStructure, dict, bool, Optional[IndexCombination]], bool]:
+        -> Callable[[FunctionArgs, QueryableStructure, dict, bool, Optional[IndexCombination]], bool]:
     """
     Returns a lambda which will evaluate a boolean-returning binary operator on a pair of arguments against a
     data structure/object of some type and return a Boolean result.
@@ -201,7 +203,7 @@ def _binary_op(op: BBOperator)\
     :return: Operator lambda for use in evaluating expressions.
     """
 
-    def uncurried_binary_op(args: List[AST], ds: QueryableStructure, schema: dict, ic: Optional[IndexCombination],
+    def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: dict, ic: Optional[IndexCombination],
                             internal: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
@@ -310,7 +312,7 @@ def _resolve_with_properties(
 
 
 def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict,
-             index_combination: Optional[Dict[str, int]], internal: bool = False):
+             index_combination: Optional[IndexCombination], internal: bool = False):
     """
     Does the same thing as _resolve_with_properties, but discards the search properties.
     """
@@ -319,7 +321,7 @@ def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: d
 
 QUERY_CHECK_SWITCH: Dict[
     FunctionName,
-    Callable[[List[AST], QueryableStructure, dict, bool, Optional[IndexCombination]], QueryableStructure]
+    Callable[[FunctionArgs, QueryableStructure, dict, bool, Optional[IndexCombination]], QueryableStructure]
 ] = {
     FUNCTION_AND: _binary_op(and_),
     FUNCTION_OR: _binary_op(or_),
