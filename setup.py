@@ -10,7 +10,7 @@ setuptools.setup(
     version="0.3.0",
 
     python_requires=">=3.6",
-    install_requires=["jsonschema>=3.2.0,<4", "psycopg2-binary>=2.7,<3.0", "redis>=3.3,<4.0", "Werkzeug>=1.0,<2.0"],
+    install_requires=["jsonschema>=3.2.0,<4", "psycopg2-binary>=2.7,<3.0", "redis>=3.4.1,<4.0", "Werkzeug>=1.0,<2.0"],
     extras_require={
         "flask": ["Flask>=1.1,<2.0"],
         "django": ["Django>=2.2,<3.0", "djangorestframework>=3.10,<3.11"]
