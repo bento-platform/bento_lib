@@ -118,6 +118,8 @@ AST = Union["Expression", "Literal"]
 
 
 class Expression:
+    type = "e"
+
     def __init__(self, fn: str, args: List[AST]):
         assert fn in VALID_FUNCTIONS
         self.fn = fn
@@ -138,6 +140,8 @@ class Expression:
 
 
 class Literal:
+    type = "l"
+
     def __init__(self, value: LiteralValue):
         assert any(isinstance(value, t) for t in literal_types)
         self.value = value
@@ -171,10 +175,10 @@ def convert_query_to_ast(query: Query) -> AST:
 def simplify_nots(ast: AST) -> AST:
     # not (not a) => a
 
-    if isinstance(ast, Literal):
+    if ast.type == "l":
         return ast
 
-    if ast.fn == FUNCTION_NOT and isinstance(ast.args[0], Expression) and ast.args[0].fn == FUNCTION_NOT:
+    if ast.fn == FUNCTION_NOT and ast.args[0].type == "e" and ast.args[0].fn == FUNCTION_NOT:
         return simplify_nots(ast.args[0].args[0])
 
     return Expression(fn=ast.fn, args=[simplify_nots(a) for a in ast.args])
@@ -192,7 +196,7 @@ def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
     # (and (and e1 e2) (and e3 e4)) => <e1, e2, e3, e4>
     # etc.
 
-    if not isinstance(ast, Expression) or ast.fn != FUNCTION_AND:
+    if not ast.type == "e" or ast.fn != FUNCTION_AND:
         return ast,
 
     return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
@@ -212,7 +216,7 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
 
 def check_operation_permissions(ast: AST, schema: dict, search_getter: Callable[[List[Literal], dict], dict],
                                 internal: bool = False):
-    if isinstance(ast, Literal):
+    if ast.type == "l":
         return
 
     if ast.fn == FUNCTION_RESOLVE:
@@ -234,6 +238,6 @@ def check_operation_permissions(ast: AST, schema: dict, search_getter: Callable[
 
     # TODO: Make this check recursive (#11) or somehow deal with boolean values
     if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in search_getter(a.args, schema).get("operations", [])
-           for a in ast.args if isinstance(a, Expression) and a.fn == FUNCTION_RESOLVE):
+           for a in ast.args if a.type == "e" and a.fn == FUNCTION_RESOLVE):
         # TODO: Custom exception?
         raise ValueError("Schema forbids using function: {}\nAST: {}\nSchema: \n{}".format(ast.fn, ast, schema))
