@@ -43,9 +43,16 @@ def _validate_not_wc(e: Expression):
         raise NotImplementedError("Cannot use wildcard helper here")
 
 
-def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict,
-             index_combination: Optional[IndexCombination], internal: bool = False, validate: bool = True)\
-        -> QueryableStructure:
+def evaluate(
+    ast: AST,
+    data_structure: QueryableStructure,
+    schema: dict,
+    index_combination: Optional[IndexCombination],
+    internal: bool = False,
+    validate: bool = True,
+    resolve_checks: bool = True,
+    check_permissions: bool = True,
+) -> QueryableStructure:
     """
     Evaluates a query expression into a value, populated by a passed data structure.
     :param ast: A query expression.
@@ -54,6 +61,8 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict,
     :param index_combination: The combination of array indices being evaluated upon.
     :param internal: Whether internal-only fields are allowed to be resolved.
     :param validate: Whether to validate the structure against the schema. Typically called only once per evaluate.
+    :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
+    :param check_permissions: Whether to check the operation permissions. Typically called once per AST/DS combo.
     :return: A value (string, int, float, bool, array, or dict.)
     """
 
@@ -62,28 +71,33 @@ def evaluate(ast: AST, data_structure: QueryableStructure, schema: dict,
         _validate_data_structure_against_schema(data_structure, schema)
 
     # A literal (e.g. <Literal value=5>) evaluates to its own value (5)
-    if isinstance(ast, Literal):
+    if ast.type == "l":
         return ast.value
 
-    # Prevents the Postgres internal-only #_wc function from being used in expressions being evaluated against Python
-    # data structures. See the documentation for _validate_not_wc.
-    _validate_not_wc(ast)
+    if resolve_checks:  # TODO: Separate setting
+        # Prevents the Postgres internal-only #_wc function from being used in expressions being evaluated against
+        # Python data structures. See the documentation for _validate_not_wc. Should only be run once per AST.
+        _validate_not_wc(ast)
 
-    # Check that the current permissions (internal or not) allow us to perform the current operation on any resolved
-    # fields. Internal queries are used for joins, etc. by services, or are performed by someone with unrestricted
-    # access to the data.
-    # TODO: This could be made more granular (some people could be given access to specific objects / tables)
-    check_operation_permissions(
-        ast,
-        schema,
-        search_getter=lambda rl, s: _resolve_with_properties(rl, data_structure, s, index_combination, internal)[1],
-        internal=internal)
+    if check_permissions:
+        # Check that the current permissions (internal or not) allow us to perform the current operation on any resolved
+        # fields. Internal queries are used for joins, etc. by services, or are performed by someone with unrestricted
+        # access to the data.
+        # TODO: This could be made more granular (some people could be given access to specific objects / tables)
+        check_operation_permissions(
+            ast,
+            schema,
+            search_getter=lambda rl, s: _resolve_with_properties(rl, data_structure, s, index_combination,
+                                                                 resolve_checks=True)[1],
+            internal=internal)
 
     # Evaluate the non-literal expression recursively.
-    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal)
+    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal, resolve_checks,
+                                      check_permissions)
 
 
-def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict) -> Iterable[ArrayLengthData]:
+def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict,
+                           resolve_checks: bool) -> Iterable[ArrayLengthData]:
     """
     To evaluate a query in a manner consistent with the Postgres evaluator (and facilitate richer queries), each array
     item needs to be fixed in a particular evaluation of a query that involves array accesses. This helper function
@@ -93,11 +107,12 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
     :param ast: The AST-ified query
     :param data_structure: The FULL data structure the query is being evaluated against
     :param schema: The JSON schema of the full data structure
+    :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
     :return: A recursive dictionary with keys being array paths and values being a tuple of (length, children dict)
     """
 
     # Literals are not arrays (currently), so they will not have any specified lengths
-    if isinstance(ast, Literal):
+    if ast.type == "l":
         return
 
     # Standard validation to prevent Postgres internal-style queries from being passed in (see _validate_not_wc docs)
@@ -106,14 +121,15 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
     # Resolves are where the magic happens w/r/t array access. Capture any array accesses with their lengths and child
     # array accesses.
     if ast.fn == FUNCTION_RESOLVE:
-        r = _resolve_array_lengths(ast.args, data_structure, schema)
+        r = _resolve_array_lengths(ast.args, data_structure, schema, "_root", resolve_checks)
         if r is not None:
             yield r
         return
 
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
     # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
-    als = tuple(chain.from_iterable(_collect_array_lengths(e, data_structure, schema) for e in ast.args))
+    als = tuple(chain.from_iterable(_collect_array_lengths(e, data_structure, schema, resolve_checks)
+                                    for e in ast.args))
     yield from (
         a1 for i1, a1 in enumerate(als)
         if not any(
@@ -195,7 +211,7 @@ def check_ast_against_data_structure(
     _validate_data_structure_against_schema(data_structure, schema)
 
     # Collect all array resolves and their lengths in order to properly cross-product arrays
-    array_lengths = _collect_array_lengths(ast, data_structure, schema)
+    array_lengths = _collect_array_lengths(ast, data_structure, schema, resolve_checks=True)
 
     # Create all combinations of indexes into arrays
     index_combinations = _create_all_index_combinations(array_lengths, {})
@@ -203,28 +219,30 @@ def check_ast_against_data_structure(
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
     # Loop through all combinations of array indices to freeze "[item]"s at particular indices across the whole query.
     return any((isinstance(e, bool) and e for e in (
-        evaluate(ast, data_structure, schema, ic, internal, validate=False)
-        for ic in index_combinations
+        evaluate(ast, data_structure, schema, ic, internal, validate=False, resolve_checks=False,
+                 check_permissions=(i == 0))
+        for i, ic in enumerate(index_combinations)
     )))
 
 
 def _binary_op(op: BBOperator)\
-        -> Callable[[FunctionArgs, QueryableStructure, dict, bool, Optional[IndexCombination]], bool]:
+        -> Callable[[FunctionArgs, QueryableStructure, dict, Optional[IndexCombination], bool, bool], bool]:
     """
-    Returns a lambda which will evaluate a boolean-returning binary operator on a pair of arguments against a
-    data structure/object of some type and return a Boolean result.
+    Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
+    return a Boolean result.
     :param op: The operator the lambda is representing.
     :return: Operator lambda for use in evaluating expressions.
     """
 
     def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: dict, ic: Optional[IndexCombination],
-                            internal: bool) -> bool:
+                            internal: bool, resolve_checks: bool, check_permissions: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
         # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
         # override it with a custom-message type error.
 
-        lhs = evaluate(args[0], ds, schema, ic, internal, validate=False)
+        lhs = evaluate(args[0], ds, schema, ic, internal, validate=False, resolve_checks=resolve_checks,
+                       check_permissions=check_permissions)
 
         # TODO: These shortcuts don't type-check the RHS, is that OK?
 
@@ -236,14 +254,15 @@ def _binary_op(op: BBOperator)\
         if op == or_ and lhs:
             return True
 
-        rhs = evaluate(args[1], ds, schema, ic, internal, validate=False)
+        rhs = evaluate(args[1], ds, schema, ic, internal, validate=False, resolve_checks=resolve_checks,
+                       check_permissions=check_permissions)
 
         try:
             return op(lhs, rhs)
         except TypeError:
             raise TypeError(f"Type-invalid use of binary operator {op} ({lhs}, {rhs})")
 
-    return lambda args, ds, schema, ic, internal: uncurried_binary_op(args, ds, schema, ic, internal)
+    return uncurried_binary_op
 
 
 def _resolve_checks(resolve: List[Literal], schema: dict):
@@ -266,18 +285,24 @@ def _resolve_checks(resolve: List[Literal], schema: dict):
 _is_not_none = partial(is_not, None)
 
 
-def _get_child_resolve_array_lengths(new_resolve: List[Literal], resolving_ds: List, item_schema: dict, new_path: str) \
-        -> Iterable[ArrayLengthData]:
+def _get_child_resolve_array_lengths(
+    new_resolve: List[Literal],
+    resolving_ds: List,
+    item_schema: dict,
+    new_path: str,
+    resolve_checks: bool,
+) -> Iterable[ArrayLengthData]:
     """
     Recursively resolve array lengths for all children of elements of an array using the _resolve_array_length function.
     :param new_resolve: The resolve path starting after the item access of the array being processed
     :param resolving_ds: The array data structure whose elements we're resolving child array accesses of
     :param item_schema: The JSON schema of the array's items
     :param new_path: The string representation of the path followed so far, including the most recent item access
+    :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
     :return: A tuple of the current array's element-wise array length data
     """
     return filter(_is_not_none, (
-        _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path)
+        _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path, resolve_checks)
         for array_item_ds in resolving_ds
     ))
 
@@ -286,7 +311,8 @@ def _resolve_array_lengths(
     resolve: List[Literal],
     resolving_ds: QueryableStructure,
     schema: dict,
-    path="_root",
+    path: str = "_root",
+    resolve_checks: bool = True,
 ) -> Optional[ArrayLengthData]:
     """
     Given a resolve path and a data structure, find lengths of any arrays in the current data structure and any
@@ -295,6 +321,7 @@ def _resolve_array_lengths(
     :param resolving_ds: The data structure we're resolving on
     :param schema: A JSON schema modeling the current data structure
     :param path: A string representation of the path followed so far, including the most recent access
+    :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
     :return: Either none (if no arrays were accessed) or a tuple of the current array's path, its length, and the
              lengths of any child array accesses
     """
@@ -305,7 +332,8 @@ def _resolve_array_lengths(
         # Resolve the root if it's an empty list
         return (path, len(resolving_ds), ()) if schema["type"] == "array" else None
 
-    _resolve_checks(resolve, schema)
+    if resolve_checks:  # pragma: no cover  TODO: Do we need this at all? right now we always check here
+        _resolve_checks(resolve, schema)
 
     new_path = f"{path}.{resolve[0].value}"
 
@@ -313,11 +341,12 @@ def _resolve_array_lengths(
     if resolve[0].value == "[item]":
         return (path,
                 len(resolving_ds),
-                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path)))
+                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path,
+                                                       resolve_checks)))
 
     # Otherwise, it's an object, so keep traversing without doing anything
     return _resolve_array_lengths(resolve[1:], resolving_ds[resolve[0].value], schema["properties"][resolve[0].value],
-                                  new_path)
+                                  new_path, resolve_checks)
 
 
 def _resolve_with_properties(
@@ -325,56 +354,64 @@ def _resolve_with_properties(
     resolving_ds: QueryableStructure,
     schema: dict,
     index_combination: Optional[IndexCombination],
-    internal: bool = False,
-    path="_root",
+    resolve_checks: bool,
 ) -> Tuple[QueryableStructure, dict]:
     """
     Resolves / evaluates a path (either object or array) into a value and its search properties. Assumes the
     data structure has already been checked against its schema.
-    :param resolve: The current path to resolve, not including the current data structure.
-    :param resolving_ds: The data structure being resolved upon.
-    :param schema: The JSON schema representing the resolving data structure.
+    :param resolve: The current path to resolve, not including the current data structure
+    :param resolving_ds: The data structure being resolved upon
+    :param schema: The JSON schema representing the resolving data structure
     :param index_combination: The combination of array indices being evaluated upon
-    :param internal: Whether internal-only fields are allowed to be resolved.
-    :param path: A string representation of the path to the currently-resolved data structure.
-    :return: The resolved value after exploring the resolve path, and the search operations that can be performed on it.
+    :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
+    :return: The resolved value after exploring the resolve path, and the search operations that can be performed on it
     """
 
-    if len(resolve) == 0:
-        # Resolve the root if it's an empty list
-        return resolving_ds, schema.get("search", {}),
+    path = "_root"
 
-    _resolve_checks(resolve, schema)
+    for i, current_resolve in enumerate(resolve):
+        if resolve_checks:
+            _resolve_checks(resolve[i:], schema)
+            if current_resolve.value == "[item]" and (index_combination is None or path not in index_combination):
+                # TODO: Specific exception class
+                raise Exception(f"Index combination not provided for path {path}")
 
-    if resolve[0].value == "[item]" and (index_combination is None or path not in index_combination):
-        # TODO: Specific exception class
-        raise Exception(f"Index combination not provided for path {path}")
+        old_path = path
+        path = f"{path}.{current_resolve.value}"
 
-    return _resolve_with_properties(
-        resolve[1:],
-        resolving_ds[resolve[0].value] if schema["type"] == "object" else resolving_ds[index_combination[path]],
-        schema["properties"][resolve[0].value] if schema["type"] == "object" else schema["items"],
-        index_combination,
-        internal,
-        path=f"{path}.{resolve[0]}")
+        if schema["type"] == "array":
+            resolving_ds = resolving_ds[index_combination[old_path]]
+            schema = schema["items"]
+            continue
+
+        # Otherwise, object
+
+        resolving_ds = resolving_ds[current_resolve.value]
+        schema = schema["properties"][current_resolve.value]
+
+    # Resolve the root if resolve list is empty
+    return resolving_ds, schema.get("search", {}),
 
 
 def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, schema: dict,
-             index_combination: Optional[IndexCombination], internal: bool = False):
+             index_combination: Optional[IndexCombination], _internal: bool = False, resolve_checks: bool = False,
+             _check_permissions: bool = True):
     """
     Does the same thing as _resolve_with_properties, but discards the search properties.
     """
-    return _resolve_with_properties(resolve, resolving_ds, schema, index_combination, internal)[0]
+    return _resolve_with_properties(resolve, resolving_ds, schema, index_combination, resolve_checks)[0]
 
 
 QUERY_CHECK_SWITCH: Dict[
     FunctionName,
-    Callable[[FunctionArgs, QueryableStructure, dict, bool, Optional[IndexCombination]], QueryableStructure]
+    Callable[[FunctionArgs, QueryableStructure, dict, Optional[IndexCombination], bool, bool], QueryableStructure]
 ] = {
     FUNCTION_AND: _binary_op(and_),
     FUNCTION_OR: _binary_op(or_),
-    FUNCTION_NOT: lambda args, ds, schema, internal, ic: not_(evaluate(args[0], ds, schema, internal, ic,
-                                                                       validate=False)),
+    FUNCTION_NOT: lambda args, ds, schema, internal, ic, chk1, chk2: not_(evaluate(args[0], ds, schema, internal, ic,
+                                                                                   validate=False,
+                                                                                   resolve_checks=chk1,
+                                                                                   check_permissions=chk2)),
 
     FUNCTION_LT: _binary_op(lt),
     FUNCTION_LE: _binary_op(le),

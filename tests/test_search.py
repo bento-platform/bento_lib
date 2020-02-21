@@ -281,6 +281,55 @@ TEST_SCHEMA = {
     }
 }
 
+TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "search": {
+                "operations": [operations.SEARCH_OP_EQ],
+                "queryable": "all"
+            }
+        },
+        "children": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "search": {
+                            "operations": [operations.SEARCH_OP_EQ],
+                            "queryable": "all"
+                        }
+                    },
+                    "prop": {
+                        "type": "string",
+                        "search": {
+                            "operations": [operations.SEARCH_OP_EQ],
+                            "queryable": "all"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_SCHEMA_2 = {
+    "type": "object",
+    "properties": {
+        "data_type_1": {
+            "type": "array",
+            "items": TEST_SCHEMA_2_DATA_TYPE_SCHEMA
+        },
+        "data_type_2": {
+            "type": "array",
+            "items": TEST_SCHEMA_2_DATA_TYPE_SCHEMA
+        }
+    }
+}
+
 
 # TODO: Postgres module should validate instead of throwing errors...
 TEST_INVALID_SCHEMA = {
@@ -425,6 +474,16 @@ TEST_QUERY_23 = [
     ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], 8]
 ]
 
+TEST_LARGE_QUERY_1 = [
+    "#and",
+    ["#eq",
+     ["#resolve", "data_type_1", "[item]", "children", "[item]", "id"],
+     ["#resolve", "data_type_2", "[item]", "children", "[item]", "id"]],
+    ["#and",
+     ["#eq", ["#resolve", "data_type_1", "[item]", "children", "[item]", "prop"], "prop500"],
+     ["#eq", ["#resolve", "data_type_2", "[item]", "children", "[item]", "prop"], "prop500"]]
+]
+
 TEST_EXPR_1 = TEST_QUERY_6
 TEST_EXPR_2 = True  # TODO: What to do in this case when it's a query?
 TEST_EXPR_3 = ["#resolve", "biosamples", "[item]", "procedure", "code", "id"]
@@ -503,6 +562,17 @@ TEST_DATA_1 = {
             "test_json_array": [{"test": "test_value"}],
         }
     ],
+}
+
+TEST_DATA_2 = {
+    "data_type_1": [{
+        "id": "test1",
+        "children": [{"id": f"child{i}", "prop": f"prop{i}"} for i in range(1000)]
+    }],
+    "data_type_2": [{
+        "id": "test2",
+        "children": [{"id": f"child{i}", "prop": f"prop{i}"} for i in range(999, -1, -1)]
+    }]
 }
 
 INVALID_DATA = [{True, False}]
@@ -745,7 +815,8 @@ def test_data_structure_search():
                                                                TEST_SCHEMA, i) == v
 
     for q, i, _v, ni in DS_VALID_QUERIES:
-        als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA)
+        als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA,
+                                                    resolve_checks=True)
         ics = tuple(data_structure._create_all_index_combinations(als, {}))
         assert len(ics) == ni
 
@@ -758,9 +829,20 @@ def test_data_structure_search():
         data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {})
 
 
+def test_large_data_structure_query():
+    def large_query():
+        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(TEST_LARGE_QUERY_1),
+                                                               TEST_DATA_2, TEST_SCHEMA_2, False)
+
+    # Test large query
+    import cProfile
+    cProfile.runctx("large_query()", None, locals(), sort="tottime")
+
+
 # noinspection PyProtectedMember
 def test_check_operation_permissions():
     for e, i, _v, ic in DS_VALID_EXPRESSIONS:
         queries.check_operation_permissions(
             queries.convert_query_to_ast(e),
-            TEST_SCHEMA, search_getter=lambda rl, s: data_structure._resolve_with_properties(rl, TEST_DATA_1, s, ic)[1])
+            TEST_SCHEMA,
+            search_getter=lambda rl, s: data_structure._resolve_with_properties(rl, TEST_DATA_1, s, ic, True)[1])

@@ -16,14 +16,17 @@
       <w>nots</w>
       <w>nres</w>
       <w>ontologies</w>
+      <w>pchk</w>
       <w>phenopacket</w>
       <w>phenopackets</w>
       <w>pmessage</w>
       <w>postgre</w>
       <w>preprocessing</w>
       <w>pytest</w>
+      <w>rchk</w>
       <w>sapiens</w>
       <w>taxon</w>
+      <w>tottime</w>
       <w>transpilers</w>
       <w>uncurried</w>
       <w>unlist</w>
