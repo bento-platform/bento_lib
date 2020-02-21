@@ -113,7 +113,7 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
 
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
     # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
-    als = list(chain.from_iterable(_collect_array_lengths(e, data_structure, schema) for e in ast.args))
+    als = tuple(chain.from_iterable(_collect_array_lengths(e, data_structure, schema) for e in ast.args))
     yield from (
         a1 for i1, a1 in enumerate(als)
         if not any(
@@ -225,6 +225,17 @@ def _binary_op(op: BBOperator)\
         # override it with a custom-message type error.
 
         lhs = evaluate(args[0], ds, schema, ic, internal, validate=False)
+
+        # TODO: These shortcuts don't type-check the RHS, is that OK?
+
+        # Shortcut #and
+        if op == and_ and not lhs:
+            return False
+
+        # Shortcut #or
+        if op == or_ and lhs:
+            return True
+
         rhs = evaluate(args[1], ds, schema, ic, internal, validate=False)
 
         try:
