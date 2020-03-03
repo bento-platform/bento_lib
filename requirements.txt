@@ -1,4 +1,4 @@
-codecov==2.0.15
+codecov==2.0.16
 Flask>=1.1,<2.0
 jsonschema==3.2.0
 psycopg2-binary==2.8.4
