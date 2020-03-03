@@ -43,13 +43,12 @@ def _validate_not_wc(e: Expression):
         raise NotImplementedError("Cannot use wildcard helper here")
 
 
-def evaluate(
+def evaluate_no_validate(
     ast: AST,
     data_structure: QueryableStructure,
     schema: dict,
     index_combination: Optional[IndexCombination],
     internal: bool = False,
-    validate: bool = True,
     resolve_checks: bool = True,
     check_permissions: bool = True,
 ) -> QueryableStructure:
@@ -60,15 +59,10 @@ def evaluate(
     :param schema: The JSON schema for data objects being queried.
     :param index_combination: The combination of array indices being evaluated upon.
     :param internal: Whether internal-only fields are allowed to be resolved.
-    :param validate: Whether to validate the structure against the schema. Typically called only once per evaluate.
     :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
     :param check_permissions: Whether to check the operation permissions. Typically called once per AST/DS combo.
     :return: A value (string, int, float, bool, array, or dict.)
     """
-
-    # The validate flag is used to avoid redundantly validating the integrity of child data structures
-    if validate:
-        _validate_data_structure_against_schema(data_structure, schema)
 
     # A literal (e.g. <Literal value=5>) evaluates to its own value (5)
     if ast.type == "l":
@@ -94,6 +88,24 @@ def evaluate(
     # Evaluate the non-literal expression recursively.
     return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal, resolve_checks,
                                       check_permissions)
+
+
+def evaluate(
+    ast: AST,
+    data_structure: QueryableStructure,
+    schema: dict,
+    index_combination: Optional[IndexCombination],
+    internal: bool = False,
+    validate: bool = True,
+    resolve_checks: bool = True,
+    check_permissions: bool = True,
+):
+    # The validate flag is used to avoid redundantly validating the integrity of child data structures
+    if validate:
+        _validate_data_structure_against_schema(data_structure, schema)
+
+    return evaluate_no_validate(ast, data_structure, schema, index_combination, internal, resolve_checks,
+                                check_permissions)
 
 
 def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict,
@@ -211,7 +223,7 @@ def check_ast_against_data_structure(
                2) An iterable of all index combinations where the query matches the data object
     """
 
-    # Validate data structure against JSON schema here to avoid having to repetitively do it with evaluate()
+    # Validate data structure against JSON schema here to avoid having to repetitively do it later
     _validate_data_structure_against_schema(data_structure, schema)
 
     # Collect all array resolves and their lengths in order to properly cross-product arrays
@@ -224,8 +236,8 @@ def check_ast_against_data_structure(
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
 
     def _evaluate(i: int, ic: IndexCombination) -> bool:
-        e = evaluate(ast, data_structure, schema, ic, internal, validate=False, resolve_checks=False,
-                     check_permissions=(i == 0))
+        e = evaluate_no_validate(ast, data_structure, schema, ic, internal, resolve_checks=False,
+                                 check_permissions=(i == 0))
         return isinstance(e, bool) and e
 
     if return_all_index_combinations:
@@ -239,9 +251,12 @@ def _binary_op(op: BBOperator)\
     """
     Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
     return a Boolean result.
-    :param op: The operator the lambda is representing.
-    :return: Operator lambda for use in evaluating expressions.
+    :param op: The operator the lambda is representing
+    :return: Operator lambda for use in evaluating expressions
     """
+
+    is_and = op == and_
+    is_or = op == or_
 
     def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: dict, ic: Optional[IndexCombination],
                             internal: bool, resolve_checks: bool, check_permissions: bool) -> bool:
@@ -250,21 +265,21 @@ def _binary_op(op: BBOperator)\
         # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
         # override it with a custom-message type error.
 
-        lhs = evaluate(args[0], ds, schema, ic, internal, validate=False, resolve_checks=resolve_checks,
-                       check_permissions=check_permissions)
+        lhs = evaluate_no_validate(args[0], ds, schema, ic, internal, resolve_checks=resolve_checks,
+                                   check_permissions=check_permissions)
 
         # TODO: These shortcuts don't type-check the RHS, is that OK?
 
         # Shortcut #and
-        if op == and_ and not lhs:
+        if is_and and not lhs:
             return False
 
         # Shortcut #or
-        if op == or_ and lhs:
+        if is_or and lhs:
             return True
 
-        rhs = evaluate(args[1], ds, schema, ic, internal, validate=False, resolve_checks=resolve_checks,
-                       check_permissions=check_permissions)
+        rhs = evaluate_no_validate(args[1], ds, schema, ic, internal, resolve_checks=resolve_checks,
+                                   check_permissions=check_permissions)
 
         try:
             return op(lhs, rhs)
@@ -274,20 +289,20 @@ def _binary_op(op: BBOperator)\
     return uncurried_binary_op
 
 
-def _resolve_checks(resolve: List[Literal], schema: dict):
+def _resolve_checks(resolve_value: str, schema: dict):
     """
     Performs standard checks while going through any type of "resolve"-based function (where a #resolve call is being
     processed) to prevent access errors.
-    :param resolve: The list of resolve terms currently being processed
+    :param resolve_value: The value of the current resolve term being processed
     :param schema: The JSON schema of the data sub-structure currently being processed
     """
     if schema["type"] not in ("object", "array"):
         raise TypeError("Cannot get property of literal")
 
-    elif schema["type"] == "object" and resolve[0].value not in schema["properties"]:
-        raise ValueError("Property {} not found in object, {}".format(resolve[0].value, [x.value for x in resolve]))
+    elif schema["type"] == "object" and resolve_value not in schema["properties"]:
+        raise ValueError("Property {} not found in object".format(resolve_value))
 
-    elif schema["type"] == "array" and resolve[0].value != "[item]":
+    elif schema["type"] == "array" and resolve_value != "[item]":
         raise TypeError("Cannot get property of array")
 
 
@@ -342,7 +357,7 @@ def _resolve_array_lengths(
         return (path, len(resolving_ds), ()) if schema["type"] == "array" else None
 
     if resolve_checks:  # pragma: no cover  TODO: Do we need this at all? right now we always check here
-        _resolve_checks(resolve, schema)
+        _resolve_checks(resolve[0].value, schema)
 
     new_path = f"{path}.{resolve[0].value}"
 
@@ -378,25 +393,26 @@ def _resolve_with_properties(
 
     path = "_root"
 
-    for i, current_resolve in enumerate(resolve):
+    for current_resolve in resolve:
+        current_resolve_value = current_resolve.value
+
         if resolve_checks:
-            _resolve_checks(resolve[i:], schema)
-            if current_resolve.value == "[item]" and (index_combination is None or path not in index_combination):
+            _resolve_checks(current_resolve_value, schema)
+            if current_resolve_value == "[item]" and (index_combination is None or path not in index_combination):
                 # TODO: Specific exception class
                 raise Exception(f"Index combination not provided for path {path}")
 
-        old_path = path
-        path = f"{path}.{current_resolve.value}"
-
         if schema["type"] == "array":
-            resolving_ds = resolving_ds[index_combination[old_path]]
+            resolving_ds = resolving_ds[index_combination[path]]
             schema = schema["items"]
+            path = f"{path}.{current_resolve_value}"
             continue
 
         # Otherwise, object
 
-        resolving_ds = resolving_ds[current_resolve.value]
-        schema = schema["properties"][current_resolve.value]
+        resolving_ds = resolving_ds[current_resolve_value]
+        schema = schema["properties"][current_resolve_value]
+        path = f"{path}.{current_resolve_value}"
 
     # Resolve the root if resolve list is empty
     return resolving_ds, schema.get("search", {}),
@@ -417,10 +433,8 @@ QUERY_CHECK_SWITCH: Dict[
 ] = {
     FUNCTION_AND: _binary_op(and_),
     FUNCTION_OR: _binary_op(or_),
-    FUNCTION_NOT: lambda args, ds, schema, internal, ic, chk1, chk2: not_(evaluate(args[0], ds, schema, internal, ic,
-                                                                                   validate=False,
-                                                                                   resolve_checks=chk1,
-                                                                                   check_permissions=chk2)),
+    FUNCTION_NOT: lambda args, ds, schema, internal, ic, chk1, chk2:
+        not_(evaluate_no_validate(args[0], ds, schema, internal, ic, resolve_checks=chk1, check_permissions=chk2)),
 
     FUNCTION_LT: _binary_op(lt),
     FUNCTION_LE: _binary_op(le),
