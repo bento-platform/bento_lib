@@ -1,6 +1,6 @@
 import jsonschema
 from functools import partial
-from itertools import chain, product
+from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
 from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
@@ -196,15 +196,19 @@ def check_ast_against_data_structure(
     ast: AST,
     data_structure: QueryableStructure,
     schema: dict,
-    internal: bool = False
-) -> bool:
+    internal: bool = False,
+    return_all_index_combinations: bool = False,
+) -> Union[bool, Iterable[IndexCombination]]:
     """
     Checks a query against a data structure, returning True if the
     :param ast: A query to evaluate against the data object.
     :param data_structure: The data object to evaluate the query against.
     :param schema: A JSON schema representing valid data objects.
     :param internal: Whether internal-only fields are allowed to be resolved.
-    :return: A boolean representing whether or not the query matches the data object.
+    :param return_all_index_combinations: Whether internal-only fields are allowed to be resolved.
+    :return: Determined by return_all_index_combinations; either
+               1) A boolean representing whether or not the query matches the data object; or
+               2) An iterable of all index combinations where the query matches the data object
     """
 
     # Validate data structure against JSON schema here to avoid having to repetitively do it with evaluate()
@@ -213,16 +217,21 @@ def check_ast_against_data_structure(
     # Collect all array resolves and their lengths in order to properly cross-product arrays
     array_lengths = _collect_array_lengths(ast, data_structure, schema, resolve_checks=True)
 
-    # Create all combinations of indexes into arrays
-    index_combinations = _create_all_index_combinations(array_lengths, {})
+    # Create all combinations of indexes into arrays and enumerate them; to be used to loop through all combinations of
+    # array indices to freeze "[item]"s at particular indices across the whole query.
+    index_combinations = enumerate(_create_all_index_combinations(array_lengths, {}))
 
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
-    # Loop through all combinations of array indices to freeze "[item]"s at particular indices across the whole query.
-    return any((isinstance(e, bool) and e for e in (
-        evaluate(ast, data_structure, schema, ic, internal, validate=False, resolve_checks=False,
-                 check_permissions=(i == 0))
-        for i, ic in enumerate(index_combinations)
-    )))
+
+    def _evaluate(i: int, ic: IndexCombination) -> bool:
+        e = evaluate(ast, data_structure, schema, ic, internal, validate=False, resolve_checks=False,
+                     check_permissions=(i == 0))
+        return isinstance(e, bool) and e
+
+    if return_all_index_combinations:
+        return (ic for i, ic in index_combinations if _evaluate(i, ic))
+
+    return any(starmap(_evaluate, index_combinations))
 
 
 def _binary_op(op: BBOperator)\

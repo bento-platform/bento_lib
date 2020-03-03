@@ -595,31 +595,36 @@ DS_VALID_EXPRESSIONS = (
     (TEST_EXPR_8, False, TEST_DATA_1["biosamples"], None),
 )
 
-# Query, Internal, Result, Number of Index Combinations (against TEST_DATA_1)
+# Columns:
+#  - Query
+#  - Internal
+#  - Result
+#  - Number of Index Combinations (against TEST_DATA_1)
+#  - Number of Matching Index Combinations (against TEST_DATA_1)
 DS_VALID_QUERIES = (
-    (TEST_QUERY_1,  False, True,  1),  # No index accesses
-    (TEST_QUERY_2,  False, True,  2),  # Accessing 2 biosamples
-    (TEST_QUERY_3,  False, True,  2),  # "
-    (TEST_QUERY_4,  False, True,  2),  # "
-    (TEST_QUERY_5,  False, False, 2),  # "
-    (TEST_QUERY_6,  False, False, 1),  # No index accesses
-    (TEST_QUERY_7,  True,  True,  1),  # "
-    (TEST_QUERY_8,  False, True,  1),  # "
-    (TEST_QUERY_9,  False, True,  1),  # "
-    (TEST_QUERY_10, False, True,  2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
-    (TEST_QUERY_11, False, True,  2),  # Accessing 2 biosamples, each with 1 test_json_array item
-    (TEST_QUERY_12, False, False, 5),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
-    (TEST_QUERY_13, False, True,  5),  # "
-    (TEST_QUERY_14, False, True,  5),  # "
-    (TEST_QUERY_15, False, False, 9),  # Accessing 3 elements in test_op_n array
-    (TEST_QUERY_16, False, True,  9),  # "
-    (TEST_QUERY_17, False, True,  9),  # "
-    (TEST_QUERY_18, False, True,  9),  # "
-    (TEST_QUERY_19, False, True, 45),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
-    (TEST_QUERY_20, False, True, 45),  # "
-    (TEST_QUERY_21, False, True, 27),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
-    (TEST_QUERY_22, False, True,  9),  # Accessing 9 in test_op_3 and checking them against itself
-    (TEST_QUERY_23, False, True, 27),  # test_op_3: 9, test_op_1: 3
+    (TEST_QUERY_1,  False, True,  1, 1),  # No index accesses
+    (TEST_QUERY_2,  False, True,  2, 1),  # Accessing 2 biosamples
+    (TEST_QUERY_3,  False, True,  2, 1),  # "
+    (TEST_QUERY_4,  False, True,  2, 1),  # "
+    (TEST_QUERY_5,  False, False, 2, 0),  # "
+    (TEST_QUERY_6,  False, False, 1, 0),  # No index accesses
+    (TEST_QUERY_7,  True,  True,  1, 1),  # "
+    (TEST_QUERY_8,  False, True,  1, 1),  # "
+    (TEST_QUERY_9,  False, True,  1, 1),  # "
+    (TEST_QUERY_10, False, True,  2, 2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
+    (TEST_QUERY_11, False, True,  2, 2),  # Accessing 2 biosamples, each with 1 test_json_array item
+    (TEST_QUERY_12, False, False, 5, 0),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
+    (TEST_QUERY_13, False, True,  5, 1),  # "
+    (TEST_QUERY_14, False, True,  5, 4),  # "
+    (TEST_QUERY_15, False, False, 9, 0),  # Accessing 3 elements in test_op_n array
+    (TEST_QUERY_16, False, True,  9, 9),  # "
+    (TEST_QUERY_17, False, True,  9, 3),  # "
+    (TEST_QUERY_18, False, True,  9, 3),  # "
+    (TEST_QUERY_19, False, True, 45, 3),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
+    (TEST_QUERY_20, False, True, 45, 3),  # "
+    (TEST_QUERY_21, False, True, 27, 1),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
+    (TEST_QUERY_22, False, True,  9, 9),  # Accessing 9 in test_op_3 and checking them against itself
+    (TEST_QUERY_23, False, True, 27, 1),  # test_op_3: 9, test_op_1: 3
 )
 
 # Query, Internal, Exception
@@ -810,15 +815,21 @@ def test_data_structure_search():
     for e, i, v, ic in DS_VALID_EXPRESSIONS:
         assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
 
-    for q, i, v, _ni in DS_VALID_QUERIES:
+    for q, i, v, _ni, nm in DS_VALID_QUERIES:
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
                                                                TEST_SCHEMA, i) == v
 
-    for q, i, _v, ni in DS_VALID_QUERIES:
+        ics = tuple(data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, return_all_index_combinations=True))
+
+        assert len(ics) == nm
+
+    for q, i, _v, ni, nm in DS_VALID_QUERIES:
         als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA,
                                                     resolve_checks=True)
         ics = tuple(data_structure._create_all_index_combinations(als, {}))
         assert len(ics) == ni
+        assert nm <= len(ics)
 
     for e, i, ex, ic in DS_INVALID_EXPRESSIONS:
         with raises(ex):
