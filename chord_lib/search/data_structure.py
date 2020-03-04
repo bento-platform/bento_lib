@@ -265,8 +265,7 @@ def _binary_op(op: BBOperator)\
         # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
         # override it with a custom-message type error.
 
-        lhs = evaluate_no_validate(args[0], ds, schema, ic, internal, resolve_checks=resolve_checks,
-                                   check_permissions=check_permissions)
+        lhs = evaluate_no_validate(args[0], ds, schema, ic, internal, resolve_checks, check_permissions)
 
         # TODO: These shortcuts don't type-check the RHS, is that OK?
 
@@ -278,8 +277,7 @@ def _binary_op(op: BBOperator)\
         if is_or and lhs:
             return True
 
-        rhs = evaluate_no_validate(args[1], ds, schema, ic, internal, resolve_checks=resolve_checks,
-                                   check_permissions=check_permissions)
+        rhs = evaluate_no_validate(args[1], ds, schema, ic, internal, resolve_checks, check_permissions)
 
         try:
             return op(lhs, rhs)
