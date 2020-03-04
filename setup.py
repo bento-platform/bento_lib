@@ -7,7 +7,7 @@ with open("README.md", "r") as rf:
 
 setuptools.setup(
     name="chord_lib",
-    version="0.5.0",
+    version="0.6.0",
 
     python_requires=">=3.6",
     install_requires=[
