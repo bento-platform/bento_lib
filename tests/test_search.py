@@ -856,4 +856,4 @@ def test_check_operation_permissions():
         queries.check_operation_permissions(
             queries.convert_query_to_ast(e),
             TEST_SCHEMA,
-            search_getter=lambda rl, s: data_structure._resolve_with_properties(rl, TEST_DATA_1, s, ic, True)[1])
+            search_getter=lambda rl, s: data_structure._resolve_properties_and_check(rl, s, ic))
