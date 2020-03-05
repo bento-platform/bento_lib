@@ -154,7 +154,10 @@ def collect_resolve_join_tables(
             current_alias_str = new_resolve_path
 
         else:
-            raise ValueError("Structure type / schema type mismatch: {} / {}".format(structure_type, schema["type"]))
+            raise ValueError(f"Structure type / schema type mismatch: {structure_type} / {schema['type']}\n"
+                             f"    Search properties: {search_properties}\n"
+                             f"    Search database properties: {search_database_properties}\n"
+                             f"    Resolve path: {new_resolve_path}")
 
     elif current_relation is not None:
         current_relation = sql.Identifier(current_relation)
