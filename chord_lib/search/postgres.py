@@ -3,7 +3,7 @@ import re
 from psycopg2 import sql
 from typing import Callable, Dict, List, Optional, Tuple
 
-from .queries import *
+from chord_lib.search import queries as q
 
 
 # Search Rules:
@@ -37,7 +37,7 @@ class JoinAndSelectData:
         key_link: Optional[Tuple[str, str]],
         field_alias: Optional[str],
         search_properties: dict,
-        unresolved: Tuple[Literal, ...]
+        unresolved: Tuple[q.Literal, ...]
     ):
         self.relations: OptionalComposablePair = relations
         self.aliases: OptionalComposablePair = aliases
@@ -45,7 +45,7 @@ class JoinAndSelectData:
         self.key_link: Optional[Tuple[str, str]] = key_link
         self.field_alias: Optional[str] = field_alias
         self.search_properties: dict = search_properties
-        self.unresolved: Tuple[Literal, ...] = unresolved
+        self.unresolved: Tuple[q.Literal, ...] = unresolved
 
     def __repr__(self):  # pragma: no cover
         return f"<JoinAndSelectData relations={self.relations} aliases={self.aliases}>"
@@ -94,7 +94,7 @@ def json_schema_to_postgres_schema(name: str, schema: dict) -> Tuple[Optional[sq
 
 
 def collect_resolve_join_tables(
-    resolve: Tuple[Literal, ...],
+    resolve: Tuple[q.Literal, ...],
     schema: dict,
     parent_relation: Optional[Tuple[Optional[sql.Composable], Optional[sql.Composable]]] = None,
     resolve_path: Optional[str] = None
@@ -209,13 +209,13 @@ def collect_resolve_join_tables(
         resolve_path=new_resolve_path if current_relation is not None else None)
 
 
-def collect_join_tables(ast: AST, terms: tuple, schema: dict) -> Tuple[JoinAndSelectData, ...]:
-    if isinstance(ast, Literal):
+def collect_join_tables(ast: q.AST, terms: tuple, schema: dict) -> Tuple[JoinAndSelectData, ...]:
+    if isinstance(ast, q.Literal):
         return terms
 
-    if ast.fn == FUNCTION_RESOLVE:
+    if ast.fn == q.FUNCTION_RESOLVE:
         terms = list(terms)
-        collected_joins = collect_resolve_join_tables((Literal("$root"), *ast.args), schema)
+        collected_joins = collect_resolve_join_tables((q.Literal("$root"), *ast.args), schema)
 
         for j in collected_joins:
             existing_aliases = set(t.current_alias_str for t in terms if t is not None)
@@ -226,13 +226,13 @@ def collect_join_tables(ast: AST, terms: tuple, schema: dict) -> Tuple[JoinAndSe
 
     new_terms = terms
 
-    for item in (a for a in ast.args if isinstance(a, Expression)):
+    for item in (a for a in ast.args if isinstance(a, q.Expression)):
         new_terms = collect_join_tables(item, new_terms, schema)
 
     return new_terms
 
 
-def join_fragment(ast: AST, schema: dict) -> sql.Composable:
+def join_fragment(ast: q.AST, schema: dict) -> sql.Composable:
     terms = collect_join_tables(ast, (), schema)
     if len(terms) == 0:
         # TODO: Don't hard-code _root?
@@ -254,25 +254,25 @@ def join_fragment(ast: AST, schema: dict) -> sql.Composable:
     ))
 
 
-def search_ast_to_psycopg2_expr(ast: AST, params: tuple, schema: dict, internal: bool = False) \
+def search_ast_to_psycopg2_expr(ast: q.AST, params: tuple, schema: dict, internal: bool = False) \
         -> SQLComposableWithParams:
-    if isinstance(ast, Literal):
+    if isinstance(ast, q.Literal):
         return sql.Placeholder(), (*params, ast.value)
 
-    check_operation_permissions(ast, schema, search_getter=get_search_properties, internal=internal)
+    q.check_operation_permissions(ast, schema, search_getter=get_search_properties, internal=internal)
 
     return POSTGRES_SEARCH_LANGUAGE_FUNCTIONS[ast.fn](ast.args, params, schema, internal)
 
 
 def search_query_to_psycopg2_sql(query, schema: dict, internal: bool = False) -> SQLComposableWithParams:
     # TODO: Shift recursion to not have to add in the extra SELECT for the root?
-    ast = convert_query_to_ast_and_preprocess(query)
+    ast = q.convert_query_to_ast_and_preprocess(query)
     sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema, internal)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
     return sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj), params
 
 
-def uncurried_binary_op(op: str, args: List[AST], params: tuple, schema: dict, internal: bool = False) \
+def uncurried_binary_op(op: str, args: List[q.AST], params: tuple, schema: dict, internal: bool = False) \
         -> SQLComposableWithParams:
     # TODO: Need to fix params!! Use named params
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
@@ -289,8 +289,8 @@ def _not(args: list, params: tuple, schema: dict, internal: bool = False) -> SQL
     return sql.SQL("NOT ({})").format(child_sql), params + child_params
 
 
-def _wildcard(args: List[AST], params: tuple, _schema: dict, _internal: bool = False) -> SQLComposableWithParams:
-    if isinstance(args[0], Expression):
+def _wildcard(args: List[q.AST], params: tuple, _schema: dict, _internal: bool = False) -> SQLComposableWithParams:
+    if isinstance(args[0], q.Expression):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
     try:
@@ -299,46 +299,46 @@ def _wildcard(args: List[AST], params: tuple, _schema: dict, _internal: bool = F
         raise TypeError("Type-invalid use of binary function #co")
 
 
-def get_relation(resolve: List[Literal], schema: dict):
-    aliases = collect_resolve_join_tables((Literal("$root"), *resolve), schema)[-1].aliases
+def get_relation(resolve: List[q.Literal], schema: dict):
+    aliases = collect_resolve_join_tables((q.Literal("$root"), *resolve), schema)[-1].aliases
     return aliases.current if aliases.current is not None else aliases.parent
 
 
-def get_field(resolve: List[Literal], schema: dict) -> Optional[str]:
-    return collect_resolve_join_tables((Literal("$root"), *resolve), schema)[-1].field_alias
+def get_field(resolve: List[q.Literal], schema: dict) -> Optional[str]:
+    return collect_resolve_join_tables((q.Literal("$root"), *resolve), schema)[-1].field_alias
 
 
-def get_search_properties(resolve: List[Literal], schema: dict) -> dict:
-    return collect_resolve_join_tables((Literal("$root"), *resolve), schema)[-1].search_properties
+def get_search_properties(resolve: List[q.Literal], schema: dict) -> dict:
+    return collect_resolve_join_tables((q.Literal("$root"), *resolve), schema)[-1].search_properties
 
 
-def _resolve(args: List[AST], params: tuple, schema: dict, _internal: bool = False) -> SQLComposableWithParams:
+def _resolve(args: List[q.AST], params: tuple, schema: dict, _internal: bool = False) -> SQLComposableWithParams:
     f_id = get_field(args, schema)
     return sql.SQL("{}.{}").format(get_relation(args, schema),
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
-def _contains(args: List[AST], params: tuple, schema: dict, internal: bool = False) -> SQLComposableWithParams:
+def _contains(args: List[q.AST], params: tuple, schema: dict, internal: bool = False) -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(Expression(fn=FUNCTION_HELPER_WC, args=[args[1]]), params, schema,
-                                                      internal)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1]]), params,
+                                                      schema, internal)
     return sql.SQL("({}) LIKE ({})").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
 
 
-POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[List[AST], tuple, dict, bool], SQLComposableWithParams]] = {
-    FUNCTION_AND: _binary_op("AND"),
-    FUNCTION_OR: _binary_op("OR"),
-    FUNCTION_NOT: _not,
+POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[List[q.AST], tuple, dict, bool], SQLComposableWithParams]] = {
+    q.FUNCTION_AND: _binary_op("AND"),
+    q.FUNCTION_OR: _binary_op("OR"),
+    q.FUNCTION_NOT: _not,
 
-    FUNCTION_LT: _binary_op("<"),
-    FUNCTION_LE: _binary_op("<="),
-    FUNCTION_EQ: _binary_op("="),
-    FUNCTION_GT: _binary_op(">"),
-    FUNCTION_GE: _binary_op(">="),
+    q.FUNCTION_LT: _binary_op("<"),
+    q.FUNCTION_LE: _binary_op("<="),
+    q.FUNCTION_EQ: _binary_op("="),
+    q.FUNCTION_GT: _binary_op(">"),
+    q.FUNCTION_GE: _binary_op(">="),
 
-    FUNCTION_CO: _contains,
+    q.FUNCTION_CO: _contains,
 
-    FUNCTION_RESOLVE: _resolve,
+    q.FUNCTION_RESOLVE: _resolve,
 
-    FUNCTION_HELPER_WC: _wildcard
+    q.FUNCTION_HELPER_WC: _wildcard
 }

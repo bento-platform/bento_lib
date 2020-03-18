@@ -9,14 +9,15 @@ django.setup()
 @pytest.mark.django_db
 def test_remote_auth_backend():
     import chord_lib.auth.django_remote_user
+    from chord_lib.auth.headers import DJANGO_USER_HEADER, DJANGO_USER_ROLE_HEADER
     from django.contrib.auth.models import User
     from django.http.request import HttpRequest
 
     b = chord_lib.auth.django_remote_user.CHORDRemoteUserBackend()
     r = HttpRequest()
     r.META = {
-        "HTTP_X_USER": "test",
-        "HTTP_X_USER_ROLE": "owner"
+        DJANGO_USER_HEADER: "test",
+        DJANGO_USER_ROLE_HEADER: "owner"
     }
 
     u = User(username="test", password="test")
@@ -27,7 +28,7 @@ def test_remote_auth_backend():
     assert u2.is_staff
     assert u2.is_superuser
 
-    r.META["HTTP_X_USER_ROLE"] = "user"
+    r.META[DJANGO_USER_ROLE_HEADER] = "user"
 
     u = User(username="test2", password="test")
     b.configure_user(r, u)

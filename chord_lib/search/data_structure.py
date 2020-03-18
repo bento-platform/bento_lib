@@ -4,7 +4,7 @@ from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
 from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
-from .queries import *
+from chord_lib.search import queries as q
 
 
 __all__ = ["check_ast_against_data_structure"]
@@ -13,7 +13,7 @@ __all__ = ["check_ast_against_data_structure"]
 QueryableStructure = Union[dict, list, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
-FunctionArgs = List[AST]
+FunctionArgs = List[q.AST]
 
 IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
@@ -33,18 +33,18 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
         raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
 
 
-def _validate_not_wc(e: Expression):
+def _validate_not_wc(e: q.Expression):
     """
     The #_wc expression function is a helper for converting the queries into the Postgres IR. If we encounter this
     function in a query being evaluated against a data structure, it's meaningless and should raise an error.
     :param e: The expression (function) to check
     """
-    if e.fn == FUNCTION_HELPER_WC:
+    if e.fn == q.FUNCTION_HELPER_WC:
         raise NotImplementedError("Cannot use wildcard helper here")
 
 
 def evaluate_no_validate(
-    ast: AST,
+    ast: q.AST,
     data_structure: QueryableStructure,
     schema: dict,
     index_combination: Optional[IndexCombination],
@@ -78,7 +78,7 @@ def evaluate_no_validate(
         # fields. Internal queries are used for joins, etc. by services, or are performed by someone with unrestricted
         # access to the data.
         # TODO: This could be made more granular (some people could be given access to specific objects / tables)
-        check_operation_permissions(
+        q.check_operation_permissions(
             ast,
             schema,
             lambda rl, s: _resolve_properties_and_check(rl, s, index_combination),
@@ -90,7 +90,7 @@ def evaluate_no_validate(
 
 
 def evaluate(
-    ast: AST,
+    ast: q.AST,
     data_structure: QueryableStructure,
     schema: dict,
     index_combination: Optional[IndexCombination],
@@ -104,7 +104,7 @@ def evaluate(
                                 check_permissions)
 
 
-def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema: dict,
+def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schema: dict,
                            resolve_checks: bool) -> Iterable[ArrayLengthData]:
     """
     To evaluate a query in a manner consistent with the Postgres evaluator (and facilitate richer queries), each array
@@ -128,7 +128,7 @@ def _collect_array_lengths(ast: AST, data_structure: QueryableStructure, schema:
 
     # Resolves are where the magic happens w/r/t array access. Capture any array accesses with their lengths and child
     # array accesses.
-    if ast.fn == FUNCTION_RESOLVE:
+    if ast.fn == q.FUNCTION_RESOLVE:
         r = _resolve_array_lengths(ast.args, data_structure, schema, "_root", resolve_checks)
         if r is not None:
             yield r
@@ -201,7 +201,7 @@ def _create_all_index_combinations(arrays_data: Iterable[ArrayLengthData], paren
 
 # TODO: More rigorous / defined rules
 def check_ast_against_data_structure(
-    ast: AST,
+    ast: q.AST,
     data_structure: QueryableStructure,
     schema: dict,
     internal: bool = False,
@@ -303,7 +303,7 @@ _is_not_none = partial(is_not, None)
 
 
 def _get_child_resolve_array_lengths(
-    new_resolve: List[Literal],
+    new_resolve: List[q.Literal],
     resolving_ds: List,
     item_schema: dict,
     new_path: str,
@@ -325,7 +325,7 @@ def _get_child_resolve_array_lengths(
 
 
 def _resolve_array_lengths(
-    resolve: List[Literal],
+    resolve: List[q.Literal],
     resolving_ds: QueryableStructure,
     schema: dict,
     path: str = "_root",
@@ -369,7 +369,7 @@ def _resolve_array_lengths(
 
 
 def _resolve_properties_and_check(
-    resolve: List[Literal],
+    resolve: List[q.Literal],
     schema: dict,
     index_combination: Optional[IndexCombination],
 ) -> dict:
@@ -400,7 +400,7 @@ def _resolve_properties_and_check(
     return r_schema.get("search", {})
 
 
-def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, _schema: dict,
+def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema: dict,
              index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions):
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
@@ -423,21 +423,21 @@ def _resolve(resolve: List[Literal], resolving_ds: QueryableStructure, _schema: 
 
 
 QUERY_CHECK_SWITCH: Dict[
-    FunctionName,
+    q.FunctionName,
     Callable[[FunctionArgs, QueryableStructure, dict, Optional[IndexCombination], bool, bool], QueryableStructure]
 ] = {
-    FUNCTION_AND: _binary_op(and_),
-    FUNCTION_OR: _binary_op(or_),
-    FUNCTION_NOT: lambda args, ds, schema, internal, ic, r_chk, p_chk:
+    q.FUNCTION_AND: _binary_op(and_),
+    q.FUNCTION_OR: _binary_op(or_),
+    q.FUNCTION_NOT: lambda args, ds, schema, internal, ic, r_chk, p_chk:
         not_(evaluate_no_validate(args[0], ds, schema, internal, ic, r_chk, p_chk)),
 
-    FUNCTION_LT: _binary_op(lt),
-    FUNCTION_LE: _binary_op(le),
-    FUNCTION_EQ: _binary_op(eq),
-    FUNCTION_GT: _binary_op(gt),
-    FUNCTION_GE: _binary_op(ge),
+    q.FUNCTION_LT: _binary_op(lt),
+    q.FUNCTION_LE: _binary_op(le),
+    q.FUNCTION_EQ: _binary_op(eq),
+    q.FUNCTION_GT: _binary_op(gt),
+    q.FUNCTION_GE: _binary_op(ge),
 
-    FUNCTION_CO: _binary_op(contains),
+    q.FUNCTION_CO: _binary_op(contains),
 
-    FUNCTION_RESOLVE: _resolve
+    q.FUNCTION_RESOLVE: _resolve
 }

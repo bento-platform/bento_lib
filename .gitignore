@@ -1,7 +1,10 @@
-.idea/workspace.xml
+.idea/chord_lib.iml
 .idea/dataSources*
+.idea/misc.xml
+.idea/workspace.xml
 .coverage
 .pytest_cache
+.tox/
 build
 dist
 htmlcov
