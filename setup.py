@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 
+import configparser
+import os
 import setuptools
 
 with open("README.md", "r") as rf:
     long_description = rf.read()
 
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "chord_lib", "package.cfg"))
+
 setuptools.setup(
-    name="chord_lib",
-    version="0.6.0",
+    name=config["package"]["name"],
+    version=config["package"]["version"],
 
     python_requires=">=3.6",
     install_requires=[
