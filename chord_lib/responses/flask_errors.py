@@ -5,7 +5,7 @@ from flask import jsonify
 from functools import partial
 from typing import Callable
 
-from .errors import *
+from chord_lib.responses import errors
 
 
 __all__ = [
@@ -49,8 +49,8 @@ def flask_error_wrap(fn: Callable) -> Callable:
     return lambda _e: fn()
 
 
-def flask_error(code: int, *errors):
-    return jsonify(http_error(code, *errors)), code
+def flask_error(code: int, *errs):
+    return jsonify(errors.http_error(code, *errs)), code
 
 
 def _flask_error(code: int) -> Callable:

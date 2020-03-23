@@ -2,7 +2,13 @@ import json
 import os
 import pytest
 
-from chord_lib.ingestion import *
+from chord_lib.ingestion import (
+    file_with_prefix,
+    find_common_prefix,
+    formatted_output,
+    make_output_params,
+    namespaced_input,
+)
 
 
 TEST_OUTPUT_PARAMS = {
@@ -211,7 +217,7 @@ def test_find_common_prefix():
     output_params_2 = make_output_params("test", TEST_WORKFLOW_PARAMS_EXISTING, [TEST_INPUT_FILE])
     prefix_2 = find_common_prefix(TEST_DATA_PATH, {"outputs": [TEST_OUTPUT_STRING_EXISTING, TEST_OUTPUT_FILE_EXISTING]},
                                   output_params_2)
-    assert prefix_2 is 1
+    assert prefix_2 == 1
 
     output_params_3 = make_output_params("test", TEST_WORKFLOW_PARAMS_EXISTING, [TEST_INPUT_FILE])
     prefix_3 = find_common_prefix(TEST_DATA_PATH, {"outputs": [TEST_OUTPUT_FILE_EXISTING]}, output_params_3)
