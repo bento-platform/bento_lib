@@ -75,6 +75,10 @@ def namespaced_input(workflow_name: str, input_id: str) -> str:
 
 
 def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs: list):
+    # TODO: This can raise KeyError on os.path.basename(workflow_params[ni]) if ni is incorrect (e.g. missing the
+    #  namespaced prefix.) This should be explicitly documented and perhaps ParameterException or something should be
+    #  introduced to force custom handling for this exception.
+
     output_params = {}
 
     for i, input_spec in enumerate(workflow_inputs):
