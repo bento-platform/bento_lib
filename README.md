@@ -27,9 +27,9 @@ python3 -m tox
   * [ ] The latest changes have been merged from the `develop` branch into the
     `master` branch
     
-  * [ ] A release has been created in the format of `v#.#.#`, listing any
-    changes made, in the GitHub releases page **tagged from the master 
-    branch!**
+  * [ ] A release has been created, tagged in the format of `v#.#.#` and named
+    in the format of `Version #.#.#`, listing any changes made, in the GitHub 
+    releases page **tagged from the master branch!**
 
 
 ### 2. Releasing from the Command Line
