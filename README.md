@@ -10,7 +10,52 @@ Common utilities and helpers for CHORD services.
 ## Running Tests
 
 ```bash
-python3 -m pytest --cov=chord_lib --cov-branch
+python3 -m tox
+```
+
+
+## Releasing
+
+
+### 1. Release Checklist
+
+  * [ ] All tests pass and test coverage has not been reduced
+
+  * [ ] Package version has been updated (following semver) in 
+    `chord_lib/package.cfg`
+    
+  * [ ] The latest changes have been merged from the `develop` branch into the
+    `master` branch
+    
+  * [ ] A release has been created in the format of `v#.#.#`, listing any
+    changes made, in the GitHub releases page **tagged from the master 
+    branch!**
+
+
+### 2. Releasing from the Command Line
+
+```bash
+# IF NECESSARY: Install twine OUTSIDE of the virtual environment
+python3 -m pip install twine
+
+# Switch to the correct branch and make sure it's up to date
+git checkout master
+git pull
+
+# If needed, enter the project virtual environment
+source env/bin/activate
+
+# Remove existing build files
+rm -rf build/ dist/ chord_lib.egg-info/
+
+# Build the new package
+python3 setup.py sdist bdist_wheel
+
+# In between these steps - test out the package... make sure everyhting works
+# before uploading it to production PyPI.
+
+# Upload it to PyPI
+python3 -m twine upload dist/*
 ```
 
 
