@@ -23,11 +23,11 @@ setuptools.setup(
     ],
     extras_require={
         "flask": ["Flask>=1.1,<2.0"],
-        "django": ["Django>=2.2,<3.0", "djangorestframework>=3.10,<3.11"]
+        "django": ["Django>=2.2,<3.0", "djangorestframework>=3.11,<3.12"]
     },
 
-    author="David Lougheed",
-    author_email="david.lougheed@mail.mcgill.ca",
+    author=config["package"]["authors"],
+    author_email=config["package"]["author_emails"],
 
     description="A set of common utilities and helpers for CHORD.",
     long_description=long_description,

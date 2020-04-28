@@ -55,7 +55,7 @@ python3 setup.py sdist bdist_wheel
 # before uploading it to production PyPI.
 
 # Upload it to PyPI
-python3 -m twine upload dist/*
+twine upload dist/*
 ```
 
 

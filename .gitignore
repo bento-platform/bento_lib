@@ -1,6 +1,7 @@
-.idea/chord_lib.iml
+.idea/$CACHE_FILE$
 .idea/dataSources*
 .idea/misc.xml
+.idea/rSettings.xml
 .idea/workspace.xml
 .coverage
 .pytest_cache
