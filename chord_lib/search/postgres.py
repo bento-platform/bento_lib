@@ -245,7 +245,7 @@ def join_fragment(ast: q.AST, schema: dict) -> sql.Composable:
         # TODO: Don't hard-code _root?
         search_database_properties = _get_search_and_database_properties(schema)[1]
         relation = search_database_properties.get("relation")
-        return sql.SQL("({}) AS {}".format(sql.Identifier(relation) if relation else sql.SQL("SELECT NULL"), SQL_ROOT))
+        return sql.SQL("({}) AS {}").format(sql.Identifier(relation) if relation else sql.SQL("SELECT NULL"), SQL_ROOT)
 
     return sql.SQL(", ").join((
         sql.SQL(" LEFT JOIN ").join((
