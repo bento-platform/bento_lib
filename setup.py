@@ -17,13 +17,13 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[
         "jsonschema>=3.2.0,<4",
-        "psycopg2-binary>=2.8.4,<3.0",
-        "redis>=3.4.1,<4.0",
-        "Werkzeug>=1.0,<2.0",
+        "psycopg2-binary>=2.8.5,<3.0",
+        "redis>=3.5.1,<4.0",
+        "Werkzeug>=1.0.1,<2.0",
     ],
     extras_require={
-        "flask": ["Flask>=1.1,<2.0"],
-        "django": ["Django>=2.2,<3.0", "djangorestframework>=3.11,<3.12"]
+        "flask": ["Flask>=1.1.2,<2.0"],
+        "django": ["Django>=2.2.12,<3.0", "djangorestframework>=3.11,<3.12"]
     },
 
     author=config["package"]["authors"],
