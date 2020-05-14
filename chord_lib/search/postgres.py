@@ -16,6 +16,9 @@ __all__ = ["search_query_to_psycopg2_sql"]
 
 SQLComposableWithParams = Tuple[sql.Composable, tuple]
 
+QUERY_ROOT = q.Literal("$root")
+SQL_ROOT = sql.Identifier("_root")
+
 
 # TODO: Python 3.7: Data Class
 class OptionalComposablePair:
@@ -93,6 +96,11 @@ def json_schema_to_postgres_schema(name: str, schema: dict) -> Tuple[Optional[sq
     )
 
 
+def _get_search_and_database_properties(schema: dict) -> Tuple[dict, dict]:
+    search_properties = schema.get("search", {})
+    return search_properties, search_properties.get("database", {})
+
+
 def collect_resolve_join_tables(
     resolve: Tuple[q.Literal, ...],
     schema: dict,
@@ -114,13 +122,12 @@ def collect_resolve_join_tables(
     if len(resolve) == 0:
         return ()
 
-    search_properties = schema.get("search", {})
-    search_database_properties = search_properties.get("database", {})
+    search_properties, search_database_properties = _get_search_and_database_properties(schema)
 
     # TODO: might be able to inject .value under some circumstances here
     schema_field = resolve[0].value
-    db_field = search_database_properties.get("field", schema_field if schema_field != "$root" else None)
-    current_relation = search_database_properties.get("relation", None)
+    db_field = search_database_properties.get("field", schema_field if schema_field != QUERY_ROOT.value else None)
+    current_relation = search_database_properties.get("relation")
 
     new_resolve_path = re.sub(r"[$\[\]]+", "", "{}_{}".format(resolve_path if resolve_path is not None else "",
                                                               schema_field))
@@ -133,7 +140,7 @@ def collect_resolve_join_tables(
 
         # TODO: Additional conditions to check if it's actually JSON
         # TODO: HStore support?
-        structure_type = search_database_properties.get("type", None)
+        structure_type = search_database_properties.get("type")
         if structure_type in ("json", "jsonb"):
             if schema["type"] == "array":  # JSON(B) array or object
                 relation_template = "{}_array_elements({})"
@@ -215,7 +222,7 @@ def collect_join_tables(ast: q.AST, terms: tuple, schema: dict) -> Tuple[JoinAnd
 
     if ast.fn == q.FUNCTION_RESOLVE:
         terms = list(terms)
-        collected_joins = collect_resolve_join_tables((q.Literal("$root"), *ast.args), schema)
+        collected_joins = collect_resolve_join_tables((QUERY_ROOT, *ast.args), schema)
 
         for j in collected_joins:
             existing_aliases = set(t.current_alias_str for t in terms if t is not None)
@@ -234,9 +241,11 @@ def collect_join_tables(ast: q.AST, terms: tuple, schema: dict) -> Tuple[JoinAnd
 
 def join_fragment(ast: q.AST, schema: dict) -> sql.Composable:
     terms = collect_join_tables(ast, (), schema)
-    if len(terms) == 0:
+    if not terms:  # Query was probably just a literal
         # TODO: Don't hard-code _root?
-        return sql.SQL("(SELECT NULL) AS {}").format(sql.Identifier("_root"))
+        search_database_properties = _get_search_and_database_properties(schema)[1]
+        relation = search_database_properties.get("relation")
+        return sql.SQL("{} AS {}").format(sql.Identifier(relation) if relation else sql.SQL("(SELECT NULL)"), SQL_ROOT)
 
     return sql.SQL(", ").join((
         sql.SQL(" LEFT JOIN ").join((
@@ -269,7 +278,7 @@ def search_query_to_psycopg2_sql(query, schema: dict, internal: bool = False) ->
     ast = q.convert_query_to_ast_and_preprocess(query)
     sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema, internal)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-    return sql.SQL("SELECT \"_root\".* FROM {} WHERE {}").format(join_fragment(ast, schema), sql_obj), params
+    return sql.SQL("SELECT {}.* FROM {} WHERE {}").format(SQL_ROOT, join_fragment(ast, schema), sql_obj), params
 
 
 def uncurried_binary_op(op: str, args: List[q.AST], params: tuple, schema: dict, internal: bool = False) \
@@ -300,16 +309,16 @@ def _wildcard(args: List[q.AST], params: tuple, _schema: dict, _internal: bool =
 
 
 def get_relation(resolve: List[q.Literal], schema: dict):
-    aliases = collect_resolve_join_tables((q.Literal("$root"), *resolve), schema)[-1].aliases
+    aliases = collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].aliases
     return aliases.current if aliases.current is not None else aliases.parent
 
 
 def get_field(resolve: List[q.Literal], schema: dict) -> Optional[str]:
-    return collect_resolve_join_tables((q.Literal("$root"), *resolve), schema)[-1].field_alias
+    return collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].field_alias
 
 
 def get_search_properties(resolve: List[q.Literal], schema: dict) -> dict:
-    return collect_resolve_join_tables((q.Literal("$root"), *resolve), schema)[-1].search_properties
+    return collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].search_properties
 
 
 def _resolve(args: List[q.AST], params: tuple, schema: dict, _internal: bool = False) -> SQLComposableWithParams:
