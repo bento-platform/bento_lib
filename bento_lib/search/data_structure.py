@@ -4,7 +4,8 @@ from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
 from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
-from chord_lib.search import queries as q
+from . import queries as q
+from ._types import JSONSchema
 
 
 __all__ = ["check_ast_against_data_structure"]
@@ -19,7 +20,7 @@ IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
 
 
-def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: dict):
+def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: JSONSchema):
     """
     Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
     because (assuming the schema is correct) it allows methods to make more assumptions about the integrity of the
@@ -46,7 +47,7 @@ def _validate_not_wc(e: q.Expression):
 def evaluate_no_validate(
     ast: q.AST,
     data_structure: QueryableStructure,
-    schema: dict,
+    schema: JSONSchema,
     index_combination: Optional[IndexCombination],
     internal: bool = False,
     resolve_checks: bool = True,
@@ -92,7 +93,7 @@ def evaluate_no_validate(
 def evaluate(
     ast: q.AST,
     data_structure: QueryableStructure,
-    schema: dict,
+    schema: JSONSchema,
     index_combination: Optional[IndexCombination],
     internal: bool = False,
     resolve_checks: bool = True,
@@ -104,7 +105,7 @@ def evaluate(
                                 check_permissions)
 
 
-def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schema: dict,
+def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schema: JSONSchema,
                            resolve_checks: bool) -> Iterable[ArrayLengthData]:
     """
     To evaluate a query in a manner consistent with the Postgres evaluator (and facilitate richer queries), each array
@@ -203,7 +204,7 @@ def _create_all_index_combinations(arrays_data: Iterable[ArrayLengthData], paren
 def check_ast_against_data_structure(
     ast: q.AST,
     data_structure: QueryableStructure,
-    schema: dict,
+    schema: JSONSchema,
     internal: bool = False,
     return_all_index_combinations: bool = False,
 ) -> Union[bool, Iterable[IndexCombination]]:
@@ -242,7 +243,7 @@ def check_ast_against_data_structure(
 
 
 def _binary_op(op: BBOperator)\
-        -> Callable[[FunctionArgs, QueryableStructure, dict, Optional[IndexCombination], bool, bool], bool]:
+        -> Callable[[FunctionArgs, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
     """
     Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
     return a Boolean result.
@@ -253,8 +254,9 @@ def _binary_op(op: BBOperator)\
     is_and = op == and_
     is_or = op == or_
 
-    def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: dict, ic: Optional[IndexCombination],
-                            internal: bool, resolve_checks: bool, check_permissions: bool) -> bool:
+    def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: JSONSchema,
+                            ic: Optional[IndexCombination], internal: bool, resolve_checks: bool,
+                            check_permissions: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
         # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
@@ -282,7 +284,7 @@ def _binary_op(op: BBOperator)\
     return uncurried_binary_op
 
 
-def _resolve_checks(resolve_value: str, schema: dict):
+def _resolve_checks(resolve_value: str, schema: JSONSchema):
     """
     Performs standard checks while going through any type of "resolve"-based function (where a #resolve call is being
     processed) to prevent access errors.
@@ -305,7 +307,7 @@ _is_not_none = partial(is_not, None)
 def _get_child_resolve_array_lengths(
     new_resolve: List[q.Literal],
     resolving_ds: List,
-    item_schema: dict,
+    item_schema: JSONSchema,
     new_path: str,
     resolve_checks: bool,
 ) -> Iterable[ArrayLengthData]:
@@ -327,7 +329,7 @@ def _get_child_resolve_array_lengths(
 def _resolve_array_lengths(
     resolve: List[q.Literal],
     resolving_ds: QueryableStructure,
-    schema: dict,
+    schema: JSONSchema,
     path: str = "_root",
     resolve_checks: bool = True,
 ) -> Optional[ArrayLengthData]:
@@ -370,7 +372,7 @@ def _resolve_array_lengths(
 
 def _resolve_properties_and_check(
     resolve: List[q.Literal],
-    schema: dict,
+    schema: JSONSchema,
     index_combination: Optional[IndexCombination],
 ) -> dict:
     """
@@ -400,7 +402,7 @@ def _resolve_properties_and_check(
     return r_schema.get("search", {})
 
 
-def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema: dict,
+def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema: JSONSchema,
              index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions):
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
@@ -424,12 +426,13 @@ def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema
 
 QUERY_CHECK_SWITCH: Dict[
     q.FunctionName,
-    Callable[[FunctionArgs, QueryableStructure, dict, Optional[IndexCombination], bool, bool], QueryableStructure]
+    Callable[[FunctionArgs, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
+             QueryableStructure]
 ] = {
     q.FUNCTION_AND: _binary_op(and_),
     q.FUNCTION_OR: _binary_op(or_),
-    q.FUNCTION_NOT: lambda args, ds, schema, internal, ic, r_chk, p_chk:
-        not_(evaluate_no_validate(args[0], ds, schema, internal, ic, r_chk, p_chk)),
+    q.FUNCTION_NOT: lambda args, ds, schema, ic, internal, r_chk, p_chk:
+        not_(evaluate_no_validate(args[0], ds, schema, ic, internal, r_chk, p_chk)),
 
     q.FUNCTION_LT: _binary_op(lt),
     q.FUNCTION_LE: _binary_op(le),

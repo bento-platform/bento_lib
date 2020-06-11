@@ -1,5 +1,6 @@
 from typing import Callable, List, Optional, Tuple, Union
 
+from ._types import JSONSchema
 from .operations import (
     SEARCH_OP_LT,
     SEARCH_OP_LE,
@@ -214,7 +215,7 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
     return Expression(FUNCTION_AND, [asts[0], and_asts_to_ast(asts[1:])])
 
 
-def check_operation_permissions(ast: AST, schema: dict, search_getter: Callable[[List[Literal], dict], dict],
+def check_operation_permissions(ast: AST, schema: JSONSchema, search_getter: Callable[[List[Literal], dict], dict],
                                 internal: bool = False):
     if ast.type == "l":
         return

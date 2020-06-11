@@ -1,5 +1,5 @@
 {
-  "$id": "https://raw.githubusercontent.com/c3g/chord_lib/master/chord_lib/schemas/ga4gh_service_info.schema.json",
+  "$id": "https://raw.githubusercontent.com/bento-platform/bento_lib/master/bento_lib/schemas/ga4gh_service_info.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {

@@ -1,4 +1,4 @@
-import chord_lib.events
+import bento_lib.events
 import pytest
 import redis
 import time
@@ -16,7 +16,7 @@ TEST_EVENT_SCHEMA = {"type": "string"}
 TEST_EVENT_BODY = "test"
 
 
-event_bus = chord_lib.events.EventBus()
+event_bus = bento_lib.events.EventBus()
 
 
 def test_registration():
@@ -51,7 +51,7 @@ def test_service_events():
             assert event["type"] == TEST_SERVICE_EVENT
             assert event["data"] == TEST_EVENT_BODY
 
-        event_bus.add_handler(chord_lib.events.ALL_SERVICE_EVENTS, handle_service_event)
+        event_bus.add_handler(bento_lib.events.ALL_SERVICE_EVENTS, handle_service_event)
         event_bus.start_event_loop()
 
         r = event_bus.publish_service_event(TEST_SERVICE, TEST_SERVICE_EVENT, TEST_EVENT_BODY)
@@ -88,8 +88,8 @@ def test_data_type_events():
             assert event["type"] == TEST_DATA_TYPE_EVENT
             assert event["data"] == TEST_EVENT_BODY
 
-        event_bus.add_handler(chord_lib.events.ALL_DATA_TYPE_EVENTS, handle_data_type_event)
-        r = event_bus.add_handler(chord_lib.events.ALL_DATA_TYPE_EVENTS, handle_data_type_event)
+        event_bus.add_handler(bento_lib.events.ALL_DATA_TYPE_EVENTS, handle_data_type_event)
+        r = event_bus.add_handler(bento_lib.events.ALL_DATA_TYPE_EVENTS, handle_data_type_event)
         assert not r
         event_bus.start_event_loop()
 
@@ -109,7 +109,7 @@ def test_premature_stop():
 def test_late_handler():
     try:
         event_bus.start_event_loop()
-        r = event_bus.add_handler(chord_lib.events.ALL_SERVICE_EVENTS, lambda _: None)
+        r = event_bus.add_handler(bento_lib.events.ALL_SERVICE_EVENTS, lambda _: None)
         assert not r
     finally:
         event_bus.stop_event_loop()
@@ -117,12 +117,12 @@ def test_late_handler():
 
 def test_fake_event_bus():
     global event_bus
-    chord_lib.events._connection_info = {"unix_socket_path": "/road/to/nowhere.sock"}
+    bento_lib.events._connection_info = {"unix_socket_path": "/road/to/nowhere.sock"}
 
     with pytest.raises(redis.exceptions.ConnectionError):
-        chord_lib.events.EventBus()
+        bento_lib.events.EventBus()
 
-    event_bus = chord_lib.events.EventBus(allow_fake=True)
+    event_bus = bento_lib.events.EventBus(allow_fake=True)
 
     test_registration()
 
@@ -130,7 +130,7 @@ def test_fake_event_bus():
         def handle_service_event(_message):
             pass
 
-        event_bus.add_handler(chord_lib.events.ALL_SERVICE_EVENTS, handle_service_event)
+        event_bus.add_handler(bento_lib.events.ALL_SERVICE_EVENTS, handle_service_event)
         event_bus.start_event_loop()
 
         r = event_bus.publish_service_event(TEST_SERVICE, TEST_SERVICE_EVENT, TEST_EVENT_BODY)
@@ -143,11 +143,11 @@ def test_fake_event_bus():
 
 
 def test_notification_format():
-    n = chord_lib.events.notifications.format_notification("test", "test2", "go_somewhere", "https://google.ca")
+    n = bento_lib.events.notifications.format_notification("test", "test2", "go_somewhere", "https://google.ca")
     assert isinstance(n, dict)
     assert len(list(n.keys())) == 4
     assert n["title"] == "test"
     assert n["description"] == "test2"
     assert n["notification_type"] == "go_somewhere"
     assert n["action_target"] == "https://google.ca"
-    validate(n, chord_lib.events.types.EVENT_CREATE_NOTIFICATION_SCHEMA)
+    validate(n, bento_lib.events.types.EVENT_CREATE_NOTIFICATION_SCHEMA)

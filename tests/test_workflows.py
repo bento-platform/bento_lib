@@ -1,6 +1,6 @@
 import werkzeug.utils
 
-from chord_lib import workflows
+from bento_lib import workflows
 
 TEST_WORKFLOWS = {
     "ingestion": {

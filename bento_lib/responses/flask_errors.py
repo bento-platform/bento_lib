@@ -5,7 +5,7 @@ from flask import jsonify
 from functools import partial
 from typing import Callable
 
-from chord_lib.responses import errors
+from bento_lib.responses import errors
 
 
 __all__ = [
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-def flask_error_wrap_with_traceback(fn: Callable, service_name="CHORD Service") -> Callable:
+def flask_error_wrap_with_traceback(fn: Callable, service_name="Bento Service") -> Callable:
     """
     Function to wrap flask_* error creators with something that supports the application.register_error_handler method,
     while also printing a traceback.
