@@ -29,14 +29,14 @@ setuptools.setup(
     author=config["package"]["authors"],
     author_email=config["package"]["author_emails"],
 
-    description="A set of common utilities and helpers for CHORD.",
+    description="A set of common utilities and helpers for Bento platform services.",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
     packages=setuptools.find_packages(),
     include_package_data=True,
 
-    url="https://github.com/c3g/chord_lib",
+    url="https://github.com/bento-platform/bento_lib",
     license="LGPLv3",
     classifiers=[
         "Programming Language :: Python :: 3",
