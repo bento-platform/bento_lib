@@ -1,4 +1,4 @@
-import chord_lib.responses as responses
+import bento_lib.responses as responses
 import json
 from dateutil.parser import isoparse
 

@@ -18,11 +18,11 @@ __all__ = [
 ]
 
 
-ALL_SERVICE_EVENTS = "chord.service.*"
-ALL_DATA_TYPE_EVENTS = "chord.data_type.*"
+ALL_SERVICE_EVENTS = "bento.service.*"
+ALL_DATA_TYPE_EVENTS = "bento.data_type.*"
 
-_SERVICE_CHANNEL_TPL = "chord.service.{}"
-_DATA_TYPE_CHANNEL_TPL = "chord.data_type.{}"
+_SERVICE_CHANNEL_TPL = "bento.service.{}"
+_DATA_TYPE_CHANNEL_TPL = "bento.data_type.{}"
 
 
 # Types

@@ -22,12 +22,12 @@ def _error_message(message):
 
 def http_error(code: int, *errors):
     if code not in HTTP_STATUS_CODES:
-        print(f"[CHORD Lib] Error: Could not find code {code} in valid HTTP status codes.")
+        print(f"[Bento Lib] Error: Could not find code {code} in valid HTTP status codes.")
         code = 500
         errors = (*errors, f"An invalid status code of {code} was specified by the service.")
 
     if code < 400:
-        print(f"[CHORD Lib] Error: Code {code} is not an HTTP error code.")
+        print(f"[Bento Lib] Error: Code {code} is not an HTTP error code.")
         code = 500
         errors = (*errors, f"A non-error status code of {code} was specified by the service.")
 

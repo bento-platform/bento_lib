@@ -2,26 +2,26 @@ from django.contrib.auth.backends import RemoteUserBackend
 from django.contrib.auth.middleware import RemoteUserMiddleware
 from rest_framework.authentication import RemoteUserAuthentication
 
-from chord_lib.auth.headers import DJANGO_USER_HEADER, DJANGO_USER_ROLE_HEADER
-from chord_lib.auth.roles import ROLE_OWNER, ROLE_USER
+from bento_lib.auth.headers import DJANGO_USER_HEADER, DJANGO_USER_ROLE_HEADER
+from bento_lib.auth.roles import ROLE_OWNER, ROLE_USER
 
 
 __all__ = [
-    "CHORDRemoteUserAuthentication",
-    "CHORDRemoteUserBackend",
-    "CHORDRemoteUserMiddleware",
+    "BentoRemoteUserAuthentication",
+    "BentoRemoteUserBackend",
+    "BentoRemoteUserMiddleware",
 ]
 
 
-class CHORDRemoteUserAuthentication(RemoteUserAuthentication):
+class BentoRemoteUserAuthentication(RemoteUserAuthentication):
     header = DJANGO_USER_HEADER
 
 
-class CHORDRemoteUserMiddleware(RemoteUserMiddleware):
+class BentoRemoteUserMiddleware(RemoteUserMiddleware):
     header = DJANGO_USER_HEADER
 
 
-class CHORDRemoteUserBackend(RemoteUserBackend):
+class BentoRemoteUserBackend(RemoteUserBackend):
     # noinspection PyMethodMayBeStatic
     def configure_user(self, request, user):
         is_owner = request.META.get(DJANGO_USER_ROLE_HEADER, ROLE_USER) == ROLE_OWNER
