@@ -1,7 +1,7 @@
 {
-  "$id": "https://raw.githubusercontent.com/c3g/chord_lib/master/chord_lib/schemas/chord_data_use.schema.json",
+  "$id": "https://raw.githubusercontent.com/bento-platform/bento_lib/master/bento_lib/schemas/bento_data_use.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CHORD Data Use File",
+  "title": "Bento Data Use File",
   "description": "Schema defining data usage conditions from the GA4GH DUO ontology.",
   "type": "object",
   "properties": {

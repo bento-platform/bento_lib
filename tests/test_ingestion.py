@@ -2,7 +2,7 @@ import json
 import os
 import pytest
 
-from chord_lib.ingestion import (
+from bento_lib.ingestion import (
     file_with_prefix,
     find_common_prefix,
     formatted_output,

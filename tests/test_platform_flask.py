@@ -1,5 +1,5 @@
-import chord_lib.auth.flask_decorators as fd
-import chord_lib.responses.flask_errors as fe
+import bento_lib.auth.flask_decorators as fd
+import bento_lib.responses.flask_errors as fe
 import pytest
 
 from flask import Flask
@@ -39,7 +39,7 @@ def flask_client():
 
 def test_flask_forbidden_error(flask_client):
     # Turn CHORD permissions mode on to make sure we're getting real permissions checks
-    fd.CHORD_PERMISSIONS = True
+    fd.BENTO_PERMISSIONS = True
 
     # non-existent endpoint
 

@@ -1,2 +1,2 @@
-include chord_lib/schemas/*.json
-include chord_lib/package.cfg
+include bento_lib/schemas/*.json
+include bento_lib/package.cfg

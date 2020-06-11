@@ -8,12 +8,12 @@ django.setup()
 
 @pytest.mark.django_db
 def test_remote_auth_backend():
-    import chord_lib.auth.django_remote_user
-    from chord_lib.auth.headers import DJANGO_USER_HEADER, DJANGO_USER_ROLE_HEADER
+    import bento_lib.auth.django_remote_user
+    from bento_lib.auth.headers import DJANGO_USER_HEADER, DJANGO_USER_ROLE_HEADER
     from django.contrib.auth.models import User
     from django.http.request import HttpRequest
 
-    b = chord_lib.auth.django_remote_user.CHORDRemoteUserBackend()
+    b = bento_lib.auth.django_remote_user.BentoRemoteUserBackend()
     r = HttpRequest()
     r.META = {
         DJANGO_USER_HEADER: "test",
