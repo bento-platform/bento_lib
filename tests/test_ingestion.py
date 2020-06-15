@@ -209,6 +209,19 @@ def test_make_output_params():
     assert len(list(output_params.keys())) == 0
 
 
+def test_optional_inputs():
+    for ip in (TEST_INPUT_FILE, TEST_INPUT_FILE_ARRAY, TEST_INPUT_STRING, TEST_INPUT_STRING_ARRAY):
+        output_params = make_output_params("test", {}, [{**ip, "required": False}])
+        assert json.dumps(output_params) == "{}"
+
+
+def test_optional_input_formatting():
+    assert formatted_output(TEST_OUTPUT_FILE, {}) is None
+    assert formatted_output(TEST_OUTPUT_FILE_ARRAY, {}) is None
+    assert formatted_output(TEST_OUTPUT_STRING, {}) is None
+    assert formatted_output(TEST_OUTPUT_STRING_ARRAY, {}) is None
+
+
 def test_find_common_prefix():
     output_params_1 = make_output_params("test", TEST_WORKFLOW_PARAMS, [TEST_INPUT_FILE])
     prefix_1 = find_common_prefix(TEST_DATA_PATH, {"outputs": [TEST_OUTPUT_FILE]}, output_params_1)
