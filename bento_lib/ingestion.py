@@ -1,6 +1,6 @@
 import os
 
-from typing import Optional
+from typing import Dict, List, Optional, Union
 from werkzeug.utils import secure_filename
 
 
@@ -23,7 +23,7 @@ __all__ = [
 WORKFLOW_TYPE_ARRAY_SUFFIX = "[]"
 
 
-def array_of_type(workflow_type: str):
+def array_of_type(workflow_type: str) -> str:
     return "{}{}".format(workflow_type, WORKFLOW_TYPE_ARRAY_SUFFIX)
 
 
@@ -34,30 +34,51 @@ WORKFLOW_TYPE_STRING_ARRAY = array_of_type("string")
 WORKFLOW_TYPE_ENUM = "enum"
 WORKFLOW_TYPE_ENUM_ARRAY = array_of_type("enum")
 
-WORKFLOW_FILE_TYPES = {WORKFLOW_TYPE_FILE, WORKFLOW_TYPE_FILE_ARRAY}
+WORKFLOW_TYPES = frozenset((
+    WORKFLOW_TYPE_FILE,
+    WORKFLOW_TYPE_FILE_ARRAY,
+    WORKFLOW_TYPE_STRING,
+    WORKFLOW_TYPE_STRING_ARRAY,
+    WORKFLOW_TYPE_ENUM,
+    WORKFLOW_TYPE_ENUM_ARRAY,
+))
+
+WORKFLOW_FILE_TYPES = frozenset((WORKFLOW_TYPE_FILE, WORKFLOW_TYPE_FILE_ARRAY))
 
 
 def file_with_prefix(file_name: str, prefix: Optional[int]) -> str:
     return f"{prefix}_{file_name}" if prefix is not None else file_name
 
 
-def _output_file_name(file_name, output_params):
-    return secure_filename(file_name.format(**output_params))
+def _output_file_name(file_name, output_params) -> Optional[str]:
+    try:
+        return secure_filename(file_name.format(**output_params))
+    except KeyError:
+        return None
 
 
-def _output_file_name_array(file_template, map_from_input, output_params):
-    return [secure_filename(file_template.format(v)) for v in output_params[map_from_input]]
+def _output_file_name_array(file_template, map_from_input, output_params) -> Optional[List[str]]:
+    try:
+        return [secure_filename(file_template.format(v)) for v in output_params[map_from_input]]
+    except KeyError:
+        return None
 
 
-def _output_string(string, output_params):
-    return string.format(**output_params)
+def _output_string(string, output_params) -> Optional[str]:
+    try:
+        return string.format(**output_params)
+    except KeyError:
+        return None
 
 
-def _output_string_array(string_template, map_from_input, output_params):
-    return [string_template.format(v) for v in output_params[map_from_input]]
+def _output_string_array(string_template, map_from_input, output_params) -> Optional[List[str]]:
+    try:
+        return [string_template.format(v) for v in output_params[map_from_input]]
+    except KeyError:
+        return None
 
 
-def formatted_output(output: dict, output_params: dict):
+def formatted_output(output: dict, output_params: dict) -> Optional[Union[str, List[str]]]:
     if output["type"] == WORKFLOW_TYPE_FILE:
         return _output_file_name(output["value"], output_params)
     elif output["type"] == WORKFLOW_TYPE_FILE_ARRAY:
@@ -74,7 +95,8 @@ def namespaced_input(workflow_name: str, input_id: str) -> str:
     return f"{workflow_name}.{input_id}"
 
 
-def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs: list):
+def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs: list) \
+        -> Dict[str, Union[str, List[str]]]:
     # TODO: This can raise KeyError on os.path.basename(workflow_params[ni]) if ni is incorrect (e.g. missing the
     #  namespaced prefix.) This should be explicitly documented and perhaps ParameterException or something should be
     #  introduced to force custom handling for this exception.
@@ -82,28 +104,33 @@ def make_output_params(workflow_id: str, workflow_params: dict, workflow_inputs:
     output_params = {}
 
     for i, input_spec in enumerate(workflow_inputs):
+        if input_spec["type"] not in WORKFLOW_TYPES:
+            raise NotImplementedError
+
+        ni = namespaced_input(workflow_id, input_spec["id"])
+
+        # If the input is not required and nothing was specified for it, skip it
+        if not input_spec.get("required", True) and workflow_params.get(ni) is None:
+            continue
+
         if input_spec["type"] in WORKFLOW_FILE_TYPES:
             # TODO: DOCS: Just file name without path...
             # TODO: Separate params for full path / path without drop_box stuff?
 
-            ni = namespaced_input(workflow_id, input_spec["id"])
             output_params[input_spec["id"]] = ([os.path.basename(f) for f in workflow_params[ni]]
                                                if input_spec["type"].endswith(WORKFLOW_TYPE_ARRAY_SUFFIX)
                                                else os.path.basename(workflow_params[ni]))
 
-        elif input_spec["type"] in (WORKFLOW_TYPE_STRING, WORKFLOW_TYPE_STRING_ARRAY, WORKFLOW_TYPE_ENUM,
-                                    WORKFLOW_TYPE_ENUM_ARRAY):
-            output_params[input_spec["id"]] = workflow_params[namespaced_input(workflow_id, input_spec["id"])]
-
-        else:
-            raise NotImplementedError
+        else:  # Primitive type or array of primitive type
+            output_params[input_spec["id"]] = workflow_params[ni]
 
     return output_params
 
 
 def _get_file_paths_from_output(base_path, output, output_params, prefix=None):
     fo = formatted_output(output, output_params)
-    return (os.path.join(base_path, file_with_prefix(f, prefix)) for f in (fo if isinstance(fo, list) else [fo]))
+    return (os.path.join(base_path, file_with_prefix(f, prefix)) for f in (fo if isinstance(fo, list) else [fo])
+            if f is not None)
 
 
 def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: dict) -> Optional[int]:
