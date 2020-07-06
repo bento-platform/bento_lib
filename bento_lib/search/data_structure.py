@@ -28,9 +28,7 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
     :param data_structure: The data structure to validate
     :param schema: The JSON schema to validate the data structure against
     """
-    try:
-        jsonschema.validate(data_structure, schema)
-    except jsonschema.ValidationError:
+    if not jsonschema.Draft7Validator(schema).is_valid(data_structure):
         raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
 
 
@@ -122,7 +120,7 @@ def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schem
 
     # Literals are not arrays (currently), so they will not have any specified lengths
     if ast.type == "l":
-        return
+        return ()
 
     # Standard validation to prevent Postgres internal-style queries from being passed in (see _validate_not_wc docs)
     _validate_not_wc(ast)
@@ -131,19 +129,17 @@ def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schem
     # array accesses.
     if ast.fn == q.FUNCTION_RESOLVE:
         r = _resolve_array_lengths(ast.args, data_structure, schema, "_root", resolve_checks)
-        if r is not None:
-            yield r
-        return
+        return () if r is None else (r,)
 
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
     # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
     als = tuple(chain.from_iterable(_collect_array_lengths(e, data_structure, schema, resolve_checks)
                                     for e in ast.args))
-    yield from (
+    return (
         a1 for i1, a1 in enumerate(als)
         if not any(
-            a1[0] == a2[0] and len(a1[2]) <= len(a2[2]) and i1 < i2  # Deduplicate identical or subset items
-            for i2, a2 in enumerate(als)
+            a1[0] == a2[0] and len(a1[2]) <= len(a2[2])  # Deduplicate identical or subset items
+            for a2 in als[i1+1:]
         )
     )
 
@@ -160,12 +156,12 @@ def _dict_combine(dicts: Iterable[dict]):
     return c
 
 
-def _create_index_combinations(array_data: ArrayLengthData, parent_template: IndexCombination) \
+def _create_index_combinations(parent_template: IndexCombination, array_data: ArrayLengthData) \
         -> Iterable[IndexCombination]:
     """
     Creates combinations of array indices from a particular array (including children, NOT including siblings.)
-    :param array_data: Information about an array's length and its children's lengths
     :param parent_template: A dictionary with information about the array's parent's current fixed indexed configuration
+    :param array_data: Information about an array's length and its children's lengths
     :return: An iterable of different combinations of fixed indices for the array and it's children (for later search)
     """
 
@@ -177,27 +173,28 @@ def _create_index_combinations(array_data: ArrayLengthData, parent_template: Ind
             continue
 
         # TODO: Don't like the mono-tuple-ing stuff
-        yield from _create_all_index_combinations((array_data[2][i],), item_template)
+        yield from _create_all_index_combinations(item_template, (array_data[2][i],))
 
 
-def _create_all_index_combinations(arrays_data: Iterable[ArrayLengthData], parent_template: IndexCombination) \
+def _create_all_index_combinations(parent_template: IndexCombination, arrays_data: Iterable[ArrayLengthData]) \
         -> Iterable[IndexCombination]:
     """
     Creates combinations of array indexes for all siblings in an iterable of arrays' length data.
-    :param arrays_data: An iterable of arrays' length data
     :param parent_template: A dictionary with information about the arrays' parent's current fixed indexed configuration
+    :param arrays_data: An iterable of arrays' length data
     :return: An iterable of different combinations of fixed indices for the arrays and their children (for later search)
     """
-
-    # Loop through and recurse
-    combination_sets = (_create_index_combinations(array_data, parent_template) for array_data in arrays_data)
 
     # Combine index mappings from different combination sets into a final list of array index combinations
     # Takes the cross product of the combination sets, since they're parallel fixations and there may be inter-item
     # comparisons between the two sets.
     # TODO: Do we need the combination superset replacement logic still?
     #  combinations = [c for c in combinations if not any(c.items() < c2.items() for c2 in combinations)]
-    yield from map(_dict_combine, product(*combination_sets))
+    return map(
+        _dict_combine,
+        # Loop through and recurse
+        product(*map(partial(_create_index_combinations, parent_template), arrays_data))
+    )
 
 
 # TODO: More rigorous / defined rules
@@ -228,7 +225,7 @@ def check_ast_against_data_structure(
 
     # Create all combinations of indexes into arrays and enumerate them; to be used to loop through all combinations of
     # array indices to freeze "[item]"s at particular indices across the whole query.
-    index_combinations = enumerate(_create_all_index_combinations(array_lengths, {}))
+    index_combinations = enumerate(_create_all_index_combinations({}, array_lengths))
 
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
 

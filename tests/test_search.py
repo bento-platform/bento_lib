@@ -827,7 +827,7 @@ def test_data_structure_search():
     for q, i, _v, ni, nm in DS_VALID_QUERIES:
         als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA,
                                                     resolve_checks=True)
-        ics = tuple(data_structure._create_all_index_combinations(als, {}))
+        ics = tuple(data_structure._create_all_index_combinations({}, als))
         assert len(ics) == ni
         assert nm <= len(ics)
 
