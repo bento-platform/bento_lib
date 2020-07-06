@@ -1,7 +1,7 @@
 {
-  "$id": "https://raw.githubusercontent.com/c3g/chord_lib/master/chord_lib/schemas/chord_ingest.schema.json",
+  "$id": "https://raw.githubusercontent.com/bento-platform/bento_lib/master/bento_lib/schemas/bento_ingest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "CHORD Ingestion Endpoint",
+  "description": "Bento Ingestion Endpoint",
   "type": "object",
   "required": [
     "table_id",
