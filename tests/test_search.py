@@ -723,7 +723,7 @@ def test_valid_function_construction():
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
         assert e.fn == f[0]
-        assert str(e.args) == str(f[1:])
+        assert str(e.args) == str(tuple(f[1:]))
 
 
 def test_invalid_function_construction():

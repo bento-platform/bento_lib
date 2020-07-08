@@ -2,7 +2,7 @@ import jsonschema
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
-from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, Optional, Tuple, Union
 
 from . import queries as q
 from ._types import JSONSchema
@@ -13,8 +13,6 @@ __all__ = ["check_ast_against_data_structure"]
 
 QueryableStructure = Union[dict, list, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
-
-FunctionArgs = List[q.AST]
 
 IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
@@ -84,8 +82,8 @@ def evaluate_no_validate(
             internal)
 
     # Evaluate the non-literal expression recursively.
-    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal, resolve_checks,
-                                      check_permissions)
+    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal,
+                                      resolve_checks, check_permissions)
 
 
 def evaluate(
@@ -230,8 +228,7 @@ def check_ast_against_data_structure(
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
 
     def _evaluate(i: int, ic: IndexCombination) -> bool:
-        e = evaluate_no_validate(ast, data_structure, schema, ic, internal, False, (i == 0))
-        return isinstance(e, bool) and e
+        return evaluate_no_validate(ast, data_structure, schema, ic, internal, False, (i == 0)) is True
 
     if return_all_index_combinations:
         return (ic for i, ic in index_combinations if _evaluate(i, ic))
@@ -240,7 +237,7 @@ def check_ast_against_data_structure(
 
 
 def _binary_op(op: BBOperator)\
-        -> Callable[[FunctionArgs, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
+        -> Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
     """
     Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
     return a Boolean result.
@@ -251,7 +248,7 @@ def _binary_op(op: BBOperator)\
     is_and = op == and_
     is_or = op == or_
 
-    def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: JSONSchema,
+    def uncurried_binary_op(args: q.Args, ds: QueryableStructure, schema: JSONSchema,
                             ic: Optional[IndexCombination], internal: bool, resolve_checks: bool,
                             check_permissions: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
@@ -302,8 +299,8 @@ _is_not_none = partial(is_not, None)
 
 
 def _get_child_resolve_array_lengths(
-    new_resolve: List[q.Literal],
-    resolving_ds: List,
+    new_resolve: Tuple[q.Literal, ...],
+    resolving_ds: list,
     item_schema: JSONSchema,
     new_path: str,
     resolve_checks: bool,
@@ -324,7 +321,7 @@ def _get_child_resolve_array_lengths(
 
 
 def _resolve_array_lengths(
-    resolve: List[q.Literal],
+    resolve: Tuple[q.Literal, ...],
     resolving_ds: QueryableStructure,
     schema: JSONSchema,
     path: str = "_root",
@@ -368,7 +365,7 @@ def _resolve_array_lengths(
 
 
 def _resolve_properties_and_check(
-    resolve: List[q.Literal],
+    resolve: Tuple[q.Literal, ...],
     schema: JSONSchema,
     index_combination: Optional[IndexCombination],
 ) -> dict:
@@ -399,7 +396,7 @@ def _resolve_properties_and_check(
     return r_schema.get("search", {})
 
 
-def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema: JSONSchema,
+def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
              index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions):
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
@@ -423,13 +420,12 @@ def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema
 
 QUERY_CHECK_SWITCH: Dict[
     q.FunctionName,
-    Callable[[FunctionArgs, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
+    Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
              QueryableStructure]
 ] = {
     q.FUNCTION_AND: _binary_op(and_),
     q.FUNCTION_OR: _binary_op(or_),
-    q.FUNCTION_NOT: lambda args, ds, schema, ic, internal, r_chk, p_chk:
-        not_(evaluate_no_validate(args[0], ds, schema, ic, internal, r_chk, p_chk)),
+    q.FUNCTION_NOT: lambda args, *rest: not_(evaluate_no_validate(args[0], *rest)),
 
     q.FUNCTION_LT: _binary_op(lt),
     q.FUNCTION_LE: _binary_op(le),

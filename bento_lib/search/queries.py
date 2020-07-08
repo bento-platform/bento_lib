@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Sequence, Tuple, Union
 
 from ._types import JSONSchema
 from .operations import (
@@ -32,6 +32,7 @@ __all__ = [
     "FunctionName",
     "Query",
     "AST",
+    "Args",
 
     "Expression",
     "Literal",
@@ -116,18 +117,19 @@ Query = Union[list, LiteralValue]
 
 
 AST = Union["Expression", "Literal"]
+Args = Tuple[AST, ...]
 
 
 class Expression:
     type = "e"
 
-    def __init__(self, fn: str, args: List[AST]):
+    def __init__(self, fn: str, args: Sequence[AST]):
         assert fn in VALID_FUNCTIONS
         self.fn = fn
 
         arg_range = FUNCTION_ARGUMENTS[fn]
         assert len(args) >= arg_range[0] and (arg_range[1] is None or len(args) <= arg_range[1])
-        self.args = args
+        self.args: Args = tuple(args)
 
     def __eq__(self, other):
         return (isinstance(other, Expression) and self.fn == other.fn and
@@ -166,7 +168,7 @@ def convert_query_to_ast(query: Query) -> AST:
             raise SyntaxError("Invalid expression: {}".format(query))
 
         try:
-            return Expression(query[0], [convert_query_to_ast(q) for q in query[1:]])
+            return Expression(query[0], tuple(convert_query_to_ast(q) for q in query[1:]))
         except AssertionError:
             raise SyntaxError("Invalid number of arguments for function {}: {}".format(query[0], len(query[1:])))
 
@@ -218,8 +220,12 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
     return Expression(FUNCTION_AND, [asts[0], and_asts_to_ast(asts[1:])])
 
 
-def check_operation_permissions(ast: AST, schema: JSONSchema, search_getter: Callable[[List[Literal], dict], dict],
-                                internal: bool = False):
+def check_operation_permissions(
+    ast: AST,
+    schema: JSONSchema,
+    search_getter: Callable[[Tuple[Literal, ...], dict], dict],
+    internal: bool = False
+):
     if ast.type == "l":
         return
 

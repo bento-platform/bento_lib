@@ -1,7 +1,7 @@
 import re
 
 from psycopg2 import sql
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 from . import queries as q
 from ._types import JSONSchema
@@ -282,7 +282,7 @@ def search_query_to_psycopg2_sql(query, schema: JSONSchema, internal: bool = Fal
     return sql.SQL("SELECT {}.* FROM {} WHERE {}").format(SQL_ROOT, join_fragment(ast, schema), sql_obj), params
 
 
-def uncurried_binary_op(op: str, args: List[q.AST], params: tuple, schema: JSONSchema, internal: bool = False) \
+def uncurried_binary_op(op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) \
         -> SQLComposableWithParams:
     # TODO: Need to fix params!! Use named params
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
@@ -290,16 +290,16 @@ def uncurried_binary_op(op: str, args: List[q.AST], params: tuple, schema: JSONS
     return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
 
 
-def _binary_op(op) -> Callable[[list, tuple, dict, bool], SQLComposableWithParams]:
+def _binary_op(op) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
     return lambda args, params, schema, internal: uncurried_binary_op(op, args, params, schema, internal)
 
 
-def _not(args: list, params: tuple, schema: dict, internal: bool = False) -> SQLComposableWithParams:
+def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) -> SQLComposableWithParams:
     child_sql, child_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     return sql.SQL("NOT ({})").format(child_sql), params + child_params
 
 
-def _wildcard(args: List[q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
+def _wildcard(args: Tuple[q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
         -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
@@ -310,26 +310,26 @@ def _wildcard(args: List[q.AST], params: tuple, _schema: JSONSchema, _internal: 
         raise TypeError("Type-invalid use of binary function #co")
 
 
-def get_relation(resolve: List[q.Literal], schema: JSONSchema):
+def get_relation(resolve: Tuple[q.Literal, ...], schema: JSONSchema):
     aliases = collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].aliases
     return aliases.current if aliases.current is not None else aliases.parent
 
 
-def get_field(resolve: List[q.Literal], schema: JSONSchema) -> Optional[str]:
+def get_field(resolve: Tuple[q.Literal, ...], schema: JSONSchema) -> Optional[str]:
     return collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].field_alias
 
 
-def get_search_properties(resolve: List[q.Literal], schema: JSONSchema) -> dict:
+def get_search_properties(resolve: Tuple[q.Literal, ...], schema: JSONSchema) -> dict:
     return collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].search_properties
 
 
-def _resolve(args: List[q.AST], params: tuple, schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
+def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
     f_id = get_field(args, schema)
     return sql.SQL("{}.{}").format(get_relation(args, schema),
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
-def _contains(args: List[q.AST], params: tuple, schema: JSONSchema, internal: bool = False) -> SQLComposableWithParams:
+def _contains(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     rhs_sql, rhs_params = search_ast_to_psycopg2_expr(q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1]]), params,
                                                       schema, internal)
@@ -338,7 +338,7 @@ def _contains(args: List[q.AST], params: tuple, schema: JSONSchema, internal: bo
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
     str,
-    Callable[[List[q.AST], tuple, JSONSchema, bool], SQLComposableWithParams]
+    Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]
 ] = {
     q.FUNCTION_AND: _binary_op("AND"),
     q.FUNCTION_OR: _binary_op("OR"),
