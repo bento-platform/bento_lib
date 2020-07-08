@@ -156,6 +156,9 @@ class Literal:
     def __repr__(self):  # pragma: no cover
         return f"<Literal {self.value}>"
 
+    def __hash__(self):
+        return self.value.__hash__()
+
 
 def convert_query_to_ast(query: Query) -> AST:
     if isinstance(query, list):

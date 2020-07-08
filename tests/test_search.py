@@ -712,6 +712,13 @@ def test_literal_equality():
     assert queries.Literal(1.0) == queries.Literal(1.0)
 
 
+def test_literal_hashing():
+    assert hash(queries.Literal(5)) == hash(5)
+    assert hash(queries.Literal(5.0)) == hash(5.0)
+    assert hash(queries.Literal("abc")) == hash("abc")
+    assert hash(queries.Literal(True)) == hash(True)
+
+
 def test_valid_function_construction():
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
