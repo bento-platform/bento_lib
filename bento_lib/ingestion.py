@@ -24,7 +24,7 @@ WORKFLOW_TYPE_ARRAY_SUFFIX = "[]"
 
 
 def array_of_type(workflow_type: str) -> str:
-    return "{}{}".format(workflow_type, WORKFLOW_TYPE_ARRAY_SUFFIX)
+    return "{workflow_type}{WORKFLOW_TYPE_ARRAY_SUFFIX}"
 
 
 WORKFLOW_TYPE_FILE = "file"
@@ -153,7 +153,7 @@ def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: d
                 duplicate_exists = duplicate_exists or os.path.exists(file_path)
 
         if duplicate_exists:
-            prefix = prefix + 1 if prefix is not None else 1
+            prefix = (prefix or 0) + 1
             continue  # Go around again to find a better prefix
 
         break
