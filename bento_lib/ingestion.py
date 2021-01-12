@@ -24,7 +24,7 @@ WORKFLOW_TYPE_ARRAY_SUFFIX = "[]"
 
 
 def array_of_type(workflow_type: str) -> str:
-    return "{workflow_type}{WORKFLOW_TYPE_ARRAY_SUFFIX}"
+    return f"{workflow_type}{WORKFLOW_TYPE_ARRAY_SUFFIX}"
 
 
 WORKFLOW_TYPE_FILE = "file"
