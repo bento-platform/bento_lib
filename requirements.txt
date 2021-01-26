@@ -4,7 +4,7 @@ certifi==2020.12.5
 chardet==4.0.0
 click==7.1.2
 codecov==2.1.11
-coverage==5.3.1
+coverage==5.4
 distlib==0.3.1
 Django==2.2.17
 djangorestframework==3.11.2
@@ -29,8 +29,8 @@ pycodestyle==2.6.0
 pyflakes==2.2.0
 pyparsing==2.4.7
 pyrsistent==0.17.3
-pytest==6.2.1
-pytest-cov==2.10.1
+pytest==6.2.2
+pytest-cov==2.11.1
 pytest-django==4.1.0
 python-dateutil==2.8.1
 pytz==2020.5
@@ -39,9 +39,9 @@ requests==2.25.1
 six==1.15.0
 sqlparse==0.4.1
 toml==0.10.2
-tox==3.21.0
+tox==3.21.2
 urllib3==1.26.2
-virtualenv==20.3.0
+virtualenv==20.4.0
 wcwidth==0.2.5
 Werkzeug==1.0.1
 zipp==3.4.0
