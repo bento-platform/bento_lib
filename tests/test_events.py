@@ -117,12 +117,12 @@ def test_late_handler():
 
 def test_fake_event_bus():
     global event_bus
-    bento_lib.events._connection_info = {"unix_socket_path": "/road/to/nowhere.sock"}
+    fake_conn = {"unix_socket_path": "/road/to/nowhere.sock"}
 
     with pytest.raises(redis.exceptions.ConnectionError):
-        bento_lib.events.EventBus()
+        bento_lib.events.EventBus(connection_data=fake_conn)
 
-    event_bus = bento_lib.events.EventBus(allow_fake=True)
+    event_bus = bento_lib.events.EventBus(connection_data=fake_conn, allow_fake=True)
 
     test_registration()
 
