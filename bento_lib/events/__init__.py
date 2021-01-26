@@ -32,7 +32,8 @@ Serializable = Union[bool, float, int, str, dict, list, tuple, None]
 
 # Redis
 
-_connection_info = {"unix_socket_path": os.environ.get("REDIS_SOCKET")} if "REDIS_SOCKET" in os.environ else {}
+# TODO: Deprecate bento_lib doing its own environment stuff
+_connection_data = {"unix_socket_path": os.environ.get("REDIS_SOCKET")} if "REDIS_SOCKET" in os.environ else {}
 
 
 class EventBus:
@@ -41,19 +42,21 @@ class EventBus:
     """
 
     @staticmethod
-    def _get_redis():
-        return redis.Redis(**_connection_info)
+    def _get_redis(connection_data: dict):
+        return redis.Redis(**connection_data)
 
-    def __init__(self, allow_fake: bool = False):
+    def __init__(self, connection_data: dict = _connection_data, allow_fake: bool = False):
         """
         Sets up a Redis connection based on the REDIS_SOCKET environment variable (or defaults, if the variable is
         not present.)
+        :param connection_data: redis-py connection parameters
+        :param allow_fake: Whether to allow for "fake" connections, i.e. no true connection to Redis.
         """
 
         self._rc: Optional[redis.Redis] = None
 
         try:
-            self._rc = self._get_redis()
+            self._rc = self._get_redis(connection_data)
             self._rc.get("")  # Dummy request to check connection
         except redis.exceptions.ConnectionError as e:
             self._rc = None
