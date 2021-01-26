@@ -142,20 +142,23 @@ def find_common_prefix(base_path: str, workflow_metadata: dict, output_params: d
         duplicate_exists = False
 
         for output in workflow_metadata["outputs"]:
-            if duplicate_exists:
-                break
-
             # It only makes sense to deal with file outputs TODO: IS THIS TRUE?
             if output["type"] not in WORKFLOW_FILE_TYPES:
                 continue
 
-            for file_path in _get_file_paths_from_output(base_path, output, output_params, prefix):
-                duplicate_exists = duplicate_exists or os.path.exists(file_path)
+            duplicate_exists = duplicate_exists or any(
+                os.path.exists(file_path)
+                for file_path in _get_file_paths_from_output(
+                    base_path, output, output_params, prefix))
 
-        if duplicate_exists:
-            prefix = (prefix or 0) + 1
-            continue  # Go around again to find a better prefix
+            if duplicate_exists:
+                # We already know this prefix isn't good enough, so stop
+                # checking files until the next go-around.
+                break
 
-        break
+        if not duplicate_exists:
+            # We've found a good prefix, exit the loop and the function
+            return prefix
 
-    return prefix
+        # Otherwise, go around again to test a better prefix
+        prefix = (prefix or 0) + 1
