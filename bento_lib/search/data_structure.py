@@ -2,7 +2,7 @@ import jsonschema
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
-from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, Optional, Tuple, Union
 
 from . import queries as q
 from ._types import JSONSchema
@@ -13,8 +13,6 @@ __all__ = ["check_ast_against_data_structure"]
 
 QueryableStructure = Union[dict, list, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
-
-FunctionArgs = List[q.AST]
 
 IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
@@ -28,9 +26,7 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
     :param data_structure: The data structure to validate
     :param schema: The JSON schema to validate the data structure against
     """
-    try:
-        jsonschema.validate(data_structure, schema)
-    except jsonschema.ValidationError:
+    if not jsonschema.Draft7Validator(schema).is_valid(data_structure):
         raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
 
 
@@ -86,8 +82,8 @@ def evaluate_no_validate(
             internal)
 
     # Evaluate the non-literal expression recursively.
-    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal, resolve_checks,
-                                      check_permissions)
+    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal,
+                                      resolve_checks, check_permissions)
 
 
 def evaluate(
@@ -122,7 +118,7 @@ def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schem
 
     # Literals are not arrays (currently), so they will not have any specified lengths
     if ast.type == "l":
-        return
+        return ()
 
     # Standard validation to prevent Postgres internal-style queries from being passed in (see _validate_not_wc docs)
     _validate_not_wc(ast)
@@ -131,19 +127,17 @@ def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schem
     # array accesses.
     if ast.fn == q.FUNCTION_RESOLVE:
         r = _resolve_array_lengths(ast.args, data_structure, schema, "_root", resolve_checks)
-        if r is not None:
-            yield r
-        return
+        return () if r is None else (r,)
 
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
     # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
     als = tuple(chain.from_iterable(_collect_array_lengths(e, data_structure, schema, resolve_checks)
                                     for e in ast.args))
-    yield from (
+    return (
         a1 for i1, a1 in enumerate(als)
         if not any(
-            a1[0] == a2[0] and len(a1[2]) <= len(a2[2]) and i1 < i2  # Deduplicate identical or subset items
-            for i2, a2 in enumerate(als)
+            a1[0] == a2[0] and len(a1[2]) <= len(a2[2])  # Deduplicate identical or subset items
+            for a2 in als[i1+1:]
         )
     )
 
@@ -160,12 +154,12 @@ def _dict_combine(dicts: Iterable[dict]):
     return c
 
 
-def _create_index_combinations(array_data: ArrayLengthData, parent_template: IndexCombination) \
+def _create_index_combinations(parent_template: IndexCombination, array_data: ArrayLengthData) \
         -> Iterable[IndexCombination]:
     """
     Creates combinations of array indices from a particular array (including children, NOT including siblings.)
-    :param array_data: Information about an array's length and its children's lengths
     :param parent_template: A dictionary with information about the array's parent's current fixed indexed configuration
+    :param array_data: Information about an array's length and its children's lengths
     :return: An iterable of different combinations of fixed indices for the array and it's children (for later search)
     """
 
@@ -177,27 +171,28 @@ def _create_index_combinations(array_data: ArrayLengthData, parent_template: Ind
             continue
 
         # TODO: Don't like the mono-tuple-ing stuff
-        yield from _create_all_index_combinations((array_data[2][i],), item_template)
+        yield from _create_all_index_combinations(item_template, (array_data[2][i],))
 
 
-def _create_all_index_combinations(arrays_data: Iterable[ArrayLengthData], parent_template: IndexCombination) \
+def _create_all_index_combinations(parent_template: IndexCombination, arrays_data: Iterable[ArrayLengthData]) \
         -> Iterable[IndexCombination]:
     """
     Creates combinations of array indexes for all siblings in an iterable of arrays' length data.
-    :param arrays_data: An iterable of arrays' length data
     :param parent_template: A dictionary with information about the arrays' parent's current fixed indexed configuration
+    :param arrays_data: An iterable of arrays' length data
     :return: An iterable of different combinations of fixed indices for the arrays and their children (for later search)
     """
-
-    # Loop through and recurse
-    combination_sets = (_create_index_combinations(array_data, parent_template) for array_data in arrays_data)
 
     # Combine index mappings from different combination sets into a final list of array index combinations
     # Takes the cross product of the combination sets, since they're parallel fixations and there may be inter-item
     # comparisons between the two sets.
     # TODO: Do we need the combination superset replacement logic still?
     #  combinations = [c for c in combinations if not any(c.items() < c2.items() for c2 in combinations)]
-    yield from map(_dict_combine, product(*combination_sets))
+    return map(
+        _dict_combine,
+        # Loop through and recurse
+        product(*map(partial(_create_index_combinations, parent_template), arrays_data))
+    )
 
 
 # TODO: More rigorous / defined rules
@@ -228,13 +223,12 @@ def check_ast_against_data_structure(
 
     # Create all combinations of indexes into arrays and enumerate them; to be used to loop through all combinations of
     # array indices to freeze "[item]"s at particular indices across the whole query.
-    index_combinations = enumerate(_create_all_index_combinations(array_lengths, {}))
+    index_combinations = enumerate(_create_all_index_combinations({}, array_lengths))
 
     # TODO: What to do here? Should be standardized, esp. w/r/t False returns
 
     def _evaluate(i: int, ic: IndexCombination) -> bool:
-        e = evaluate_no_validate(ast, data_structure, schema, ic, internal, False, (i == 0))
-        return isinstance(e, bool) and e
+        return evaluate_no_validate(ast, data_structure, schema, ic, internal, False, (i == 0)) is True
 
     if return_all_index_combinations:
         return (ic for i, ic in index_combinations if _evaluate(i, ic))
@@ -243,7 +237,7 @@ def check_ast_against_data_structure(
 
 
 def _binary_op(op: BBOperator)\
-        -> Callable[[FunctionArgs, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
+        -> Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
     """
     Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
     return a Boolean result.
@@ -254,7 +248,7 @@ def _binary_op(op: BBOperator)\
     is_and = op == and_
     is_or = op == or_
 
-    def uncurried_binary_op(args: FunctionArgs, ds: QueryableStructure, schema: JSONSchema,
+    def uncurried_binary_op(args: q.Args, ds: QueryableStructure, schema: JSONSchema,
                             ic: Optional[IndexCombination], internal: bool, resolve_checks: bool,
                             check_permissions: bool) -> bool:
         # TODO: Standardize type safety / behaviour!!!
@@ -305,8 +299,8 @@ _is_not_none = partial(is_not, None)
 
 
 def _get_child_resolve_array_lengths(
-    new_resolve: List[q.Literal],
-    resolving_ds: List,
+    new_resolve: Tuple[q.Literal, ...],
+    resolving_ds: list,
     item_schema: JSONSchema,
     new_path: str,
     resolve_checks: bool,
@@ -327,7 +321,7 @@ def _get_child_resolve_array_lengths(
 
 
 def _resolve_array_lengths(
-    resolve: List[q.Literal],
+    resolve: Tuple[q.Literal, ...],
     resolving_ds: QueryableStructure,
     schema: JSONSchema,
     path: str = "_root",
@@ -371,7 +365,7 @@ def _resolve_array_lengths(
 
 
 def _resolve_properties_and_check(
-    resolve: List[q.Literal],
+    resolve: Tuple[q.Literal, ...],
     schema: JSONSchema,
     index_combination: Optional[IndexCombination],
 ) -> dict:
@@ -402,7 +396,7 @@ def _resolve_properties_and_check(
     return r_schema.get("search", {})
 
 
-def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema: JSONSchema,
+def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
              index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions):
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
@@ -426,13 +420,12 @@ def _resolve(resolve: List[q.Literal], resolving_ds: QueryableStructure, _schema
 
 QUERY_CHECK_SWITCH: Dict[
     q.FunctionName,
-    Callable[[FunctionArgs, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
+    Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
              QueryableStructure]
 ] = {
     q.FUNCTION_AND: _binary_op(and_),
     q.FUNCTION_OR: _binary_op(or_),
-    q.FUNCTION_NOT: lambda args, ds, schema, ic, internal, r_chk, p_chk:
-        not_(evaluate_no_validate(args[0], ds, schema, ic, internal, r_chk, p_chk)),
+    q.FUNCTION_NOT: lambda args, *rest: not_(evaluate_no_validate(args[0], *rest)),
 
     q.FUNCTION_LT: _binary_op(lt),
     q.FUNCTION_LE: _binary_op(le),

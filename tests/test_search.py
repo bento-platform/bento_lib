@@ -712,11 +712,18 @@ def test_literal_equality():
     assert queries.Literal(1.0) == queries.Literal(1.0)
 
 
+def test_literal_hashing():
+    assert hash(queries.Literal(5)) == hash(5)
+    assert hash(queries.Literal(5.0)) == hash(5.0)
+    assert hash(queries.Literal("abc")) == hash("abc")
+    assert hash(queries.Literal(True)) == hash(True)
+
+
 def test_valid_function_construction():
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
         assert e.fn == f[0]
-        assert str(e.args) == str(f[1:])
+        assert str(e.args) == str(tuple(f[1:]))
 
 
 def test_invalid_function_construction():
@@ -827,7 +834,7 @@ def test_data_structure_search():
     for q, i, _v, ni, nm in DS_VALID_QUERIES:
         als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA,
                                                     resolve_checks=True)
-        ics = tuple(data_structure._create_all_index_combinations(als, {}))
+        ics = tuple(data_structure._create_all_index_combinations({}, als))
         assert len(ics) == ni
         assert nm <= len(ics)
 
