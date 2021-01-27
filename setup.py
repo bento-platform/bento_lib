@@ -17,7 +17,7 @@ setuptools.setup(
     python_requires=">=3.6",
     install_requires=[
         "jsonschema>=3.2.0,<4",
-        "psycopg2-binary>=2.8.5,<3.0",
+        "psycopg2-binary>=2.8.6,<3.0",
         "redis>=3.5.3,<4.0",
         "Werkzeug>=1.0.1,<2.0",
     ],
