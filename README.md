@@ -51,7 +51,7 @@ rm -rf build/ dist/ bento_lib.egg-info/
 # Build the new package
 python3 setup.py sdist bdist_wheel
 
-# In between these steps - test out the package... make sure everyhting works
+# In between these steps - test out the package... make sure everything works
 # before uploading it to production PyPI.
 
 # Upload it to PyPI
