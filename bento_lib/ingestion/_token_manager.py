@@ -29,9 +29,11 @@ class IngestionTokenManager:
 
     def __init__(self, service_name: str, redis_connection_data: Optional[dict] = None):
         """
-        TODO
-        :param service_name: TODO
-        :param redis_connection_data: TODO
+        Initializes an instance of the token manager. If redis_connection_data
+        is passed, the contents will be used to initialize a redis-py
+        connection. A blank dictionary will use Redis defaults (localhost/6379)
+        :param service_name: A unique name (within the Redis instance) for the token set
+        :param redis_connection_data: A dictionary with redis-py connection parameters
         """
 
         self._service_name: str = service_name
@@ -47,6 +49,10 @@ class IngestionTokenManager:
 
     @property
     def _redis_key(self) -> str:
+        """
+        Unique key for the Redis token hash set, based on the service name.
+        :return: Generated unique key for the Redis hash set
+        """
         return f"{self._service_name}_ingest_tokens"
 
     def _redis_fetch(self) -> dict:
@@ -83,7 +89,8 @@ class IngestionTokenManager:
 
     def generate_token(self, expiry=10080) -> str:
         """
-        TODO
+        Generates a secure one-time use token, with an expiry, to ingest some
+        data into a Bento data service.
         :param expiry: Expiry (in minutes) from the current time for the new token
         :return: The newly-generated ingestion token
         """
@@ -103,11 +110,18 @@ class IngestionTokenManager:
 
     @staticmethod
     def _check_token(token_exp: Optional[float]) -> bool:
+        """
+        Given a token, checks if the token is valid (i.e. exists in the token
+        set and is not expired.)
+        :param token_exp: Token expiry, or None if token was not found
+        :return: Token validity
+        """
         return token_exp and datetime.now().timestamp() < token_exp
 
     def check_and_consume_token(self, token: str) -> bool:
         """
-        Checks if a token is valid (present and not expired.)
+        Given a token, checks if the token is valid (i.e. exists in the token
+        set and is not expired), consuming the token in the process.
         :param token: The token to check
         :return: boolean representing the token's validity
         """
