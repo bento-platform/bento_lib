@@ -2,6 +2,7 @@ import configparser
 import os
 
 from . import auth
+from . import drs
 from . import events
 from . import schemas
 from . import search
@@ -14,4 +15,4 @@ config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "package.c
 
 name = config["package"]["name"]
 __version__ = config["package"]["version"]
-__all__ = ["__version__", "auth", "events", "schemas", "search", "workflows"]
+__all__ = ["__version__", "auth", "drs", "events", "schemas", "search", "workflows"]
