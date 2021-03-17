@@ -67,6 +67,12 @@ twine upload dist/*
 with the Bento container authentication headers (derived from
 `lua-resty-openidc`, set by the internal container NGINX instance.)
 
+### `drs`
+
+`drs` provides utilities for fetching data and record metadata from 
+GA4GH-compatible DRS services, and Bento's own implementation (which has some 
+non-standard extensions.)
+
 ### `events`
 
 `events` facilitates JSON-serialized message-passing between Bento
@@ -76,11 +82,6 @@ Events should have a lower-case type which is type-insensitively unique and
 adequately describes the associated data.
 
 All Bento channels are prefixed with `bento.`.
-
-### `ingestion`
-
-`ingestion` contains common code used for handling ingestion routines in
-different Bento data services.
 
 ### `schemas`
 
@@ -120,4 +121,5 @@ methods for creating and processing ASTs.
 ### `workflows`
 
 `workflows` contains common code used for handling workflow metadata processing
-and response generation.
+and response generation, as well as code associated with Bento's ingestion
+routines across the different data services.
