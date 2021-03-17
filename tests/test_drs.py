@@ -12,8 +12,8 @@ TEST_DRS_REPLY_NO_ACCESS = {
         "checksum": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
         "type": "sha-256",
     }],
-    "created_time": "",  # TODO: RFC3339
-    "updated_time": "",  # TODO: RFC3339
+    "created_time": "2021-03-17T21:29:15+00:00",
+    "updated_time": "2021-03-17T21:29:15+00:00",
     "id": TEST_DRS_ID,
     "mime_type": "text/plain",
     "self_uri": f"drs://localhost/{TEST_DRS_ID}",
