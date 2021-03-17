@@ -24,33 +24,37 @@ __all__ = [
 ]
 
 
-def flask_error_wrap_with_traceback(fn: Callable, service_name="Bento Service") -> Callable:
+# noinspection PyIncorrectDocstring
+def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     """
     Function to wrap flask_* error creators with something that supports the application.register_error_handler method,
-    while also printing a traceback.
+    while also printing a traceback. Optionally, the keyword argument service_name can be passed in to make the error
+    logging more precise.
     :param fn: The flask error-generating function to wrap
-    :param service_name: The name of the service (for logging purposes)
     :return: The wrapped function
     """
+
+    service_name = kwargs.pop("service_name", "Bento Service")
+
     # TODO: pass exception?
     def handle_error(_e):
         print(f"[{service_name}] Encountered error:", file=sys.stderr)
         traceback.print_exc()
-        return fn()
+        return fn(*args, **kwargs)
     return handle_error
 
 
-def flask_error_wrap(fn: Callable) -> Callable:
+def flask_error_wrap(fn: Callable, *args, **kwargs) -> Callable:
     """
     Function to wrap flask_* error creators with something that supports the application.register_error_handler method.
     :param fn: The flask error-generating function to wrap
     :return: The wrapped function
     """
-    return lambda _e: fn()
+    return lambda _e: fn(*args, **kwargs)
 
 
-def flask_error(code: int, *errs):
-    return jsonify(errors.http_error(code, *errs)), code
+def flask_error(code: int, *errs, drs_compat: bool = False):
+    return jsonify(errors.http_error(code, *errs, drs_compat=drs_compat)), code
 
 
 def _flask_error(code: int) -> Callable:

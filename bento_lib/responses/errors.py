@@ -20,7 +20,7 @@ def _error_message(message):
     return {"message": message}
 
 
-def http_error(code: int, *errors):
+def http_error(code: int, *errors, drs_compat: bool = False):
     if code not in HTTP_STATUS_CODES:
         print(f"[Bento Lib] Error: Could not find code {code} in valid HTTP status codes.")
         code = 500
@@ -37,7 +37,11 @@ def http_error(code: int, *errors):
         "code": code,
         "message": message,
         "timestamp": datetime.datetime.utcnow().isoformat("T") + "Z",
-        **({"errors": [_error_message(e) for e in errors]} if len(errors) > 0 else {})
+        **({"errors": [_error_message(e) for e in errors]} if len(errors) > 0 else {}),
+
+        # The DRS spec has a slightly different error specification - if a
+        # compatibility flag is passed in,
+        **({"status_code": code, "msg": message} if drs_compat else {}),
     }
 
 
