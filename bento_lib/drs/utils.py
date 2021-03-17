@@ -9,7 +9,8 @@ __all__ = [
     "DrsInvalidScheme",
     "DrsRequestError",
     "get_file_access_method_if_any",
-    "drs_uri_to_record"
+    "decode_drs_uri",
+    "fetch_drs_record_by_uri"
 ]
 
 
@@ -30,7 +31,7 @@ def get_file_access_method_if_any(drs_object_record: dict) -> Optional[dict]:
     return next((a for a in drs_object_record.get("access_methods", []) if a.get("type", None) == "file"), None)
 
 
-def _decode_drs_uri(drs_uri: str, internal_drs_base_url: Optional[str] = None) -> str:
+def decode_drs_uri(drs_uri: str, internal_drs_base_url: Optional[str] = None) -> str:
     """
     Given a DRS URI and possibly an override for the DRS service URL, returns
     the decoded HTTP URL for the DRS object.
@@ -50,7 +51,7 @@ def _decode_drs_uri(drs_uri: str, internal_drs_base_url: Optional[str] = None) -
     return f"{drs_base_path}/ga4gh/drs/v1/objects/{parsed_drs_uri.path.split('/')[-1]}"
 
 
-def drs_uri_to_record(drs_uri: str, internal_drs_base_url: Optional[str] = None) -> Optional[dict]:
+def fetch_drs_record_by_uri(drs_uri: str, internal_drs_base_url: Optional[str] = None) -> Optional[dict]:
     """
     Given a URI in the format drs://<hostname>/<object-id>, decodes it into an
     HTTP URL and fetches the object metadata.
@@ -61,7 +62,7 @@ def drs_uri_to_record(drs_uri: str, internal_drs_base_url: Optional[str] = None)
 
     # TODO: Translation dictionary for internal DRS hostnames, to avoid overriding EVERY DRS host.
 
-    decoded_object_uri = _decode_drs_uri(drs_uri, internal_drs_base_url)
+    decoded_object_uri = decode_drs_uri(drs_uri, internal_drs_base_url)
     print(f"[Bento Lib] Attempting to fetch {decoded_object_uri}", flush=True)
     drs_res = requests.get(decoded_object_uri)
 
