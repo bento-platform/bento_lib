@@ -8,7 +8,8 @@ from typing import Optional
 __all__ = [
     "DrsInvalidScheme",
     "DrsRequestError",
-    "get_file_access_method_if_any",
+
+    "get_access_method_of_type",
     "decode_drs_uri",
     "fetch_drs_record_by_uri"
 ]
@@ -22,13 +23,15 @@ class DrsRequestError(Exception):
     pass
 
 
-def get_file_access_method_if_any(drs_object_record: dict) -> Optional[dict]:
+def get_access_method_of_type(drs_object_record: dict, access_type: str, default=None):
     """
-    Gets a file path access method from a DRS object, if one exists.
+    Gets an access method of specified type from a DRS object, if one with the type exists.
     :param drs_object_record: The record for the DRS object, fetched from the instance.
-    :return: The file path to the object's bytes, if one exists.
+    :param access_type: The access type to try and find in the object record.
+    :param default: The value to return if the access method is not found.
+    :return: The access method of the specified type for the object's bytes, if one exists.
     """
-    return next((a for a in drs_object_record.get("access_methods", []) if a.get("type", None) == "file"), None)
+    return next((a for a in drs_object_record.get("access_methods", []) if a.get("type", None) == access_type), default)
 
 
 def decode_drs_uri(drs_uri: str, internal_drs_base_url: Optional[str] = None) -> str:

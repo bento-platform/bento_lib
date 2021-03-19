@@ -29,11 +29,12 @@ TEST_DRS_REPLY = {
 }
 
 
-def test_get_file_access_method():
-    assert json.dumps(drs_utils.get_file_access_method_if_any(TEST_DRS_REPLY), sort_keys=True) == \
+def test_get_access_method():
+    assert json.dumps(drs_utils.get_access_method_of_type(TEST_DRS_REPLY, "file"), sort_keys=True) == \
         json.dumps(TEST_DRS_REPLY["access_methods"][0], sort_keys=True)
 
-    assert drs_utils.get_file_access_method_if_any(TEST_DRS_REPLY_NO_ACCESS) is None
+    assert drs_utils.get_access_method_of_type(TEST_DRS_REPLY_NO_ACCESS, "file") is None
+    assert drs_utils.get_access_method_of_type(TEST_DRS_REPLY_NO_ACCESS, "http") is None
 
 
 def test_drs_uri_decode():
