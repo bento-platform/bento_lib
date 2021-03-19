@@ -1,6 +1,6 @@
 import json
 import pytest
-import requests_mock
+import responses
 
 from bento_lib.responses import errors
 from bento_lib.drs import utils as drs_utils
@@ -48,23 +48,26 @@ def test_drs_uri_decode():
     # TODO: Really, Bento should pass ga4gh/drs URLs to DRS directly instead of under a sub-path
 
 
+@responses.activate
 def test_drs_uri_fetch():
-    with requests_mock.Mocker() as m:
-        m.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", json=TEST_DRS_REPLY)
-        m.get(f"http://localhost/ga4gh/drs/v1/objects/{TEST_DRS_ID}", json=TEST_DRS_REPLY)
+    responses.add(responses.GET, f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}",
+                  json=TEST_DRS_REPLY, status=200)
+    responses.add(responses.GET, f"http://localhost/ga4gh/drs/v1/objects/{TEST_DRS_ID}",
+                  json=TEST_DRS_REPLY, status=200)
+    responses.add(responses.GET, "https://example.org/ga4gh/drs/v1/objects/abc",
+                  json=errors.not_found_error(), status=404)
+    responses.add(responses.GET, "http://localhost/ga4gh/drs/v1/objects/abc",
+                  json=errors.not_found_error(), status=404)
 
-        m.get("https://example.org/ga4gh/drs/v1/objects/abc", status_code=404, json=errors.not_found_error())
-        m.get("http://localhost/ga4gh/drs/v1/objects/abc", status_code=404, json=errors.not_found_error())
+    assert json.dumps(drs_utils.fetch_drs_record_by_uri(f"drs://example.org/{TEST_DRS_ID}"), sort_keys=True) == \
+        json.dumps(TEST_DRS_REPLY, sort_keys=True)
+    assert json.dumps(drs_utils.fetch_drs_record_by_uri(
+        f"drs://example.org/{TEST_DRS_ID}",
+        internal_drs_base_url="http://localhost/"
+    ), sort_keys=True) == json.dumps(TEST_DRS_REPLY, sort_keys=True)
 
-        assert json.dumps(drs_utils.fetch_drs_record_by_uri(f"drs://example.org/{TEST_DRS_ID}"), sort_keys=True) == \
-            json.dumps(TEST_DRS_REPLY, sort_keys=True)
-        assert json.dumps(drs_utils.fetch_drs_record_by_uri(
-            f"drs://example.org/{TEST_DRS_ID}",
-            internal_drs_base_url="http://localhost/"
-        ), sort_keys=True) == json.dumps(TEST_DRS_REPLY, sort_keys=True)
+    with pytest.raises(drs_utils.DrsRequestError):
+        drs_utils.fetch_drs_record_by_uri("drs://example.org/abc")
 
-        with pytest.raises(drs_utils.DrsRequestError):
-            drs_utils.fetch_drs_record_by_uri("drs://example.org/abc")
-
-        with pytest.raises(drs_utils.DrsRequestError):
-            drs_utils.fetch_drs_record_by_uri("drs://example.org/abc", internal_drs_base_url="http://localhost/")
+    with pytest.raises(drs_utils.DrsRequestError):
+        drs_utils.fetch_drs_record_by_uri("drs://example.org/abc", internal_drs_base_url="http://localhost/")
