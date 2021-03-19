@@ -6,7 +6,7 @@ click==7.1.2
 codecov==2.1.11
 coverage==5.4
 distlib==0.3.1
-Django==2.2.17
+Django==2.2.18
 djangorestframework==3.11.2
 entrypoints==0.3
 filelock==3.0.12
