@@ -1,6 +1,6 @@
 # Bento Library (for Python Bento microservices)
 
-![Build Status](https://api.travis-ci.org/bento-platform/bento_lib.svg?branch=master)
+![Build Status](https://github.com/bento-platform/bento_lib/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/bento-platform/bento_lib/branch/master/graph/badge.svg)](https://codecov.io/gh/bento-platform/bento_lib)
 [![PyPI version](https://badge.fury.io/py/bento-lib.svg)](https://badge.fury.io/py/bento-lib)
 
