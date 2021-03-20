@@ -10,12 +10,23 @@ jobs:
     strategy:
       matrix:
         python-version: [ 3.6, 3.9 ]
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v1
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Test
         run: pytest -svv --cov=bento_lib --cov-branch
+        env:
+          TEST_REDIS_HOST: redis
+          TEST_REDIS_PORT: 6379
       - name: Codecov
         run: codecov
   install:
