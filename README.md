@@ -31,6 +31,16 @@ python3 -m tox
   * [ ] A release has been created, tagged in the format of `v#.#.#` and named
     in the format of `Version #.#.#`, listing any changes made, in the GitHub 
     releases page **tagged from the master branch!**
+    
+
+#### 1A. Note on Versioning
+
+The `bento_lib` project uses [semantic versioning](https://semver.org/) for
+releasing. If the API is broken in any way, including minor differences in the
+way a function behaves given an identical set of parameters (excluding bugfixes
+for unintentional behaviour), the MAJOR version must be incremented. In this 
+way, we guarantee that projects relying on this API do not accidentally break
+upon upgrading.
 
 
 ### 2. Releasing from the Command Line
