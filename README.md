@@ -1,6 +1,7 @@
 # Bento Library (for Python Bento microservices)
 
-![Build Status](https://api.travis-ci.org/bento-platform/bento_lib.svg?branch=master)
+![Test Status](https://github.com/bento-platform/bento_lib/workflows/Test/badge.svg)
+![Lint Status](https://github.com/bento-platform/bento_lib/workflows/Lint/badge.svg)
 [![codecov](https://codecov.io/gh/bento-platform/bento_lib/branch/master/graph/badge.svg)](https://codecov.io/gh/bento-platform/bento_lib)
 [![PyPI version](https://badge.fury.io/py/bento-lib.svg)](https://badge.fury.io/py/bento-lib)
 
@@ -30,6 +31,16 @@ python3 -m tox
   * [ ] A release has been created, tagged in the format of `v#.#.#` and named
     in the format of `Version #.#.#`, listing any changes made, in the GitHub 
     releases page **tagged from the master branch!**
+    
+
+#### 1A. Note on Versioning
+
+The `bento_lib` project uses [semantic versioning](https://semver.org/) for
+releasing. If the API is broken in any way, including minor differences in the
+way a function behaves given an identical set of parameters (excluding bugfixes
+for unintentional behaviour), the MAJOR version must be incremented. In this 
+way, we guarantee that projects relying on this API do not accidentally break
+upon upgrading.
 
 
 ### 2. Releasing from the Command Line
@@ -51,7 +62,7 @@ rm -rf build/ dist/ bento_lib.egg-info/
 # Build the new package
 python3 setup.py sdist bdist_wheel
 
-# In between these steps - test out the package... make sure everyhting works
+# In between these steps - test out the package... make sure everything works
 # before uploading it to production PyPI.
 
 # Upload it to PyPI
@@ -67,6 +78,12 @@ twine upload dist/*
 with the Bento container authentication headers (derived from
 `lua-resty-openidc`, set by the internal container NGINX instance.)
 
+### `drs`
+
+`drs` provides utilities for fetching data and record metadata from 
+GA4GH-compatible DRS services, and Bento's own implementation (which has some 
+non-standard extensions.)
+
 ### `events`
 
 `events` facilitates JSON-serialized message-passing between Bento
@@ -76,11 +93,6 @@ Events should have a lower-case type which is type-insensitively unique and
 adequately describes the associated data.
 
 All Bento channels are prefixed with `bento.`.
-
-### `ingestion`
-
-`ingestion` contains common code used for handling ingestion routines in
-different Bento data services.
 
 ### `schemas`
 
@@ -120,4 +132,5 @@ methods for creating and processing ASTs.
 ### `workflows`
 
 `workflows` contains common code used for handling workflow metadata processing
-and response generation.
+and response generation, as well as code associated with Bento's ingestion
+routines across the different data services.
