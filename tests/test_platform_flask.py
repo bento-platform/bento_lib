@@ -12,7 +12,7 @@ def flask_client():
 
     application.register_error_handler(Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error))
     application.register_error_handler(BadRequest, fe.flask_error_wrap(fe.flask_bad_request_error))
-    application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error))
+    application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
 
     @application.route("/500")
     def r500():
@@ -45,7 +45,12 @@ def test_flask_forbidden_error(flask_client):
 
     r = flask_client.get("/non-existent")
     assert r.status_code == 404
-    assert r.get_json()["code"] == 404
+    rj = r.get_json()
+    assert rj["code"] == 404
+
+    # - We passed drs_compat=True to this, so check for DRS-specific fields
+    assert rj["status_code"] == rj["code"]
+    assert rj["msg"] == rj["message"]
 
     # server error endpoint
 

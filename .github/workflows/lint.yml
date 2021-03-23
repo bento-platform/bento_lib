@@ -1,0 +1,15 @@
+name: Lint
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run linter
+        run: flake8 ./bento_lib ./tests

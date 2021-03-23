@@ -1,5 +1,6 @@
 import bento_lib.events
 import pytest
+import os
 import redis
 import time
 
@@ -16,7 +17,10 @@ TEST_EVENT_SCHEMA = {"type": "string"}
 TEST_EVENT_BODY = "test"
 
 
-event_bus = bento_lib.events.EventBus()
+TEST_REDIS_HOST = os.environ.get("TEST_REDIS_HOST", "localhost")
+TEST_REDIS_PORT = int(os.environ.get("TEST_REDIS_PORT", 6379))
+
+event_bus = bento_lib.events.EventBus(connection_data={"host": TEST_REDIS_HOST, "port": TEST_REDIS_PORT})
 
 
 def test_registration():
