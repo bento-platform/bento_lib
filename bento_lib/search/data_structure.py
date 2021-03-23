@@ -434,6 +434,7 @@ QUERY_CHECK_SWITCH: Dict[
     q.FUNCTION_GE: _binary_op(ge),
 
     q.FUNCTION_CO: _binary_op(contains),
+    q.FUNCTION_ICO: _binary_op(contains),
 
     q.FUNCTION_RESOLVE: _resolve
 }
