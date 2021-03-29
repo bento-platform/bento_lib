@@ -6,6 +6,7 @@ __all__ = [
     "SEARCH_OP_GE",
 
     "SEARCH_OP_CO",
+    "SEARCH_OP_ICO",
 
     "SEARCH_OPERATIONS",
 ]
@@ -18,6 +19,7 @@ SEARCH_OP_GT = "gt"
 SEARCH_OP_GE = "ge"
 
 SEARCH_OP_CO = "co"
+SEARCH_OP_ICO = "ico"
 
 SEARCH_OPERATIONS = (
     SEARCH_OP_EQ,
@@ -26,4 +28,5 @@ SEARCH_OPERATIONS = (
     SEARCH_OP_GT,
     SEARCH_OP_GE,
     SEARCH_OP_CO,
+    SEARCH_OP_ICO,
 )
