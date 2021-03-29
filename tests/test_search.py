@@ -635,7 +635,6 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_21, False, True, 27, 1),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
     (TEST_QUERY_22, False, True,  9, 9),  # Accessing 9 in test_op_3 and checking them against itself
     (TEST_QUERY_23, False, True, 27, 1),  # test_op_3: 9, test_op_1: 3
-    # TODO it fails with errors ' assert False == True' and 'assert 0 == 2', must be 2 matching biosamples
     (TEST_QUERY_24,  False, True,  2, 2),
 )
 
