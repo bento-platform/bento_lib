@@ -329,11 +329,17 @@ def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = 
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
-def _contains(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) -> SQLComposableWithParams:
+# TODO rename the function ?
+def _contains(op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False, )\
+        -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     rhs_sql, rhs_params = search_ast_to_psycopg2_expr(q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1]]), params,
                                                       schema, internal)
-    return sql.SQL("({}) LIKE ({})").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
+    return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
+
+
+def _contains_op(op) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
+    return lambda args, params, schema, internal: _contains(op, args, params, schema, internal)
 
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
@@ -350,7 +356,8 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
     q.FUNCTION_GT: _binary_op(">"),
     q.FUNCTION_GE: _binary_op(">="),
 
-    q.FUNCTION_CO: _contains,
+    q.FUNCTION_CO: _contains_op("LIKE"),
+    q.FUNCTION_ICO: _contains_op("ILIKE"),
 
     q.FUNCTION_RESOLVE: _resolve,
 

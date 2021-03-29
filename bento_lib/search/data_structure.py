@@ -18,6 +18,17 @@ IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
 
 
+def _icontains(lhs: str, rhs: str):
+    """
+    Same as the "contains" operator, except with case-folded (i.e. case
+    insensitive) arguments.
+    :param lhs: The LHS for the operation.
+    :param rhs: The RHS for the operation.
+    :return: The result of the icontains operation.
+    """
+    return contains(lhs.casefold(), rhs.casefold())
+
+
 def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: JSONSchema):
     """
     Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
@@ -434,6 +445,7 @@ QUERY_CHECK_SWITCH: Dict[
     q.FUNCTION_GE: _binary_op(ge),
 
     q.FUNCTION_CO: _binary_op(contains),
+    q.FUNCTION_ICO: _binary_op(_icontains),
 
     q.FUNCTION_RESOLVE: _resolve
 }
