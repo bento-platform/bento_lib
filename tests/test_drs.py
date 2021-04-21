@@ -55,9 +55,9 @@ def test_drs_uri_fetch():
     responses.add(responses.GET, f"http://localhost/ga4gh/drs/v1/objects/{TEST_DRS_ID}",
                   json=TEST_DRS_REPLY, status=200)
     responses.add(responses.GET, "https://example.org/ga4gh/drs/v1/objects/abc",
-                  json=errors.not_found_error(), status=404)
+                  json=errors.not_found_error(drs_compat=True), status=404)
     responses.add(responses.GET, "http://localhost/ga4gh/drs/v1/objects/abc",
-                  json=errors.not_found_error(), status=404)
+                  json=errors.not_found_error(drs_compat=True), status=404)
 
     assert json.dumps(drs_utils.fetch_drs_record_by_uri(f"drs://example.org/{TEST_DRS_ID}"), sort_keys=True) == \
         json.dumps(TEST_DRS_REPLY, sort_keys=True)

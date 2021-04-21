@@ -20,7 +20,16 @@ def _error_message(message):
     return {"message": message}
 
 
-def http_error(code: int, *errors, drs_compat: bool = False):
+def http_error(code: int, *errors, drs_compat: bool = False, sr_compat: bool = False):
+    """
+    Builds a dictionary for an HTTP error JSON response.
+    :param code: The error status code to embed in the response.
+    :param errors: A list of error descriptions (human-readable) to explain the error.
+    :param drs_compat: Whether to generate a GA4GH DRS schema backwards-compatible response.
+    :param sr_compat: Whether to generate a GA4GH Service Registry backwards-compatible response.
+    :return: A dictionary to encode in JSON for the error response.
+    """
+
     if code not in HTTP_STATUS_CODES:
         print(f"[Bento Lib] Error: Could not find code {code} in valid HTTP status codes.")
         code = 500
@@ -37,11 +46,19 @@ def http_error(code: int, *errors, drs_compat: bool = False):
         "code": code,
         "message": message,
         "timestamp": datetime.datetime.utcnow().isoformat("T") + "Z",
-        **({"errors": [_error_message(e) for e in errors]} if len(errors) > 0 else {}),
+        **({"errors": [_error_message(e) for e in errors]} if errors else {}),
 
         # The DRS spec has a slightly different error specification - if a
-        # compatibility flag is passed in,
+        # compatibility flag is passed in, extra fields are tacked on here.
         **({"status_code": code, "msg": message} if drs_compat else {}),
+
+        # The Service Registry spec *also* has a slightly different error
+        # specification; do the same thing as above.
+        **({
+            "status": code,
+            "title": message,
+            **({"detail": " | ".join(errors)} if errors else {}),
+        } if sr_compat else {}),
     }
 
 

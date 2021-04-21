@@ -34,3 +34,25 @@ def test_errors():
     assert e["message"] == "Not Found"
     assert json.dumps(e["errors"]) == '[{"message": "test message"}, {"message": "test message 2"}]'
     assert isoparse(e["timestamp"])
+
+    # Test compatibility modes (the base stuff already works, from passing the above tests)
+
+    e = responses.errors.forbidden_error("test message", drs_compat=True)
+    assert len(list(e.keys())) == 6
+    assert e["status_code"] == 403
+    assert e["msg"] == "Forbidden"
+
+    e = responses.errors.forbidden_error("test message", sr_compat=True)
+    assert len(list(e.keys())) == 7
+    assert e["status"] == 403
+    assert e["title"] == "Forbidden"
+    assert e["detail"] == "test message"
+
+    # ew
+    e = responses.errors.forbidden_error("test message", drs_compat=True, sr_compat=True)
+    assert len(list(e.keys())) == 9
+    assert e["status"] == 403
+    assert e["status_code"] == 403
+    assert e["msg"] == "Forbidden"
+    assert e["title"] == "Forbidden"
+    assert e["detail"] == "test message"
