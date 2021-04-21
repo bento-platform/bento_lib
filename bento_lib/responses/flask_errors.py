@@ -53,8 +53,8 @@ def flask_error_wrap(fn: Callable, *args, **kwargs) -> Callable:
     return lambda _e: fn(*args, **kwargs)
 
 
-def flask_error(code: int, *errs, drs_compat: bool = False):
-    return jsonify(errors.http_error(code, *errs, drs_compat=drs_compat)), code
+def flask_error(code: int, *errs, drs_compat: bool = False, sr_compat: bool = False):
+    return jsonify(errors.http_error(code, *errs, drs_compat=drs_compat, sr_compat=sr_compat)), code
 
 
 def _flask_error(code: int) -> Callable:
