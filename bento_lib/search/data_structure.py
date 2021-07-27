@@ -44,7 +44,7 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
         errors = "\n".join(err.message for err in schema_validator.iter_errors(data_structure))
         raise ValueError(
             f"Invalid data structure: \n"
-            f"{json.dumps(data_structure)}\n"
+            f"{data_structure}\n"
             f"For Schema: \n"
             f"{json.dumps(schema)} \n"
             f"Validation Errors: \n"
