@@ -1,4 +1,6 @@
+import json
 import jsonschema
+
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
@@ -37,8 +39,16 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
     :param data_structure: The data structure to validate
     :param schema: The JSON schema to validate the data structure against
     """
-    if not jsonschema.Draft7Validator(schema).is_valid(data_structure):
-        raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
+    schema_validator = jsonschema.Draft7Validator(schema)
+    if not schema_validator.is_valid(data_structure):
+        errors = "\n".join(schema_validator.iter_errors(data_structure))
+        raise ValueError(
+            f"Invalid data structure: \n"
+            f"{json.dumps(data_structure)}\n"
+            f"For Schema: \n"
+            f"{json.dumps(schema)} \n"
+            f"Validation Errors: \n"
+            f"{errors}")
 
 
 def _validate_not_wc(e: q.Expression):
