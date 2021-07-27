@@ -41,7 +41,7 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
     """
     schema_validator = jsonschema.Draft7Validator(schema)
     if not schema_validator.is_valid(data_structure):
-        errors = "\n".join(schema_validator.iter_errors(data_structure))
+        errors = "\n".join(err.message for err in schema_validator.iter_errors(data_structure))
         raise ValueError(
             f"Invalid data structure: \n"
             f"{json.dumps(data_structure)}\n"
