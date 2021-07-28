@@ -832,11 +832,17 @@ def test_postgres_invalid_expressions():
 # noinspection PyProtectedMember
 def test_data_structure_search():
     for e, i, v, ic in DS_VALID_EXPRESSIONS:
-        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
+        assert data_structure.evaluate(
+            queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=False) == v
+        assert data_structure.evaluate(
+            queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=True) == v
 
     for q, i, v, _ni, nm in DS_VALID_QUERIES:
         assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
-                                                               TEST_SCHEMA, i) == v
+                                                               TEST_SCHEMA, i, secure_errors=False) == v
+
+        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
+                                                               TEST_SCHEMA, i, secure_errors=True) == v
 
         ics = tuple(data_structure.check_ast_against_data_structure(
             queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, return_all_index_combinations=True))
@@ -852,11 +858,21 @@ def test_data_structure_search():
 
     for e, i, ex, ic in DS_INVALID_EXPRESSIONS:
         with raises(ex):
-            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i)
+            data_structure.evaluate(
+                queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=False)
+        with raises(ex):
+            data_structure.evaluate(
+                queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=True)
 
     # Invalid data
+
     with raises(ValueError):
-        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {})
+        data_structure.evaluate(
+            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=False)
+
+    with raises(ValueError):
+        data_structure.evaluate(
+            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=True)
 
 
 def test_large_data_structure_query():
@@ -866,7 +882,7 @@ def test_large_data_structure_query():
 
     # Test large query
     import cProfile
-    cProfile.runctx("large_query()", None, locals(), sort="tottime")
+    cProfile.runctx("large_query()", {}, locals(), sort="tottime")
 
 
 # noinspection PyProtectedMember
