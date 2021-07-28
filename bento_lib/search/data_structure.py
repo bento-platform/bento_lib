@@ -129,9 +129,10 @@ def evaluate(
     internal: bool = False,
     resolve_checks: bool = True,
     check_permissions: bool = True,
+    secure_errors: bool = True,
 ):
     # The validate flag is used to avoid redundantly validating the integrity of child data structures
-    _validate_data_structure_against_schema(data_structure, schema)
+    _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
     return evaluate_no_validate(ast, data_structure, schema, index_combination, internal, resolve_checks,
                                 check_permissions)
 
@@ -237,6 +238,7 @@ def check_ast_against_data_structure(
     schema: JSONSchema,
     internal: bool = False,
     return_all_index_combinations: bool = False,
+    secure_errors: bool = True,
 ) -> Union[bool, Iterable[IndexCombination]]:
     """
     Checks a query against a data structure, returning True if the
@@ -245,13 +247,14 @@ def check_ast_against_data_structure(
     :param schema: A JSON schema representing valid data objects.
     :param internal: Whether internal-only fields are allowed to be resolved.
     :param return_all_index_combinations: Whether internal-only fields are allowed to be resolved.
+    :param secure_errors: Whether to not expose any data in error messaevaluateges. Impairs debugging.
     :return: Determined by return_all_index_combinations; either
                1) A boolean representing whether or not the query matches the data object; or
                2) An iterable of all index combinations where the query matches the data object
     """
 
     # Validate data structure against JSON schema here to avoid having to repetitively do it later
-    _validate_data_structure_against_schema(data_structure, schema)
+    _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
 
     # Collect all array resolves and their lengths in order to properly cross-product arrays
     array_lengths = _collect_array_lengths(ast, data_structure, schema, True)
