@@ -31,7 +31,8 @@ def _icontains(lhs: str, rhs: str):
     return contains(lhs.casefold(), rhs.casefold())
 
 
-def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: JSONSchema):
+def _validate_data_structure_against_schema(
+        data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True):
     """
     Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
     because (assuming the schema is correct) it allows methods to make more assumptions about the integrity of the
@@ -41,14 +42,27 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
     """
     schema_validator = jsonschema.Draft7Validator(schema)
     if not schema_validator.is_valid(data_structure):
-        errors = "\n".join(err.message for err in schema_validator.iter_errors(data_structure))
+        # There is a mismatch between the data structure and the corresponding
+        # search schema. This probably means either the schema is incorrect or
+        # the service is returning data that doesn't conform to what it says it
+        # should conform to. If secure_errors is False, the data structure,
+        # schema, and validation errors will all be returned in the giant
+        # error string.
+
+        errors = tuple(err.message for err in schema_validator.iter_errors(data_structure))
+        errors_str = "\n".join(errors)
+
+        if secure_errors:
+            raise ValueError(f"Invalid data structure for schema (schema ID: {schema.get('$id', 'N/A')});"
+                             f"encountered {len(errors)} validation errors (masked for privacy)")
+
         raise ValueError(
             f"Invalid data structure: \n"
             f"{data_structure}\n"
-            f"For Schema: \n"
+            f"For schema: \n"
             f"{json.dumps(schema)} \n"
             f"Validation Errors: \n"
-            f"{errors}")
+            f"{errors_str}")
 
 
 def _validate_not_wc(e: q.Expression):
@@ -310,7 +324,7 @@ def _resolve_checks(resolve_value: str, schema: JSONSchema):
         raise TypeError("Cannot get property of literal")
 
     elif schema["type"] == "object" and resolve_value not in schema["properties"]:
-        raise ValueError("Property {} not found in object".format(resolve_value))
+        raise ValueError(f"Property {resolve_value} not found in object")
 
     elif schema["type"] == "array" and resolve_value != "[item]":
         raise TypeError("Cannot get property of array")
