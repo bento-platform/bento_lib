@@ -199,6 +199,8 @@ def _create_index_combinations(parent_template: IndexCombination, array_data: Ar
     :return: An iterable of different combinations of fixed indices for the array and it's children (for later search)
     """
 
+    # array_data is a tuple of (path, length, (tuple of child array lengths,))
+
     for i in range(array_data[1]):
         item_template = {**parent_template, array_data[0]: i}
 
@@ -246,7 +248,7 @@ def check_ast_against_data_structure(
     :param data_structure: The data object to evaluate the query against.
     :param schema: A JSON schema representing valid data objects.
     :param internal: Whether internal-only fields are allowed to be resolved.
-    :param return_all_index_combinations: Whether internal-only fields are allowed to be resolved.
+    :param return_all_index_combinations: Whether to return all index combinations that the query resolves to True on.
     :param secure_errors: Whether to not expose any data in error messaevaluateges. Impairs debugging.
     :return: Determined by return_all_index_combinations; either
                1) A boolean representing whether or not the query matches the data object; or
