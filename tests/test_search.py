@@ -838,11 +838,20 @@ def test_data_structure_search():
             queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=True) == v
 
     for q, i, v, _ni, nm in DS_VALID_QUERIES:
-        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
-                                                               TEST_SCHEMA, i, secure_errors=False) == v
+        # These are all valid, so we should be able to try out the different options with no negative effects
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False) == v
 
-        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
-                                                               TEST_SCHEMA, i, secure_errors=True) == v
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False,
+            skip_schema_validation=True) == v
+
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True) == v
+
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True,
+            skip_schema_validation=True) == v
 
         ics = tuple(data_structure.check_ast_against_data_structure(
             queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, return_all_index_combinations=True))
