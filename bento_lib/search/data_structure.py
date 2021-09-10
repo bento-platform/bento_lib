@@ -241,6 +241,7 @@ def check_ast_against_data_structure(
     internal: bool = False,
     return_all_index_combinations: bool = False,
     secure_errors: bool = True,
+    skip_schema_validation: bool = False,
 ) -> Union[bool, Iterable[IndexCombination]]:
     """
     Checks a query against a data structure, returning True if the
@@ -250,13 +251,16 @@ def check_ast_against_data_structure(
     :param internal: Whether internal-only fields are allowed to be resolved.
     :param return_all_index_combinations: Whether to return all index combinations that the query resolves to True on.
     :param secure_errors: Whether to not expose any data in error messaevaluateges. Impairs debugging.
+    :param skip_schema_validation: Whether to skip schema validation on the data structure. Improves performance but can
+                                   lead to wonky errors.
     :return: Determined by return_all_index_combinations; either
                1) A boolean representing whether or not the query matches the data object; or
                2) An iterable of all index combinations where the query matches the data object
     """
 
-    # Validate data structure against JSON schema here to avoid having to repetitively do it later
-    _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
+    if not skip_schema_validation:
+        # Validate data structure against JSON schema here to avoid having to repetitively do it later
+        _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
 
     # Collect all array resolves and their lengths in order to properly cross-product arrays
     array_lengths = _collect_array_lengths(ast, data_structure, schema, True)
