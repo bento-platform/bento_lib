@@ -299,6 +299,19 @@ def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
     return sql.SQL("NOT ({})").format(child_sql), params + child_params
 
 
+# TODO rename the function ?
+def _contains(op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False, )\
+        -> SQLComposableWithParams:
+    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1]]), params,
+                                                      schema, internal)
+    return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
+
+
+def _contains_op(op) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
+    return lambda args, params, schema, internal: _contains(op, args, params, schema, internal)
+
+
 def _wildcard(args: Tuple[q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
         -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
@@ -327,19 +340,6 @@ def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = 
     f_id = get_field(args, schema)
     return sql.SQL("{}.{}").format(get_relation(args, schema),
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
-
-
-# TODO rename the function ?
-def _contains(op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False, )\
-        -> SQLComposableWithParams:
-    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1]]), params,
-                                                      schema, internal)
-    return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
-
-
-def _contains_op(op) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
-    return lambda args, params, schema, internal: _contains(op, args, params, schema, internal)
 
 
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[

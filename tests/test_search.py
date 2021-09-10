@@ -402,7 +402,7 @@ TEST_FUNCTIONS = (
 
 TEST_INVALID_FUNCTIONS = (
     ["eq", 5, 6],
-    ["#bad", 6, 7]
+    ["#bad", 6, 7],
 )
 
 TEST_INVALID_EXPRESSION_SYNTAX = (
@@ -635,7 +635,8 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_21, False, True, 27, 1),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
     (TEST_QUERY_22, False, True,  9, 9),  # Accessing 9 in test_op_3 and checking them against itself
     (TEST_QUERY_23, False, True, 27, 1),  # test_op_3: 9, test_op_1: 3
-    (TEST_QUERY_24,  False, True,  2, 2),
+
+    (TEST_QUERY_24, False, True,  2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
 )
 
 # Query, Internal, Exception
@@ -886,8 +887,8 @@ def test_data_structure_search():
 
 def test_large_data_structure_query():
     def large_query():
-        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(TEST_LARGE_QUERY_1),
-                                                               TEST_DATA_2, TEST_SCHEMA_2, False)
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(TEST_LARGE_QUERY_1), TEST_DATA_2, TEST_SCHEMA_2, False)
 
     # Test large query
     import cProfile
