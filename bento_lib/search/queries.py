@@ -81,6 +81,7 @@ VALID_FUNCTIONS = (
 
 BINARY_RANGE = (2, 2)
 
+# Keys are functions, values are a tuple of (minimum argument count, maximum argument count)
 FUNCTION_ARGUMENTS = {
     FUNCTION_AND: BINARY_RANGE,
     FUNCTION_OR: BINARY_RANGE,
@@ -244,8 +245,7 @@ def check_operation_permissions(
         # If resolving any field, make sure at least some operation is permitted
         if query_mode not in query_modes:
             # TODO: Custom exception?
-            raise ValueError("Cannot access field using {} (queryable: {}, allowed are {})".format(ast, query_mode,
-                                                                                                   query_modes))
+            raise ValueError(f"Cannot access field using {ast} (queryable: {query_mode}, allowed are {query_modes})")
 
     # Check to make sure the function's execution is permitted
 
@@ -256,4 +256,4 @@ def check_operation_permissions(
     if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in search_getter(a.args, schema).get("operations", [])
            for a in ast.args if a.type == "e" and a.fn == FUNCTION_RESOLVE):
         # TODO: Custom exception?
-        raise ValueError("Schema forbids using function: {}\nAST: {}\nSchema: \n{}".format(ast.fn, ast, schema))
+        raise ValueError(f"Schema forbids using function: {ast.fn}\nAST: {ast}\nSchema: \n{schema}")

@@ -441,7 +441,8 @@ def _resolve_properties_and_check(
 
 
 def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
-             index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions):
+             index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
+        -> QueryableStructure:
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
     checked against its schema.
