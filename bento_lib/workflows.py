@@ -175,12 +175,19 @@ def secure_filename(fn: str) -> str:
 
 
 def workflow_exists(workflow_id: str, wfs: Dict):
-    return workflow_id in wfs["ingestion"] or workflow_id in wfs["analysis"]
+    for key in wfs:
+        if workflow_id in wfs[key]:
+            return True
+
+    return False
 
 
 def get_workflow(workflow_id: str, wfs: Dict):
-    return (wfs["ingestion"][workflow_id] if workflow_id in wfs["ingestion"]
-            else wfs["analysis"][workflow_id])
+    for key in wfs:
+        if workflow_id in wfs[key]:
+            return wfs[key][workflow_id]
+
+    raise KeyError(f'Workflow ID {workflow_id} not found.')
 
 
 def get_workflow_resource(workflow_id: str, wfs: Dict):
