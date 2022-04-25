@@ -279,9 +279,13 @@ def test_get_workflow():
     assert workflows.get_workflow("test", TEST_WORKFLOWS) == TEST_WORKFLOWS["ingestion"]["test"]
     assert workflows.get_workflow("test_analysis", TEST_WORKFLOWS) == TEST_WORKFLOWS["analysis"]["test_analysis"]
     assert workflows.get_workflow("test_export", TEST_WORKFLOWS) == TEST_WORKFLOWS["export"]["test_export"]
+    with pytest.raises(KeyError):
+        workflows.get_workflow("does_not_exist", TEST_WORKFLOWS)
 
 
 def test_get_workflow_resource():
     assert workflows.get_workflow_resource("test", TEST_WORKFLOWS) == "test.wdl"
     assert workflows.get_workflow_resource("test_analysis", TEST_WORKFLOWS) == "test_analysis.wdl"
     assert workflows.get_workflow_resource("test_export", TEST_WORKFLOWS) == "test_export.wdl"
+    with pytest.raises(KeyError):
+        workflows.get_workflow_resource("does_not_exist", TEST_WORKFLOWS)
