@@ -121,7 +121,9 @@ FUNCTION_SEARCH_OP_MAP = {
     FUNCTION_IN: SEARCH_OP_IN,
 }
 
-
+# literal types are scalar that are used in queries to compare the value for a
+# given field for example 20, in a query for age greater than 20.
+# In the AST they are distinct from Expressions
 literal_types = str, int, float, bool    # TODO: How to handle dict in practical cases?
 LiteralValue = Union[literal_types]
 
@@ -182,6 +184,34 @@ class Literal:
 
 
 def convert_query_to_ast(query: Query) -> AST:
+    """
+    Recursive function that converts a list of nested lists and scalars to
+    an AST object containing nested Expression and Literal objects.
+    In the Query argument, a list defines an expression and otherwise the
+    scalar values should define the literals.
+    For example:
+    ["#eq", ["#resolve", "patient", "name"], "John Doe"]
+    |<---------------    Root List 1   ---------------->
+    |<fn>|  |<-------    arg #1   ------->|  |<-arg #2>|
+            |<----    Nested List 2  ---->|, |<literal>|
+            |<- fn ->|   |<arg 1>| |<arg2>|
+    is converted into
+    Expression -->
+        - type: "e"
+        - fn: FUNCTION_EQ,
+        - range: (2, 2)
+        - args: Tuple(
+            Expression -->
+                - type: "e"
+                - fn: FUNCTION_RESOLVE
+                - range: (1, None)
+                - args: Tuple("patient", "name")
+                        Note: Does not recurse down to literals due to function #resolve implementation)
+            Literal -->
+                - type: "l"
+                - value: "John Doe"
+        )
+    """
     if isinstance(query, list):
         if len(query) == 0 or not isinstance(query[0], str) or query[0] not in VALID_FUNCTIONS:
             raise SyntaxError("Invalid expression: {}".format(query))
