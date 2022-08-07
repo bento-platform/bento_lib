@@ -294,6 +294,12 @@ def _binary_op(op) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableW
     return lambda args, params, schema, internal: uncurried_binary_op(op, args, params, schema, internal)
 
 
+def _in(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) -> SQLComposableWithParams:
+    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema, internal)
+    return sql.SQL("({}) IN {}").format(lhs_sql, rhs_sql), params + lhs_params + rhs_params
+
+
 def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) -> SQLComposableWithParams:
     child_sql, child_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     return sql.SQL("NOT ({})").format(child_sql), params + child_params
@@ -342,6 +348,18 @@ def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = 
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
+def _list(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
+    # _list argument is a tuple of Literal objects to be used in an IN clause.
+    # with psycopg2, it must be passed as a tuple of tuples, hence the enclosing
+    # parentheses in the following statement.
+    # TODO: for large lists, the syntax IN (VALUES ("patient1"), ("patient2")) which creates
+    # a table construct on the fly is recommended performance-wise (better indexing)
+    # FUTURE: psycopg3 won't allow the "tuples adaptation" syntax anymore:
+    # https://www.psycopg.org/psycopg3/docs/basic/from_pg2.html#you-cannot-use-in-s-with-a-tuple
+    values = tuple(a.value for a in args)
+    return sql.Placeholder(), (*params, values)
+
+
 POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
     str,
     Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]
@@ -355,11 +373,13 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
     q.FUNCTION_EQ: _binary_op("="),
     q.FUNCTION_GT: _binary_op(">"),
     q.FUNCTION_GE: _binary_op(">="),
+    q.FUNCTION_IN: _in,
 
     q.FUNCTION_CO: _contains_op("LIKE"),
     q.FUNCTION_ICO: _contains_op("ILIKE"),
 
     q.FUNCTION_RESOLVE: _resolve,
+    q.FUNCTION_LIST: _list,
 
     q.FUNCTION_HELPER_WC: _wildcard
 }
