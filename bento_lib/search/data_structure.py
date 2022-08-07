@@ -67,8 +67,8 @@ def _validate_data_structure_against_schema(
 
 def _validate_not_wc(e: q.Expression):
     """
-    The #_wc expression function is a helper for converting the queries into the Postgres IR. If we encounter this
-    function in a query being evaluated against a data structure, it's meaningless and should raise an error.
+    The #_wc (wildcard) expression function is a helper for converting the queries into the Postgres IR. If we encounter
+    this function in a query being evaluated against a data structure, it's meaningless and should raise an error.
     :param e: The expression (function) to check
     """
     if e.fn == q.FUNCTION_HELPER_WC:
