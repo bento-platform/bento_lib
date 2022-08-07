@@ -486,7 +486,7 @@ def _list(literals: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _sc
     :param index_combination: The combination of array indices being evaluated upon
     :return: a set containing all the values
     """
-    return set(l.value for l in literals)
+    return set(literal.value for literal in literals)
 
 
 QUERY_CHECK_SWITCH: Dict[
