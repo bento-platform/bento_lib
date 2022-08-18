@@ -479,11 +479,8 @@ def _list(literals: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _sc
         -> QueryableStructure:
     """
     This function is to be used in conjonction with the #in operator to check
-    for equality over a set of literals. (e.g. individual.karyotypic_sex in {"XX", "X0", "XXX"})
-    :param values: an iterable containing all the values to check upon.
-    :param resolve: The current path to resolve, not including the current data structure
-    :param resolving_ds: The data structure being resolved upon
-    :param index_combination: The combination of array indices being evaluated upon
+    for matches in a set of literals. (e.g. individual.karyotypic_sex in {"XX", "X0", "XXX"})
+    :param literals: an iterable containing all the literals to check upon.
     :return: a set containing all the values
     """
     return set(literal.value for literal in literals)
