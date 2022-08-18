@@ -349,7 +349,7 @@ def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = 
 
 
 def _list(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
-    # _list argument is a tuple of Literal objects to be used in an IN clause.
+    # :param args: a tuple of query.Literal objects to be used in an IN clause.
     # with psycopg2, it must be passed as a tuple of tuples, hence the enclosing
     # parentheses in the following statement.
     # TODO: for large lists, the syntax IN (VALUES ("patient1"), ("patient2")) which creates
