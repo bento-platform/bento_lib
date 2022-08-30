@@ -10,6 +10,7 @@ NUMBER_SEARCH = {
         operations.SEARCH_OP_GT,
         operations.SEARCH_OP_GE,
         operations.SEARCH_OP_EQ,
+        operations.SEARCH_OP_IN,
     ],
     "queryable": "all"
 }
@@ -27,7 +28,7 @@ TEST_SCHEMA = {
         "id": {
             "type": "string",
             "search": {
-                "operations": [operations.SEARCH_OP_EQ],
+                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                 "queryable": "internal",
                 "database": {"field": "phenopacket_id"}
             }
@@ -89,7 +90,7 @@ TEST_SCHEMA = {
                                 "id": {
                                     "type": "string",
                                     "search": {
-                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                                         "queryable": "all"
                                     }
                                 },
@@ -201,14 +202,14 @@ TEST_SCHEMA = {
                 "id": {
                     "type": "string",
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ],
+                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                         "queryable": "internal"
                     }
                 },
                 "karyotypic_sex": {
                     "type": "string",
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ],
+                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                         "queryable": "all"
                     }
                 },
@@ -216,7 +217,7 @@ TEST_SCHEMA = {
                     "type": "string",
                     "enum": ["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"],
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ],
+                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                         "queryable": "all"
                     }
                 },
@@ -226,7 +227,7 @@ TEST_SCHEMA = {
                         "id": {
                             "type": "string",
                             "search": {
-                                "operations": [operations.SEARCH_OP_EQ],
+                                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                                 "queryable": "all"
                             }
                         },
@@ -293,7 +294,7 @@ TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
         "id": {
             "type": "string",
             "search": {
-                "operations": [operations.SEARCH_OP_EQ],
+                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                 "queryable": "all"
             }
         },
@@ -305,14 +306,14 @@ TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
                     "id": {
                         "type": "string",
                         "search": {
-                            "operations": [operations.SEARCH_OP_EQ],
+                            "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                             "queryable": "all"
                         }
                     },
                     "prop": {
                         "type": "string",
                         "search": {
-                            "operations": [operations.SEARCH_OP_EQ],
+                            "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                             "queryable": "all"
                         }
                     }
@@ -398,11 +399,13 @@ TEST_FUNCTIONS = (
     [queries.FUNCTION_CO, "hello", "h"],
     [queries.FUNCTION_ICO, "LABEL", "label"],
     [queries.FUNCTION_RESOLVE, "biosamples", "[item]", "procedure", "code", "id"],
+    [queries.FUNCTION_IN, 5, {1, 2, 3, 4, 5}],
+    [queries.FUNCTION_LIST, 1, 2, 3, 4, 5]
 )
 
 TEST_INVALID_FUNCTIONS = (
     ["eq", 5, 6],
-    ["#bad", 6, 7]
+    ["#bad", 6, 7],
 )
 
 TEST_INVALID_EXPRESSION_SYNTAX = (
@@ -483,6 +486,8 @@ TEST_QUERY_23 = [
 ]
 
 TEST_QUERY_24 = ["#ico", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"]
+
+TEST_QUERY_25 = ["#in", ["#resolve", "subject", "karyotypic_sex"], ["#list", "XO", "XX"]]
 
 TEST_LARGE_QUERY_1 = [
     "#and",
@@ -635,7 +640,9 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_21, False, True, 27, 1),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
     (TEST_QUERY_22, False, True,  9, 9),  # Accessing 9 in test_op_3 and checking them against itself
     (TEST_QUERY_23, False, True, 27, 1),  # test_op_3: 9, test_op_1: 3
-    (TEST_QUERY_24,  False, True,  2, 2),
+
+    (TEST_QUERY_24, False, True,  2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
+    (TEST_QUERY_25, False, True,  1, 1),  # in statement, search in list of string values
 )
 
 # Query, Internal, Exception
@@ -691,6 +698,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_22, False, ()),
     (TEST_QUERY_23, False, (6, 8)),
     (TEST_QUERY_24, True, ("%label%",)),
+    (TEST_QUERY_25, True, (("XO", "XX"),)),
 )
 
 PG_INVALID_EXPRESSIONS = (
@@ -832,11 +840,26 @@ def test_postgres_invalid_expressions():
 # noinspection PyProtectedMember
 def test_data_structure_search():
     for e, i, v, ic in DS_VALID_EXPRESSIONS:
-        assert data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic) == v
+        assert data_structure.evaluate(
+            queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=False) == v
+        assert data_structure.evaluate(
+            queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=True) == v
 
     for q, i, v, _ni, nm in DS_VALID_QUERIES:
-        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(q), TEST_DATA_1,
-                                                               TEST_SCHEMA, i) == v
+        # These are all valid, so we should be able to try out the different options with no negative effects
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False) == v
+
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False,
+            skip_schema_validation=True) == v
+
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True) == v
+
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True,
+            skip_schema_validation=True) == v
 
         ics = tuple(data_structure.check_ast_against_data_structure(
             queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, return_all_index_combinations=True))
@@ -852,21 +875,31 @@ def test_data_structure_search():
 
     for e, i, ex, ic in DS_INVALID_EXPRESSIONS:
         with raises(ex):
-            data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i)
+            data_structure.evaluate(
+                queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=False)
+        with raises(ex):
+            data_structure.evaluate(
+                queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=True)
 
     # Invalid data
+
     with raises(ValueError):
-        data_structure.evaluate(queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {})
+        data_structure.evaluate(
+            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=False)
+
+    with raises(ValueError):
+        data_structure.evaluate(
+            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=True)
 
 
 def test_large_data_structure_query():
     def large_query():
-        assert data_structure.check_ast_against_data_structure(queries.convert_query_to_ast(TEST_LARGE_QUERY_1),
-                                                               TEST_DATA_2, TEST_SCHEMA_2, False)
+        assert data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(TEST_LARGE_QUERY_1), TEST_DATA_2, TEST_SCHEMA_2, False)
 
     # Test large query
     import cProfile
-    cProfile.runctx("large_query()", None, locals(), sort="tottime")
+    cProfile.runctx("large_query()", {}, locals(), sort="tottime")
 
 
 # noinspection PyProtectedMember

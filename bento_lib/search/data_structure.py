@@ -1,4 +1,6 @@
+import json
 import jsonschema
+
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
@@ -11,7 +13,7 @@ from ._types import JSONSchema
 __all__ = ["check_ast_against_data_structure"]
 
 
-QueryableStructure = Union[dict, list, str, int, float, bool]
+QueryableStructure = Union[dict, list, set, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
 IndexCombination = Dict[str, int]
@@ -29,7 +31,19 @@ def _icontains(lhs: str, rhs: str):
     return contains(lhs.casefold(), rhs.casefold())
 
 
-def _validate_data_structure_against_schema(data_structure: QueryableStructure, schema: JSONSchema):
+def _in(lhs: Union[str, int, float], rhs: QueryableStructure):
+    """
+    Same as `contains`, except order of arguments is inverted and second
+    argument is a set.
+    Note: set is preferred over list as it makes `contains` complexity O(1) vs O(n).
+    As this is intended to be used in a loop over dataset results, it makes the
+    implementation's complexity linear instead of quadratic.
+    """
+    return contains(rhs, lhs)
+
+
+def _validate_data_structure_against_schema(
+        data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True):
     """
     Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
     because (assuming the schema is correct) it allows methods to make more assumptions about the integrity of the
@@ -37,14 +51,35 @@ def _validate_data_structure_against_schema(data_structure: QueryableStructure, 
     :param data_structure: The data structure to validate
     :param schema: The JSON schema to validate the data structure against
     """
-    if not jsonschema.Draft7Validator(schema).is_valid(data_structure):
-        raise ValueError("Invalid data structure: \n{}\nFor Schema: \n{}".format(data_structure, schema))
+    schema_validator = jsonschema.Draft7Validator(schema)
+    if not schema_validator.is_valid(data_structure):
+        # There is a mismatch between the data structure and the corresponding
+        # search schema. This probably means either the schema is incorrect or
+        # the service is returning data that doesn't conform to what it says it
+        # should conform to. If secure_errors is False, the data structure,
+        # schema, and validation errors will all be returned in the giant
+        # error string.
+
+        errors = tuple(err.message for err in schema_validator.iter_errors(data_structure))
+        errors_str = "\n".join(errors)
+
+        if secure_errors:
+            raise ValueError(f"Invalid data structure for schema (schema ID: {schema.get('$id', 'N/A')});"
+                             f"encountered {len(errors)} validation errors (masked for privacy)")
+
+        raise ValueError(
+            f"Invalid data structure: \n"
+            f"{data_structure}\n"
+            f"For schema: \n"
+            f"{json.dumps(schema)} \n"
+            f"Validation Errors: \n"
+            f"{errors_str}")
 
 
 def _validate_not_wc(e: q.Expression):
     """
-    The #_wc expression function is a helper for converting the queries into the Postgres IR. If we encounter this
-    function in a query being evaluated against a data structure, it's meaningless and should raise an error.
+    The #_wc (wildcard) expression function is a helper for converting the queries into the Postgres IR. If we encounter
+    this function in a query being evaluated against a data structure, it's meaningless and should raise an error.
     :param e: The expression (function) to check
     """
     if e.fn == q.FUNCTION_HELPER_WC:
@@ -105,9 +140,10 @@ def evaluate(
     internal: bool = False,
     resolve_checks: bool = True,
     check_permissions: bool = True,
+    secure_errors: bool = True,
 ):
     # The validate flag is used to avoid redundantly validating the integrity of child data structures
-    _validate_data_structure_against_schema(data_structure, schema)
+    _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
     return evaluate_no_validate(ast, data_structure, schema, index_combination, internal, resolve_checks,
                                 check_permissions)
 
@@ -174,6 +210,8 @@ def _create_index_combinations(parent_template: IndexCombination, array_data: Ar
     :return: An iterable of different combinations of fixed indices for the array and it's children (for later search)
     """
 
+    # array_data is a tuple of (path, length, (tuple of child array lengths,))
+
     for i in range(array_data[1]):
         item_template = {**parent_template, array_data[0]: i}
 
@@ -213,6 +251,8 @@ def check_ast_against_data_structure(
     schema: JSONSchema,
     internal: bool = False,
     return_all_index_combinations: bool = False,
+    secure_errors: bool = True,
+    skip_schema_validation: bool = False,
 ) -> Union[bool, Iterable[IndexCombination]]:
     """
     Checks a query against a data structure, returning True if the
@@ -220,14 +260,18 @@ def check_ast_against_data_structure(
     :param data_structure: The data object to evaluate the query against.
     :param schema: A JSON schema representing valid data objects.
     :param internal: Whether internal-only fields are allowed to be resolved.
-    :param return_all_index_combinations: Whether internal-only fields are allowed to be resolved.
+    :param return_all_index_combinations: Whether to return all index combinations that the query resolves to True on.
+    :param secure_errors: Whether to not expose any data in error messaevaluateges. Impairs debugging.
+    :param skip_schema_validation: Whether to skip schema validation on the data structure. Improves performance but can
+                                   lead to wonky errors.
     :return: Determined by return_all_index_combinations; either
                1) A boolean representing whether or not the query matches the data object; or
                2) An iterable of all index combinations where the query matches the data object
     """
 
-    # Validate data structure against JSON schema here to avoid having to repetitively do it later
-    _validate_data_structure_against_schema(data_structure, schema)
+    if not skip_schema_validation:
+        # Validate data structure against JSON schema here to avoid having to repetitively do it later
+        _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
 
     # Collect all array resolves and their lengths in order to properly cross-product arrays
     array_lengths = _collect_array_lengths(ast, data_structure, schema, True)
@@ -300,7 +344,7 @@ def _resolve_checks(resolve_value: str, schema: JSONSchema):
         raise TypeError("Cannot get property of literal")
 
     elif schema["type"] == "object" and resolve_value not in schema["properties"]:
-        raise ValueError("Property {} not found in object".format(resolve_value))
+        raise ValueError(f"Property {resolve_value} not found in object")
 
     elif schema["type"] == "array" and resolve_value != "[item]":
         raise TypeError("Cannot get property of array")
@@ -408,7 +452,8 @@ def _resolve_properties_and_check(
 
 
 def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
-             index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions):
+             index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
+        -> QueryableStructure:
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
     checked against its schema.
@@ -429,6 +474,18 @@ def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _
     return resolving_ds
 
 
+def _list(literals: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
+          index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
+        -> QueryableStructure:
+    """
+    This function is to be used in conjonction with the #in operator to check
+    for matches in a set of literals. (e.g. individual.karyotypic_sex in {"XX", "X0", "XXX"})
+    :param literals: an iterable containing all the literals to check upon.
+    :return: a set containing all the values
+    """
+    return set(literal.value for literal in literals)
+
+
 QUERY_CHECK_SWITCH: Dict[
     q.FunctionName,
     Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
@@ -446,6 +503,8 @@ QUERY_CHECK_SWITCH: Dict[
 
     q.FUNCTION_CO: _binary_op(contains),
     q.FUNCTION_ICO: _binary_op(_icontains),
+    q.FUNCTION_IN: _binary_op(_in),
 
-    q.FUNCTION_RESOLVE: _resolve
+    q.FUNCTION_RESOLVE: _resolve,
+    q.FUNCTION_LIST: _list,
 }

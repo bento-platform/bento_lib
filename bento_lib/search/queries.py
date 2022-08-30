@@ -7,6 +7,7 @@ from .operations import (
     SEARCH_OP_EQ,
     SEARCH_OP_GT,
     SEARCH_OP_GE,
+    SEARCH_OP_IN,
     SEARCH_OP_CO,
     SEARCH_OP_ICO
 )
@@ -23,7 +24,9 @@ __all__ = [
     "FUNCTION_GE",
     "FUNCTION_CO",
     "FUNCTION_ICO",
+    "FUNCTION_IN",
     "FUNCTION_RESOLVE",
+    "FUNCTION_LIST",
     "FUNCTION_HELPER_WC",
 
     "VALID_FUNCTIONS",
@@ -57,10 +60,13 @@ FUNCTION_EQ = "#eq"
 FUNCTION_GT = "#gt"
 FUNCTION_GE = "#ge"
 
+FUNCTION_IN = "#in"
+
 FUNCTION_CO = "#co"
 FUNCTION_ICO = "#ico"
 
 FUNCTION_RESOLVE = "#resolve"
+FUNCTION_LIST = "#list"
 
 FUNCTION_HELPER_WC = "#_wc"
 
@@ -73,14 +79,17 @@ VALID_FUNCTIONS = (
     FUNCTION_EQ,
     FUNCTION_GT,
     FUNCTION_GE,
+    FUNCTION_IN,
     FUNCTION_CO,
     FUNCTION_ICO,
     FUNCTION_RESOLVE,
+    FUNCTION_LIST,
     FUNCTION_HELPER_WC,
 )
 
 BINARY_RANGE = (2, 2)
 
+# Keys are functions, values are a tuple of (minimum argument count, maximum argument count)
 FUNCTION_ARGUMENTS = {
     FUNCTION_AND: BINARY_RANGE,
     FUNCTION_OR: BINARY_RANGE,
@@ -92,7 +101,9 @@ FUNCTION_ARGUMENTS = {
     FUNCTION_GE: BINARY_RANGE,
     FUNCTION_CO: BINARY_RANGE,
     FUNCTION_ICO: BINARY_RANGE,
+    FUNCTION_IN: BINARY_RANGE,
     FUNCTION_RESOLVE: (0, None),
+    FUNCTION_LIST: (1, None),
     FUNCTION_HELPER_WC: (1, 1),
 }
 
@@ -106,9 +117,13 @@ FUNCTION_SEARCH_OP_MAP = {
 
     FUNCTION_CO: SEARCH_OP_CO,
     FUNCTION_ICO: SEARCH_OP_ICO,
+
+    FUNCTION_IN: SEARCH_OP_IN,
 }
 
-
+# literal types are scalar that are used in queries to compare the value for a
+# given field for example 20, in a query for age greater than 20.
+# In the AST they are distinct from Expressions
 literal_types = str, int, float, bool    # TODO: How to handle dict in practical cases?
 LiteralValue = Union[literal_types]
 
@@ -169,6 +184,34 @@ class Literal:
 
 
 def convert_query_to_ast(query: Query) -> AST:
+    """
+    Recursive function that converts a list of nested lists and scalars to
+    an AST object containing nested Expression and Literal objects.
+    In the Query argument, a list defines an expression and otherwise the
+    scalar values should define the literals.
+    For example:
+    ["#eq", ["#resolve", "patient", "name"], "John Doe"]
+    |<---------------    Root List 1   ---------------->
+    |<fn>|  |<-------    arg #1   ------->|  |<-arg #2>|
+            |<----    Nested List 2  ---->|, |<literal>|
+            |<- fn ->|   |<arg 1>| |<arg2>|
+    is converted into
+    Expression -->
+        - type: "e"
+        - fn: FUNCTION_EQ,
+        - range: (2, 2)
+        - args: Tuple(
+            Expression -->
+                - type: "e"
+                - fn: FUNCTION_RESOLVE
+                - range: (1, None)
+                - args: Tuple("patient", "name")
+                        Note: Does not recurse down to literals due to function #resolve implementation)
+            Literal -->
+                - type: "l"
+                - value: "John Doe"
+        )
+    """
     if isinstance(query, list):
         if len(query) == 0 or not isinstance(query[0], str) or query[0] not in VALID_FUNCTIONS:
             raise SyntaxError("Invalid expression: {}".format(query))
@@ -244,8 +287,7 @@ def check_operation_permissions(
         # If resolving any field, make sure at least some operation is permitted
         if query_mode not in query_modes:
             # TODO: Custom exception?
-            raise ValueError("Cannot access field using {} (queryable: {}, allowed are {})".format(ast, query_mode,
-                                                                                                   query_modes))
+            raise ValueError(f"Cannot access field using {ast} (queryable: {query_mode}, allowed are {query_modes})")
 
     # Check to make sure the function's execution is permitted
 
@@ -256,4 +298,4 @@ def check_operation_permissions(
     if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in search_getter(a.args, schema).get("operations", [])
            for a in ast.args if a.type == "e" and a.fn == FUNCTION_RESOLVE):
         # TODO: Custom exception?
-        raise ValueError("Schema forbids using function: {}\nAST: {}\nSchema: \n{}".format(ast.fn, ast, schema))
+        raise ValueError(f"Schema forbids using function: {ast.fn}\nAST: {ast}\nSchema: \n{schema}")
