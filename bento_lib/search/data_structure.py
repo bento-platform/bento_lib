@@ -13,7 +13,7 @@ from ._types import JSONSchema
 __all__ = ["check_ast_against_data_structure"]
 
 
-QueryableStructure = Union[dict, list, str, int, float, bool]
+QueryableStructure = Union[dict, list, set, str, int, float, bool]
 BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
 IndexCombination = Dict[str, int]
@@ -29,6 +29,17 @@ def _icontains(lhs: str, rhs: str):
     :return: The result of the icontains operation.
     """
     return contains(lhs.casefold(), rhs.casefold())
+
+
+def _in(lhs: Union[str, int, float], rhs: QueryableStructure):
+    """
+    Same as `contains`, except order of arguments is inverted and second
+    argument is a set.
+    Note: set is preferred over list as it makes `contains` complexity O(1) vs O(n).
+    As this is intended to be used in a loop over dataset results, it makes the
+    implementation's complexity linear instead of quadratic.
+    """
+    return contains(rhs, lhs)
 
 
 def _validate_data_structure_against_schema(
@@ -67,8 +78,8 @@ def _validate_data_structure_against_schema(
 
 def _validate_not_wc(e: q.Expression):
     """
-    The #_wc expression function is a helper for converting the queries into the Postgres IR. If we encounter this
-    function in a query being evaluated against a data structure, it's meaningless and should raise an error.
+    The #_wc (wildcard) expression function is a helper for converting the queries into the Postgres IR. If we encounter
+    this function in a query being evaluated against a data structure, it's meaningless and should raise an error.
     :param e: The expression (function) to check
     """
     if e.fn == q.FUNCTION_HELPER_WC:
@@ -463,6 +474,18 @@ def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _
     return resolving_ds
 
 
+def _list(literals: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
+          index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
+        -> QueryableStructure:
+    """
+    This function is to be used in conjonction with the #in operator to check
+    for matches in a set of literals. (e.g. individual.karyotypic_sex in {"XX", "X0", "XXX"})
+    :param literals: an iterable containing all the literals to check upon.
+    :return: a set containing all the values
+    """
+    return set(literal.value for literal in literals)
+
+
 QUERY_CHECK_SWITCH: Dict[
     q.FunctionName,
     Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
@@ -480,6 +503,8 @@ QUERY_CHECK_SWITCH: Dict[
 
     q.FUNCTION_CO: _binary_op(contains),
     q.FUNCTION_ICO: _binary_op(_icontains),
+    q.FUNCTION_IN: _binary_op(_in),
 
-    q.FUNCTION_RESOLVE: _resolve
+    q.FUNCTION_RESOLVE: _resolve,
+    q.FUNCTION_LIST: _list,
 }

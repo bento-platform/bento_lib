@@ -10,6 +10,7 @@ NUMBER_SEARCH = {
         operations.SEARCH_OP_GT,
         operations.SEARCH_OP_GE,
         operations.SEARCH_OP_EQ,
+        operations.SEARCH_OP_IN,
     ],
     "queryable": "all"
 }
@@ -27,7 +28,7 @@ TEST_SCHEMA = {
         "id": {
             "type": "string",
             "search": {
-                "operations": [operations.SEARCH_OP_EQ],
+                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                 "queryable": "internal",
                 "database": {"field": "phenopacket_id"}
             }
@@ -89,7 +90,7 @@ TEST_SCHEMA = {
                                 "id": {
                                     "type": "string",
                                     "search": {
-                                        "operations": [operations.SEARCH_OP_EQ],
+                                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                                         "queryable": "all"
                                     }
                                 },
@@ -201,14 +202,14 @@ TEST_SCHEMA = {
                 "id": {
                     "type": "string",
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ],
+                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                         "queryable": "internal"
                     }
                 },
                 "karyotypic_sex": {
                     "type": "string",
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ],
+                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                         "queryable": "all"
                     }
                 },
@@ -216,7 +217,7 @@ TEST_SCHEMA = {
                     "type": "string",
                     "enum": ["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"],
                     "search": {
-                        "operations": [operations.SEARCH_OP_EQ],
+                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                         "queryable": "all"
                     }
                 },
@@ -226,7 +227,7 @@ TEST_SCHEMA = {
                         "id": {
                             "type": "string",
                             "search": {
-                                "operations": [operations.SEARCH_OP_EQ],
+                                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                                 "queryable": "all"
                             }
                         },
@@ -293,7 +294,7 @@ TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
         "id": {
             "type": "string",
             "search": {
-                "operations": [operations.SEARCH_OP_EQ],
+                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                 "queryable": "all"
             }
         },
@@ -305,14 +306,14 @@ TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
                     "id": {
                         "type": "string",
                         "search": {
-                            "operations": [operations.SEARCH_OP_EQ],
+                            "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                             "queryable": "all"
                         }
                     },
                     "prop": {
                         "type": "string",
                         "search": {
-                            "operations": [operations.SEARCH_OP_EQ],
+                            "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                             "queryable": "all"
                         }
                     }
@@ -398,6 +399,8 @@ TEST_FUNCTIONS = (
     [queries.FUNCTION_CO, "hello", "h"],
     [queries.FUNCTION_ICO, "LABEL", "label"],
     [queries.FUNCTION_RESOLVE, "biosamples", "[item]", "procedure", "code", "id"],
+    [queries.FUNCTION_IN, 5, {1, 2, 3, 4, 5}],
+    [queries.FUNCTION_LIST, 1, 2, 3, 4, 5]
 )
 
 TEST_INVALID_FUNCTIONS = (
@@ -483,6 +486,8 @@ TEST_QUERY_23 = [
 ]
 
 TEST_QUERY_24 = ["#ico", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"]
+
+TEST_QUERY_25 = ["#in", ["#resolve", "subject", "karyotypic_sex"], ["#list", "XO", "XX"]]
 
 TEST_LARGE_QUERY_1 = [
     "#and",
@@ -637,6 +642,7 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_23, False, True, 27, 1),  # test_op_3: 9, test_op_1: 3
 
     (TEST_QUERY_24, False, True,  2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
+    (TEST_QUERY_25, False, True,  1, 1),  # in statement, search in list of string values
 )
 
 # Query, Internal, Exception
@@ -692,6 +698,7 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_22, False, ()),
     (TEST_QUERY_23, False, (6, 8)),
     (TEST_QUERY_24, True, ("%label%",)),
+    (TEST_QUERY_25, True, (("XO", "XX"),)),
 )
 
 PG_INVALID_EXPRESSIONS = (
