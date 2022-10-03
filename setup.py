@@ -23,7 +23,7 @@ setuptools.setup(
     ],
     extras_require={
         "flask": ["Flask>=2.0.1,<3"],
-        "django": ["Django>=3.2.7,<4", "djangorestframework>=3.12.4,<3.13"]
+        "django": ["Django>=3.2.15,<5", "djangorestframework>=3.12.4,<3.13"]
     },
 
     author=config["package"]["authors"],
