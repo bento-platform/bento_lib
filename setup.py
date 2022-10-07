@@ -14,7 +14,7 @@ setuptools.setup(
     name=config["package"]["name"],
     version=config["package"]["version"],
 
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
         "jsonschema>=3.2.0,<4",
         "psycopg2-binary>=2.8.6,<3.0",
@@ -23,7 +23,7 @@ setuptools.setup(
     ],
     extras_require={
         "flask": ["Flask>=2.0.1,<3"],
-        "django": ["Django>=3.2.7,<4", "djangorestframework>=3.12.4,<3.13"]
+        "django": ["Django>=4.1.1,<5", "djangorestframework>=3.13.1,<3.15"]
     },
 
     author=config["package"]["authors"],
