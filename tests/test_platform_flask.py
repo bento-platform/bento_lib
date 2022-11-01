@@ -37,7 +37,7 @@ def flask_client():
         yield client
 
 
-def test_flask_forbidden_error(flask_client):
+def test_flask_errors(flask_client):
     # Turn CHORD permissions mode on to make sure we're getting real permissions checks
     fd.BENTO_PERMISSIONS = True
 
