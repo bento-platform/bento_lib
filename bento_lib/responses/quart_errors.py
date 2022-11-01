@@ -1,7 +1,7 @@
 import sys
 import traceback
 
-from quart.json import jsonify
+from quart import jsonify
 from functools import partial
 from typing import Callable
 

@@ -2,7 +2,7 @@ import os
 
 from functools import wraps
 from quart import request
-from typing import Union
+from typing import Callable, Union
 
 from bento_lib.auth.headers import BENTO_USER_HEADER, BENTO_USER_ROLE_HEADER
 from bento_lib.auth.roles import ROLE_OWNER, ROLE_USER
@@ -21,7 +21,7 @@ BENTO_DEBUG = os.environ.get("CHORD_DEBUG", "true").lower() == "true"
 BENTO_PERMISSIONS = os.environ.get("CHORD_PERMISSIONS", str(not BENTO_DEBUG)).lower() == "true"
 
 
-def _check_roles(headers, roles: Union[set, dict]):
+def _check_roles(headers, roles: Union[set, dict]) -> bool:
     method_roles = roles if not isinstance(roles, dict) else roles.get(request.method, set())
     return (
         not BENTO_PERMISSIONS or
@@ -30,7 +30,7 @@ def _check_roles(headers, roles: Union[set, dict]):
     )
 
 
-def quart_permissions(method_roles):
+def quart_permissions(method_roles: Union[set, dict]) -> Callable:
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
