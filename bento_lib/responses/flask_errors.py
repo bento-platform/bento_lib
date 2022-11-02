@@ -37,9 +37,9 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     service_name = kwargs.pop("service_name", "Bento Service")
 
     # TODO: pass exception?
-    def handle_error(_e):
+    def handle_error(e):
         print(f"[{service_name}] Encountered error:", file=sys.stderr)
-        traceback.print_exc()
+        traceback.print_exception(e)
         return fn(*args, **kwargs)
     return handle_error
 

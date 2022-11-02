@@ -1,3 +1,4 @@
+import asyncio
 import bento_lib.auth.quart_decorators as qd
 import bento_lib.responses.quart_errors as qe
 import pytest
@@ -17,21 +18,25 @@ async def quart_client():
 
     @application.route("/500")
     async def r500():
+        await asyncio.sleep(0.5)
         raise Exception("help")
 
     @application.route("/test1")
     @qd.quart_permissions_any_user
     async def test1():
+        await asyncio.sleep(0.5)
         return "test1"
 
     @application.route("/test2")
     @qd.quart_permissions_owner
     async def test2():
+        await asyncio.sleep(0.5)
         return "test2"
 
     @application.route("/test3", methods=["GET", "POST"])
     @qd.quart_permissions({"POST": {"owner"}})
     async def test3():
+        await asyncio.sleep(0.5)
         return "test3"
 
     yield application.test_client()
