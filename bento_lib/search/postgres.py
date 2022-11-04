@@ -348,7 +348,7 @@ def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = 
                                    sql.Identifier(f_id) if f_id is not None else sql.SQL("*")), params
 
 
-def _list(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
+def _list(args: q.Args, params: tuple, _schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
     # :param args: a tuple of query.Literal objects to be used in an IN clause.
     # with psycopg2, it must be passed as a tuple of tuples, hence the enclosing
     # parentheses in the following statement.

@@ -16,14 +16,15 @@ setuptools.setup(
 
     python_requires=">=3.8",
     install_requires=[
-        "jsonschema>=3.2.0,<4",
+        "jsonschema>=3.2.0,<5",
         "psycopg2-binary>=2.8.6,<3.0",
         "redis>=3.5.3,<4.0",
         "Werkzeug>=2.0.1,<3",
     ],
     extras_require={
         "flask": ["Flask>=2.0.1,<3"],
-        "django": ["Django>=4.1.1,<5", "djangorestframework>=3.13.1,<3.15"]
+        "django": ["Django>=4.1.1,<5", "djangorestframework>=3.13.1,<3.15"],
+        "quart": ["quart>=0.18.3,<0.19"],
     },
 
     author=config["package"]["authors"],
