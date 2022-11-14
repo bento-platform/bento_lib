@@ -1,5 +1,6 @@
 aiofiles==22.1.0
 aiohttp==3.8.3
+aioresponses==0.7.3
 aiosignal==1.2.0
 appdirs==1.4.4
 asgiref==3.5.2
