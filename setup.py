@@ -20,6 +20,7 @@ setuptools.setup(
         "jsonschema>=3.2.0,<5",
         "psycopg2-binary>=2.8.6,<3.0",
         "redis>=3.5.3,<4.0",
+        "requests>=2.28.1,<3",
         "Werkzeug>=2.0.1,<3",
     ],
     extras_require={
