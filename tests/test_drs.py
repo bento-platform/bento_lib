@@ -2,6 +2,7 @@ import json
 import pytest
 import responses
 
+from aioresponses import aioresponses
 from bento_lib.responses import errors
 from bento_lib.drs import utils as drs_utils
 
@@ -71,3 +72,35 @@ def test_drs_uri_fetch():
 
     with pytest.raises(drs_utils.DrsRequestError):
         drs_utils.fetch_drs_record_by_uri("drs://example.org/abc", internal_drs_base_url="http://localhost/")
+
+
+@pytest.fixture
+def mocked():
+    with aioresponses() as m:
+        yield m
+
+
+@pytest.mark.asyncio
+async def test_drs_uri_fetch_async(mocked):
+    mocked.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
+    mocked.get(f"http://localhost/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
+    mocked.get("https://example.org/ga4gh/drs/v1/objects/abc",
+               payload=errors.not_found_error(drs_compat=True), status=404)
+    mocked.get("http://localhost/ga4gh/drs/v1/objects/abc",
+               payload=errors.not_found_error(drs_compat=True), status=404)
+
+    assert json.dumps(
+        await drs_utils.fetch_drs_record_by_uri_async(f"drs://example.org/{TEST_DRS_ID}"),
+        sort_keys=True
+    ) == json.dumps(TEST_DRS_REPLY, sort_keys=True)
+    assert json.dumps(await drs_utils.fetch_drs_record_by_uri_async(
+        f"drs://example.org/{TEST_DRS_ID}",
+        internal_drs_base_url="http://localhost/"
+    ), sort_keys=True) == json.dumps(TEST_DRS_REPLY, sort_keys=True)
+
+    with pytest.raises(drs_utils.DrsRequestError):
+        await drs_utils.fetch_drs_record_by_uri_async("drs://example.org/abc")
+
+    with pytest.raises(drs_utils.DrsRequestError):
+        await drs_utils.fetch_drs_record_by_uri_async(
+            "drs://example.org/abc", internal_drs_base_url="http://localhost/")

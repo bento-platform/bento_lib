@@ -1,3 +1,4 @@
+import aiohttp
 import requests
 import sys
 
@@ -78,3 +79,30 @@ def fetch_drs_record_by_uri(drs_uri: str, internal_drs_base_url: Optional[str] =
     # TODO: Schema for DRS response
 
     return drs_res.json()
+
+
+async def fetch_drs_record_by_uri_async(drs_uri: str, internal_drs_base_url: Optional[str] = None) -> Optional[dict]:
+    """
+    Given a URI in the format drs://<hostname>/<object-id>, decodes it into an
+    HTTP URL and asynchronously fetches the object metadata.
+    :param drs_uri: The URI of the object to fetch.
+    :param internal_drs_base_url: An optional override hard-coded DRS base URL to use, for container networking etc.
+    :return: The fetched DRS object metadata.
+    """
+
+    # TODO: Translation dictionary for internal DRS hostnames, to avoid overriding EVERY DRS host.
+
+    decoded_object_uri = decode_drs_uri(drs_uri, internal_drs_base_url)
+    print(f"[Bento Lib] Attempting to fetch {decoded_object_uri}", flush=True)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(decoded_object_uri) as drs_res:
+            if drs_res.status != 200:
+                print(f"[Bento Lib] Could not fetch: '{decoded_object_uri}'", file=sys.stderr, flush=True)
+                print(f"\tAttempted URL: {decoded_object_uri} (status: {drs_res.status})", file=sys.stderr, flush=True)
+                raise DrsRequestError(f"Could not fetch '{decoded_object_uri}' (status: {drs_res.status})")
+
+            # TODO: Handle JSON parse errors
+            # TODO: Schema for DRS response
+
+            return await drs_res.json()
