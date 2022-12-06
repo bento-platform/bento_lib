@@ -10,7 +10,7 @@
       "properties": {
         "group": {"type": "string"},
         "artifact": {"type": "string"},
-        "version": {"type": "string"},
+        "version": {"type": "string"}
       }
     },
     "description": {"type": "string"},
