@@ -1,4 +1,7 @@
-from typing import Callable, Optional, Sequence, Tuple, Union
+from __future__ import annotations
+
+from abc import ABC
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 from ._types import JSONSchema
 from .operations import (
@@ -70,6 +73,9 @@ FUNCTION_LIST = "#list"
 
 FUNCTION_HELPER_WC = "#_wc"
 
+# Special function which is just used for Python typing to represent a literal.
+FUNCTION_HELPER_LITERAL = "#_literal"
+
 VALID_FUNCTIONS = (
     FUNCTION_AND,
     FUNCTION_OR,
@@ -125,7 +131,7 @@ FUNCTION_SEARCH_OP_MAP = {
 # given field for example 20, in a query for age greater than 20.
 # In the AST they are distinct from Expressions
 literal_types = str, int, float, bool    # TODO: How to handle dict in practical cases?
-LiteralValue = Union[literal_types]
+LiteralValue = Union[str, int, float, bool]
 
 FunctionName = str
 
@@ -137,11 +143,18 @@ Query = Union[list, LiteralValue]
 # TODO: Argument types...
 
 
-AST = Union["Expression", "Literal"]
-Args = Tuple[AST, ...]
+# AST = Union["Expression", "Literal"]
+Args = Tuple["AST", ...]
 
 
-class Expression:
+class AST(ABC):
+    type: str
+    fn: str
+    args: Args
+    value: Any
+
+
+class Expression(AST):
     type = "e"
 
     def __init__(self, fn: str, args: Sequence[AST]):
@@ -156,6 +169,10 @@ class Expression:
         return (isinstance(other, Expression) and self.fn == other.fn and
                 all(a == b for a, b in zip(self.args, other.args)))
 
+    @property
+    def value(self) -> Expression:
+        return self
+
     def __str__(self):
         return "[{}, {}]".format(self.fn, ", ".join(str(a) for a in self.args))
 
@@ -163,8 +180,10 @@ class Expression:
         return f"<Expression {self.fn} [{', '.join(repr(a) for a in self.args)}]>"
 
 
-class Literal:
+class Literal(AST):
     type = "l"
+    fn = FUNCTION_HELPER_LITERAL
+    args = ()
 
     def __init__(self, value: LiteralValue):
         assert any(isinstance(value, t) for t in literal_types)
@@ -257,16 +276,21 @@ def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
     return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
 
 
+def _and_asts_to_ast_rec(asts: Tuple[AST, ...]) -> AST:
+    if len(asts) == 1:  # Base case
+        return asts[0]
+
+    return Expression(FUNCTION_AND, [asts[0], _and_asts_to_ast_rec(asts[1:])])
+
+
 def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
+    # ()               => None
     # (e1, e2, e3, e4) => (and e1 (and e2 (and e3 e4)))
 
     if len(asts) == 0:
         return None
 
-    if len(asts) == 1:
-        return asts[0]
-
-    return Expression(FUNCTION_AND, [asts[0], and_asts_to_ast(asts[1:])])
+    return _and_asts_to_ast_rec(asts)
 
 
 def check_operation_permissions(

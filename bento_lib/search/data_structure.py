@@ -76,7 +76,7 @@ def _validate_data_structure_against_schema(
             f"{errors_str}")
 
 
-def _validate_not_wc(e: q.Expression):
+def _validate_not_wc(e: q.AST):
     """
     The #_wc (wildcard) expression function is a helper for converting the queries into the Postgres IR. If we encounter
     this function in a query being evaluated against a data structure, it's meaningless and should raise an error.
@@ -398,9 +398,10 @@ def _resolve_array_lengths(
 
     if len(resolve) == 0:
         # Resolve the root if it's an empty list
-        return (path, len(resolving_ds), ()) if schema["type"] == "array" else None
+        #  - Python typing is awkward here (relying on schema correctness), so we don't process this line.
+        return (path, len(resolving_ds), ()) if schema["type"] == "array" else None  # type: ignore
 
-    resolve_value = resolve[0].value
+    resolve_value: str = str(resolve[0].value)
 
     if resolve_checks:  # pragma: no cover  TODO: Do we need this at all? right now we always check here
         _resolve_checks(resolve_value, schema)
