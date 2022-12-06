@@ -222,15 +222,15 @@ def collect_join_tables(ast: q.AST, terms: tuple, schema: JSONSchema) -> Tuple[J
         return terms
 
     if ast.fn == q.FUNCTION_RESOLVE:
-        terms = list(terms)
+        terms_list = list(terms)
         collected_joins = collect_resolve_join_tables((QUERY_ROOT, *ast.args), schema)
 
         for j in collected_joins:
-            existing_aliases = set(t.current_alias_str for t in terms if t is not None)
+            existing_aliases = set(t.current_alias_str for t in terms_list if t is not None)
             if j.current_alias_str is not None and j.current_alias_str not in existing_aliases:
-                terms.append(j)
+                terms_list.append(j)
 
-        return tuple(terms)
+        return tuple(terms_list)
 
     new_terms = terms
 
