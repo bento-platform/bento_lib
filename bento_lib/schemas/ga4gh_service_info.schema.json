@@ -5,7 +5,14 @@
   "properties": {
     "id": {"type": "string"},
     "name": {"type": "string"},
-    "type": {"type": "string"},
+    "type": {
+      "type": "object",
+      "properties": {
+        "group": {"type": "string"},
+        "artifact": {"type": "string"},
+        "version": {"type": "string"},
+      }
+    },
     "description": {"type": "string"},
     "organization": {
       "type": "object",
