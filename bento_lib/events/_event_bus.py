@@ -48,14 +48,14 @@ class EventBus:
 
         self._ps = None
 
-        self._ps_handlers = {}
+        self._ps_handlers: dict[str, Callable] = {}
         self._event_thread = None
 
         self._service_event_types = {}
         self._data_type_event_types = {}
 
     @staticmethod
-    def _callback_deserialize(callback: Callable[[dict], None]):
+    def _callback_deserialize(callback: Callable[[dict], None]) -> Callable:
         return lambda message: callback({
             **message,
             "data": json.loads(message["data"]) if message["type"] in ("message", "pmessage") else message["data"]
@@ -78,7 +78,7 @@ class EventBus:
         self._ps_handlers[pattern] = self._callback_deserialize(callback)
         return True
 
-    def start_event_loop(self):
+    def start_event_loop(self) -> None:
         """
         Starts the event handling loop in a new thread. Whichever handlers were previously added will be present.
         The loop must be restarted if the handlers are changed.
@@ -94,7 +94,7 @@ class EventBus:
         self._ps.psubscribe(**self._ps_handlers)
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001, daemon=True)
 
-    def stop_event_loop(self):
+    def stop_event_loop(self) -> None:
         """
         Stops the event handling loop, if running. Otherwise, does nothing.
         """
@@ -107,7 +107,7 @@ class EventBus:
         self._ps = None
 
     @staticmethod
-    def _make_event(event_type: str, event_data, attrs: dict):
+    def _make_event(event_type: str, event_data, attrs: dict) -> str:
         return json.dumps({
             "type": event_type.lower(),
             "data": event_data,
