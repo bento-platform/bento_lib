@@ -743,6 +743,7 @@ def test_valid_function_construction():
     for f in TEST_FUNCTIONS:
         e = queries.Expression(fn=f[0], args=f[1:])
         assert e.fn == f[0]
+        assert e.value == e
         assert str(e.args) == str(tuple(f[1:]))
 
 
@@ -761,9 +762,11 @@ def test_invalid_expression_syntax():
 def test_invalid_literals():
     for v in TEST_INVALID_LITERALS:
         with raises(AssertionError):
+            # noinspection PyTypeChecker
             queries.Literal(value=v)
 
         with raises(ValueError):
+            # noinspection PyTypeChecker
             queries.convert_query_to_ast(v)
 
 

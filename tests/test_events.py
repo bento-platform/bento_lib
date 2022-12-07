@@ -20,7 +20,15 @@ TEST_EVENT_BODY = "test"
 TEST_REDIS_HOST = os.environ.get("TEST_REDIS_HOST", "localhost")
 TEST_REDIS_PORT = int(os.environ.get("TEST_REDIS_PORT", 6379))
 
-event_bus = bento_lib.events.EventBus(connection_data={"host": TEST_REDIS_HOST, "port": TEST_REDIS_PORT})
+event_bus = bento_lib.events.EventBus(host=TEST_REDIS_HOST, port=TEST_REDIS_PORT)
+
+
+def test_url_connection():
+    eb = bento_lib.events.EventBus(url=f"redis://{TEST_REDIS_HOST}:{TEST_REDIS_PORT}")
+    try:
+        eb.start_event_loop()
+    finally:
+        eb.stop_event_loop()
 
 
 def test_registration():
@@ -121,12 +129,12 @@ def test_late_handler():
 
 def test_fake_event_bus():
     global event_bus
-    fake_conn = {"unix_socket_path": "/road/to/nowhere.sock"}
+    fake_conn = {"url": "redis://localhost:8021"}
 
     with pytest.raises(redis.exceptions.ConnectionError):
-        bento_lib.events.EventBus(connection_data=fake_conn)
+        bento_lib.events.EventBus(**fake_conn)
 
-    event_bus = bento_lib.events.EventBus(connection_data=fake_conn, allow_fake=True)
+    event_bus = bento_lib.events.EventBus(**fake_conn, allow_fake=True)
 
     test_registration()
 

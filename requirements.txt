@@ -42,7 +42,7 @@ platformdirs==2.5.2
 pluggy==0.13.1
 priority==2.0.0
 psycopg2==2.9.5
-py==1.10.0
+py==1.11.0
 pycodestyle==2.7.0
 pyflakes==2.3.1
 pyparsing==2.4.7
@@ -61,7 +61,7 @@ six==1.16.0
 sqlparse==0.4.2
 toml==0.10.2
 tomli==2.0.1
-tox==3.27.0
+tox==3.27.1
 types-toml==0.10.8
 urllib3==1.26.12
 virtualenv==20.16.6

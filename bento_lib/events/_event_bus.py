@@ -1,6 +1,5 @@
 import json
 import jsonschema
-import os
 import redis
 
 from typing import Callable, Optional, Union
@@ -15,8 +14,7 @@ DATA_TYPE_CHANNEL_TPL = "bento.data_type.{}"
 Serializable = Union[bool, float, int, str, dict, list, tuple, None]
 
 # Redis
-# TODO: Deprecate bento_lib doing its own environment stuff
-default_connection_data = {"unix_socket_path": os.environ.get("REDIS_SOCKET")} if "REDIS_SOCKET" in os.environ else {}
+default_connection_data = {"host": "localhost", "port": 6379}
 
 
 class EventBus:
@@ -25,37 +23,40 @@ class EventBus:
     """
 
     @staticmethod
-    def _get_redis(connection_data: dict):
-        return redis.Redis(**connection_data)
+    def _get_redis(**kwargs) -> redis.Redis:
+        if "url" in kwargs:
+            return redis.Redis.from_url(kwargs["url"])
+        return redis.Redis(**kwargs)
 
-    def __init__(self, connection_data: dict = default_connection_data, allow_fake: bool = False):
+    def __init__(self, allow_fake: bool = False, **kwargs):
         """
         Sets up a Redis connection based on the REDIS_SOCKET environment variable (or defaults, if the variable is
-        not present.)
-        :param connection_data: redis-py connection parameters
+        not present.) Keyword arguments are passed to the Redis connection factory. If "url" is passed as a keyword
+        argument, it is used instead of any other keyword arguments.
         :param allow_fake: Whether to allow for "fake" connections, i.e. no true connection to Redis.
         """
 
         self._rc: Optional[redis.Redis] = None
 
         try:
-            self._rc = self._get_redis(connection_data)
+            self._rc = self._get_redis(**(kwargs or default_connection_data))
             self._rc.get("")  # Dummy request to check connection
         except redis.exceptions.ConnectionError as e:
             self._rc = None
             if not allow_fake:
                 raise e
+            # TODO: Log otherwise (as info)
 
-        self._ps = None
+        self._ps: Optional[redis.PubSub] = None
 
-        self._ps_handlers = {}
-        self._event_thread = None
+        self._ps_handlers: dict[str, Callable[[dict], None]] = {}
+        self._event_thread: Optional[redis.PubSubWorkerThread] = None
 
         self._service_event_types = {}
         self._data_type_event_types = {}
 
     @staticmethod
-    def _callback_deserialize(callback: Callable[[dict], None]):
+    def _callback_deserialize(callback: Callable[[dict], None]) -> Callable[[dict], None]:
         return lambda message: callback({
             **message,
             "data": json.loads(message["data"]) if message["type"] in ("message", "pmessage") else message["data"]
@@ -78,7 +79,7 @@ class EventBus:
         self._ps_handlers[pattern] = self._callback_deserialize(callback)
         return True
 
-    def start_event_loop(self):
+    def start_event_loop(self) -> None:
         """
         Starts the event handling loop in a new thread. Whichever handlers were previously added will be present.
         The loop must be restarted if the handlers are changed.
@@ -94,7 +95,7 @@ class EventBus:
         self._ps.psubscribe(**self._ps_handlers)
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001, daemon=True)
 
-    def stop_event_loop(self):
+    def stop_event_loop(self) -> None:
         """
         Stops the event handling loop, if running. Otherwise, does nothing.
         """
@@ -107,7 +108,7 @@ class EventBus:
         self._ps = None
 
     @staticmethod
-    def _make_event(event_type: str, event_data, attrs: dict):
+    def _make_event(event_type: str, event_data, attrs: dict) -> str:
         return json.dumps({
             "type": event_type.lower(),
             "data": event_data,
