@@ -20,7 +20,7 @@ TEST_EVENT_BODY = "test"
 TEST_REDIS_HOST = os.environ.get("TEST_REDIS_HOST", "localhost")
 TEST_REDIS_PORT = int(os.environ.get("TEST_REDIS_PORT", 6379))
 
-event_bus = bento_lib.events.EventBus(connection_data={"host": TEST_REDIS_HOST, "port": TEST_REDIS_PORT})
+event_bus = bento_lib.events.EventBus(host=TEST_REDIS_HOST, port=TEST_REDIS_PORT)
 
 
 def test_registration():
