@@ -1,6 +1,5 @@
 import json
 import jsonschema
-import os
 import redis
 
 from typing import Callable, Optional, Union
