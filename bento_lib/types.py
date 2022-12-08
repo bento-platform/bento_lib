@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict, Union
+from typing import TypedDict
 
 __all__ = [
     "GA4GHServiceType",
