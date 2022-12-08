@@ -34,4 +34,8 @@ class GA4GHServiceInfo(_GA4GHServiceInfoBase, total=False):
     contactUrl: str
     documentationUrl: str
     url: str  # Technically not part of spec; comes from service-registry
-    environment: Union[Literal["dev"], Literal["prod"]]
+    environment: str  # TODO: Literal["dev", "prod"] if JetBrains fixes their inspection...
+
+    # TODO: put these in their own Bento object?
+    git_tag: str
+    git_branch: str
