@@ -2,6 +2,8 @@ from typing import Literal, TypedDict, Union
 
 __all__ = [
     "GA4GHServiceType",
+    "GA4GHServiceOrganization",
+    "GA4GHServiceInfo",
 ]
 
 
@@ -24,5 +26,4 @@ class GA4GHServiceInfo(TypedDict):
     organization: GA4GHServiceOrganization
     contactUrl: str
     version: str
-    url: str
     environment: Union[Literal["dev"], Literal["prod"]]
