@@ -21,6 +21,13 @@ class GA4GHServiceOrganization(TypedDict):
 # TODO: py3.11: Required[] instead of base class
 
 
+class BentoExtraServiceInfo(TypedDict, total=False):
+    service_kind: str  # One service_kind per Bento service/instance
+
+    git_tag: str
+    git_branch: str
+
+
 class _GA4GHServiceInfoBase(TypedDict):
     id: str
     name: str
@@ -36,6 +43,8 @@ class GA4GHServiceInfo(_GA4GHServiceInfoBase, total=False):
     url: str  # Technically not part of spec; comes from service-registry
     environment: str  # TODO: Literal["dev", "prod"] if JetBrains fixes their inspection...
 
-    # TODO: put these in their own Bento object?
+    # TODO: deprecate in favour of bento object
     git_tag: str
     git_branch: str
+
+    bento: BentoExtraServiceInfo

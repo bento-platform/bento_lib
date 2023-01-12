@@ -2,7 +2,7 @@ import json
 import jsonschema
 import redis
 
-from typing import Callable, Optional, Union
+from typing import Callable, Dict, Optional, Union
 
 __all__ = ["EventBus"]
 
@@ -52,8 +52,8 @@ class EventBus:
         self._ps_handlers: dict[str, Callable[[dict], None]] = {}
         self._event_thread: Optional[redis.PubSubWorkerThread] = None
 
-        self._service_event_types = {}
-        self._data_type_event_types = {}
+        self._service_event_types: Dict[str, dict] = {}
+        self._data_type_event_types: Dict[str, dict] = {}
 
     @staticmethod
     def _callback_deserialize(callback: Callable[[dict], None]) -> Callable[[dict], None]:
@@ -148,13 +148,13 @@ class EventBus:
         """
         return self._add_schema(self._data_type_event_types, event_type, event_schema)
 
-    def get_service_event_types(self) -> dict:
+    def get_service_event_types(self) -> Dict[str, dict]:
         """
         :return: A dictionary of registered service event types and their associated schemas.
         """
         return {**self._service_event_types}
 
-    def get_data_type_event_types(self) -> dict:
+    def get_data_type_event_types(self) -> Dict[str, dict]:
         """
         :return: A dictionary of registered data type event types and their associated schemas.
         """
@@ -162,7 +162,7 @@ class EventBus:
 
     def _publish_event(
         self,
-        event_types: dict,
+        event_types: Dict[str, dict],
         channel: str,
         event_type: str,
         event_data: Serializable,
