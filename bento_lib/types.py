@@ -22,10 +22,10 @@ class GA4GHServiceOrganization(TypedDict):
 
 
 class BentoExtraServiceInfo(TypedDict, total=False):
-    service_kind: str  # One service_kind per Bento service/instance
+    serviceKind: str  # One service_kind per Bento service/instance
 
-    git_tag: str
-    git_branch: str
+    gitTag: str
+    gitBranch: str
 
 
 class _GA4GHServiceInfoBase(TypedDict):
