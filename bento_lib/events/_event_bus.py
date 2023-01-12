@@ -1,5 +1,6 @@
 import json
 import jsonschema
+import logging
 import redis
 
 from typing import Callable, Dict, Optional, Union
@@ -38,14 +39,19 @@ class EventBus:
 
         self._rc: Optional[redis.Redis] = None
 
+        logger = kwargs.pop("logger", None) or logging.getLogger(__name__)
+        self._logger: logging.Logger = logger
+
+        connection_data: dict = kwargs or default_connection_data
+
         try:
-            self._rc = self._get_redis(**(kwargs or default_connection_data))
+            self._rc = self._get_redis(**connection_data)
             self._rc.get("")  # Dummy request to check connection
         except redis.exceptions.ConnectionError as e:
             self._rc = None
             if not allow_fake:
                 raise e
-            # TODO: Log otherwise (as info)
+            logger.warning(f"Starting event bus in 'fake' mode (tried connection data: {connection_data})")
 
         self._ps: Optional[redis.PubSub] = None
 
@@ -91,6 +97,8 @@ class EventBus:
         if self._event_thread is not None:
             return
 
+        self._logger.debug("Starting EventBus event loop")
+
         self._ps = self._rc.pubsub()
         self._ps.psubscribe(**self._ps_handlers)
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001, daemon=True)
@@ -102,6 +110,8 @@ class EventBus:
 
         if self._event_thread is None:
             return
+
+        self._logger.debug("Stopping EventBus event loop")
 
         self._event_thread.stop()
         self._event_thread = None
@@ -179,7 +189,9 @@ class EventBus:
         if self._rc is None:
             return False
 
-        self._rc.publish(channel, self._make_event(event_type, event_data, attrs))
+        event: str = self._make_event(event_type, event_data, attrs)
+        self._logger.debug(f"Publishing event: {event}")
+        self._rc.publish(channel, event)
         return True
 
     def publish_service_event(self, service_artifact: str, event_type: str, event_data: Serializable) -> bool:
