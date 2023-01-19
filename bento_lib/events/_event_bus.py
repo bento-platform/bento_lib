@@ -2,6 +2,7 @@ import json
 import jsonschema
 import logging
 import redis
+import uuid
 
 from typing import Callable, Dict, Optional, Union
 
@@ -120,6 +121,7 @@ class EventBus:
     @staticmethod
     def _make_event(event_type: str, event_data, attrs: dict) -> str:
         return json.dumps({
+            "id": str(uuid.uuid4()),  # So other services can decide how to claim specific events or whatever
             "type": event_type.lower(),
             "data": event_data,
             **attrs
