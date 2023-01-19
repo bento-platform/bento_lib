@@ -3,6 +3,7 @@ from typing import TypedDict
 __all__ = [
     "GA4GHServiceType",
     "GA4GHServiceOrganization",
+    "BentoExtraServiceInfo",
     "GA4GHServiceInfo",
 ]
 
@@ -24,8 +25,10 @@ class GA4GHServiceOrganization(TypedDict):
 class BentoExtraServiceInfo(TypedDict, total=False):
     serviceKind: str  # One service_kind per Bento service/instance
 
+    gitRepository: str
     gitTag: str
     gitBranch: str
+    gitCommit: str
 
 
 class _GA4GHServiceInfoBase(TypedDict):
