@@ -10,6 +10,9 @@ __all__ = [
 
     "SEARCH_OP_IN",
 
+    "SEARCH_OP_ISW",
+    "SEARCH_OP_IEW",
+
     "SEARCH_OPERATIONS",
 ]
 
@@ -25,6 +28,9 @@ SEARCH_OP_ICO = "ico"
 
 SEARCH_OP_IN = "in"
 
+SEARCH_OP_ISW = "isw"
+SEARCH_OP_IEW = "iew"
+
 SEARCH_OPERATIONS = (
     SEARCH_OP_EQ,
     SEARCH_OP_LT,
@@ -34,4 +40,6 @@ SEARCH_OPERATIONS = (
     SEARCH_OP_IN,
     SEARCH_OP_CO,
     SEARCH_OP_ICO,
+    SEARCH_OP_ISW,
+    SEARCH_OP_IEW,
 )
