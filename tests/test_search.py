@@ -659,9 +659,9 @@ DS_VALID_QUERIES = (
     (TEST_QUERY_24, False, True,  2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
     (TEST_QUERY_25, False, True,  1, 1),  # in statement, search in list of string values
 
-    (TEST_QUERY_26, False, False,  2, 0),  # TODO
-    (TEST_QUERY_27, False, True,  2, 2),  # TODO
-    (TEST_QUERY_28, False, True,  2, 1),  # TODO
+    (TEST_QUERY_26, False, False,  2, 0),  # Starts with 'label' - no matches since both end with 'label' instead
+    (TEST_QUERY_27, False, True,  2, 2),  # Ends with 'label'
+    (TEST_QUERY_28, False, True,  2, 1),  # Starts with 'dummy' - only 1 of 2 match
 )
 
 # Query, Internal, Exception
