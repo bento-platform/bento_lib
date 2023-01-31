@@ -47,14 +47,23 @@ TEST_SCHEMA = {
                                     "id": {
                                         "type": "string",
                                         "search": {
-                                            "operations": [operations.SEARCH_OP_CO],
+                                            "operations": [
+                                                operations.SEARCH_OP_CO,
+                                                operations.SEARCH_OP_ICO,
+                                                operations.SEARCH_OP_ISW,
+                                                operations.SEARCH_OP_IEW,
+                                            ],
                                             "queryable": "all"
                                         }
                                     },
                                     "label": {
                                         "type": "string",
                                         "search": {
-                                            "operations": [operations.SEARCH_OP_ICO],
+                                            "operations": [
+                                                operations.SEARCH_OP_ICO,
+                                                operations.SEARCH_OP_ISW,
+                                                operations.SEARCH_OP_IEW,
+                                            ],
                                             "queryable": "all"
                                         }
                                     }
@@ -489,6 +498,10 @@ TEST_QUERY_24 = ["#ico", ["#resolve", "biosamples", "[item]", "procedure", "code
 
 TEST_QUERY_25 = ["#in", ["#resolve", "subject", "karyotypic_sex"], ["#list", "XO", "XX"]]
 
+TEST_QUERY_26 = ["#isw", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"]
+TEST_QUERY_27 = ["#iew", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"]
+TEST_QUERY_28 = ["#isw", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "dummy"]
+
 TEST_LARGE_QUERY_1 = [
     "#and",
     ["#eq",
@@ -519,6 +532,8 @@ INVALID_EXPR_8 = [5, 5]
 INVALID_EXPR_9 = ["#gt", ["#resolve", "subject", "sex"], "MALE"]
 INVALID_EXPR_10 = ["#resolve", "subject", "id"]  # Invalid with bad permissions
 INVALID_EXPR_11 = ["#resolve", "subject"]  # Invalid with bad permissions
+INVALID_EXPR_12 = ["#isw", 5, 3]  # Invalid with wrong types
+INVALID_EXPR_13 = ["#iew", 5, 3]  # Invalid with wrong types
 
 
 TEST_QUERY_STR = (
@@ -643,6 +658,10 @@ DS_VALID_QUERIES = (
 
     (TEST_QUERY_24, False, True,  2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
     (TEST_QUERY_25, False, True,  1, 1),  # in statement, search in list of string values
+
+    (TEST_QUERY_26, False, False,  2, 0),  # Starts with 'label' - no matches since both end with 'label' instead
+    (TEST_QUERY_27, False, True,  2, 2),  # Ends with 'label'
+    (TEST_QUERY_28, False, True,  2, 1),  # Starts with 'dummy' - only 1 of 2 match
 )
 
 # Query, Internal, Exception
@@ -658,6 +677,8 @@ COMMON_INVALID_EXPRESSIONS = (
     (INVALID_EXPR_9,  False, ValueError),
     (INVALID_EXPR_10, False, ValueError),
     (INVALID_EXPR_11, True,  ValueError),
+    (INVALID_EXPR_12, False,  TypeError),
+    (INVALID_EXPR_13, False,  TypeError),
 )
 
 # Expression, Internal, Exception Raised, Index Combination
@@ -667,9 +688,9 @@ DS_INVALID_EXPRESSIONS = (
     (TEST_EXPR_7, False, Exception, {"_root.biosamples": 0}),
     (TEST_EXPR_7, False, Exception, {}),
     (TEST_EXPR_7, False, Exception, None),
-    (["#_wc", "v1"], False, NotImplementedError, None),
+    (["#_wc", "v1", "anywhere"], False, NotImplementedError, None),
     (["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"],
-      ["#_wc", "v1"]], False, NotImplementedError, {"_root.biosamples": 0})
+      ["#_wc", "v1", "anywhere"]], False, NotImplementedError, {"_root.biosamples": 0})
 )
 
 
@@ -699,12 +720,16 @@ PG_VALID_QUERIES = (
     (TEST_QUERY_23, False, (6, 8)),
     (TEST_QUERY_24, True, ("%label%",)),
     (TEST_QUERY_25, True, (("XO", "XX"),)),
+    (TEST_QUERY_26, True, ("label%",)),
+    (TEST_QUERY_27, True, ("%label",)),
+    (TEST_QUERY_28, True, ("dummy%",)),
 )
 
 PG_INVALID_EXPRESSIONS = (
     *COMMON_INVALID_EXPRESSIONS,
-    (["#_wc", "v1", "v2"], False, SyntaxError),
-    (["#_wc", ["#resolve", "biosamples"]], False, NotImplementedError),
+    (["#_wc", "v1"], False, SyntaxError),
+    (["#_wc", "v1", "v2", "v3"], False, SyntaxError),
+    (["#_wc", ["#resolve", "biosamples"], "anywhere"], False, NotImplementedError),
     ({"dict": True}, False, ValueError),
 )
 

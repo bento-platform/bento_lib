@@ -1,3 +1,4 @@
+import functools
 import re
 
 from psycopg2 import sql
@@ -306,25 +307,38 @@ def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
 
 
 # TODO rename the function ?
-def _contains(op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False, )\
+def _contains(op: str, wc_loc: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False)\
         -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1]]), params,
-                                                      schema, internal)
+    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(
+        q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], q.Literal(wc_loc)]), params, schema, internal)
     return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
 
 
-def _contains_op(op) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
-    return lambda args, params, schema, internal: _contains(op, args, params, schema, internal)
+def _contains_op(op: str) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
+    def _inner(*args):
+        return _contains(op, "anywhere", *args)
+    return _inner
 
 
-def _wildcard(args: Tuple[q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
+_i_starts_with = functools.partial(_contains, "ILIKE", "start")
+_i_ends_with = functools.partial(_contains, "ILIKE", "end")
+
+
+def _wildcard(args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
         -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
+    if args[1].value == "start":
+        wcs = "{}%"
+    elif args[1].value == "end":
+        wcs = "%{}"
+    else:  # anywhere
+        wcs = "%{}%"
+
     try:
-        return sql.Placeholder(), (*params, "%{}%".format(args[0].value.replace("%", r"\%")))
+        return sql.Placeholder(), (*params, wcs.format(args[0].value.replace("%", r"\%")))
     except AttributeError:  # Cast
         raise TypeError("Type-invalid use of binary function #co")
 
@@ -353,7 +367,7 @@ def _list(args: q.Args, params: tuple, _schema: JSONSchema, _internal: bool = Fa
     # with psycopg2, it must be passed as a tuple of tuples, hence the enclosing
     # parentheses in the following statement.
     # TODO: for large lists, the syntax IN (VALUES ("patient1"), ("patient2")) which creates
-    # a table construct on the fly is recommended performance-wise (better indexing)
+    #  a table construct on the fly is recommended performance-wise (better indexing)
     # FUTURE: psycopg3 won't allow the "tuples adaptation" syntax anymore:
     # https://www.psycopg.org/psycopg3/docs/basic/from_pg2.html#you-cannot-use-in-s-with-a-tuple
     values = tuple(a.value for a in args)
@@ -377,6 +391,9 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
 
     q.FUNCTION_CO: _contains_op("LIKE"),
     q.FUNCTION_ICO: _contains_op("ILIKE"),
+
+    q.FUNCTION_ISW: _i_starts_with,
+    q.FUNCTION_IEW: _i_ends_with,
 
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,

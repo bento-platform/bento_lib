@@ -12,7 +12,9 @@ from .operations import (
     SEARCH_OP_GE,
     SEARCH_OP_IN,
     SEARCH_OP_CO,
-    SEARCH_OP_ICO
+    SEARCH_OP_ICO,
+    SEARCH_OP_ISW,
+    SEARCH_OP_IEW,
 )
 
 
@@ -65,8 +67,11 @@ FUNCTION_GE = "#ge"
 
 FUNCTION_IN = "#in"
 
-FUNCTION_CO = "#co"
-FUNCTION_ICO = "#ico"
+FUNCTION_CO = "#co"  # contains
+FUNCTION_ICO = "#ico"  # case-insensitive string contains
+
+FUNCTION_ISW = "#isw"  # case-insensitive starts with
+FUNCTION_IEW = "#iew"  # case-insensitive ends with
 
 FUNCTION_RESOLVE = "#resolve"
 FUNCTION_LIST = "#list"
@@ -88,6 +93,8 @@ VALID_FUNCTIONS = (
     FUNCTION_IN,
     FUNCTION_CO,
     FUNCTION_ICO,
+    FUNCTION_ISW,
+    FUNCTION_IEW,
     FUNCTION_RESOLVE,
     FUNCTION_LIST,
     FUNCTION_HELPER_WC,
@@ -108,9 +115,11 @@ FUNCTION_ARGUMENTS = {
     FUNCTION_CO: BINARY_RANGE,
     FUNCTION_ICO: BINARY_RANGE,
     FUNCTION_IN: BINARY_RANGE,
+    FUNCTION_ISW: BINARY_RANGE,
+    FUNCTION_IEW: BINARY_RANGE,
     FUNCTION_RESOLVE: (0, None),
     FUNCTION_LIST: (1, None),
-    FUNCTION_HELPER_WC: (1, 1),
+    FUNCTION_HELPER_WC: BINARY_RANGE,
 }
 
 
@@ -125,6 +134,9 @@ FUNCTION_SEARCH_OP_MAP = {
     FUNCTION_ICO: SEARCH_OP_ICO,
 
     FUNCTION_IN: SEARCH_OP_IN,
+
+    FUNCTION_ISW: SEARCH_OP_ISW,
+    FUNCTION_IEW: SEARCH_OP_IEW,
 }
 
 # literal types are scalar that are used in queries to compare the value for a

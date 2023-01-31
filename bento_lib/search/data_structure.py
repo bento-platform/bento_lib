@@ -42,6 +42,30 @@ def _in(lhs: Union[str, int, float], rhs: QueryableStructure):
     return contains(rhs, lhs)
 
 
+def _i_starts_with(lhs: str, rhs: str):
+    """
+    Checks whether a string starts with a particular prefix, in a case-insensitive fashion.
+    :param lhs: The full string to assess.
+    :param rhs: The prefix to test against LHS.
+    :return: Whether the string starts with the prefix.
+    """
+    if not isinstance(lhs, str) or not isinstance(rhs, str):
+        raise TypeError("#isw can only be used with strings")
+    return lhs.casefold().startswith(rhs.casefold())
+
+
+def _i_ends_with(lhs: str, rhs: str):
+    """
+    Checks whether a string ends with a particular suffix, in a case-insensitive fashion.
+    :param lhs: The full string to assess.
+    :param rhs: The prefix to test against LHS.
+    :return: Whether the string ends with the prefix.
+    """
+    if not isinstance(lhs, str) or not isinstance(rhs, str):
+        raise TypeError("#iew can only be used with strings")
+    return lhs.casefold().endswith(rhs.casefold())
+
+
 def _validate_data_structure_against_schema(
         data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True):
     """
@@ -300,6 +324,7 @@ def _binary_op(op: BBOperator)\
     :return: Operator lambda for use in evaluating expressions
     """
 
+    # needed for shortcutting assessment of boolean operators
     is_and = op == and_
     is_or = op == or_
 
@@ -313,7 +338,7 @@ def _binary_op(op: BBOperator)\
 
         lhs = evaluate_no_validate(args[0], ds, schema, ic, internal, resolve_checks, check_permissions)
 
-        # TODO: These shortcuts don't type-check the RHS, is that OK?
+        # These shortcuts mean that the RHS does NOT get type-checked!
 
         # Shortcut #and
         if is_and and not lhs:
@@ -505,6 +530,9 @@ QUERY_CHECK_SWITCH: Dict[
     q.FUNCTION_CO: _binary_op(contains),
     q.FUNCTION_ICO: _binary_op(_icontains),
     q.FUNCTION_IN: _binary_op(_in),
+
+    q.FUNCTION_ISW: _binary_op(_i_starts_with),
+    q.FUNCTION_IEW: _binary_op(_i_ends_with),
 
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,
