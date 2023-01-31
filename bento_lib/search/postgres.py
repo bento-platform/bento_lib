@@ -325,14 +325,14 @@ _i_starts_with = functools.partial(_contains, "ILIKE", "start")
 _i_ends_with = functools.partial(_contains, "ILIKE", "end")
 
 
-def _wildcard(args: Tuple[q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
+def _wildcard(args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
         -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
         raise NotImplementedError("Cannot currently use #co on an expression")  # TODO
 
-    if args[1] == "start":
+    if args[1].value == "start":
         wcs = "{}%"
-    elif args[1] == "end":
+    elif args[1].value == "end":
         wcs = "%{}"
     else:  # anywhere
         wcs = "%{}%"
