@@ -311,7 +311,7 @@ def _contains(op: str, wc_loc: str, args: q.Args, params: tuple, schema: JSONSch
         -> SQLComposableWithParams:
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     rhs_sql, rhs_params = search_ast_to_psycopg2_expr(
-        q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], wc_loc]), params, schema, internal)
+        q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], q.Literal(wc_loc)]), params, schema, internal)
     return sql.SQL("({}) {} ({})").format(lhs_sql, sql.SQL(op), rhs_sql), params + lhs_params + rhs_params
 
 
