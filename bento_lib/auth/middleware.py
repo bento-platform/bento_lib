@@ -27,9 +27,12 @@ class AuthxFlaskMiddleware():
         self.public_key = RSAAlgorithm.from_jwk(rsa_key_json_str)
 
     def verify_token(self):
-        print("authx checkup")
+        if request.path != '/': # ignore logging root calls (healthcheck spam)
+            print("authx checkup")
+
         if request.headers.get("Authorization"):
             print("authz header discovered")
+            
             # Assume is Bearer token
             authz_str_split=request.headers.get("Authorization").split(' ')
             if len(authz_str_split) > 1:
