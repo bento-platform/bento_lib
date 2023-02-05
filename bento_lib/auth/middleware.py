@@ -58,14 +58,7 @@ class AuthxFlaskMiddleware():
             raise AuthXException('Missing access_token !')
 
 
-class APIException(Exception):
-    def __init__(self, message="Internal Server Error", status_code=500, payload=None):
-        super().__init__()
-        self.message = message
-        self.status_code = status_code
-        self.payload = payload
-
-class AuthXException(APIException):
+class AuthXException(Exception):
     def __init__(self, message="Unauthorized", status_code=401):
         super().__init__()
         self.message = message
