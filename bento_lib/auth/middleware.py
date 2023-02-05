@@ -12,21 +12,20 @@ class AuthxFlaskMiddleware():
     def __init__(self, oidc_iss="https://localhost/auth/realms/realm", client_id="abc123", oidc_alg="RS256"):
         print('authx middleware initialized')
 
+        self.oidc_issuer = oidc_iss
+        self.client_id = client_id
+        self.oidc_alg = oidc_alg
+
+        self.oidc_wellknown_path = Self.oidc_issuer + "/protocol/openid-connect/certs"
+
         # initialize key-rotation-fetching background process
-        fetch_jwks_background_thread = Thread(target=self.fetch_jwks, args=(self,))
+        fetch_jwks_background_thread = Thread(target=self.fetch_jwks)
         fetch_jwks_background_thread.daemon = True
         fetch_jwks_background_thread.start()
 
     def fetch_jwks(self):
         while True:
             print("fetching jwks...")
-            self.oidc_issuer = oidc_iss
-            self.client_id = client_id
-
-            self.oidc_wellknown_path = self.oidc_issuer + "/protocol/openid-connect/certs"
-
-            self.oidc_alg = oidc_alg
-
             r =requests.get(self.oidc_wellknown_path, verify=False)
             jwks = r.json()
 
