@@ -63,9 +63,17 @@ class AuthxFlaskMiddleware():
                 # print(json.dumps(payload, indent=4, separators=(',', ': ')))
             
                 # TODO: parse out relevant claims/data
-                roles = payload["resource_access"][self.client_id]["roles"]
-                print(roles)
+                if 'resource_access' in payload.keys() and 
+                    str(self.client_id) in payload["resource_access"].keys() and
+                    'roles' in ["resource_access"][self.client_id].keys() :
+                        
+                    roles = payload["resource_access"][self.client_id]["roles"]
+                    print(roles)
 
+                    # TODO: do stuff with roles
+                    # i.e. send an X-HEADER downstream                  
+                else:
+                    raise AuthXException('Missing roles !')
             else:
                 raise AuthXException('Malformed access_token !')
         else:
