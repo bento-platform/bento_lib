@@ -63,7 +63,7 @@ class AuthxFlaskMiddleware():
                 # print(json.dumps(payload, indent=4, separators=(',', ': ')))
             
                 # TODO: parse out relevant claims/data
-                if 'resource_access' in payload.keys() and str(self.client_id) in payload["resource_access"].keys() and 'roles' in ["resource_access"][self.client_id].keys() :
+                if 'resource_access' in payload.keys() and str(self.client_id) in payload["resource_access"].keys() and 'roles' in payload["resource_access"][self.client_id].keys() :
                     roles = payload["resource_access"][self.client_id]["roles"]
                     print(roles)
 
