@@ -16,7 +16,7 @@ class AuthxFlaskMiddleware():
         self.client_id = client_id
         self.oidc_alg = oidc_alg
 
-        self.oidc_wellknown_path = Self.oidc_issuer + "/protocol/openid-connect/certs"
+        self.oidc_wellknown_path = self.oidc_issuer + "/protocol/openid-connect/certs"
 
         # initialize key-rotation-fetching background process
         fetch_jwks_background_thread = Thread(target=self.fetch_jwks)
