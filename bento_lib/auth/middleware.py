@@ -13,7 +13,7 @@ class AuthxFlaskMiddleware():
         print('authx middleware initialized')
 
         # initialize key-rotation-fetching background process
-        fetch_jwks_background_thread = Thread(target=self.fetch_jwks)
+        fetch_jwks_background_thread = Thread(target=self.fetch_jwks, args=(self,))
         fetch_jwks_background_thread.daemon = True
         fetch_jwks_background_thread.start()
 
