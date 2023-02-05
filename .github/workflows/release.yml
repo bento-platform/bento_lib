@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+  push:
+    branches:
+      - "features/**" # TEMP
 jobs:
   publish:
     runs-on: ubuntu-latest
