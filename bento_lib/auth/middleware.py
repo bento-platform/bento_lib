@@ -2,29 +2,41 @@ import json
 import requests
 import os
 import jwt
+import time
 
+from threading import Thread
 from flask import request
 from jwt.algorithms import RSAAlgorithm
 
 class AuthxFlaskMiddleware():
     def __init__(self, oidc_iss="https://localhost/auth/realms/realm", client_id="abc123", oidc_alg="RS256"):
         print('authx middleware initialized')
-        # authx poc
-        self.oidc_issuer = oidc_iss
-        self.client_id = client_id
 
-        self.oidc_wellknown_path = self.oidc_issuer + "/protocol/openid-connect/certs"
+        # initialize key-rotation-fetching background process
+        fetch_jwks_background_thread = Thread(target=self.fetch_jwks)
+        fetch_jwks_background_thread.daemon = True
+        fetch_jwks_background_thread.start()
 
-        self.oidc_alg = oidc_alg
+    def fetch_jwks(self):
+        while True:
+            print("fetching jwks...")
+            self.oidc_issuer = oidc_iss
+            self.client_id = client_id
 
-        r =requests.get(self.oidc_wellknown_path, verify=False)
-        jwks = r.json()
+            self.oidc_wellknown_path = self.oidc_issuer + "/protocol/openid-connect/certs"
 
-        public_keys = jwks["keys"]
-        rsa_key = [x for x in public_keys if x["alg"] == self.oidc_alg][0]
-        rsa_key_json_str = json.dumps(rsa_key)
-        
-        self.public_key = RSAAlgorithm.from_jwk(rsa_key_json_str)
+            self.oidc_alg = oidc_alg
+
+            r =requests.get(self.oidc_wellknown_path, verify=False)
+            jwks = r.json()
+
+            public_keys = jwks["keys"]
+            rsa_key = [x for x in public_keys if x["alg"] == self.oidc_alg][0]
+            rsa_key_json_str = json.dumps(rsa_key)
+            
+            self.public_key = RSAAlgorithm.from_jwk(rsa_key_json_str)
+
+            time.sleep(60) # sleep 1 minute
 
     def verify_token(self):
         if request.path != '/': # ignore logging root calls (healthcheck spam)
