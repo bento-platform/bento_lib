@@ -1,6 +1,5 @@
 import json
 import requests
-import os
 import jwt
 import time
 
@@ -54,7 +53,7 @@ class AuthxFlaskMiddleware():
                 # use idp public_key to validate and parse inbound token
                 try:
                     payload = jwt.decode(token_str, self.public_key, algorithms=[self.oidc_alg], audience="account")
-                    header = jwt.get_unverified_header(token_str)
+                    # header = jwt.get_unverified_header(token_str)
                 except jwt.exceptions.ExpiredSignatureError:
                     raise AuthXException('Expired access_token!')
                 except Exception:
@@ -64,7 +63,9 @@ class AuthxFlaskMiddleware():
                 # print(json.dumps(payload, indent=4, separators=(',', ': ')))
 
                 # TODO: parse out relevant claims/data
-                if 'resource_access' in payload.keys() and str(self.client_id) in payload["resource_access"].keys() and 'roles' in payload["resource_access"][self.client_id].keys():
+                if 'resource_access' in payload.keys() and \
+                        str(self.client_id) in payload["resource_access"].keys() and \
+                        'roles' in payload["resource_access"][self.client_id].keys():
                     roles = payload["resource_access"][self.client_id]["roles"]
                     print(roles)
 
