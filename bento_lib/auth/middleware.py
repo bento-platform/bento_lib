@@ -8,6 +8,7 @@ from threading import Thread
 from flask import request
 from jwt.algorithms import RSAAlgorithm
 
+
 class AuthxFlaskMiddleware():
     def __init__(self, oidc_iss="https://localhost/auth/realms/realm", client_id="abc123", oidc_alg="RS256"):
         print('authx middleware initialized')
@@ -26,26 +27,26 @@ class AuthxFlaskMiddleware():
     def fetch_jwks(self):
         while True:
             print("fetching jwks...")
-            r =requests.get(self.oidc_wellknown_path, verify=False)
+            r = requests.get(self.oidc_wellknown_path, verify=False)
             jwks = r.json()
 
             public_keys = jwks["keys"]
             rsa_key = [x for x in public_keys if x["alg"] == self.oidc_alg][0]
             rsa_key_json_str = json.dumps(rsa_key)
-            
+
             self.public_key = RSAAlgorithm.from_jwk(rsa_key_json_str)
 
-            time.sleep(60) # sleep 1 minute
+            time.sleep(60)  # sleep 1 minute
 
     def verify_token(self):
-        if request.path != '/': # ignore logging root calls (healthcheck spam)
+        if request.path != '/':  # ignore logging root calls (healthcheck spam)
             print("authx checkup")
 
         if request.headers.get("Authorization"):
             print("authz header discovered")
-            
+
             # Assume is Bearer token
-            authz_str_split=request.headers.get("Authorization").split(' ')
+            authz_str_split = request.headers.get("Authorization").split(' ')
             if len(authz_str_split) > 1:
                 token_str = authz_str_split[1]
                 # print(token_str)
@@ -61,14 +62,14 @@ class AuthxFlaskMiddleware():
 
                 # print(json.dumps(header, indent=4, separators=(',', ': ')))
                 # print(json.dumps(payload, indent=4, separators=(',', ': ')))
-            
+
                 # TODO: parse out relevant claims/data
-                if 'resource_access' in payload.keys() and str(self.client_id) in payload["resource_access"].keys() and 'roles' in payload["resource_access"][self.client_id].keys() :
+                if 'resource_access' in payload.keys() and str(self.client_id) in payload["resource_access"].keys() and 'roles' in payload["resource_access"][self.client_id].keys():
                     roles = payload["resource_access"][self.client_id]["roles"]
                     print(roles)
 
                     # TODO: do stuff with roles
-                    # i.e. send an X-HEADER                  
+                    # i.e. send an X-HEADER
                 else:
                     raise AuthXException('Missing roles !')
             else:

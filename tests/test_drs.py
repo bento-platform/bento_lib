@@ -41,7 +41,7 @@ def test_get_access_method():
 def test_drs_uri_decode():
     assert drs_utils.decode_drs_uri("drs://example.org/abc") == "https://example.org/ga4gh/drs/v1/objects/abc"
     assert drs_utils.decode_drs_uri("drs://example.org/abc", internal_drs_base_url="http://localhost/sub/") == \
-           "http://localhost/sub/ga4gh/drs/v1/objects/abc"
+        "http://localhost/sub/ga4gh/drs/v1/objects/abc"
 
     with pytest.raises(drs_utils.DrsInvalidScheme):
         drs_utils.decode_drs_uri("http://example.org/abc")
