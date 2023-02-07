@@ -5,6 +5,7 @@ from flask import current_app
 
 from .middleware import AuthxFlaskMiddleware
 
+
 def authn_token_required_flask_wrapper(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
