@@ -4,7 +4,7 @@ import jwt
 import time
 
 from threading import Thread
-from flask import request
+from flask import request, g
 from jwt.algorithms import RSAAlgorithm
 
 
@@ -62,15 +62,19 @@ class AuthxFlaskMiddleware():
                 # print(json.dumps(header, indent=4, separators=(',', ': ')))
                 # print(json.dumps(payload, indent=4, separators=(',', ': ')))
 
-                # TODO: parse out relevant claims/data
+                # parse out relevant roles
                 if 'resource_access' in payload.keys() and \
                         str(self.client_id) in payload["resource_access"].keys() and \
                         'roles' in payload["resource_access"][self.client_id].keys():
                     roles = payload["resource_access"][self.client_id]["roles"]
                     print(roles)
 
-                    # TODO: do stuff with roles
-                    # i.e. send an X-HEADER
+                    # provide access to this token's
+                    # roles via flask 'global'
+                    if 'auth' not in g:
+                        g.authn = {}
+                        g.authn['roles'] = roles
+
                 else:
                     raise AuthXException('Missing roles !')
             else:
