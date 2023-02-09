@@ -9,14 +9,17 @@ from jwt.algorithms import RSAAlgorithm
 
 
 class AuthxFlaskMiddleware():
-    def __init__(self, oidc_iss="https://localhost/auth/realms/realm", client_id="abc123", oidc_alg="RS256"):
+    def __init__(self, 
+            oidc_iss="https://localhost/auth/realms/realm", 
+            oidc_wellknown_path="https://localhost/auth/realms/realm/protocol/openid-connect/certs",
+            client_id="abc123", oidc_alg="RS256"):
         print('authx middleware initialized')
 
         self.oidc_issuer = oidc_iss
         self.client_id = client_id
         self.oidc_alg = oidc_alg
 
-        self.oidc_wellknown_path = self.oidc_issuer + "/protocol/openid-connect/certs"
+        self.oidc_wellknown_path = oidc_wellknown_path
 
         # initialize key-rotation-fetching background process
         fetch_jwks_background_thread = Thread(target=self.fetch_jwks)
