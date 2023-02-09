@@ -25,7 +25,6 @@ class AuthxFlaskMiddleware():
 
     def fetch_jwks(self):
         while True:
-            print("fetching jwks...")
             r = requests.get(self.oidc_wellknown_path, verify=False)
             jwks = r.json()
 
@@ -39,8 +38,6 @@ class AuthxFlaskMiddleware():
 
     def verify_token(self):
         if request.headers.get("Authorization"):
-            print("authz header discovered")
-
             # Assume is Bearer token
             authz_str_split = request.headers.get("Authorization").split(' ')
             if len(authz_str_split) > 1:
