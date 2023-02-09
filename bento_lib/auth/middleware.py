@@ -69,11 +69,11 @@ class AuthxFlaskMiddleware():
                     # provide access to this token's
                     # roles via flask 'global'
                     if 'auth' not in g:
-                        g.authn = {}
-                        g.authn['roles'] = roles
+                        raise AuthXException('Missing roles !')
 
-                else:
-                    raise AuthXException('Missing roles !')
+                    g.authn = {}
+                    g.authn['roles'] = roles
+
             else:
                 raise AuthXException('Malformed access_token !')
         else:
