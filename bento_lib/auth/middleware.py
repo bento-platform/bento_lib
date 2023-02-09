@@ -38,9 +38,6 @@ class AuthxFlaskMiddleware():
             time.sleep(60)  # sleep 1 minute
 
     def verify_token(self):
-        if request.path != '/':  # ignore logging root calls (healthcheck spam)
-            print("authx checkup")
-
         if request.headers.get("Authorization"):
             print("authz header discovered")
 
