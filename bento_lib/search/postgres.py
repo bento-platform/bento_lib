@@ -431,6 +431,15 @@ def get_search_properties(resolve: Tuple[q.Literal, ...], schema: JSONSchema) ->
 
 
 def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = False) -> SQLComposableWithParams:
+    """
+    Compiles arguments for a #resolve call (an operation which accesses a field on a Bento searchable object)
+    into SQL.
+    :param args: Arguments representing the path to the field being resolved.
+    :param params: Any existing SQL parameters (i.e, values to insert into the SQL without introducing injections).
+    :param schema: The schema for the Bento searchable object.
+    :param _internal: (unused here) whether we are querying from a global-access context, or a permissioned one.
+    :return: A tuple of the SQL representation for the field access, and the params tuple (unchanged here).
+    """
     f_id = get_field(args, schema)
     return sql.SQL("{relation}.{field}").format(
         relation=get_relation(args, schema),
