@@ -166,7 +166,7 @@ def evaluate(
     check_permissions: bool = True,
     secure_errors: bool = True,
 ):
-    # The validate flag is used to avoid redundantly validating the integrity of child data structures
+    # The 'validate' flag is used to avoid redundantly validating the integrity of child data structures
     _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
     return evaluate_no_validate(ast, data_structure, schema, index_combination, internal, resolve_checks,
                                 check_permissions)
@@ -328,9 +328,15 @@ def _binary_op(op: BBOperator)\
     is_and = op == and_
     is_or = op == or_
 
-    def uncurried_binary_op(args: q.Args, ds: QueryableStructure, schema: JSONSchema,
-                            ic: Optional[IndexCombination], internal: bool, resolve_checks: bool,
-                            check_permissions: bool) -> bool:
+    def uncurried_binary_op(
+        args: q.Args,
+        ds: QueryableStructure,
+        schema: JSONSchema,
+        ic: Optional[IndexCombination],
+        internal: bool,
+        resolve_checks: bool,
+        check_permissions: bool
+    ) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
         # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
@@ -379,7 +385,7 @@ _is_not_none = partial(is_not, None)
 
 
 def _get_child_resolve_array_lengths(
-    new_resolve: Tuple[q.Literal, ...],
+    new_resolve: Tuple[q.AST, ...],
     resolving_ds: list,
     item_schema: JSONSchema,
     new_path: str,
@@ -401,7 +407,7 @@ def _get_child_resolve_array_lengths(
 
 
 def _resolve_array_lengths(
-    resolve: Tuple[q.Literal, ...],
+    resolve: Tuple[q.AST, ...],
     resolving_ds: QueryableStructure,
     schema: JSONSchema,
     path: str = "_root",
@@ -426,6 +432,9 @@ def _resolve_array_lengths(
         #  - Python typing is awkward here (relying on schema correctness), so we don't process this line.
         return (path, len(resolving_ds), ()) if schema["type"] == "array" else None  # type: ignore
 
+    if resolve[0].type != "l":
+        raise TypeError(f"{q.FUNCTION_RESOLVE} expects only literals as arguments; got {resolve[0]}")
+
     resolve_value: str = str(resolve[0].value)
 
     if resolve_checks:  # pragma: no cover  TODO: Do we need this at all? right now we always check here
@@ -435,10 +444,11 @@ def _resolve_array_lengths(
 
     # The current data structure is an array, so return its length and recurse on its (potential) child arrays.
     if resolve[0].value == "[item]":
-        return (path,
-                len(resolving_ds),
-                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path,
-                                                       resolve_checks)))
+        return (
+            path,
+            len(resolving_ds),
+            tuple(
+                _get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path, resolve_checks)))
 
     # Otherwise, it's an object, so keep traversing without doing anything
     return _resolve_array_lengths(resolve[1:], resolving_ds[resolve_value], schema["properties"][resolve_value],
@@ -477,9 +487,15 @@ def _resolve_properties_and_check(
     return r_schema.get("search", {})
 
 
-def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
-             index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
-        -> QueryableStructure:
+def _resolve(
+    resolve: Tuple[q.Literal, ...],
+    resolving_ds: QueryableStructure,
+    _schema: JSONSchema,
+    index_combination: Optional[IndexCombination],
+    _internal: bool,
+    _resolve_checks: bool,
+    _check_permissions: bool,
+) -> QueryableStructure:
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
     checked against its schema.
@@ -500,9 +516,15 @@ def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _
     return resolving_ds
 
 
-def _list(literals: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
-          index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
-        -> QueryableStructure:
+def _list(
+    literals: Tuple[q.Literal, ...],
+    _resolving_ds: QueryableStructure,
+    _schema: JSONSchema,
+    _index_combination: Optional[IndexCombination],
+    _internal: bool,
+    _resolve_checks: bool,
+    _check_permissions: bool,
+) -> QueryableStructure:
     """
     This function is to be used in conjonction with the #in operator to check
     for matches in a set of literals. (e.g. individual.karyotypic_sex in {"XX", "X0", "XXX"})
