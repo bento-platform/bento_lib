@@ -412,8 +412,9 @@ def _wildcard(args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _in
 
     try:
         return sql.Placeholder(), (*params, wcs.format(args[0].value.replace("%", r"\%")))
-    except AttributeError:  # Cast
-        raise TypeError("Type-invalid use of binary function #co")
+    except AttributeError:
+        # Can happen with non-string argument to #_wc, which will throw on .replace(...)
+        raise TypeError(f"Type-invalid use of binary function {q.FUNCTION_HELPER_WC}")
 
 
 def get_relation(resolve: Tuple[q.Literal, ...], schema: JSONSchema):
