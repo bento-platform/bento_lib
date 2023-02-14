@@ -2,7 +2,7 @@ import bento_lib.auth.flask_decorators as fd
 import bento_lib.responses.flask_errors as fe
 
 from bento_lib.auth.middleware import AuthxFlaskMiddleware
-from bento_lib.auth.wrappers import authn_token_optional_flask_wrapper  # authn_token_required_flask_wrapper
+from bento_lib.auth.wrappers import authn_token_optional_flask_wrapper, authn_token_required_flask_wrapper
 
 import pytest
 
@@ -48,6 +48,11 @@ def flask_client():
     def authn_test1():
         return "authn-test1"
 
+    @application.route("/authn/test2")
+    @authn_token_required_flask_wrapper
+    def authn_test2():
+        return "authn-test2"
+
     with application.test_client() as client:
         yield client
 
@@ -74,6 +79,8 @@ def test_flask_errors(flask_client):
     assert r.get_json()["code"] == 500
 
     # authn
+    # /authn/test1
+
     # - test optional authntoken endpoint
     # -- without token
     r = flask_client.get("/authn/test1")
@@ -84,8 +91,16 @@ def test_flask_errors(flask_client):
     r = flask_client.get("/authn/test1", headers={"Authorization": "Bearer: abc123.abc123.abc123"})
     assert r.status_code == 500  # when using default middleware settings for now
 
+    # /authn/test2
+
     # - test required authntoken endpoint
-    # ...
+    # -- without token
+    r = flask_client.get("/authn/test2")
+    assert r.status_code == 500  # when using default middleware settings for now
+
+    # -- with invalid token
+    r = flask_client.get("/authn/test2", headers={"Authorization": "Bearer: abc123.abc123.abc123"})
+    assert r.status_code == 500  # when using default middleware settings for now
 
     # /test1
 
