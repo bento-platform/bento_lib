@@ -1,8 +1,12 @@
 import bento_lib.auth.flask_decorators as fd
 import bento_lib.responses.flask_errors as fe
+
+from bento_lib.auth.middleware import AuthxFlaskMiddleware
+from bento_lib.auth.wrappers import authn_token_optional_flask_wrapper, authn_token_required_flask_wrapper
+
 import pytest
 
-from flask import Flask
+from flask import Flask, current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
 
@@ -13,6 +17,12 @@ def flask_client():
     application.register_error_handler(Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error))
     application.register_error_handler(BadRequest, fe.flask_error_wrap(fe.flask_bad_request_error))
     application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
+
+    with application.app_context():
+        authxm = AuthxFlaskMiddleware() # using default
+        current_app.authx = {}
+        current_app.authx['enabled'] = True
+        current_app.authx['middleware'] = authxm
 
     @application.route("/500")
     def r500():
@@ -32,6 +42,11 @@ def flask_client():
     @fd.flask_permissions({"POST": {"owner"}})
     def test3():
         return "test3"
+
+    @application.route("/authn/test1")
+    @authn_token_optional_flask_wrapper
+    def authn_test1():
+        return "authn-test1"
 
     with application.test_client() as client:
         yield client
@@ -57,6 +72,20 @@ def test_flask_errors(flask_client):
     r = flask_client.get("/500")
     assert r.status_code == 500
     assert r.get_json()["code"] == 500
+
+    # authn
+    # - test optional authntoken endpoint
+    # -- without token
+    r = flask_client.get("/authn/test1")
+    assert r.status_code == 200
+    assert r.data.decode("utf-8") == "authn-test1"
+
+    # -- with invalid token
+    r = flask_client.get("/authn/test1", headers={"Authorization": "Bearer: abc123.abc123.abc123"})
+    assert r.status_code == 500 # when using default middleware settings for now
+    
+    # - test required authntoken endpoint
+    # ...
 
     # /test1
 

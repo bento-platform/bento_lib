@@ -89,3 +89,5 @@ Werkzeug==2.2.2
 wsproto==1.2.0
 yarl==1.8.1
 zipp==3.11.0
+pyjwt
+cryptography
