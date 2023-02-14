@@ -126,6 +126,10 @@ def test_flask_errors(flask_client):
     r = flask_client.get("/authn/test1", headers={"Authorization": f"Bearer: {demo_token}"})
     assert r.status_code == 401
 
+    # -- with malformed token header                                       __/--- concatenated strings
+    r = flask_client.get("/authn/test1", headers={"Authorization": f"Bearer:{demo_token}"})
+    assert r.status_code == 401
+
     # /authn/test2
 
     # - test required authntoken endpoint
