@@ -15,6 +15,8 @@ class AuthxFlaskMiddleware():
                  client_id="abc123", oidc_alg="RS256"):
         print('authx middleware initialized')
 
+        self.public_key = None
+        
         self.oidc_issuer = oidc_iss
         self.client_id = client_id
         self.oidc_alg = oidc_alg
