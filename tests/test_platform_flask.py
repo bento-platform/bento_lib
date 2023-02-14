@@ -20,6 +20,7 @@ def flask_client():
     application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
 
     with application.app_context():
+        # enable authx middleware
         authxm = AuthxFlaskMiddleware(oidc_iss="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2",
                                       oidc_wellknown_path=("""https://auth.qa.bento.c3g.calculquebec.ca"""
                                                            """/auth/realms/bentov2/protocol/openid-connect/certs"""),
@@ -56,6 +57,31 @@ def flask_client():
     @authn_token_required_flask_wrapper
     def authn_test2():
         return "authn-test2"
+
+    with application.test_client() as client:
+        yield client
+
+
+@pytest.fixture
+def flask_client2():
+    application = Flask(__name__)
+
+    application.register_error_handler(AuthXException, fe.flask_error_wrap(fe.flask_unauthorized_error))
+    application.register_error_handler(Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error))
+    application.register_error_handler(BadRequest, fe.flask_error_wrap(fe.flask_bad_request_error))
+    application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
+
+    with application.app_context():
+        # disable authx middleware
+        authxm = None
+        current_app.authx = {}
+        current_app.authx['enabled'] = False
+        current_app.authx['middleware'] = authxm
+
+    @application.route("/authn/test3")
+    @authn_token_optional_flask_wrapper
+    def authn_test3():
+        return "authn-test3"
 
     with application.test_client() as client:
         yield client
@@ -152,3 +178,12 @@ def test_flask_errors(flask_client):
     r = flask_client.get("/test3", headers={"X-User": "test", "X-User-Role": "owner"})
     assert r.status_code == 200
     assert r.data.decode("utf-8") == "test3"
+
+
+def test_flask_errors2(flask_client2):
+    # /authn/test3
+
+    # - test disabled authx endpoint
+    r = flask_client2.get("/authn/test3")
+    assert r.status_code == 200
+    assert r.data.decode("utf-8") == "authn-test3"
