@@ -90,7 +90,7 @@ def test_flask_errors(flask_client):
     assert r.data.decode("utf-8") == "authn-test1"
 
     # -- with invalid token
-    r = flask_client.get("/authn/test1", headers={"Authorization": "Bearer: abc123.abc123.abc123"})
+    r = flask_client.get("/authn/test1", headers={"Authorization": "Bearer: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"})
     assert r.status_code == 500  # when using default middleware settings for now
 
     # /authn/test2
@@ -101,7 +101,7 @@ def test_flask_errors(flask_client):
     assert r.status_code == 500  # when using default middleware settings for now
 
     # -- with invalid token
-    r = flask_client.get("/authn/test2", headers={"Authorization": "Bearer: abc123.abc123.abc123"})
+    r = flask_client.get("/authn/test2", headers={"Authorization": "Bearer: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"})
     assert r.status_code == 500  # when using default middleware settings for now
 
     # /test1
