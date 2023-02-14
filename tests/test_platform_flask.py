@@ -2,7 +2,7 @@ import bento_lib.auth.flask_decorators as fd
 import bento_lib.responses.flask_errors as fe
 
 from bento_lib.auth.middleware import AuthxFlaskMiddleware
-from bento_lib.auth.wrappers import authn_token_optional_flask_wrapper, authn_token_required_flask_wrapper
+from bento_lib.auth.wrappers import authn_token_optional_flask_wrapper  # authn_token_required_flask_wrapper
 
 import pytest
 
