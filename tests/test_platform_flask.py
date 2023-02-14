@@ -1,7 +1,7 @@
 import bento_lib.auth.flask_decorators as fd
 import bento_lib.responses.flask_errors as fe
 
-from bento_lib.auth.middleware import AuthxFlaskMiddleware
+from bento_lib.auth.middleware import AuthxFlaskMiddleware, AuthXException
 from bento_lib.auth.wrappers import authn_token_optional_flask_wrapper, authn_token_required_flask_wrapper
 
 import pytest
@@ -14,6 +14,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 def flask_client():
     application = Flask(__name__)
 
+    application.register_error_handler(AuthXException, fe.flask_error_wrap(fe.flask_unauthorized_error))
     application.register_error_handler(Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error))
     application.register_error_handler(BadRequest, fe.flask_error_wrap(fe.flask_bad_request_error))
     application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
@@ -81,6 +82,11 @@ def test_flask_errors(flask_client):
     assert r.get_json()["code"] == 500
 
     # authn
+    demo_token = (
+        f"""eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."""
+        f"""eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."""
+        f"""SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c""")
+
     # /authn/test1
 
     # - test optional authntoken endpoint
@@ -90,19 +96,19 @@ def test_flask_errors(flask_client):
     assert r.data.decode("utf-8") == "authn-test1"
 
     # -- with invalid token
-    r = flask_client.get("/authn/test1", headers={"Authorization": "Bearer: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"})
-    assert r.status_code == 500  # when using default middleware settings for now
+    r = flask_client.get("/authn/test1", headers={"Authorization": f"Bearer: {demo_token}"})
+    assert r.status_code == 401
 
     # /authn/test2
 
     # - test required authntoken endpoint
     # -- without token
     r = flask_client.get("/authn/test2")
-    assert r.status_code == 500  # when using default middleware settings for now
+    assert r.status_code == 401
 
     # -- with invalid token
-    r = flask_client.get("/authn/test2", headers={"Authorization": "Bearer: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"})
-    assert r.status_code == 500  # when using default middleware settings for now
+    r = flask_client.get("/authn/test2", headers={"Authorization": f"Bearer: {demo_token}"})
+    assert r.status_code == 401
 
     # /test1
 
