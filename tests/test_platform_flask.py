@@ -19,7 +19,7 @@ def flask_client():
     application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
 
     with application.app_context():
-        authxm = AuthxFlaskMiddleware() # using default
+        authxm = AuthxFlaskMiddleware()  # using default
         current_app.authx = {}
         current_app.authx['enabled'] = True
         current_app.authx['middleware'] = authxm
@@ -82,8 +82,8 @@ def test_flask_errors(flask_client):
 
     # -- with invalid token
     r = flask_client.get("/authn/test1", headers={"Authorization": "Bearer: abc123.abc123.abc123"})
-    assert r.status_code == 500 # when using default middleware settings for now
-    
+    assert r.status_code == 500  # when using default middleware settings for now
+
     # - test required authntoken endpoint
     # ...
 
