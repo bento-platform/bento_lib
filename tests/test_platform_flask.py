@@ -21,7 +21,8 @@ def flask_client():
 
     with application.app_context():
         authxm = AuthxFlaskMiddleware(oidc_iss="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2",
-                                      oidc_wellknown_path="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2/protocol/openid-connect/certs",
+                                      oidc_wellknown_path=("""https://auth.qa.bento.c3g.calculquebec.ca"""
+                                                           """/auth/realms/bentov2/protocol/openid-connect/certs"""),
                                       client_id="local_bentov2")  # using default
         current_app.authx = {}
         current_app.authx['enabled'] = True
@@ -83,9 +84,9 @@ def test_flask_errors(flask_client):
 
     # authn
     demo_token = (
-        f"""eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."""
-        f"""eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."""
-        f"""SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c""")
+        """eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."""
+        """eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ."""
+        """SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c""")
 
     # /authn/test1
 
