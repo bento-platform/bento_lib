@@ -19,7 +19,9 @@ def flask_client():
     application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
 
     with application.app_context():
-        authxm = AuthxFlaskMiddleware()  # using default
+        authxm = AuthxFlaskMiddleware(oidc_iss="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2",
+            oidc_wellknown_path="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2/protocol/openid-connect/certs",
+            client_id="local_bentov2")  # using default
         current_app.authx = {}
         current_app.authx['enabled'] = True
         current_app.authx['middleware'] = authxm
