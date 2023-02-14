@@ -60,10 +60,20 @@ class AuthxFlaskMiddleware():
 
             # use idp public_key to validate and parse inbound token
             try:
-                payload = jwt.decode(token_str, self.public_key, algorithms=[self.oidc_alg], audience="account")
                 # header = jwt.get_unverified_header(token_str)
+                payload = jwt.decode(token_str, self.public_key, algorithms=[self.oidc_alg], audience="account")
+            # specific jwt errors
             except jwt.exceptions.ExpiredSignatureError:
                 raise AuthXException('Expired access_token!')
+            # less-specific jwt errors
+            except jwt.exceptions.InvalidTokenError:
+                raise AuthXException('Invalid access_token!')
+            except jwt.exceptions.DecodeError:
+                raise AuthXException('Error decoding access_token!')
+            # general jwt errors
+            except jwt.exceptions.PyJWTError:
+                raise AuthXException('access_token error!')
+            # other
             except Exception:
                 raise AuthXException('access_token error!')
 
