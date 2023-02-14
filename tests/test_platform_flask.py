@@ -20,8 +20,8 @@ def flask_client():
 
     with application.app_context():
         authxm = AuthxFlaskMiddleware(oidc_iss="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2",
-            oidc_wellknown_path="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2/protocol/openid-connect/certs",
-            client_id="local_bentov2")  # using default
+                                      oidc_wellknown_path="https://auth.qa.bento.c3g.calculquebec.ca/auth/realms/bentov2/protocol/openid-connect/certs",
+                                      client_id="local_bentov2")  # using default
         current_app.authx = {}
         current_app.authx['enabled'] = True
         current_app.authx['middleware'] = authxm
