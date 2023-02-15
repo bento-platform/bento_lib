@@ -376,16 +376,25 @@ def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
     return sql.SQL("NOT ({child})").format(child=child_sql), params + child_params
 
 
+def _like_op(op: str) -> Callable[[Tuple[q.AST, q.AST], tuple, JSONSchema, bool], SQLComposableWithParams]:
+    def inner(args: Tuple[q.AST, q.AST], params: tuple, schema: JSONSchema, internal: bool = False) \
+            -> SQLComposableWithParams:
+        lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
+        rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema, internal)
+
+        return (
+            sql.SQL("{lhs} {op} {rhs}").format(lhs=lhs_sql, op=sql.SQL(op), rhs=rhs_sql),
+            params + lhs_params + rhs_params,
+        )
+
+    return inner
+
+
 # TODO rename the function ?
 def _contains(op: str, wc_loc: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False)\
         -> SQLComposableWithParams:
-    lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
-    rhs_sql, rhs_params = search_ast_to_psycopg2_expr(
-        q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], q.Literal(wc_loc)]), params, schema, internal)
-    return (
-        sql.SQL("({lhs}) {op} ({rhs})").format(lhs=lhs_sql, op=sql.SQL(op), rhs=rhs_sql),
-        params + lhs_params + rhs_params,
-    )
+    return _like_op(op)(
+        (args[0], q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], q.Literal(wc_loc)])), params, schema, internal)
 
 
 def _contains_op(op: str) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
@@ -479,9 +488,11 @@ POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
 
     q.FUNCTION_ISW: _i_starts_with,
     q.FUNCTION_IEW: _i_ends_with,
+    q.FUNCTION_LIKE: _like_op("LIKE"),
+    q.FUNCTION_ILIKE: _like_op("ILIKE"),
 
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,
 
-    q.FUNCTION_HELPER_WC: _wildcard
+    q.FUNCTION_HELPER_WC: _wildcard,
 }

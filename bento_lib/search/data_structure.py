@@ -1,10 +1,12 @@
 import json
+import re
+
 import jsonschema
 
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
-from typing import Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
 from . import queries as q
 from ._types import JSONSchema
@@ -50,7 +52,7 @@ def _i_starts_with(lhs: str, rhs: str):
     :return: Whether the string starts with the prefix.
     """
     if not isinstance(lhs, str) or not isinstance(rhs, str):
-        raise TypeError("#isw can only be used with strings")
+        raise TypeError(f"{q.FUNCTION_ISW} can only be used with strings")
     return lhs.casefold().startswith(rhs.casefold())
 
 
@@ -62,8 +64,50 @@ def _i_ends_with(lhs: str, rhs: str):
     :return: Whether the string ends with the prefix.
     """
     if not isinstance(lhs, str) or not isinstance(rhs, str):
-        raise TypeError("#iew can only be used with strings")
+        raise TypeError(f"{q.FUNCTION_IEW} can only be used with strings")
     return lhs.casefold().endswith(rhs.casefold())
+
+
+# See, e.g., https://stackoverflow.com/questions/399078/what-special-characters-must-be-escaped-in-regular-expressions
+REGEX_CHARS_TO_ESCAPE = frozenset({"[", "]", "(", ")", "{", "}", "\\", ".", "^", "$", "*", "+", "-", "?", "|"})
+
+
+def _like_op(case_insensitive: bool):
+    def like_inner(lhs, rhs):
+        if not isinstance(lhs, str) or not isinstance(rhs, str):
+            raise TypeError(f"{q.FUNCTION_LIKE} can only be used with strings")
+
+        # Replace % with (.*) if % is not preceded by a
+        # Wrap with ^$ to replicate whole-string behaviour
+
+        regex_form: List[str] = ["^"]
+        escape_mode: bool = False
+        for char in rhs:
+            if char == "\\":
+                escape_mode = True
+                continue
+
+            if char == "%":
+                if escape_mode:
+                    regex_form.append("%")
+                else:
+                    regex_form.append("(.*)")
+                continue
+
+            # End of Bento-escaped characters
+
+            if char in REGEX_CHARS_TO_ESCAPE:
+                # Escape special Regex characters with a backslash while building pattern
+                regex_form.append(rf"\{char}")
+                continue
+
+            regex_form.append(char)  # Unmodified if not special
+
+        regex_form.append("$")
+
+        return re.compile("".join(regex_form), *((re.IGNORECASE,) if case_insensitive else ())).match(lhs) is not None
+
+    return like_inner
 
 
 def _validate_data_structure_against_schema(
@@ -555,6 +599,8 @@ QUERY_CHECK_SWITCH: Dict[
 
     q.FUNCTION_ISW: _binary_op(_i_starts_with),
     q.FUNCTION_IEW: _binary_op(_i_ends_with),
+    q.FUNCTION_LIKE: _binary_op(_like_op(case_insensitive=False)),
+    q.FUNCTION_ILIKE: _binary_op(_like_op(case_insensitive=True)),
 
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,
