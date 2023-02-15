@@ -95,6 +95,7 @@ def _like_op(case_insensitive: bool):
                 continue
 
             # End of Bento-escaped characters
+            escape_mode = False
 
             if char in REGEX_CHARS_TO_ESCAPE:
                 # Escape special Regex characters with a backslash while building pattern
