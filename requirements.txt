@@ -85,7 +85,7 @@ typing_extensions==4.4.0
 urllib3==1.26.14
 virtualenv==20.17.1
 wcwidth==0.2.5
-Werkzeug==2.2.2
+Werkzeug==2.2.3
 wsproto==1.2.0
 yarl==1.8.1
 zipp==3.11.0
