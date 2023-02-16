@@ -793,7 +793,6 @@ DS_INVALID_EXPRESSIONS = (
     (["#iew", 5, 3], False, TypeError, None),  # Invalid with wrong types (DS only)
     (["#like", 5, 3], False, TypeError, None),  # Invalid with wrong types (DS only)
     (["#ilike", 5, 3], False, TypeError, None),  # Invalid with wrong types (DS only)
-    (["#resolve", "subject", ["#gt", 6, 5]], False, TypeError, None),  # Non-literal in resolve
 )
 
 PG_INVALID_EXPRESSIONS = (

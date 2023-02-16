@@ -481,9 +481,6 @@ def _resolve_array_lengths(
         #  - Python typing is awkward here (relying on schema correctness), so we don't process this line.
         return (path, len(resolving_ds), ()) if schema["type"] == "array" else None  # type: ignore
 
-    if resolve[0].type != "l":
-        raise TypeError(f"{q.FUNCTION_RESOLVE} expects only literals as arguments; got {resolve[0]}")
-
     resolve_value: str = str(resolve[0].value)
 
     if resolve_checks:  # pragma: no cover  TODO: Do we need this at all? right now we always check here
