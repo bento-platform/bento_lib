@@ -73,32 +73,37 @@ REGEX_CHARS_TO_ESCAPE = frozenset({"[", "]", "(", ")", "{", "}", "\\", ".", "^",
 
 
 def regex_from_like_pattern(pattern: str, case_insensitive: bool) -> re.Pattern:
-    # Replace % with (.*) if % is not preceded by a
-    # Wrap with ^$ to replicate whole-string behaviour
+    """
+    Converts an SQL-style match pattern with %/_ wildcards into a Python Regex object.
+    :param pattern: The SQL-style match pattern to convert.
+    :param case_insensitive: Whether the generated Regex should be case-insensitive.
+    :return: The converted Regex object.
+    """
+
+    # - Replace % with (.*) if % is not preceded by a \
+    # - Wrap with ^$ to replicate whole-string behaviour
+    # - Escape any special Regex characters
 
     regex_form: List[str] = ["^"]
     escape_mode: bool = False
     for char in pattern:
+        # Put us into escape mode, so that the next character is escaped if needed
         if char == "\\":
             escape_mode = True
             continue
 
-        if char == "%":
-            if escape_mode:
-                regex_form.append("%")
-            else:
-                regex_form.append("(.*)")
-            continue
-
-        # End of Bento-escaped characters
-        escape_mode = False
-
-        if char in REGEX_CHARS_TO_ESCAPE:
+        if char == "%":  # Matches any number of characters
+            # If we're in escape mode, append the literal %. Otherwise, replace it with a wildcard pattern.
+            regex_form.append("%" if escape_mode else "(.*)")
+        elif char == "_":  # Match a single character
+            regex_form.append("_" if escape_mode else ".")
+        elif char in REGEX_CHARS_TO_ESCAPE:
             # Escape special Regex characters with a backslash while building pattern
             regex_form.append(rf"\{char}")
-            continue
+        else:
+            regex_form.append(char)  # Unmodified if not special
 
-        regex_form.append(char)  # Unmodified if not special
+        escape_mode = False  # Turn off escape mode after one iteration; it only applies to the character in front of it
 
     regex_form.append("$")
 
