@@ -14,18 +14,18 @@ setuptools.setup(
     name=config["package"]["name"],
     version=config["package"]["version"],
 
-    python_requires=">=3.8",
+    python_requires=">=3.8.1",
     install_requires=[
-        "aiohttp>=3.8.3,<4",
+        "aiohttp>=3.8.4,<4",
         "jsonschema>=3.2.0,<5",
         "psycopg2-binary>=2.8.6,<3.0",
         "redis>=3.5.3,<4.0",
         "requests>=2.28.1,<3",
-        "Werkzeug>=2.0.1,<3",
+        "Werkzeug>=2.2.3,<3",
     ],
     extras_require={
-        "flask": ["Flask>=2.0.1,<3"],
-        "django": ["Django>=4.1.1,<5", "djangorestframework>=3.13.1,<3.15"],
+        "flask": ["Flask>=2.2.3,<3"],
+        "django": ["Django>=4.1.7,<5", "djangorestframework>=3.13.1,<3.15"],
         "quart": ["quart>=0.18.3,<0.19"],
     },
 
