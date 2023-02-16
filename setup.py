@@ -17,7 +17,7 @@ setuptools.setup(
     python_requires=">=3.8.1",
     install_requires=[
         "aiohttp>=3.8.4,<4",
-        "jsonschema>=3.2.0,<5",
+        "jsonschema>=4.17.3,<5",
         "psycopg2-binary>=2.9.5,<3.0",
         "redis>=3.5.3,<4.0",
         "requests>=2.28.1,<3",
