@@ -210,8 +210,12 @@ def collect_resolve_join_tables(
         relationship_type = relationship["type"]
         # TODO: py3.10: match
         if relationship_type == "MANY_TO_ONE":
+            # For a many-to-one relationship, the outer/higher element in the nesting has the foreign key,
+            # so that many outer elements can map to the same inner element.
             key_link = (relationship["foreign_key"], search_database_properties["primary_key"])
         elif relationship_type == "ONE_TO_MANY":
+            # For a one-to-many relationship, the inner/nested element in the relationship has the foreign key,
+            # so that many inner elements can map to the same outer element.
             key_link = (relationship["parent_primary_key"], relationship["parent_foreign_key"])
         else:
             raise SyntaxError(f"Invalid relationship type: {relationship_type}")
@@ -410,8 +414,9 @@ _i_ends_with = functools.partial(_contains, "ILIKE", "end")
 def _wildcard(args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
         -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
-        raise NotImplementedError("Cannot currently use #_wc on an expression")  # TODO
+        raise NotImplementedError(f"Cannot currently use {q.FUNCTION_HELPER_WC} on an expression")  # TODO
 
+    # TODO: py3.10: match
     if args[1].value == "start":
         wcs = "{}%"
     elif args[1].value == "end":
