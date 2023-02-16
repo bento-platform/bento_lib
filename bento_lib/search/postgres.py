@@ -425,7 +425,7 @@ def _wildcard(args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _in
         wcs = "%{}%"
 
     try:
-        return sql.Placeholder(), (*params, wcs.format(args[0].value.replace("%", r"\%")))
+        return sql.Placeholder(), (*params, wcs.format(args[0].value.replace("%", r"\%").replace("_", r"\_")))
     except AttributeError:
         # Can happen with non-string argument to #_wc, which will throw on .replace(...)
         raise TypeError(f"Type-invalid use of function {q.FUNCTION_HELPER_WC}")
