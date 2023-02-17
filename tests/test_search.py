@@ -607,19 +607,19 @@ TEST_QUERIES = [
     #  - no matches since it is case-sensitive
     {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%L_BeL"],  # 32
      "ds": (False, False, 2, 0),
-     "ps": (False, ("%LaBeL",))},
+     "ps": (False, ("%L_BeL",))},
     #  - 2 matches; case-insensitive
     {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%LaBE_"],  # 33
      "ds": (False, True, 2, 2),
-     "ps": (True, ("%LaBEL",))},
+     "ps": (True, ("%LaBE_",))},
 
     # 28 but with like - only 1 of 2 match for both
     {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%DUMM_%"],  # 34
      "ds": (False, True, 2, 1),
-     "ps": (True, ("%DUMMY%",))},
+     "ps": (True, ("%DUMM_%",))},
     {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "DU_MY%"],  # 35
      "ds": (False, True, 2, 1),
-     "ps": (True, ("DUMMY%",))},
+     "ps": (True, ("DU_MY%",))},
 
     #  - 0 matches (bad case)
     {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "DUmmY%"],  # 36
@@ -640,7 +640,7 @@ TEST_QUERIES = [
      "ps": (False, ("%duM%my",))},
 
     #  - no matches (bad pattern); testing escaped % and Regex escapes
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "[%duM\\%my]"],  # 40
+    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "[%duM\\%\\_my]"],  # 40
      "ds": (False, False, 2, 0),
      "ps": (False, ("[%duM\\%\\_my]",))},
 ]
