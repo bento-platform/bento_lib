@@ -15,6 +15,8 @@ from .operations import (
     SEARCH_OP_ICO,
     SEARCH_OP_ISW,
     SEARCH_OP_IEW,
+    SEARCH_OP_LIKE,
+    SEARCH_OP_ILIKE,
 )
 
 
@@ -72,6 +74,8 @@ FUNCTION_ICO = "#ico"  # case-insensitive string contains
 
 FUNCTION_ISW = "#isw"  # case-insensitive starts with
 FUNCTION_IEW = "#iew"  # case-insensitive ends with
+FUNCTION_LIKE = "#like"  # SQL-style LIKE operator
+FUNCTION_ILIKE = "#ilike"  # SQL-style case-insensitive ILIKE operator
 
 FUNCTION_RESOLVE = "#resolve"
 FUNCTION_LIST = "#list"
@@ -95,6 +99,8 @@ VALID_FUNCTIONS = (
     FUNCTION_ICO,
     FUNCTION_ISW,
     FUNCTION_IEW,
+    FUNCTION_LIKE,
+    FUNCTION_ILIKE,
     FUNCTION_RESOLVE,
     FUNCTION_LIST,
     FUNCTION_HELPER_WC,
@@ -117,6 +123,8 @@ FUNCTION_ARGUMENTS = {
     FUNCTION_IN: BINARY_RANGE,
     FUNCTION_ISW: BINARY_RANGE,
     FUNCTION_IEW: BINARY_RANGE,
+    FUNCTION_LIKE: BINARY_RANGE,
+    FUNCTION_ILIKE: BINARY_RANGE,
     FUNCTION_RESOLVE: (0, None),
     FUNCTION_LIST: (1, None),
     FUNCTION_HELPER_WC: BINARY_RANGE,
@@ -137,6 +145,9 @@ FUNCTION_SEARCH_OP_MAP = {
 
     FUNCTION_ISW: SEARCH_OP_ISW,
     FUNCTION_IEW: SEARCH_OP_IEW,
+
+    FUNCTION_LIKE: SEARCH_OP_LIKE,
+    FUNCTION_ILIKE: SEARCH_OP_ILIKE,
 }
 
 # literal types are scalar that are used in queries to compare the value for a

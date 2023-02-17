@@ -1,10 +1,12 @@
 import json
+import re
+
 import jsonschema
 
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
-from typing import Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
 from . import queries as q
 from ._types import JSONSchema
@@ -20,7 +22,7 @@ IndexCombination = Dict[str, int]
 ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
 
 
-def _icontains(lhs: str, rhs: str):
+def _icontains(lhs: str, rhs: str) -> bool:
     """
     Same as the "contains" operator, except with case-folded (i.e. case
     insensitive) arguments.
@@ -31,7 +33,7 @@ def _icontains(lhs: str, rhs: str):
     return contains(lhs.casefold(), rhs.casefold())
 
 
-def _in(lhs: Union[str, int, float], rhs: QueryableStructure):
+def _in(lhs: Union[str, int, float], rhs: QueryableStructure) -> bool:
     """
     Same as `contains`, except order of arguments is inverted and second
     argument is a set.
@@ -42,7 +44,7 @@ def _in(lhs: Union[str, int, float], rhs: QueryableStructure):
     return contains(rhs, lhs)
 
 
-def _i_starts_with(lhs: str, rhs: str):
+def _i_starts_with(lhs: str, rhs: str) -> bool:
     """
     Checks whether a string starts with a particular prefix, in a case-insensitive fashion.
     :param lhs: The full string to assess.
@@ -50,11 +52,11 @@ def _i_starts_with(lhs: str, rhs: str):
     :return: Whether the string starts with the prefix.
     """
     if not isinstance(lhs, str) or not isinstance(rhs, str):
-        raise TypeError("#isw can only be used with strings")
+        raise TypeError(f"{q.FUNCTION_ISW} can only be used with strings")
     return lhs.casefold().startswith(rhs.casefold())
 
 
-def _i_ends_with(lhs: str, rhs: str):
+def _i_ends_with(lhs: str, rhs: str) -> bool:
     """
     Checks whether a string ends with a particular suffix, in a case-insensitive fashion.
     :param lhs: The full string to assess.
@@ -62,12 +64,64 @@ def _i_ends_with(lhs: str, rhs: str):
     :return: Whether the string ends with the prefix.
     """
     if not isinstance(lhs, str) or not isinstance(rhs, str):
-        raise TypeError("#iew can only be used with strings")
+        raise TypeError(f"{q.FUNCTION_IEW} can only be used with strings")
     return lhs.casefold().endswith(rhs.casefold())
 
 
+# See, e.g., https://stackoverflow.com/questions/399078/what-special-characters-must-be-escaped-in-regular-expressions
+REGEX_CHARS_TO_ESCAPE = frozenset({"[", "]", "(", ")", "{", "}", "\\", ".", "^", "$", "*", "+", "-", "?", "|"})
+
+
+def regex_from_like_pattern(pattern: str, case_insensitive: bool) -> re.Pattern:
+    """
+    Converts an SQL-style match pattern with %/_ wildcards into a Python Regex object.
+    :param pattern: The SQL-style match pattern to convert.
+    :param case_insensitive: Whether the generated Regex should be case-insensitive.
+    :return: The converted Regex object.
+    """
+
+    # - Replace % with (.*) if % is not preceded by a \
+    # - Wrap with ^$ to replicate whole-string behaviour
+    # - Escape any special Regex characters
+
+    regex_form: List[str] = ["^"]
+    escape_mode: bool = False
+    for char in pattern:
+        # Put us into escape mode, so that the next character is escaped if needed
+        if char == "\\":
+            escape_mode = True
+            continue
+
+        if char == "%":  # Matches any number of characters
+            # If we're in escape mode, append the literal %. Otherwise, replace it with a wildcard pattern.
+            regex_form.append("%" if escape_mode else "(.*)")
+        elif char == "_":  # Match a single character
+            regex_form.append("_" if escape_mode else ".")
+        elif char in REGEX_CHARS_TO_ESCAPE:
+            # Escape special Regex characters with a backslash while building pattern
+            regex_form.append(rf"\{char}")
+        else:
+            regex_form.append(char)  # Unmodified if not special
+
+        escape_mode = False  # Turn off escape mode after one iteration; it only applies to the character in front of it
+
+    regex_form.append("$")
+
+    return re.compile("".join(regex_form), *((re.IGNORECASE,) if case_insensitive else ()))
+
+
+def _like_op(case_insensitive: bool):
+    def like_inner(lhs, rhs) -> bool:
+        if not isinstance(lhs, str) or not isinstance(rhs, str):
+            raise TypeError(f"{q.FUNCTION_LIKE} can only be used with strings")
+
+        return regex_from_like_pattern(rhs, case_insensitive).match(lhs) is not None
+
+    return like_inner
+
+
 def _validate_data_structure_against_schema(
-        data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True):
+        data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True) -> None:
     """
     Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
     because (assuming the schema is correct) it allows methods to make more assumptions about the integrity of the
@@ -100,7 +154,7 @@ def _validate_data_structure_against_schema(
             f"{errors_str}")
 
 
-def _validate_not_wc(e: q.AST):
+def _validate_not_wc(e: q.AST) -> None:
     """
     The #_wc (wildcard) expression function is a helper for converting the queries into the Postgres IR. If we encounter
     this function in a query being evaluated against a data structure, it's meaningless and should raise an error.
@@ -166,7 +220,7 @@ def evaluate(
     check_permissions: bool = True,
     secure_errors: bool = True,
 ):
-    # The validate flag is used to avoid redundantly validating the integrity of child data structures
+    # The 'validate' flag is used to avoid redundantly validating the integrity of child data structures
     _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
     return evaluate_no_validate(ast, data_structure, schema, index_combination, internal, resolve_checks,
                                 check_permissions)
@@ -328,9 +382,15 @@ def _binary_op(op: BBOperator)\
     is_and = op == and_
     is_or = op == or_
 
-    def uncurried_binary_op(args: q.Args, ds: QueryableStructure, schema: JSONSchema,
-                            ic: Optional[IndexCombination], internal: bool, resolve_checks: bool,
-                            check_permissions: bool) -> bool:
+    def uncurried_binary_op(
+        args: q.Args,
+        ds: QueryableStructure,
+        schema: JSONSchema,
+        ic: Optional[IndexCombination],
+        internal: bool,
+        resolve_checks: bool,
+        check_permissions: bool
+    ) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
         # Evaluate both sides of the binary expression. If there's a type error while trying to use a Python built-in,
@@ -379,7 +439,7 @@ _is_not_none = partial(is_not, None)
 
 
 def _get_child_resolve_array_lengths(
-    new_resolve: Tuple[q.Literal, ...],
+    new_resolve: Tuple[q.AST, ...],
     resolving_ds: list,
     item_schema: JSONSchema,
     new_path: str,
@@ -401,7 +461,7 @@ def _get_child_resolve_array_lengths(
 
 
 def _resolve_array_lengths(
-    resolve: Tuple[q.Literal, ...],
+    resolve: Tuple[q.AST, ...],
     resolving_ds: QueryableStructure,
     schema: JSONSchema,
     path: str = "_root",
@@ -435,10 +495,11 @@ def _resolve_array_lengths(
 
     # The current data structure is an array, so return its length and recurse on its (potential) child arrays.
     if resolve[0].value == "[item]":
-        return (path,
-                len(resolving_ds),
-                tuple(_get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path,
-                                                       resolve_checks)))
+        return (
+            path,
+            len(resolving_ds),
+            tuple(
+                _get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path, resolve_checks)))
 
     # Otherwise, it's an object, so keep traversing without doing anything
     return _resolve_array_lengths(resolve[1:], resolving_ds[resolve_value], schema["properties"][resolve_value],
@@ -477,9 +538,15 @@ def _resolve_properties_and_check(
     return r_schema.get("search", {})
 
 
-def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
-             index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
-        -> QueryableStructure:
+def _resolve(
+    resolve: Tuple[q.Literal, ...],
+    resolving_ds: QueryableStructure,
+    _schema: JSONSchema,
+    index_combination: Optional[IndexCombination],
+    _internal: bool,
+    _resolve_checks: bool,
+    _check_permissions: bool,
+) -> QueryableStructure:
     """
     Resolves / evaluates a path (either object or array) into a value. Assumes the data structure has already been
     checked against its schema.
@@ -500,9 +567,15 @@ def _resolve(resolve: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _
     return resolving_ds
 
 
-def _list(literals: Tuple[q.Literal, ...], resolving_ds: QueryableStructure, _schema: JSONSchema,
-          index_combination: Optional[IndexCombination], _internal, _resolve_checks, _check_permissions) \
-        -> QueryableStructure:
+def _list(
+    literals: Tuple[q.Literal, ...],
+    _resolving_ds: QueryableStructure,
+    _schema: JSONSchema,
+    _index_combination: Optional[IndexCombination],
+    _internal: bool,
+    _resolve_checks: bool,
+    _check_permissions: bool,
+) -> QueryableStructure:
     """
     This function is to be used in conjonction with the #in operator to check
     for matches in a set of literals. (e.g. individual.karyotypic_sex in {"XX", "X0", "XXX"})
@@ -533,6 +606,8 @@ QUERY_CHECK_SWITCH: Dict[
 
     q.FUNCTION_ISW: _binary_op(_i_starts_with),
     q.FUNCTION_IEW: _binary_op(_i_ends_with),
+    q.FUNCTION_LIKE: _binary_op(_like_op(case_insensitive=False)),
+    q.FUNCTION_ILIKE: _binary_op(_like_op(case_insensitive=True)),
 
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,
