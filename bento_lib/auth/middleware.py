@@ -42,10 +42,12 @@ class AuthxFlaskMiddleware():
             time.sleep(60)  # sleep 1 minute
 
     def verify_token_optional(self):
+        g.authn = {}
         if request.headers.get("Authorization"):
             self.verify_token()
 
     def verify_token_required(self):
+        g.authn = {}
         if request.headers.get("Authorization"):
             self.verify_token()
         else:
@@ -80,6 +82,8 @@ class AuthxFlaskMiddleware():
             # print(json.dumps(header, indent=4, separators=(',', ': ')))
             # print(json.dumps(payload, indent=4, separators=(',', ': ')))
 
+            g.authn['has_valid_token'] = True
+            
             # parse out relevant roles
             if 'resource_access' in payload.keys() and \
                     str(self.client_id) in payload["resource_access"].keys() and \
@@ -87,12 +91,6 @@ class AuthxFlaskMiddleware():
                 roles = payload["resource_access"][self.client_id]["roles"]
                 print(roles)
 
-                # provide access to this token's
-                # roles via flask 'global'
-                if 'auth' not in g:
-                    raise AuthXException('Missing roles !')
-
-                g.authn = {}
                 g.authn['roles'] = roles
 
         else:
