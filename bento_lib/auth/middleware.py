@@ -83,7 +83,7 @@ class AuthxFlaskMiddleware():
             # print(json.dumps(payload, indent=4, separators=(',', ': ')))
 
             g.authn['has_valid_token'] = True
-            
+
             # parse out relevant roles
             if 'resource_access' in payload.keys() and \
                     str(self.client_id) in payload["resource_access"].keys() and \
