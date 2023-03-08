@@ -35,13 +35,16 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     """
 
     service_name = kwargs.pop("service_name", "Bento Service")
+    logger = kwargs.pop("logger", None)
 
-    # TODO: pass exception?
     def handle_error(e):
-        print(f"[{service_name}] Encountered error:", file=sys.stderr)
-        # TODO: py3.10: print_exception(e)
-        traceback.print_exception(type(e), e, e.__traceback__)
-        return fn(*args, **kwargs)
+        if logger:
+            logger.error(f"Encountered error:\n{traceback.format_exception(type(e), e, e.__traceback__)}")
+        else:
+            print(f"[{service_name}] Encountered error:", file=sys.stderr)
+            # TODO: py3.10: print_exception(e)
+            traceback.print_exception(type(e), e, e.__traceback__)
+        return fn(str(e), *args, **kwargs)
     return handle_error
 
 

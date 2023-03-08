@@ -1,11 +1,12 @@
 import asyncio
 import bento_lib.auth.quart_decorators as qd
 import bento_lib.responses.quart_errors as qe
+import logging
 import pytest
 import pytest_asyncio
 
 from quart import Quart
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 
 @pytest_asyncio.fixture
@@ -13,6 +14,9 @@ async def quart_client():
     application = Quart(__name__)
 
     application.register_error_handler(Exception, qe.quart_error_wrap_with_traceback(qe.quart_internal_server_error))
+    application.register_error_handler(
+        InternalServerError,
+        qe.quart_error_wrap_with_traceback(qe.quart_internal_server_error, logger=logging.getLogger(__name__)))
     application.register_error_handler(BadRequest, qe.quart_error_wrap(qe.quart_bad_request_error))
     application.register_error_handler(NotFound, qe.quart_error_wrap(qe.quart_not_found_error, drs_compat=True))
 
@@ -20,6 +24,11 @@ async def quart_client():
     async def r500():
         await asyncio.sleep(0.5)
         raise Exception("help")
+
+    @application.route("/test0")
+    async def test0():
+        await asyncio.sleep(0.5)
+        raise InternalServerError("test0")
 
     @application.route("/test1")
     @qd.quart_permissions_any_user
@@ -63,6 +72,13 @@ async def test_quart_errors(quart_client):
     r = await quart_client.get("/500")
     assert r.status_code == 500
     assert (await r.get_json())["code"] == 500
+
+    # /test0
+
+    r = await quart_client.get("/test0")
+    assert r.status_code == 500
+    assert (await r.get_json())["code"] == 500
+    assert (await r.get_json())["errors"][0]["message"] == "500 Internal Server Error: test0"
 
     # /test1
 
