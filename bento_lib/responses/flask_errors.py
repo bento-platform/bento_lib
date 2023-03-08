@@ -47,11 +47,12 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
 
 def flask_error_wrap(fn: Callable, *args, **kwargs) -> Callable:
     """
-    Function to wrap flask_* error creators with something that supports the application.register_error_handler method.
+    Function to wrap flask_* error creators with something that supports the application.register_error_handler method
+    and pass in the exception as a message.
     :param fn: The flask error-generating function to wrap
     :return: The wrapped function
     """
-    return lambda _e: fn(*args, **kwargs)
+    return lambda e: fn(str(e), *args, **kwargs)
 
 
 def flask_error(code: int, *errs, drs_compat: bool = False, sr_compat: bool = False):
