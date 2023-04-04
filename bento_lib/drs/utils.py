@@ -68,7 +68,8 @@ def fetch_drs_record_by_uri(drs_uri: str, internal_drs_base_url: Optional[str] =
 
     decoded_object_uri = decode_drs_uri(drs_uri, internal_drs_base_url)
     print(f"[Bento Lib] Attempting to fetch {decoded_object_uri}", flush=True)
-    drs_res = requests.get(decoded_object_uri)
+    params = {"internal_path": "true"} if internal_drs_base_url else {}
+    drs_res = requests.get(decoded_object_uri, params=params)
 
     if drs_res.status_code != 200:
         print(f"[Bento Lib] Could not fetch: '{decoded_object_uri}'", file=sys.stderr, flush=True)
@@ -95,8 +96,9 @@ async def fetch_drs_record_by_uri_async(drs_uri: str, internal_drs_base_url: Opt
     decoded_object_uri = decode_drs_uri(drs_uri, internal_drs_base_url)
     print(f"[Bento Lib] Attempting to fetch {decoded_object_uri}", flush=True)
 
+    params = {"internal_path": "true"} if internal_drs_base_url else {}
     async with aiohttp.ClientSession() as session:
-        async with session.get(decoded_object_uri) as drs_res:
+        async with session.get(decoded_object_uri, params=params) as drs_res:
             if drs_res.status != 200:
                 print(f"[Bento Lib] Could not fetch: '{decoded_object_uri}'", file=sys.stderr, flush=True)
                 print(f"\tAttempted URL: {decoded_object_uri} (status: {drs_res.status})", file=sys.stderr, flush=True)
