@@ -4,19 +4,22 @@ import jwt
 import time
 
 from threading import Thread
-from flask import request, g
+from flask import Flask, request, g
 from jwt.algorithms import RSAAlgorithm
+
+from .exceptions import BentoAuthException
 
 
 class FlaskAuthMiddleware:
     def __init__(
         self,
+        app: Flask,
         oidc_iss="https://localhost/auth/realms/realm",
         oidc_wellknown_path="https://localhost/auth/realms/realm/protocol/openid-connect/certs",
         client_id="abc123",
         oidc_alg="RS256"
     ):
-        print('authx middleware initialized')
+        self._app: Flask = app
 
         self.public_key = None
 
@@ -54,7 +57,7 @@ class FlaskAuthMiddleware:
         if request.headers.get("Authorization"):
             self.verify_token()
         else:
-            raise AuthXException('Missing access_token !')
+            raise BentoAuthException('Missing access_token !')
 
     def verify_token(self):
         # Assume is Bearer token
@@ -69,18 +72,18 @@ class FlaskAuthMiddleware:
                 payload = jwt.decode(token_str, self.public_key, algorithms=[self.oidc_alg], audience="account")
             # specific jwt errors
             except jwt.exceptions.ExpiredSignatureError:
-                raise AuthXException('Expired access_token!')
+                raise BentoAuthException('Expired access_token!')
             # less-specific jwt errors
             except jwt.exceptions.InvalidTokenError:
-                raise AuthXException('Invalid access_token!')
+                raise BentoAuthException('Invalid access_token!')
             except jwt.exceptions.DecodeError:
-                raise AuthXException('Error decoding access_token!')
+                raise BentoAuthException('Error decoding access_token!')
             # general jwt errors
             except jwt.exceptions.PyJWTError:
-                raise AuthXException('access_token error!')
+                raise BentoAuthException('access_token error!')
             # other
             except Exception:
-                raise AuthXException('access_token error!')
+                raise BentoAuthException('access_token error!')
 
             # print(json.dumps(header, indent=4, separators=(',', ': ')))
             # print(json.dumps(payload, indent=4, separators=(',', ': ')))
@@ -97,11 +100,4 @@ class FlaskAuthMiddleware:
                 g.authn['roles'] = roles
 
         else:
-            raise AuthXException('Malformed access_token !')
-
-
-class AuthXException(Exception):
-    def __init__(self, message="Unauthorized", status_code=401):
-        super().__init__()
-        self.message = message
-        self.status_code = status_code
+            raise BentoAuthException('Malformed access_token !')
