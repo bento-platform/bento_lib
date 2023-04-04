@@ -8,11 +8,14 @@ from flask import request, g
 from jwt.algorithms import RSAAlgorithm
 
 
-class AuthxFlaskMiddleware():
-    def __init__(self,
-                 oidc_iss="https://localhost/auth/realms/realm",
-                 oidc_wellknown_path="https://localhost/auth/realms/realm/protocol/openid-connect/certs",
-                 client_id="abc123", oidc_alg="RS256"):
+class FlaskAuthMiddleware:
+    def __init__(
+        self,
+        oidc_iss="https://localhost/auth/realms/realm",
+        oidc_wellknown_path="https://localhost/auth/realms/realm/protocol/openid-connect/certs",
+        client_id="abc123",
+        oidc_alg="RS256"
+    ):
         print('authx middleware initialized')
 
         self.public_key = None
