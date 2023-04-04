@@ -19,6 +19,7 @@ setuptools.setup(
         "aiohttp>=3.8.3,<4",
         "jsonschema>=3.2.0,<5",
         "psycopg2-binary>=2.8.6,<3.0",
+        "PyJWT>=2.6.0,<2.7",
         "redis>=3.5.3,<4.0",
         "requests>=2.28.1,<3",
         "Werkzeug>=2.0.1,<3",
