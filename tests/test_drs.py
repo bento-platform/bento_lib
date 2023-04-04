@@ -84,9 +84,13 @@ def mocked():
 async def test_drs_uri_fetch_async(mocked):
     mocked.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
     mocked.get(f"http://localhost/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
+    mocked.get(
+        f"http://localhost/ga4gh/drs/v1/objects/{TEST_DRS_ID}?internal_path=true", payload=TEST_DRS_REPLY, status=200)
     mocked.get("https://example.org/ga4gh/drs/v1/objects/abc",
                payload=errors.not_found_error(drs_compat=True), status=404)
     mocked.get("http://localhost/ga4gh/drs/v1/objects/abc",
+               payload=errors.not_found_error(drs_compat=True), status=404)
+    mocked.get("http://localhost/ga4gh/drs/v1/objects/abc?internal_path=true",
                payload=errors.not_found_error(drs_compat=True), status=404)
 
     assert json.dumps(

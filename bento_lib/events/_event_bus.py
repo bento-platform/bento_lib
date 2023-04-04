@@ -54,10 +54,10 @@ class EventBus:
                 raise e
             logger.warning(f"Starting event bus in 'fake' mode (tried connection data: {connection_data})")
 
-        self._ps: Optional[redis.PubSub] = None
+        self._ps: Optional[redis.client.PubSub] = None
 
         self._ps_handlers: dict[str, Callable[[dict], None]] = {}
-        self._event_thread: Optional[redis.PubSubWorkerThread] = None
+        self._event_thread: Optional[redis.client.PubSubWorkerThread] = None
 
         self._service_event_types: Dict[str, dict] = {}
         self._data_type_event_types: Dict[str, dict] = {}
@@ -101,7 +101,10 @@ class EventBus:
         self._logger.debug("Starting EventBus event loop")
 
         self._ps = self._rc.pubsub()
-        self._ps.psubscribe(**self._ps_handlers)
+
+        if self._ps_handlers:  # Only try to subscribe if we have any registered handlers
+            self._ps.psubscribe(**self._ps_handlers)
+
         self._event_thread = self._ps.run_in_thread(sleep_time=0.001, daemon=True)
 
     def stop_event_loop(self) -> None:
