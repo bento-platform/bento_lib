@@ -26,7 +26,7 @@ setuptools.setup(
     extras_require={
         "flask": ["Flask>=2.2.5,<3"],
         "django": ["Django>=4.1.7,<5", "djangorestframework>=3.14.0,<3.15"],
-        "quart": ["quart>=0.18.3,<0.19"],
+        "quart": ["quart>=0.18.4,<0.19"],
     },
 
     author=config["package"]["authors"],
