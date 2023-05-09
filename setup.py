@@ -28,6 +28,7 @@ setuptools.setup(
         "flask": ["Flask>=2.2.5,<3"],
         "django": ["Django>=4.1.7,<5", "djangorestframework>=3.14.0,<3.15"],
         "quart": ["quart>=0.18.4,<0.19"],
+        "fastapi": ["fastapi>=0.95.1,<0.96"],
     },
 
     author=config["package"]["authors"],
