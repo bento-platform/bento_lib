@@ -10,6 +10,8 @@ from typing import FrozenSet, Optional, Tuple
 
 from ..exceptions import BentoAuthException
 
+__all__ = ["BaseAuthMiddleware"]
+
 
 class BaseAuthMiddleware(ABC):
     def __init__(
