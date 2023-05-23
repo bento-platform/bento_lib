@@ -34,7 +34,7 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
             content_type="application/json")
 
     def middleware_post(self, response: Response) -> Response:
-        if not g.bento_determined_authz:
+        if self.enabled and not g.bento_determined_authz:
             return self._make_forbidden()
         return response
 
@@ -49,6 +49,9 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         require_token: bool = True,
         set_authz_flag: bool = False,
     ):
+        if not self.enabled:
+            return
+
         resource = resource or RESOURCE_EVERYTHING  # If no resource specified, require the permissions node-wide.
 
         tkn = request.headers.get("Authorization")

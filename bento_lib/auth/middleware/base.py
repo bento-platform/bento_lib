@@ -23,9 +23,11 @@ class BaseAuthMiddleware(ABC):
         drs_compat: bool = False,
         sr_compat: bool = False,
         debug_mode: bool = False,
+        enabled: bool = True,
         logger: Optional[logging.Logger] = None,
     ):
         self._debug: bool = debug_mode
+        self._enabled: bool = enabled
         self._logger = logger or logging.getLogger(__name__)
 
         self._drs_compat: bool = drs_compat
@@ -43,10 +45,15 @@ class BaseAuthMiddleware(ABC):
 
         self._disallowed_algorithms = disallowed_algorithms
 
-        # initialize key-rotation-fetching background process:
-        self._fetch_jwks_background_thread = Thread(target=self._fetch_jwks)
-        self._fetch_jwks_background_thread.daemon = True
-        self._fetch_jwks_background_thread.start()
+        if enabled:
+            # initialize key-rotation-fetching background process:
+            self._fetch_jwks_background_thread = Thread(target=self._fetch_jwks)
+            self._fetch_jwks_background_thread.daemon = True
+            self._fetch_jwks_background_thread.start()
+
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
 
     def _fetch_jwks(self):
         while True:

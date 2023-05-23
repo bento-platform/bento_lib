@@ -14,6 +14,7 @@ def extract_middleware_arguments() -> tuple:
         middleware_settings.get("DRS_COMPAT", False),
         middleware_settings.get("SR_COMPAT", False),
         settings.DEBUG,
+        middleware_settings.get("ENABLED", True),
         middleware_settings.get("LOGGER"),
     )
 
