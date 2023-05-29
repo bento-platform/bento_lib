@@ -19,10 +19,12 @@ TODO
 ```json
 {
   "query": [
-    [
-      {},
-      {}
-    ],
+    {
+      "or": [
+        {},
+        {}
+      ]
+    },
     {
       "field": ["biosamples", "[item]", "id"],
       "negated": false,
@@ -37,8 +39,7 @@ TODO
       "subject_id": ["subject", "id"],
       "filename": ["experiments", "[item]", "experiment_results", "[item]", "file_name"]
     },
-    "key": "id",
-    "distinct": true
+    "key": "id"
   }
 }
 ```

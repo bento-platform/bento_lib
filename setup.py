@@ -19,6 +19,7 @@ setuptools.setup(
         "aiohttp>=3.8.4,<4",
         "jsonschema>=4.17.3,<5",
         "psycopg2-binary>=2.9.5,<3.0",
+        "pydantic>=1.10.7,<2",
         "redis>=4.5.1,<5.0",
         "requests>=2.28.1,<3",
         "Werkzeug>=2.2.3,<3",
