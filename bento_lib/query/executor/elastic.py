@@ -1,12 +1,12 @@
 from .base import QueryExecutor
-from ..types import QueryRequest, QueryResponse
+from ..types import QueryResponse
 
 __all__ = ["QeElastic"]
 
 
 class QeElastic(QueryExecutor):
-    def execute(self, query_request: QueryRequest) -> QueryResponse:
+    def execute(self) -> QueryResponse:
         pass
 
-    async def execute_async(self, query_request: QueryRequest) -> QueryResponse:
+    async def execute_async(self) -> QueryResponse:
         pass
