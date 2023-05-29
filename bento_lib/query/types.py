@@ -13,8 +13,8 @@ Expr = Any
 class QIFilter(BaseModel):
     field: FieldPath
     negated: bool = False
-    operator: Literal["="]
-    expr: Expr | List[int] | List[float] | int | float | str | bool
+    operator: Literal["="]  # Need to type-check whether operator works against expr
+    expr: Union[Expr, List[int], List[float], int, float, str, bool]
 
 
 class QIOr(BaseModel):
