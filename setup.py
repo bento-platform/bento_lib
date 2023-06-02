@@ -25,7 +25,7 @@ setuptools.setup(
     ],
     extras_require={
         "flask": ["Flask>=2.2.5,<3"],
-        "django": ["Django>=4.1.7,<5", "djangorestframework>=3.14.0,<3.15"],
+        "django": ["Django>=4.1.9,<5", "djangorestframework>=3.14.0,<3.15"],
         "fastapi": ["fastapi>=0.95.2,<0.96"],
         "quart": ["quart>=0.18.4,<0.19"],
     },
