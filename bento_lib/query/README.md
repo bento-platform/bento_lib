@@ -16,13 +16,25 @@
 
 TODO
 
+`POST /data-types/phenopacket/search`
+
 ```json
 {
   "query": [
     {
       "or": [
-        {},
-        {}
+        {
+          "field": ["biosamples", "[item]", "id"],
+          "negated": false,
+          "operator": "<",
+          "expr": 2
+        },
+        {
+          "field": ["biosamples", "[item]", "id"],
+          "negated": false,
+          "operator": ">=",
+          "expr": 4
+        }
       ]
     },
     {
