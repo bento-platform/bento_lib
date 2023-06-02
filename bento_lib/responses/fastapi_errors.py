@@ -32,6 +32,6 @@ def validation_exception_handler(_request: Request, exc: RequestValidationError)
     code = status.HTTP_400_BAD_REQUEST
     return JSONResponse(
         http_error(
-            code, 
+            code,
             *((".".join(map(str, e["loc"])) + ": " + e["msg"]) if e.get("loc") else e["msg"] for e in exc.errors())),
         status_code=code)
