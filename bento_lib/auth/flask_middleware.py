@@ -34,6 +34,8 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
             content_type="application/json")
 
     def middleware_post(self, response: Response) -> Response:
+        if request.method == "OPTIONS":  # Allow pre-flight responses through
+            return response
         if self.enabled and not g.bento_determined_authz:
             return self._make_forbidden()
         return response
