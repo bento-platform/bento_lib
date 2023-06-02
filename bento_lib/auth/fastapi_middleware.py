@@ -1,12 +1,14 @@
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from typing import Awaitable, Callable
 
 from bento_lib.responses.errors import http_error
 from .exceptions import BentoAuthException
 from .middleware.base import BaseAuthMiddleware
 
 
-class FastApiAuthMiddleware(BaseAuthMiddleware):
+class FastApiAuthMiddleware(BaseAuthMiddleware, BaseHTTPMiddleware):
     def attach(self, app: FastAPI):
         """
         Attach the middleware to an application. Must be called in order for requests to be checked.
@@ -14,7 +16,10 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
         """
         app.middleware("http")(self)
 
-    async def __call__(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+        if request.method == "OPTIONS":  # Allow pre-flight responses through
+            return await call_next(request)
+
         # Set flag saying the request hasn't had its permissions determined yet.
         request.state.bento_determined_authz = False
 
