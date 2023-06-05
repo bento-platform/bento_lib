@@ -46,8 +46,10 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
         request.bento_determined_authz = True
 
     async def __call__(self, request: HttpRequest):
-        if self.enabled:
-            request.bento_determined_authz = False
+        if not self.enabled:
+            return await self.get_response(request)
+
+        request.bento_determined_authz = False
 
         try:
             response = await self.get_response(request)  # We've just crammed a new property in there... no state object

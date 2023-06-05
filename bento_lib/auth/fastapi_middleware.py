@@ -21,7 +21,9 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
         app.middleware("http")(self.dispatch)
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-        if request.method == "OPTIONS":  # Allow pre-flight responses through
+        if not self.enabled or request.method == "OPTIONS":
+            # - Skip checks if the authorization middleware is disabled
+            # - Allow pre-flight responses through
             return await call_next(request)
 
         # Set flag saying the request hasn't had its permissions determined yet.
