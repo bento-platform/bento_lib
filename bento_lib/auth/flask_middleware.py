@@ -27,7 +27,7 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
             g.bento_determined_authz = False
 
     def _make_forbidden(self) -> Response:
-        self.mark_authz_done()
+        self.mark_authz_done(request)
         return Response(
             json.dumps(http_error(403, "Forbidden", drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
             status=403,
