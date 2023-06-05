@@ -51,6 +51,8 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
 
     def dep_public_endpoint(self):
         def _inner(request: Request):
+            if not self.enabled:
+                return
             self.mark_authz_done(request)
         return Depends(_inner)
 
@@ -63,6 +65,9 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
         resource = resource or RESOURCE_EVERYTHING
 
         async def _inner(request: Request):
+            if not self.enabled:
+                return
+
             await self.async_check_authz_evaluate(
                 request,
                 permissions,

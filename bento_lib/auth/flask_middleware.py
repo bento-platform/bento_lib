@@ -92,18 +92,19 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                try:
-                    self.require_permissions_on_resource(permissions, resource, require_token, set_authz_flag)
-                except BentoAuthException as e:
-                    # returning an error, so mark authz flow as 'done' (rejecting in one way or another):
-                    self.mark_authz_done()
-                    # return error response:
-                    return Response(
-                        json.dumps(http_error(
-                            e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
-                        status=e.status_code,
-                        content_type="application/json",
-                    )
+                if self.enabled:
+                    try:
+                        self.require_permissions_on_resource(permissions, resource, require_token, set_authz_flag)
+                    except BentoAuthException as e:
+                        # returning an error, so mark authz flow as 'done' (rejecting in one way or another):
+                        self.mark_authz_done(request)
+                        # return error response:
+                        return Response(
+                            json.dumps(http_error(
+                                e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
+                            status=e.status_code,
+                            content_type="application/json",
+                        )
                 return func(*args, **kwargs)
             return wrapper
         return decorator

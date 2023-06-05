@@ -48,7 +48,7 @@ class BaseAuthMiddleware(ABC):
 
         self._disallowed_algorithms = disallowed_algorithms
 
-        if enabled:
+        if self.enabled:
             # initialize key-rotation-fetching background process:
             self._fetch_jwks_background_thread = Thread(target=self._fetch_jwks)
             self._fetch_jwks_background_thread.daemon = True
@@ -59,7 +59,7 @@ class BaseAuthMiddleware(ABC):
         return self._enabled
 
     def _fetch_jwks(self):
-        while True:
+        while self.enabled:
             if not self._openid_config:
                 r = requests.get(self._openid_config_url, verify=self._verify_ssl)
                 self._openid_config = r.json()
@@ -172,6 +172,9 @@ class BaseAuthMiddleware(ABC):
         require_token: bool = True,
         set_authz_flag: bool = False,
     ):
+        if not self.enabled:
+            return
+
         res = await self.async_authz_post(
             request,
             "/policy/evaluate",
