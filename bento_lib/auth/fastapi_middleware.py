@@ -49,6 +49,11 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
     def mark_authz_done(request: Request):
         request.state.bento_determined_authz = True
 
+    def dep_public_endpoint(self):
+        def _inner(request: Request):
+            self.mark_authz_done(request)
+        return Depends(_inner)
+
     def dep_require_permissions_on_resource(
         self,
         permissions: frozenset[str],
