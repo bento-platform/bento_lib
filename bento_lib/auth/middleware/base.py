@@ -1,12 +1,8 @@
 import aiohttp
-import jwt
 import logging
 import requests
-import time
 
 from abc import ABC, abstractmethod
-from jwt import PyJWK, PyJWKSet
-from threading import Thread
 from typing import Any
 
 from ..exceptions import BentoAuthException
@@ -18,9 +14,6 @@ class BaseAuthMiddleware(ABC):
     def __init__(
         self,
         bento_authz_service_url: str,
-        openid_config_url: str,
-        openid_aud: str = "account",
-        disallowed_algorithms: frozenset[str] = frozenset({}),
         drs_compat: bool = False,
         sr_compat: bool = False,
         debug_mode: bool = False,
@@ -38,65 +31,9 @@ class BaseAuthMiddleware(ABC):
 
         self._bento_authz_service_url: str = bento_authz_service_url
 
-        # Populated by key-rotation thread vvv
-        self._jwks: tuple[PyJWK, ...] = ()
-        self._openid_config: dict | None = None
-        # ^^^
-
-        self._openid_config_url: str = openid_config_url
-        self._openid_aud: str = openid_aud
-
-        self._disallowed_algorithms = disallowed_algorithms
-
-        if self.enabled:
-            # initialize key-rotation-fetching background process:
-            self._fetch_jwks_background_thread = Thread(target=self._fetch_jwks)
-            self._fetch_jwks_background_thread.daemon = True
-            self._fetch_jwks_background_thread.start()
-
     @property
     def enabled(self) -> bool:
         return self._enabled
-
-    def _fetch_jwks(self):
-        while self.enabled:
-            if not self._openid_config:
-                r = requests.get(self._openid_config_url, verify=self._verify_ssl)
-                self._openid_config = r.json()
-
-            # Manually do JWK signing key fetching. This way, we can turn off SSL verification in debug mode.
-
-            r = requests.get(self._openid_config["jwks_uri"], verify=self._verify_ssl)
-            jwks = r.json()
-            jwk_set = PyJWKSet.from_dict(jwks)
-
-            self._jwks = tuple(k for k in jwk_set.keys if k.public_key_use in ("sig", None) and k.key_id)
-
-            time.sleep(60)  # sleep 1 minute
-
-    def verify_token(self, token: str):
-        try:
-            header = jwt.get_unverified_header(token)
-            signing_key = next((k for k in self._jwks if k.key_id == header["kid"]), None)
-            if signing_key is None:
-                raise BentoAuthException("Could not find signing key")
-            if (alg := header["alg"]) is None or alg in self._disallowed_algorithms:
-                raise BentoAuthException("Disallowed signing algorithm")
-            return jwt.decode(
-                token, signing_key.key, algorithms=[signing_key.Algorithm], audience=self._openid_aud)
-        # specific jwt errors
-        except jwt.exceptions.ExpiredSignatureError:
-            raise BentoAuthException("Expired access token")
-        # less-specific jwt errors
-        except jwt.exceptions.InvalidTokenError as e:
-            self._logger.error(f"Got invalid token error: {e}")
-            raise BentoAuthException("Invalid access token")
-        # general jwt errors
-        except jwt.exceptions.PyJWTError:
-            raise BentoAuthException("Access token error")
-        # other
-        except Exception:
-            raise BentoAuthException("Access token error")
 
     @abstractmethod
     def get_authz_header_value(self, request: Any) -> str | None:  # pragma: no cover
@@ -108,25 +45,12 @@ class BaseAuthMiddleware(ABC):
             if token is None:
                 raise BentoAuthException("No token provided")
 
-    def verify_token_from_header_and_raise(self, token_header: str | None) -> None:
-        if token_header is not None:
-            try:
-                self.verify_token(token_header.split(" ")[1])
-            except BentoAuthException as e:
-                self._logger.error(f"Encountered auth exception during request: {e}")
-                raise e  # Re-raise - pass it up
-            except IndexError:
-                # Bad split, return 400
-                raise BentoAuthException("Malformatted authorization header", status_code=400)
-
     def mk_authz_url(self, path: str) -> str:
         return f"{self._bento_authz_service_url.rstrip('/')}{path}"
 
     def authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
         tkn_header = self.get_authz_header_value(request)
-
         self.check_require_token(require_token, tkn_header)
-        self.verify_token_from_header_and_raise(tkn_header)
 
         res = requests.post(
             self.mk_authz_url(path),
@@ -143,9 +67,7 @@ class BaseAuthMiddleware(ABC):
 
     async def async_authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
         tkn_header = self.get_authz_header_value(request)
-
         self.check_require_token(require_token, tkn_header)
-        self.verify_token_from_header_and_raise(tkn_header)
 
         async with aiohttp.ClientSession() as session:
             async with session.post(

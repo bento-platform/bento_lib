@@ -21,9 +21,6 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
         middleware_settings = getattr(settings, "BENTO_AUTHZ_MIDDLEWARE_CONFIG", {})
         return (
             middleware_settings["AUTHZ_SERVICE_URL"],
-            middleware_settings["OPENID_CONFIG_URL"],
-            middleware_settings["OPENID_AUD"],
-            middleware_settings.get("DISALLOWED_ALGORITHMS", frozenset({})),
             middleware_settings.get("DRS_COMPAT", False),
             middleware_settings.get("SR_COMPAT", False),
             settings.DEBUG,
