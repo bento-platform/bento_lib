@@ -88,7 +88,8 @@ class BaseAuthMiddleware(ABC):
         except jwt.exceptions.ExpiredSignatureError:
             raise BentoAuthException("Expired access token")
         # less-specific jwt errors
-        except jwt.exceptions.InvalidTokenError:
+        except jwt.exceptions.InvalidTokenError as e:
+            self._logger.error(f"Got invalid token error: {e}")
             raise BentoAuthException("Invalid access token")
         # general jwt errors
         except jwt.exceptions.PyJWTError:
