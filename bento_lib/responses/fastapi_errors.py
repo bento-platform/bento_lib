@@ -31,5 +31,7 @@ def http_exception_handler_factory(logger: logging.Logger) -> Callable[[Request,
 def validation_exception_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
     code = status.HTTP_400_BAD_REQUEST
     return JSONResponse(
-        http_error(code, *((".".join(e["loc"]) + ": " + e["msg"]) if e.get("loc") else e["msg"] for e in exc.errors())),
+        http_error(
+            code,
+            *((".".join(map(str, e["loc"])) + ": " + e["msg"]) if e.get("loc") else e["msg"] for e in exc.errors())),
         status_code=code)
