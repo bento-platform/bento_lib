@@ -14,7 +14,7 @@ setuptools.setup(
     name=config["package"]["name"],
     version=config["package"]["version"],
 
-    python_requires=">=3.8.1",
+    python_requires=">=3.10.0",
     install_requires=[
         "aiohttp>=3.8.4,<4",
         "jsonschema>=4.17.3,<5",
