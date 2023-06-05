@@ -34,7 +34,7 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
                 raise BentoAuthException(status_code=status.HTTP_403_FORBIDDEN, message="Forbidden")
 
         except BentoAuthException as e:
-            request.state.bento_determined_authz = True
+            self.mark_authz_done(request)
             return JSONResponse(
                 status_code=e.status_code,
                 content=http_error(e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat))
@@ -45,32 +45,9 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
     def get_authz_header_value(self, request: Request) -> str | None:
         return request.headers.get("Authorization")
 
-    async def require_permissions_on_resource(
-        self,
-        request: Request,
-        permissions: frozenset[str],
-        resource: dict,
-        require_token: bool = True,
-        set_authz_flag: bool = False,
-    ):
-        if not self.enabled:
-            return
-
-        res = await self.async_authz_post(
-            request,
-            "/policy/evaluate",
-            body={"requested_resource": resource, "required_permissions": list(permissions)},
-            require_token=require_token,
-        )
-
-        if not res.get("result"):
-            # We early-return with the flag set - we're returning Forbidden,
-            # and we've determined authz, so we can just set the flag.
-            raise BentoAuthException("Forbidden", status_code=403)  # Actually forbidden by authz service
-
-        if set_authz_flag:
-            # Flag that we have thought about auth
-            request.state.determined_authz = True
+    @staticmethod
+    def mark_authz_done(request: Request):
+        request.state.bento_determined_authz = True
 
     def dep_require_permissions_on_resource(
         self,
@@ -81,7 +58,7 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
         resource = resource or RESOURCE_EVERYTHING
 
         async def _inner(request: Request):
-            await self.require_permissions_on_resource(
+            await self.async_check_authz_evaluate(
                 request,
                 permissions,
                 resource,

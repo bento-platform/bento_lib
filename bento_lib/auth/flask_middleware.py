@@ -8,6 +8,10 @@ from .middleware.base import BaseAuthMiddleware
 from .middleware.constants import RESOURCE_EVERYTHING
 from ..responses.errors import http_error
 
+__all__ = [
+    "FlaskAuthMiddleware",
+]
+
 
 class FlaskAuthMiddleware(BaseAuthMiddleware):
     def attach(self, app: Flask):
@@ -37,7 +41,7 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         return response
 
     @staticmethod
-    def mark_authz_done():
+    def mark_authz_done(_request: Request):
         g.bento_determined_authz = True
 
     def get_authz_header_value(self, r: Request) -> str | None:
@@ -76,7 +80,7 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
             raise BentoAuthException("Forbidden", status_code=403)  # Actually forbidden by authz service
 
         if set_authz_flag:
-            self.mark_authz_done()
+            self.mark_authz_done(request)
 
     def deco_require_permissions_on_resource(
         self,
