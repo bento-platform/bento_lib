@@ -29,7 +29,6 @@ setuptools.setup(
         "django": ["Django>=4.1.9,<5", "djangorestframework>=3.14.0,<3.15"],
         "fastapi": ["fastapi>=0.95.2,<0.96"],
         "quart": ["quart>=0.18.4,<0.19"],
-        "fastapi": ["fastapi>=0.95.1,<0.96"],
     },
 
     author=config["package"]["authors"],
