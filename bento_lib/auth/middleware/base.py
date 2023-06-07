@@ -48,38 +48,39 @@ class BaseAuthMiddleware(ABC):
     def mk_authz_url(self, path: str) -> str:
         return f"{self._bento_authz_service_url.rstrip('/')}{path}"
 
-    def authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
+    def _extract_token_and_build_headers(self, request: Any, require_token: bool) -> dict:
         tkn_header = self.get_authz_header_value(request)
         self.check_require_token(require_token, tkn_header)
+        return {"Authorization": tkn_header} if tkn_header else {}
 
+    def _gen_exc_non_200_error_from_authz(self, code: int, content: bytes):
+        self._logger.error(f"Got non-200 response from authorization service: {code} {content}")
+        # Generic error - don't leak errors from authz service!
+        raise BentoAuthException("Error from authz service", status_code=500)
+
+    def authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
         res = requests.post(
             self.mk_authz_url(path),
             json=body,
-            headers=({"Authorization": tkn_header} if tkn_header else {}), verify=self._verify_ssl)
+            headers=self._extract_token_and_build_headers(request, require_token),
+            verify=self._verify_ssl)
 
-        if res.status_code != 200:  # Evaluation failed f
-            self._logger.error(
-                f"Got non-200 response from authorization service: {res.status_code} {res.content}")
-            # Generic error - don't leak errors from authz service!
-            raise BentoAuthException("Error from authz service", status_code=500)
+        if res.status_code != 200:  # Invalid authorization service response
+            raise self._gen_exc_non_200_error_from_authz(res.status_code, res.content)
 
         return res.json()
 
     async def async_authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
-        tkn_header = self.get_authz_header_value(request)
-        self.check_require_token(require_token, tkn_header)
-
         async with aiohttp.ClientSession() as session:
             async with session.post(
                     self.mk_authz_url(path),
                     json=body,
-                    headers=({"Authorization": tkn_header} if tkn_header else {}),
+                    headers=self._extract_token_and_build_headers(request, require_token),
                     ssl=(None if self._verify_ssl else False)) as res:
-                if res.status != 200:  # Evaluation failed f
-                    self._logger.error(
-                        f"Got non-200 response from authorization service: {res.status} {await res.text()}")
-                    # Generic error - don't leak errors from authz service!
-                    raise BentoAuthException("Error from authz service", status_code=500)
+
+                if res.status != 200:  # Invalid authorization service response
+                    raise self._gen_exc_non_200_error_from_authz(res.status, await res.content.read())
+
                 return await res.json()
 
     @staticmethod

@@ -63,6 +63,7 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
         permissions: frozenset[str],
         resource: dict | None = None,
         require_token: bool = True,
+        set_authz_flag: bool = True,
     ):
         resource = resource or RESOURCE_EVERYTHING
 
@@ -75,7 +76,7 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
                 permissions,
                 resource,
                 require_token=require_token,
-                set_authz_flag=True,
+                set_authz_flag=set_authz_flag,
             )
 
         return Depends(_inner)
