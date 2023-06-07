@@ -3,9 +3,9 @@ from django.conf import settings
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from typing import Awaitable, Callable
 
-from ..responses.errors import http_error
-from .exceptions import BentoAuthException
-from .middleware.base import BaseAuthMiddleware
+from bento_lib.responses.errors import http_error
+from bento_lib.auth.exceptions import BentoAuthException
+from bento_lib.auth.middleware.base import BaseAuthMiddleware
 
 __all__ = [
     "DjangoAuthMiddleware",

@@ -3,10 +3,10 @@ import json
 from flask import Flask, Request, Response, request, g
 from functools import wraps
 
-from .exceptions import BentoAuthException
-from .middleware.base import BaseAuthMiddleware
-from .middleware.constants import RESOURCE_EVERYTHING
-from ..responses.errors import http_error
+from bento_lib.auth.exceptions import BentoAuthException
+from bento_lib.auth.middleware.base import BaseAuthMiddleware
+from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
+from bento_lib.responses.errors import http_error
 
 __all__ = [
     "FlaskAuthMiddleware",
