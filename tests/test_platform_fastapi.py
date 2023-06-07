@@ -177,38 +177,36 @@ def test_fastapi_auth_public(test_client_auth: TestClient):
     assert r.status_code == 200
 
 
-def test_fastapi_auth_private(aioresponse: aioresponses, test_client_auth: TestClient):
+# cases: (authz response code, authz response result, test client URL, auth header included, assert final response)
+@pytest.mark.parametrize("authz_code, authz_res, test_url, inc_headers, test_code", (
     # allowed through
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
-    r = test_client_auth.post("/post-private", headers=TEST_AUTHZ_HEADERS, json=TEST_VALID_POST_BODY)
-    assert r.status_code == 200
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
-    r = test_client_auth.post("/post-private-no-flag", headers=TEST_AUTHZ_HEADERS, json=TEST_VALID_POST_BODY)
-    assert r.status_code == 200
-
+    (200, True, "/post-private", True, 200),
+    (200, True, "/post-private-no-flag", True, 200),
     # forbidden
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": False})
-    r = test_client_auth.post("/post-private", headers=TEST_AUTHZ_HEADERS, json=TEST_VALID_POST_BODY)
-    assert r.status_code == 403
-
+    (200, False, "/post-private", True, 403),
     # error from auth service
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=500, payload={"result": False})
-    r = test_client_auth.post("/post-private", headers=TEST_AUTHZ_HEADERS, json=TEST_VALID_POST_BODY)
-    assert r.status_code == 500
-
+    (500, False, "/post-private", True, 500),
     # allowed - no token
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
-    r = test_client_auth.post("/post-private-no-token", json=TEST_VALID_POST_BODY)
-    assert r.status_code == 200
+    (200, True, "/post-private-no-token", False, 200),
     # allowed - no token required, but one given
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
-    r = test_client_auth.post("/post-private-no-token", headers=TEST_AUTHZ_HEADERS, json=TEST_VALID_POST_BODY)
-    assert r.status_code == 200
-
+    (200, True, "/post-private-no-token", True, 200),
     # missing authz flag set
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
-    r = test_client_auth.post("/post-missing-authz", headers=TEST_AUTHZ_HEADERS, json=TEST_VALID_POST_BODY)
-    assert r.status_code == 403
+    (200, True, "/post-missing-authz", True, 403),
+))
+def test_fastapi_auth_private(
+    # case variables
+    authz_code: int,
+    authz_res: bool,
+    test_url: str,
+    inc_headers: bool,
+    test_code: int,
+    # fixtures
+    aioresponse: aioresponses,
+    test_client_auth: TestClient,
+):
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=authz_code, payload={"result": authz_res})
+    r = test_client_auth.post(test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_VALID_POST_BODY)
+    assert r.status_code == test_code
 
 
 def test_fastapi_auth_missing_token(aioresponse: aioresponses, test_client_auth: TestClient):
