@@ -88,6 +88,32 @@ class BaseAuthMiddleware(ABC):
     def mark_authz_done(request: Any):  # pragma: no cover
         pass
 
+    def check_authz_evaluate(
+        self,
+        request: Any,
+        permissions: frozenset[str],
+        resource: dict | None = None,
+        require_token: bool = True,
+        set_authz_flag: bool = False,
+    ):
+        if not self.enabled:
+            return
+
+        res = self.authz_post(
+            request,
+            "/policy/evaluate",
+            body={"requested_resource": resource, "required_permissions": list(permissions)},
+            require_token=require_token,
+        )
+
+        if not res.get("result"):
+            # We early-return with the flag set - we're returning Forbidden,
+            # and we've determined authz, so we can just set the flag.
+            raise BentoAuthException("Forbidden", status_code=403)  # Actually forbidden by authz service
+
+        if set_authz_flag:
+            self.mark_authz_done(request)
+
     async def async_check_authz_evaluate(
         self,
         request: Any,

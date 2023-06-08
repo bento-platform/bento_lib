@@ -2,9 +2,27 @@ import bento_lib.responses.flask_errors as fe
 
 import logging
 import pytest
+import responses
 
-from flask import Flask
+from flask import Flask, jsonify, Request, request
+from flask.testing import FlaskClient
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
+
+from bento_lib.auth.middleware.flask import FlaskAuthMiddleware
+
+from .common import (
+    PERMISSION_INGEST_DATA,
+    authz_test_case_params,
+    authz_test_cases,
+    TEST_AUTHZ_VALID_POST_BODY,
+    TEST_AUTHZ_HEADERS,
+)
+
+
+logger = logging.getLogger(__name__)
+
+
+# Standard test app -----------------------------------------------------------
 
 
 @pytest.fixture
@@ -32,6 +50,74 @@ def flask_client():
 
     with application.test_client() as client:
         yield client
+
+
+# Auth test app ---------------------------------------------------------------
+
+
+@pytest.fixture
+def flask_client_auth():
+    test_app_auth = Flask(__name__)
+    auth_middleware = FlaskAuthMiddleware(bento_authz_service_url="https://bento-auth.local", logger=logger)
+    auth_middleware.attach(test_app_auth)
+
+    @test_app_auth.route("/post-public", methods=["POST"])
+    @auth_middleware.deco_public_endpoint
+    def auth_post_public():
+        return jsonify(request.json)
+
+    @test_app_auth.route("/post-private", methods=["POST"])
+    @auth_middleware.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}))
+    def auth_post_private():
+        return jsonify(request.json)
+
+    @test_app_auth.route("/post-private-no-flag", methods=["POST"])
+    @auth_middleware.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), set_authz_flag=False)
+    def auth_post_private_no_flag():
+        auth_middleware.mark_authz_done(request)
+        return jsonify(request.json)
+
+    @test_app_auth.route("/post-private-no-token", methods=["POST"])
+    @auth_middleware.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), require_token=False)
+    def auth_post_private_no_token():
+        return jsonify(request.json)
+
+    @test_app_auth.route("/post-missing-authz", methods=["POST"])
+    def auth_post_missing_authz():
+        return jsonify(request.json)  # no authz flag set, so will return a 403
+
+    with test_app_auth.test_client() as client:
+        yield client
+
+
+# Auth test app (disabled auth middleware) ------------------------------------
+
+
+@pytest.fixture
+def flask_client_auth_disabled_with_middleware():
+    test_app_auth_disabled = Flask(__name__)
+    auth_middleware_disabled = FlaskAuthMiddleware(
+        bento_authz_service_url="https://bento-auth.local",
+        logger=logger,
+        enabled=False,
+    )
+    auth_middleware_disabled.attach(test_app_auth_disabled)
+
+    @test_app_auth_disabled.route("/post-public", methods=["POST"])
+    @auth_middleware_disabled.deco_public_endpoint
+    def auth_disabled_post_public():
+        return jsonify(request.json)
+
+    @test_app_auth_disabled.route("/post-private", methods=["POST"])
+    @auth_middleware_disabled.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}))
+    def auth_disabled_post_private():
+        return jsonify(request.json)
+
+    with test_app_auth_disabled.test_client() as client:
+        yield client, auth_middleware_disabled
+
+
+# -----------------------------------------------------------------------------
 
 
 def test_flask_errors(flask_client):
@@ -64,3 +150,50 @@ def test_flask_errors(flask_client):
     r = flask_client.get("/test1")
     assert r.status_code == 200
     assert r.get_json()["hello"] == "test1"
+
+
+def test_flask_auth_public(flask_client_auth: FlaskClient):
+    r = flask_client_auth.post("/post-public", json=TEST_AUTHZ_VALID_POST_BODY)
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize(authz_test_case_params, authz_test_cases)
+@responses.activate
+def test_flask_auth(
+    # case variables
+    authz_code: int,
+    authz_res: bool,
+    test_url: str,
+    inc_headers: bool,
+    test_code: int,
+    # fixtures
+    flask_client_auth: FlaskClient,
+):
+    responses.add(
+        responses.POST,
+        "https://bento-auth.local/policy/evaluate",
+        json={"result": authz_res},
+        status=authz_code,
+    )
+    r = flask_client_auth.post(
+        test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY)
+    assert r.status_code == test_code
+
+
+@responses.activate
+def test_fastapi_auth_disabled(flask_client_auth_disabled_with_middleware: tuple[FlaskClient, FlaskAuthMiddleware]):
+    flask_client_auth_disabled, auth_middleware_disabled = flask_client_auth_disabled_with_middleware
+
+    # middleware is disabled, should work anyway
+    r = flask_client_auth_disabled.post("/post-public", json=TEST_AUTHZ_VALID_POST_BODY)
+    assert r.status_code == 200
+
+    # middleware is disabled, should allow through
+    r = flask_client_auth_disabled.post("/post-private", json=TEST_AUTHZ_VALID_POST_BODY)
+    assert r.status_code == 200
+
+    assert auth_middleware_disabled.check_authz_evaluate(
+        Request({}),
+        frozenset({PERMISSION_INGEST_DATA}),
+        {"everything": True},
+    ) is None

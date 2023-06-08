@@ -26,12 +26,17 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         if self.enabled:
             g.bento_determined_authz = False
 
-    def _make_forbidden(self) -> Response:
+    def _make_auth_error(self, e: BentoAuthException) -> Response:
+        # returning an error, so mark authz flow as 'done' (rejecting in one way or another):
         self.mark_authz_done(request)
+        # return error response:
         return Response(
-            json.dumps(http_error(403, "Forbidden", drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
-            status=403,
+            json.dumps(http_error(e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
+            status=e.status_code,
             content_type="application/json")
+
+    def _make_forbidden(self) -> Response:
+        return self._make_auth_error(BentoAuthException("Forbidden", status_code=403))
 
     def middleware_post(self, response: Response) -> Response:
         if not self.enabled or request.method == "OPTIONS":
@@ -49,64 +54,41 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
     def get_authz_header_value(self, r: Request) -> str | None:
         return r.headers.get("Authorization")
 
-    def get_permissions_on_resource(self, resource: dict):
-        return self.authz_post(
-            request,
-            "/policy/list-permissions",
-            {"requested_resource": resource},
-            require_token=False,
-        ).get("result")
-
-    def require_permissions_on_resource(
-        self,
-        permissions: frozenset[str],
-        resource: dict | None = None,
-        require_token: bool = True,
-        set_authz_flag: bool = False,
-    ):
-        if not self.enabled:
-            return
-
-        resource = resource or RESOURCE_EVERYTHING  # If no resource specified, require the permissions node-wide.
-
-        res = self.authz_post(
-            request,
-            "/policy/evaluate",
-            body={"requested_resource": resource, "required_permissions": list(permissions)},
-            require_token=require_token,
-        )
-
-        if not res.get("result"):
-            # We early-return with the flag set - we're returning Forbidden,
-            # and we've determined authz, so we can just set the flag.
-            raise BentoAuthException("Forbidden", status_code=403)  # Actually forbidden by authz service
-
-        if set_authz_flag:
-            self.mark_authz_done(request)
+    # TODO: IMPL SYNC + ASYNC + TEST
+    # def get_permissions_on_resource(self, resource: dict):
+    #     return self.authz_post(
+    #         request,
+    #         "/policy/list-permissions",
+    #         {"requested_resource": resource},
+    #         require_token=False,
+    #     ).get("result")
 
     def deco_require_permissions_on_resource(
         self,
         permissions: frozenset[str],
         resource: dict | None = None,
         require_token: bool = True,
-        set_authz_flag: bool = False,
+        set_authz_flag: bool = True,
     ):
+        resource = resource or RESOURCE_EVERYTHING  # If no resource specified, require the permissions node-wide.
+
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 if self.enabled:
                     try:
-                        self.require_permissions_on_resource(permissions, resource, require_token, set_authz_flag)
+                        self.check_authz_evaluate(request, permissions, resource, require_token, set_authz_flag)
                     except BentoAuthException as e:
-                        # returning an error, so mark authz flow as 'done' (rejecting in one way or another):
-                        self.mark_authz_done(request)
-                        # return error response:
-                        return Response(
-                            json.dumps(http_error(
-                                e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
-                            status=e.status_code,
-                            content_type="application/json",
-                        )
+                        return self._make_auth_error(e)
                 return func(*args, **kwargs)
             return wrapper
         return decorator
+
+    def deco_public_endpoint(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            res = func(*args, **kwargs)
+            if self.enabled:
+                self.mark_authz_done(request)
+            return res
+        return wrapper
