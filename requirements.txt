@@ -19,7 +19,7 @@ colorama==0.4.6
 coverage==7.2.7
 cryptography==41.0.1
 distlib==0.3.6
-Django==4.1.9
+Django==4.2.2
 djangorestframework==3.14.0
 entrypoints==0.4
 exceptiongroup==1.1.1

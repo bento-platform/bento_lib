@@ -1,5 +1,5 @@
+from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import JsonResponse, HttpRequest, HttpResponse
-from django.utils.decorators import async_only_middleware
 from typing import Awaitable, Callable
 
 from bento_lib.responses.errors import http_error
@@ -20,12 +20,27 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
         request.bento_determined_authz = True
 
     def make_django_middleware(self):
-        @async_only_middleware
-        def inner_middleware(get_response: Callable[[HttpRequest], Awaitable[HttpResponse]]):
-            async def handle_request(request: HttpRequest) -> HttpResponse:
-                return await self.dispatch(get_response, request)
-            return handle_request
-        return inner_middleware
+        # noinspection PyMethodParameters
+        class InnerMiddleware:
+            async_capable = True
+            sync_capable = False
+
+            def __init__(inner_self, get_response: Callable[[HttpRequest], Awaitable[HttpResponse]]):
+                inner_self.get_response = get_response
+                if iscoroutinefunction(inner_self.get_response):  # pragma: no cover
+                    markcoroutinefunction(inner_self)
+
+            async def __call__(inner_self, request: HttpRequest) -> HttpResponse:
+                return await self.dispatch(inner_self.get_response, request)
+
+            @staticmethod
+            def process_exception(request: HttpRequest, exc: Exception):
+                if isinstance(exc, BentoAuthException):
+                    self.mark_authz_done(request)
+                    return self._make_auth_error(exc)
+                return None
+
+        return InnerMiddleware
 
     def _make_auth_error(self, e: BentoAuthException) -> JsonResponse:
         return JsonResponse(
@@ -42,15 +57,11 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
 
         request.bento_determined_authz = False
 
-        try:
-            response = await get_response(request)  # We've just crammed a new property in there... no state object
-            if not request.bento_determined_authz:
-                # Next in response chain didn't properly think about auth; return 403
-                return self._make_auth_error(BentoAuthException("Forbidden", status_code=403))
-
-        except BentoAuthException as e:
-            self.mark_authz_done(request)
-            return self._make_auth_error(e)
+        # Don't handle BentoAuthException here - middleware handles it elsewhere
+        response = await get_response(request)  # We've just crammed a new property in there... no state object
+        if not request.bento_determined_authz:
+            # Next in response chain didn't properly think about auth; return 403
+            return self._make_auth_error(BentoAuthException("Forbidden", status_code=403))
 
         # Otherwise, return the response as normal
         return response

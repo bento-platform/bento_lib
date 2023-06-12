@@ -42,7 +42,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'tests.django_test_project.django_test_project.authz.authz_middleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -50,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tests.django_test_project.django_test_project.authz.authz_middleware',
 ]
 
 ROOT_URLCONF = 'tests.django_test_project.django_test_project.urls'
