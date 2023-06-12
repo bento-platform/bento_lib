@@ -23,7 +23,7 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
         @async_only_middleware
         def inner_middleware(get_response: Callable[[HttpRequest], Awaitable[HttpResponse]]):
             async def handle_request(request: HttpRequest) -> HttpResponse:
-                return await self.call(get_response, request)
+                return await self.dispatch(get_response, request)
             return handle_request
 
     def _make_auth_error(self, e: BentoAuthException) -> JsonResponse:
@@ -31,7 +31,7 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
             http_error(e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat),
             status_code=e.status_code)
 
-    async def call(
+    async def dispatch(
         self,
         get_response: Callable[[HttpRequest], Awaitable[HttpResponse]],
         request: HttpRequest,
