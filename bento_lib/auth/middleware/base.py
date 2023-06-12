@@ -92,7 +92,7 @@ class BaseAuthMiddleware(ABC):
         self,
         request: Any,
         permissions: frozenset[str],
-        resource: dict | None = None,
+        resource: dict,
         require_token: bool = True,
         set_authz_flag: bool = False,
     ):
