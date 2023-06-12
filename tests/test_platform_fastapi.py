@@ -11,9 +11,11 @@ from fastapi.testclient import TestClient
 from httpx import Response as HttpxResponse
 from pydantic import BaseModel
 
+from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
+    bento_auth_exception_handler_factory,
     validation_exception_handler,
 )
 
@@ -38,6 +40,7 @@ class TestBody(BaseModel):
 
 test_app = FastAPI()
 test_app.exception_handler(HTTPException)(http_exception_handler_factory(logger))
+test_app.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger))
 test_app.exception_handler(RequestValidationError)(validation_exception_handler)
 test_client_ = TestClient(test_app)
 
@@ -60,6 +63,11 @@ def get_500():
 @test_app.post("/post-400")
 def post_400(body: TestBody):
     return JSONResponse(body.dict())
+
+
+@test_app.get("/get-403")
+def get_403():
+    raise BentoAuthException("Hello", status_code=403)
 
 
 # Auth test app ---------------------------------------------------------------
@@ -165,6 +173,10 @@ def test_fastapi_http_exception_404(test_client: TestClient):
 
 def test_fastapi_http_exception_500(test_client: TestClient):
     _expect_error(test_client.get("/get-500"), 500, "Hello")
+
+
+def test_fastapi_auth_exception_403(test_client: TestClient):
+    _expect_error(test_client.get("/get-403"), 403, "Hello")
 
 
 def test_fastapi_validation_exception(test_client: TestClient):
