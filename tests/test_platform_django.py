@@ -1,39 +1,52 @@
-import django
 import pytest
-import os
+import responses
+from django.http import JsonResponse
+from django.test import Client
+from tests.django_test_project.django_test_project.authz import authz
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "tests.django_settings"
-django.setup()
+from .common import (
+    authz_test_case_params,
+    authz_test_cases,
+    TEST_AUTHZ_VALID_POST_BODY,
+    TEST_AUTHZ_HEADERS,
+)
 
 
-@pytest.mark.django_db
-def test_remote_auth_backend():
-    import bento_lib.auth.django_remote_user
-    from bento_lib.auth.headers import DJANGO_USER_HEADER, DJANGO_USER_ROLE_HEADER
-    from django.contrib.auth.models import User
-    from django.http.request import HttpRequest
+@pytest.mark.parametrize(authz_test_case_params, authz_test_cases)
+@responses.activate
+def test_django_auth(
+    # case variables
+    authz_code: int,
+    authz_res: bool,
+    test_url: str,
+    inc_headers: bool,
+    test_code: int,
+    # fixtures
+    client: Client,
+):
+    responses.add(
+        responses.POST,
+        "https://bento-auth.local/policy/evaluate",
+        json={"result": authz_res},
+        status=authz_code,
+    )
+    r: JsonResponse = client.post(
+        test_url,
+        headers=(TEST_AUTHZ_HEADERS if inc_headers else {}),
+        data=TEST_AUTHZ_VALID_POST_BODY,
+        content_type="application/json")
+    assert r.status_code == test_code
 
-    b = bento_lib.auth.django_remote_user.BentoRemoteUserBackend()
-    r = HttpRequest()
-    r.META = {
-        DJANGO_USER_HEADER: "test",
-        DJANGO_USER_ROLE_HEADER: "owner"
-    }
 
-    u = User(username="test", password="test")
-    b.configure_user(r, u)
+def test_django_exc(client: Client):
+    with pytest.raises(Exception):
+        client.post(
+            "/post-exc",
+            data=TEST_AUTHZ_VALID_POST_BODY,
+            content_type="application/json")
 
-    u2 = User.objects.get_by_natural_key("test")
 
-    assert u2.is_staff
-    assert u2.is_superuser
-
-    r.META[DJANGO_USER_ROLE_HEADER] = "user"
-
-    u = User(username="test2", password="test")
-    b.configure_user(r, u)
-
-    u2 = User.objects.get_by_natural_key("test2")
-
-    assert not u2.is_staff
-    assert not u2.is_superuser
+def test_disabled(client: Client):
+    authz._enabled = False
+    r = client.post("/post-private", data=TEST_AUTHZ_VALID_POST_BODY, content_type="application/json")
+    assert r.status_code == 200
