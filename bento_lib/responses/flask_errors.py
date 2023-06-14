@@ -50,6 +50,7 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
         if authz:
             authz.mark_authz_done(request)
         return fn(str(e), *args, **kwargs)
+
     return handle_error
 
 
@@ -60,10 +61,15 @@ def flask_error_wrap(fn: Callable, *args, **kwargs) -> Callable:
     :param fn: The flask error-generating function to wrap
     :return: The wrapped function
     """
+
     authz: FlaskAuthMiddleware | None = kwargs.pop("authz", None)
-    if authz:
-        authz.mark_authz_done(request)
-    return lambda e: fn(str(e), *args, **kwargs)
+
+    def handle_error(e):
+        if authz:
+            authz.mark_authz_done(request)
+        return fn(str(e), *args, **kwargs)
+
+    return handle_error
 
 
 def flask_error(code: int, *errs, drs_compat: bool = False, sr_compat: bool = False):
