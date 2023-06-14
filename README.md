@@ -43,40 +43,18 @@ way, we guarantee that projects relying on this API do not accidentally break
 upon upgrading.
 
 
-### 2. Releasing from the Command Line
+### 2. Releasing automatically
 
-```bash
-# IF NECESSARY: Install twine OUTSIDE of the virtual environment
-python3 -m pip install twine
-
-# Switch to the correct branch and make sure it's up to date
-git checkout master
-git pull
-
-# If needed, enter the project virtual environment
-source env/bin/activate
-
-# Remove existing build files
-rm -rf build/ dist/ bento_lib.egg-info/
-
-# Build the new package
-python3 setup.py sdist bdist_wheel
-
-# In between these steps - test out the package... make sure everything works
-# before uploading it to production PyPI.
-
-# Upload it to PyPI
-twine upload dist/*
-```
+When a version is tagged on GitHub, a build + release CI pipeline is automatically triggered.
+Make sure that the tagged version is a valid semantic versioning translation of the version in
+`package.cfg`, and that the versions otherwise match.
 
 
 ## Modules
 
 ### `auth`
 
-`auth` provides Python service decorators and Django / DRF backends for dealing
-with the Bento container authentication headers (derived from
-`lua-resty-openidc`, set by the internal container NGINX instance.)
+`auth` provides Python service middleware for dealing with the Bento authorization service.
 
 ### `drs`
 
@@ -93,6 +71,11 @@ Events should have a lower-case type which is type-insensitively unique and
 adequately describes the associated data.
 
 All Bento channels are prefixed with `bento.`.
+
+### `responses`
+
+`responses` contains standardized error message-generating functions 
+and exception handling functions for different Python web frameworks.
 
 ### `schemas`
 
@@ -125,9 +108,10 @@ PostgreSQL, allowing safe queries against a Postgres database.
 `search.queries` provides definitions for the Bento query AST and some helper
 methods for creating and processing ASTs.
 
-### `utils`
+### `types`
 
-`utils` contains miscellaneous utilities commonly required by Bento services.
+`types` contains Python type hints for different standard Bento 
+dictionaries/objects.
 
 ### `workflows`
 
