@@ -61,6 +61,11 @@ def flask_client_auth():
     auth_middleware = FlaskAuthMiddleware(bento_authz_service_url="https://bento-auth.local", logger=logger)
     auth_middleware.attach(test_app_auth)
 
+    test_app_auth.register_error_handler(
+        Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error, authz=auth_middleware))
+    test_app_auth.register_error_handler(
+        NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True, authz=auth_middleware))
+
     @test_app_auth.route("/post-public", methods=["POST"])
     @auth_middleware.deco_public_endpoint
     def auth_post_public():
@@ -85,6 +90,14 @@ def flask_client_auth():
     @test_app_auth.route("/post-missing-authz", methods=["POST"])
     def auth_post_missing_authz():
         return jsonify(request.json)  # no authz flag set, so will return a 403
+
+    @test_app_auth.route("/get-500", methods=["GET"])
+    def auth_500():
+        raise Exception("aaa")
+
+    @test_app_auth.route("/get-404", methods=["GET"])
+    def auth_404():
+        raise NotFound()
 
     with test_app_auth.test_client() as client:
         yield client
@@ -178,6 +191,20 @@ def test_flask_auth(
     r = flask_client_auth.post(
         test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == test_code
+
+
+@responses.activate
+def test_flask_auth_500(flask_client_auth: FlaskClient):
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": True}, status=200)
+    r = flask_client_auth.get("/get-500", headers=TEST_AUTHZ_HEADERS)
+    assert r.status_code == 500
+
+
+@responses.activate
+def test_flask_auth_404(flask_client_auth: FlaskClient):
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": True}, status=200)
+    r = flask_client_auth.get("/get-404", headers=TEST_AUTHZ_HEADERS)
+    assert r.status_code == 404
 
 
 @responses.activate

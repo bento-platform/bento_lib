@@ -1,10 +1,11 @@
 import sys
 import traceback
 
-from flask import jsonify
+from flask import jsonify, request
 from functools import partial
 from typing import Callable
 
+from bento_lib.auth.middleware.flask import FlaskAuthMiddleware
 from bento_lib.responses import errors
 
 
@@ -35,7 +36,9 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     """
 
     service_name = kwargs.pop("service_name", "Bento Service")
+
     logger = kwargs.pop("logger", None)
+    authz: FlaskAuthMiddleware | None = kwargs.pop("authz", None)
 
     def handle_error(e):
         if logger:
@@ -44,7 +47,10 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
             print(f"[{service_name}] Encountered error:", file=sys.stderr)
             # TODO: py3.10: print_exception(e)
             traceback.print_exception(type(e), e, e.__traceback__)
+        if authz:
+            authz.mark_authz_done(request)
         return fn(str(e), *args, **kwargs)
+
     return handle_error
 
 
@@ -55,7 +61,15 @@ def flask_error_wrap(fn: Callable, *args, **kwargs) -> Callable:
     :param fn: The flask error-generating function to wrap
     :return: The wrapped function
     """
-    return lambda e: fn(str(e), *args, **kwargs)
+
+    authz: FlaskAuthMiddleware | None = kwargs.pop("authz", None)
+
+    def handle_error(e):
+        if authz:
+            authz.mark_authz_done(request)
+        return fn(str(e), *args, **kwargs)
+
+    return handle_error
 
 
 def flask_error(code: int, *errs, drs_compat: bool = False, sr_compat: bool = False):
