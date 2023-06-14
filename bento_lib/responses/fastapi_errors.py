@@ -62,6 +62,7 @@ def validation_exception_handler_factory(
         return JSONResponse(
             http_error(
                 code,
-                *((".".join(map(str, e["loc"])) + ": " + e["msg"]) if e.get("loc") else e["msg"] for e in exc.errors())),
+                *((".".join(map(str, e["loc"])) + ": " + e["msg"])
+                  if e.get("loc") else e["msg"] for e in exc.errors())),
             status_code=code)
     return validation_exception_handler
