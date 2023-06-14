@@ -127,6 +127,11 @@ def auth_post_missing_authz(body: TestBody):
     return JSONResponse(body.dict())  # no authz flag set, so will return a 403
 
 
+@test_app_auth.get("/get-500")
+def auth_get_500():
+    raise HTTPException(500, "Internal Server Error")
+
+
 # Auth test app (disabled auth middleware) ------------------------------------
 
 test_app_auth_disabled = FastAPI()
@@ -219,6 +224,18 @@ def test_fastapi_auth(
     r = fastapi_client_auth.post(
         test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == test_code
+
+
+def test_fastapi_auth_invalid_body(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
+    r = fastapi_client_auth.post("/post-private", headers=TEST_AUTHZ_HEADERS, json={"test1": "a"})
+    assert r.status_code == 400
+
+
+def test_fastapi_auth_500(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
+    r = fastapi_client_auth.get("/get-500", headers=TEST_AUTHZ_HEADERS)
+    assert r.status_code == 500
 
 
 def test_fastapi_auth_missing_token(aioresponse: aioresponses, fastapi_client_auth: TestClient):
