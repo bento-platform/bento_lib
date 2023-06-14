@@ -16,7 +16,7 @@ from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
-    validation_exception_handler,
+    validation_exception_handler_factory,
 )
 
 from .common import (
@@ -39,9 +39,9 @@ class TestBody(BaseModel):
 # Standard test app -----------------------------------------------------------
 
 test_app = FastAPI()
-test_app.exception_handler(HTTPException)(http_exception_handler_factory(logger))
-test_app.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger))
-test_app.exception_handler(RequestValidationError)(validation_exception_handler)
+test_app.exception_handler(HTTPException)(http_exception_handler_factory(logger, None))
+test_app.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger, None))
+test_app.exception_handler(RequestValidationError)(validation_exception_handler_factory(None))
 test_client_ = TestClient(test_app)
 
 
@@ -82,6 +82,11 @@ test_app_auth.add_middleware(
 )
 auth_middleware = FastApiAuthMiddleware(bento_authz_service_url="https://bento-auth.local", logger=logger)
 auth_middleware.attach(test_app_auth)
+
+test_app_auth.exception_handler(HTTPException)(http_exception_handler_factory(logger, auth_middleware))
+test_app_auth.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger, auth_middleware))
+test_app_auth.exception_handler(RequestValidationError)(validation_exception_handler_factory(auth_middleware))
+
 fastapi_client_auth_ = TestClient(test_app_auth)
 
 
@@ -131,6 +136,14 @@ auth_middleware_disabled = FastApiAuthMiddleware(
     enabled=False,
 )
 auth_middleware_disabled.attach(test_app_auth_disabled)
+
+test_app_auth_disabled.exception_handler(HTTPException)(
+    http_exception_handler_factory(logger, auth_middleware_disabled))
+test_app_auth_disabled.exception_handler(BentoAuthException)(
+    bento_auth_exception_handler_factory(logger, auth_middleware_disabled))
+test_app_auth_disabled.exception_handler(RequestValidationError)(
+    validation_exception_handler_factory(auth_middleware_disabled))
+
 fastapi_client_auth_disabled_ = TestClient(test_app_auth_disabled)
 
 
