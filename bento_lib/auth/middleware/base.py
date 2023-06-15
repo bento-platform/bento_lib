@@ -3,7 +3,7 @@ import logging
 import requests
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Callable
 
 from ..exceptions import BentoAuthException
 
@@ -48,7 +48,15 @@ class BaseAuthMiddleware(ABC):
     def mk_authz_url(self, path: str) -> str:
         return f"{self._bento_authz_service_url.rstrip('/')}{path}"
 
-    def _extract_token_and_build_headers(self, request: Any, require_token: bool) -> dict:
+    def _extract_token_and_build_headers(
+        self,
+        request: Any,
+        require_token: bool,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+    ) -> dict[str, str]:
+        if headers_getter:
+            return headers_getter(request)
+
         tkn_header = self.get_authz_header_value(request)
         self.check_require_token(require_token, tkn_header)
         return {"Authorization": tkn_header} if tkn_header else {}
@@ -58,11 +66,18 @@ class BaseAuthMiddleware(ABC):
         # Generic error - don't leak errors from authz service!
         raise BentoAuthException("Error from authz service", status_code=500)
 
-    def authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
+    def authz_post(
+        self,
+        request: Any,
+        path: str,
+        body: dict,
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+    ) -> dict:
         res = requests.post(
             self.mk_authz_url(path),
             json=body,
-            headers=self._extract_token_and_build_headers(request, require_token),
+            headers=self._extract_token_and_build_headers(request, require_token, headers_getter),
             verify=self._verify_ssl)
 
         if res.status_code != 200:  # Invalid authorization service response
@@ -70,12 +85,19 @@ class BaseAuthMiddleware(ABC):
 
         return res.json()
 
-    async def async_authz_post(self, request: Any, path: str, body: dict, require_token: bool = False) -> dict:
+    async def async_authz_post(
+        self,
+        request: Any,
+        path: str,
+        body: dict,
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+    ) -> dict:
         async with aiohttp.ClientSession() as session:
             async with session.post(
                     self.mk_authz_url(path),
                     json=body,
-                    headers=self._extract_token_and_build_headers(request, require_token),
+                    headers=self._extract_token_and_build_headers(request, require_token, headers_getter),
                     ssl=(None if self._verify_ssl else False)) as res:
 
                 if res.status != 200:  # Invalid authorization service response
@@ -95,6 +117,7 @@ class BaseAuthMiddleware(ABC):
         resource: dict,
         require_token: bool = True,
         set_authz_flag: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
     ):
         if not self.enabled:
             return
@@ -104,6 +127,7 @@ class BaseAuthMiddleware(ABC):
             "/policy/evaluate",
             body={"requested_resource": resource, "required_permissions": list(permissions)},
             require_token=require_token,
+            headers_getter=headers_getter,
         )
 
         if not res.get("result"):
@@ -121,6 +145,7 @@ class BaseAuthMiddleware(ABC):
         resource: dict,
         require_token: bool = True,
         set_authz_flag: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
     ):
         if not self.enabled:
             return
@@ -130,6 +155,7 @@ class BaseAuthMiddleware(ABC):
             "/policy/evaluate",
             body={"requested_resource": resource, "required_permissions": list(permissions)},
             require_token=require_token,
+            headers_getter=headers_getter,
         )
 
         if not res.get("result"):
