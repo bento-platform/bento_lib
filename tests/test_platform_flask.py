@@ -8,6 +8,7 @@ from flask import Flask, jsonify, Request, request
 from flask.testing import FlaskClient
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
+from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
 from bento_lib.auth.middleware.flask import FlaskAuthMiddleware
 
 from .common import (
@@ -98,6 +99,20 @@ def flask_client_auth():
     @test_app_auth.route("/get-404", methods=["GET"])
     def auth_404():
         raise NotFound()
+
+    @test_app_auth.route("/post-with-token-in-body", methods=["POST"])
+    def auth_post_with_token_in_body():
+        token = request.json["token"]
+        payload = request.json["payload"]
+        auth_middleware.check_authz_evaluate(
+            request,
+            frozenset({PERMISSION_INGEST_DATA}),
+            RESOURCE_EVERYTHING,
+            require_token=True,
+            set_authz_flag=True,
+            headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+        )
+        return jsonify({"payload": payload})
 
     with test_app_auth.test_client() as client:
         yield client
@@ -208,7 +223,15 @@ def test_flask_auth_404(flask_client_auth: FlaskClient):
 
 
 @responses.activate
-def test_fastapi_auth_disabled(flask_client_auth_disabled_with_middleware: tuple[FlaskClient, FlaskAuthMiddleware]):
+def test_flask_auth_post_with_token_in_body(flask_client_auth: FlaskClient):
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": True}, status=200)
+    r = flask_client_auth.post("/post-with-token-in-body", json={"token": "test", "payload": "hello world"})
+    assert r.status_code == 200
+    assert r.text == '{"payload":"hello world"}\n'
+
+
+@responses.activate
+def test_flask_auth_disabled(flask_client_auth_disabled_with_middleware: tuple[FlaskClient, FlaskAuthMiddleware]):
     flask_client_auth_disabled, auth_middleware_disabled = flask_client_auth_disabled_with_middleware
 
     # middleware is disabled, should work anyway
