@@ -12,6 +12,7 @@ from httpx import Response as HttpxResponse
 from pydantic import BaseModel
 
 from bento_lib.auth.exceptions import BentoAuthException
+from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
@@ -34,6 +35,11 @@ logger = logging.getLogger(__name__)
 class TestBody(BaseModel):
     test1: str
     test2: str
+
+
+class TestTokenBody(BaseModel):
+    token: str
+    payload: str
 
 
 # Standard test app -----------------------------------------------------------
@@ -130,6 +136,20 @@ def auth_post_missing_authz(body: TestBody):
 @test_app_auth.get("/get-500")
 def auth_get_500():
     raise HTTPException(500, "Internal Server Error")
+
+
+@test_app_auth.post("/post-with-token-in-body")
+async def auth_post_with_token_in_body(request: Request, body: TestTokenBody):
+    token = body.token
+    await auth_middleware.async_check_authz_evaluate(
+        request,
+        frozenset({PERMISSION_INGEST_DATA}),
+        RESOURCE_EVERYTHING,
+        require_token=True,
+        set_authz_flag=True,
+        headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+    )
+    return JSONResponse({"payload": body.payload})
 
 
 # Auth test app (disabled auth middleware) ------------------------------------
@@ -251,6 +271,13 @@ def test_fastapi_auth_options_call(aioresponse: aioresponses, fastapi_client_aut
         "Access-Control-Request-Method": "POST",
     })
     assert r.status_code == 200
+
+
+def test_fastapi_auth_post_with_token_in_body(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
+    r = fastapi_client_auth.post("/post-with-token-in-body", json={"token": "test", "payload": "hello world"})
+    assert r.status_code == 200
+    assert r.text == '{"payload":"hello world"}'
 
 
 @pytest.mark.asyncio
