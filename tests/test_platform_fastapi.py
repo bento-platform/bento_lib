@@ -207,7 +207,9 @@ def _expect_error(r: HttpxResponse, code: int, msg: str):
 
 def test_fastapi_middleware_init_logger():
     inst = FastApiAuthMiddleware(bento_authz_service_url="https://bento-auth.local")
+    inst._log_error("doesn't appear")
     inst.attach(FastAPI())  # should create a logger if not specified
+    inst._log_error("does appear")
     assert inst._logger is not None
 
 
