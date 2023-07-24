@@ -1,3 +1,5 @@
+import logging
+
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import JsonResponse, HttpRequest, HttpResponse
 from typing import Awaitable, Callable
@@ -12,6 +14,13 @@ __all__ = [
 
 
 class DjangoAuthMiddleware(BaseAuthMiddleware):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If no logger was passed, create a new logger
+        if self._logger is None:
+            self._logger = logging.getLogger(__name__)
+
     def get_authz_header_value(self, request: HttpRequest) -> str | None:
         return request.headers.get("Authorization")
 

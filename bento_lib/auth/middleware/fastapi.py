@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from typing import Awaitable, Callable
@@ -18,7 +20,13 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
         Attach the middleware to an application. Must be called in order for requests to be checked.
         :param app: A FastAPI application.
         """
+
+        # Attach our instance's dispatch method to the FastAPI instance as a middleware function
         app.middleware("http")(self.dispatch)
+
+        # If no logger was passed, create a new logger
+        if self._logger is None:
+            self._logger = logging.getLogger(__name__)
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         if not self.enabled or request.method == "OPTIONS":

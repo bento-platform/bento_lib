@@ -24,7 +24,7 @@ class BaseAuthMiddleware(ABC):
         self._verify_ssl: bool = not debug_mode
 
         self._enabled: bool = enabled
-        self._logger = logger or logging.getLogger(__name__)
+        self._logger: logging.Logger | None = logger
 
         self._drs_compat: bool = drs_compat
         self._sr_compat: bool = sr_compat
@@ -61,8 +61,12 @@ class BaseAuthMiddleware(ABC):
         self.check_require_token(require_token, tkn_header)
         return {"Authorization": tkn_header} if tkn_header else {}
 
+    def _log_error(self, message: str):
+        if self._logger:
+            self._logger.error(message)
+
     def _gen_exc_non_200_error_from_authz(self, code: int, content: bytes):
-        self._logger.error(f"Got non-200 response from authorization service: {code} {content}")
+        self._log_error(f"Got non-200 response from authorization service: {code} {content}")
         # Generic error - don't leak errors from authz service!
         raise BentoAuthException("Error from authz service", status_code=500)
 

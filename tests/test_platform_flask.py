@@ -148,6 +148,13 @@ def flask_client_auth_disabled_with_middleware():
 # -----------------------------------------------------------------------------
 
 
+def test_flask_middleware_init_logger():
+    inst = FlaskAuthMiddleware(bento_authz_service_url="https://bento-auth.local")
+    app = Flask(__name__)
+    inst.attach(app)
+    assert inst._logger == app.logger
+
+
 def test_flask_errors(flask_client):
     # non-existent endpoint
 
