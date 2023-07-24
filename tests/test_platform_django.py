@@ -12,6 +12,12 @@ from .common import (
 )
 
 
+def test_django_authz_logger_init():
+    from bento_lib.auth.middleware.django import DjangoAuthMiddleware
+    mw = DjangoAuthMiddleware("https://bento-auth.local")
+    assert mw._logger is not None
+
+
 @pytest.mark.parametrize(authz_test_case_params, authz_test_cases)
 @responses.activate
 def test_django_auth(
