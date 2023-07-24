@@ -19,8 +19,12 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         Attach the middleware to an application. Must be called in order for requests to be checked.
         :param app: A Flask application.
         """
+
         app.before_request(self.middleware_pre)
         app.after_request(self.middleware_post)
+
+        if self._logger is None:
+            self._logger = app.logger
 
     def middleware_pre(self) -> None:
         if self.enabled:
