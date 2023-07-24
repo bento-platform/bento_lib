@@ -205,6 +205,12 @@ def _expect_error(r: HttpxResponse, code: int, msg: str):
     assert data["errors"][0]["message"] == msg
 
 
+def test_fastapi_middleware_init_logger():
+    inst = FastApiAuthMiddleware(bento_authz_service_url="https://bento-auth.local")
+    inst.attach(FastAPI())  # should create a logger if not specified
+    assert inst._logger is not None
+
+
 def test_fastapi_http_exception_404(test_client: TestClient):
     _expect_error(test_client.get("/get-404"), 404, "Hello")
 
