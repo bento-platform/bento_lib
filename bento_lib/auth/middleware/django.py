@@ -53,7 +53,13 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
 
     def _make_auth_error(self, e: BentoAuthException) -> JsonResponse:
         return JsonResponse(
-            http_error(e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat),
+            http_error(
+                e.status_code,
+                e.message,
+                drs_compat=self._drs_compat,
+                sr_compat=self._sr_compat,
+                beacon_meta_callback=self._beacon_meta_callback,
+            ),
             status=e.status_code)
 
     async def dispatch(

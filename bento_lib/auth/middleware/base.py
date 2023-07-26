@@ -16,6 +16,7 @@ class BaseAuthMiddleware(ABC):
         bento_authz_service_url: str,
         drs_compat: bool = False,
         sr_compat: bool = False,
+        beacon_meta_callback: Callable[[], dict] | None = None,
         debug_mode: bool = False,
         enabled: bool = True,
         logger: logging.Logger | None = None,
@@ -28,6 +29,7 @@ class BaseAuthMiddleware(ABC):
 
         self._drs_compat: bool = drs_compat
         self._sr_compat: bool = sr_compat
+        self._beacon_meta_callback: Callable[[], dict] | None = beacon_meta_callback
 
         self._bento_authz_service_url: str = bento_authz_service_url
 
