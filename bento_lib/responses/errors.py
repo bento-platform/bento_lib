@@ -27,7 +27,7 @@ def http_error(
     *errors,
     drs_compat: bool = False,
     sr_compat: bool = False,
-    beacon_compat_meta_callback: Callable[[], dict] | None = None,
+    beacon_meta_callback: Callable[[], dict] | None = None,
 ):
     """
     Builds a dictionary for an HTTP error JSON response.
@@ -35,7 +35,7 @@ def http_error(
     :param errors: A list of error descriptions (human-readable) to explain the error.
     :param drs_compat: Whether to generate a GA4GH DRS schema backwards-compatible response.
     :param sr_compat: Whether to generate a GA4GH Service Registry backwards-compatible response.
-    :param beacon_compat_meta_callback: Callback for generating GA4GH Beacon V2 backwards-compatible meta field for
+    :param beacon_meta_callback: Callback for generating GA4GH Beacon V2 backwards-compatible meta field for
            error response. If this is specified, Beacon V2-compatible errors will be enabled.
     :return: A dictionary to encode in JSON for the error response.
     """
@@ -72,12 +72,12 @@ def http_error(
 
         # ... why so many "standards"? Here's a Beacon V2-compatible error specification
         **({
-            "meta": beacon_compat_meta_callback(),
+            "meta": beacon_meta_callback(),
             "error": {
                 "errorCode": code,
                 **({"errorMessage": " | ".join(errors)} if errors else {}),
             },
-        } if beacon_compat_meta_callback is not None else {}),
+        } if beacon_meta_callback is not None else {}),
     }
 
 
