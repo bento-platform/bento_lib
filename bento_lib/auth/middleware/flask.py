@@ -35,7 +35,13 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         self.mark_authz_done(request)
         # return error response:
         return Response(
-            json.dumps(http_error(e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat)),
+            json.dumps(http_error(
+                e.status_code,
+                e.message,
+                drs_compat=self._drs_compat,
+                sr_compat=self._sr_compat,
+                beacon_meta_callback=self._beacon_meta_callback,
+            )),
             status=e.status_code,
             content_type="application/json")
 

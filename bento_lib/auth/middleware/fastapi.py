@@ -47,7 +47,13 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
             self.mark_authz_done(request)
             return JSONResponse(
                 status_code=e.status_code,
-                content=http_error(e.status_code, e.message, drs_compat=self._drs_compat, sr_compat=self._sr_compat))
+                content=http_error(
+                    e.status_code,
+                    e.message,
+                    drs_compat=self._drs_compat,
+                    sr_compat=self._sr_compat,
+                    beacon_meta_callback=self._beacon_meta_callback,
+                ))
 
         # Otherwise, return the response as normal
         return res

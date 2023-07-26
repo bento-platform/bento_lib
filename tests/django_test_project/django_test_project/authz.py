@@ -10,10 +10,10 @@ middleware_settings = getattr(settings, "BENTO_AUTHZ_MIDDLEWARE_CONFIG", {})
 
 authz = DjangoAuthMiddleware(
     middleware_settings["AUTHZ_SERVICE_URL"],
-    middleware_settings.get("DRS_COMPAT", False),
-    middleware_settings.get("SR_COMPAT", False),
-    settings.DEBUG,
-    middleware_settings.get("ENABLED", True),
-    middleware_settings.get("LOGGER"),
+    drs_compat=middleware_settings.get("DRS_COMPAT", False),
+    sr_compat=middleware_settings.get("SR_COMPAT", False),
+    debug_mode=settings.DEBUG,
+    enabled=middleware_settings.get("ENABLED", True),
+    logger=middleware_settings.get("LOGGER"),
 )
 authz_middleware = authz.make_django_middleware()

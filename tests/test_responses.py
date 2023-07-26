@@ -37,11 +37,13 @@ def test_errors():
 
     # Test compatibility modes (the base stuff already works, from passing the above tests)
 
+    # DRS
     e = responses.errors.forbidden_error("test message", drs_compat=True)
     assert len(list(e.keys())) == 6
     assert e["status_code"] == 403
     assert e["msg"] == "Forbidden"
 
+    # service registry
     e = responses.errors.forbidden_error("test message", sr_compat=True)
     assert len(list(e.keys())) == 7
     assert e["status"] == 403
@@ -56,3 +58,9 @@ def test_errors():
     assert e["msg"] == "Forbidden"
     assert e["title"] == "Forbidden"
     assert e["detail"] == "test message"
+
+    # beacon
+    e = responses.errors.forbidden_error("test message", beacon_meta_callback=lambda: {})
+    assert len(list(e.keys())) == 6
+    assert e["error"]["errorCode"] == 403
+    assert e["error"]["errorMessage"] == "test message"
