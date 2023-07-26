@@ -2,6 +2,8 @@ import datetime
 from functools import partial
 from werkzeug.http import HTTP_STATUS_CODES
 
+from typing import Callable
+
 
 __all__ = [
     "http_error",
@@ -20,13 +22,21 @@ def _error_message(message):
     return {"message": message}
 
 
-def http_error(code: int, *errors, drs_compat: bool = False, sr_compat: bool = False):
+def http_error(
+    code: int,
+    *errors,
+    drs_compat: bool = False,
+    sr_compat: bool = False,
+    beacon_compat_meta_callback: Callable[[], dict] | None = None,
+):
     """
     Builds a dictionary for an HTTP error JSON response.
     :param code: The error status code to embed in the response.
     :param errors: A list of error descriptions (human-readable) to explain the error.
     :param drs_compat: Whether to generate a GA4GH DRS schema backwards-compatible response.
     :param sr_compat: Whether to generate a GA4GH Service Registry backwards-compatible response.
+    :param beacon_compat_meta_callback: Callback for generating GA4GH Beacon V2 backwards-compatible meta field for
+           error response. If this is specified, Beacon V2-compatible errors will be enabled.
     :return: A dictionary to encode in JSON for the error response.
     """
 
@@ -59,6 +69,15 @@ def http_error(code: int, *errors, drs_compat: bool = False, sr_compat: bool = F
             "title": message,
             **({"detail": " | ".join(errors)} if errors else {}),
         } if sr_compat else {}),
+
+        # ... why so many "standards"? Here's a Beacon V2-compatible error specification
+        **({
+            "meta": beacon_compat_meta_callback(),
+            "error": {
+                "errorCode": code,
+                **({"errorMessage": " | ".join(errors)} if errors else {}),
+            },
+        } if beacon_compat_meta_callback is not None else {}),
     }
 
 
