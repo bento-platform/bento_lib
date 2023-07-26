@@ -27,13 +27,14 @@ def _log_if_500(logger: logging.Logger, code: int, exc: Exception) -> None:
 def http_exception_handler_factory(
     logger: logging.Logger,
     authz: FastApiAuthMiddleware | None = None,
+    **kwargs,
 ) -> Callable[[Request, HTTPException], Response]:
     def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
         if authz:
             authz.mark_authz_done(request)
         code = exc.status_code
         _log_if_500(logger, code, exc)
-        return JSONResponse(http_error(code, exc.detail), status_code=code)
+        return JSONResponse(http_error(code, exc.detail, **kwargs), status_code=code)
 
     return http_exception_handler
 
@@ -41,19 +42,21 @@ def http_exception_handler_factory(
 def bento_auth_exception_handler_factory(
     logger: logging.Logger,
     authz: FastApiAuthMiddleware | None = None,
+    **kwargs,
 ) -> Callable[[Request, BentoAuthException], Response]:
     def bento_auth_exception_handler(request: Request, exc: BentoAuthException) -> JSONResponse:
         if authz:
             authz.mark_authz_done(request)
         code = exc.status_code
         _log_if_500(logger, code, exc)
-        return JSONResponse(http_error(code, exc.message), status_code=code)
+        return JSONResponse(http_error(code, exc.message, **kwargs), status_code=code)
 
     return bento_auth_exception_handler
 
 
 def validation_exception_handler_factory(
     authz: FastApiAuthMiddleware | None = None,
+    **kwargs,
 ) -> Callable[[Request, RequestValidationError], Response]:
     def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         if authz:
@@ -63,6 +66,7 @@ def validation_exception_handler_factory(
             http_error(
                 code,
                 *((".".join(map(str, e["loc"])) + ": " + e["msg"])
-                  if e.get("loc") else e["msg"] for e in exc.errors())),
+                  if e.get("loc") else e["msg"] for e in exc.errors()),
+                **kwargs),
             status_code=code)
     return validation_exception_handler
