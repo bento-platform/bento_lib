@@ -26,7 +26,7 @@ setuptools.setup(
     extras_require={
         "flask": ["Flask>=2.2.5,<3"],
         "django": ["Django>=4.2.1,<5", "djangorestframework>=3.14.0,<3.15"],
-        "fastapi": ["fastapi>=0.95.2,<0.101"],
+        "fastapi": ["fastapi>=0.95.2,<0.102"],
     },
 
     author=config["package"]["authors"],
