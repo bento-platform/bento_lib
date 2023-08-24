@@ -19,6 +19,7 @@ setuptools.setup(
         "aiohttp>=3.8.4,<4",
         "jsonschema>=4.17.3,<5",
         "psycopg2-binary>=2.9.5,<3.0",
+        "pydantic>=2.3.0,<3",
         "redis>=4.5.4,<5.0",
         "requests>=2.28.1,<3",
         "Werkzeug>=2.2.3,<3",
@@ -26,7 +27,7 @@ setuptools.setup(
     extras_require={
         "flask": ["Flask>=2.2.5,<3"],
         "django": ["Django>=4.2.1,<5", "djangorestframework>=3.14.0,<3.15"],
-        "fastapi": ["fastapi>=0.95.2,<0.102"],
+        "fastapi": ["fastapi>=0.100.0,<0.102"],
     },
 
     author=config["package"]["authors"],
