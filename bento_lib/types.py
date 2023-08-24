@@ -24,7 +24,12 @@ class GA4GHServiceOrganization(TypedDict):
 
 class BentoExtraServiceInfo(TypedDict, total=False):
     serviceKind: str  # One service_kind per Bento service/instance
-    dataService: bool  # Whether the service provides data types/ingest workflows
+    dataService: bool  # Whether the service provides data types/search/workflows
+    # Whether the service provides workflows:
+    #   - not necessarily data types; split from dataService to allow services to provide workflows
+    #     without needing to provide data types/search endpoints as well
+    #   - implict default: false
+    workflowProvider: bool
 
     gitRepository: str
     gitTag: str
