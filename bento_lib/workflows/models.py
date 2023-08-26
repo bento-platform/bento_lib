@@ -1,13 +1,17 @@
 import werkzeug.utils
 
 from collections import defaultdict
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
 
-class WorkflowBaseInput(BaseModel):
+class FrozenBaseModel(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+
+class WorkflowBaseInput(FrozenBaseModel):
     id: str
-    required: bool
+    required: bool = True
     type: str
 
 
