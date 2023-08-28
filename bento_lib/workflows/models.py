@@ -5,6 +5,30 @@ from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
 
+__all__ = [
+    # Input base modles
+    "WorkflowBaseInput",
+    "WorkflowInjectedInput",
+    # Input models
+    "WorkflowStringInput",
+    "WorkflowStringInput",
+    "WorkflowStringArrayInput",
+    "WorkflowNumberInput",
+    "WorkflowNumberArrayInput",
+    "WorkflowBooleanInput",
+    "WorkflowEnumInput",
+    "WorkflowEnumArrayInput",
+    "WorkflowProjectDatasetInput",
+    "WorkflowDatasetInput",
+    "WorkflowFileInput",
+    "WorkflowFileArrayInput",
+    "WorkflowReferenceGenomeInput",
+    "WorkflowServiceUrlInput",
+    # Non-Pydantic classes
+    "WorkflowSet",
+]
+
+
 class FrozenBaseModel(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -58,34 +82,21 @@ class WorkflowDatasetInput(WorkflowBaseInput):
     type: Literal["dataset"]
 
 
-class WorkflowDropBoxFileInput(WorkflowBaseInput):
-    type: Literal["drop-box-file"]
+class WorkflowFileInput(WorkflowBaseInput):
+    # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
+    type: Literal["file"]
     pattern: str = "*"  # file name regular expression pattern
 
 
-class WorkflowDropBoxFileArrayInput(WorkflowBaseInput):
-    type: Literal["drop-box-file[]"]
+class WorkflowFileArrayInput(WorkflowBaseInput):
+    # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
+    type: Literal["file[]"]
     pattern: str = "*"  # file name regular expression pattern
-
-
-class WorkflowDRSBlobInput(WorkflowBaseInput):
-    type: Literal["drs-blob"]
-    pattern: str = "*"  # file/blob name regular expression pattern
-
-
-class WorkflowDRSBundleInput(WorkflowBaseInput):
-    type: Literal["drs-bundle"]
-    pattern: str = "*"  # bundle name regular expression pattern
-
-
-class WorkflowDRSObjectInput(WorkflowBaseInput):
-    type: Literal["drs-object"]
-    pattern: str = "*"  # object name regular expression pattern
 
 
 class WorkflowReferenceGenomeInput(WorkflowBaseInput):
-    # TODO: maybe taxon ID or pattern for filtering
-    pass
+    type: Literal["ref-genome"]
+    # TODO: maybe taxon ID or pattern for filtering; for now just a string
 
 
 class WorkflowServiceUrlInput(WorkflowInjectedInput):
@@ -103,11 +114,8 @@ WorkflowInput = (
     WorkflowEnumArrayInput |
     WorkflowProjectDatasetInput |
     WorkflowDatasetInput |
-    WorkflowDropBoxFileInput |
-    WorkflowDropBoxFileArrayInput |
-    WorkflowDRSBlobInput |
-    WorkflowDRSBundleInput |
-    WorkflowDRSObjectInput |
+    WorkflowFileInput |
+    WorkflowFileArrayInput |
     WorkflowReferenceGenomeInput |
     WorkflowServiceUrlInput
 )
