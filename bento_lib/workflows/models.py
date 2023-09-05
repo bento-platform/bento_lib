@@ -125,14 +125,25 @@ WorkflowType = Literal["ingestion", "analysis", "export"]
 
 
 class WorkflowDefinition(BaseModel):
-    name: str
-    type: WorkflowType
-    description: str
-    file: str
+    """
+    Class defining meta-information about a workflow in the context of a Bento node.
+    """
+    name: str  # Human-readable workflow name
+    type: WorkflowType  # One of a few pre-defined values for categorizing workflow type/purpose
+    description: str  # Human-readable workflow description
+    file: str  # WDL file name
+    # Here, inputs defines UI / injected inputs for this workflow. These get transformed into a JSON parameters file
+    # which is fed to the WDL workflow description / Cromwell.
+    # As such, many of these workflow input types end up mapping to the same WDL type:
+    #  - ex. the Bento WorkflowInput types enum/project:datraset/dataset/ref-genome all map to the WDL type String.
     inputs: list[WorkflowInput]
 
 
 class WorkflowSet:
+    """
+    A class for constructing a singleton object that stores all workflow descriptions in a particular service.
+    """
+
     def __init__(self):
         self._defs_by_id: dict[str, WorkflowDefinition] = {}
 
