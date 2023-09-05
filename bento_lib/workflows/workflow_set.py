@@ -24,8 +24,10 @@ class WorkflowSet:
     def get_workflow(self, id_: str) -> WorkflowDefinition | None:
         return self._defs_by_id.get(id_)
 
-    def get_workflow_resource(self, id_: str) -> str:
-        return werkzeug.utils.secure_filename(self.get_workflow(id_).file)
+    def get_workflow_resource(self, id_: str) -> str | None:
+        if (wd := self.get_workflow(id_)) is not None:
+            return werkzeug.utils.secure_filename(wd.file)
+        return None
 
     def workflow_exists(self, id_: str) -> bool:
         return id_ in self._defs_by_id
