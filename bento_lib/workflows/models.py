@@ -24,8 +24,8 @@ __all__ = [
     "WorkflowFileArrayInput",
     "WorkflowReferenceGenomeInput",
     "WorkflowServiceUrlInput",
-    # Non-Pydantic classes
-    "WorkflowSet",
+    # Workflow definition model
+    "WorkflowDefinition",
 ]
 
 
