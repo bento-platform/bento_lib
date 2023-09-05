@@ -1,6 +1,3 @@
-import werkzeug.utils
-
-from collections import defaultdict
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
