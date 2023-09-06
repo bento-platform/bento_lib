@@ -1,3 +1,5 @@
+import pytest
+
 from bento_lib import workflows
 
 
@@ -29,3 +31,6 @@ def test_workflow_set():
 
     assert ws.workflow_dicts_by_type_and_id()["ingestion"]["test"]["name"] == "Test Workflow"
     assert ws.workflow_dicts_by_id()["test"]["name"] == "Test Workflow"
+
+    with pytest.raises(ValueError):
+        ws.add_workflow("test", wd)  # already exists
