@@ -16,7 +16,6 @@ __all__ = [
     "WorkflowEnumInput",
     "WorkflowEnumArrayInput",
     "WorkflowProjectDatasetInput",
-    "WorkflowDatasetInput",
     "WorkflowFileInput",
     "WorkflowFileArrayInput",
     "WorkflowReferenceGenomeInput",
@@ -75,10 +74,6 @@ class WorkflowProjectDatasetInput(WorkflowBaseInput):
     type: Literal["project:dataset"]
 
 
-class WorkflowDatasetInput(WorkflowBaseInput):
-    type: Literal["dataset"]
-
-
 class WorkflowFileInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
     type: Literal["file"]
@@ -110,7 +105,6 @@ WorkflowInput = (
     WorkflowEnumInput |
     WorkflowEnumArrayInput |
     WorkflowProjectDatasetInput |
-    WorkflowDatasetInput |
     WorkflowFileInput |
     WorkflowFileArrayInput |
     WorkflowReferenceGenomeInput |
