@@ -18,6 +18,8 @@ __all__ = [
     "WorkflowProjectDatasetInput",
     "WorkflowFileInput",
     "WorkflowFileArrayInput",
+    "WorkflowDirectoryInput",
+    "WorkflowDirectoryArrayInput",
     "WorkflowReferenceGenomeInput",
     "WorkflowServiceUrlInput",
     # Workflow definition model
@@ -86,6 +88,16 @@ class WorkflowFileArrayInput(WorkflowBaseInput):
     pattern: str = "*"  # file name regular expression pattern
 
 
+class WorkflowDirectoryInput(WorkflowBaseInput):
+    # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
+    type: Literal["directory"]
+
+
+class WorkflowDirectoryArrayInput(WorkflowBaseInput):
+    # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
+    type: Literal["directory[]"]
+
+
 class WorkflowReferenceGenomeInput(WorkflowBaseInput):
     type: Literal["ref-genome"]
     # TODO: maybe taxon ID or pattern for filtering; for now just a string
@@ -107,6 +119,8 @@ WorkflowInput = (
     WorkflowProjectDatasetInput |
     WorkflowFileInput |
     WorkflowFileArrayInput |
+    WorkflowDirectoryInput |
+    WorkflowDirectoryArrayInput |
     WorkflowReferenceGenomeInput |
     WorkflowServiceUrlInput
 )
