@@ -20,7 +20,6 @@ __all__ = [
     "WorkflowFileArrayInput",
     "WorkflowDirectoryInput",
     "WorkflowDirectoryArrayInput",
-    "WorkflowReferenceGenomeInput",
     "WorkflowServiceUrlInput",
     # Workflow definition model
     "WorkflowDefinition",
@@ -98,11 +97,6 @@ class WorkflowDirectoryArrayInput(WorkflowBaseInput):
     type: Literal["directory[]"]
 
 
-class WorkflowReferenceGenomeInput(WorkflowBaseInput):
-    type: Literal["ref-genome"]
-    # TODO: maybe taxon ID or pattern for filtering; for now just a string
-
-
 class WorkflowServiceUrlInput(WorkflowInjectedInput):
     type: Literal["service-url"]
     service_kind: str
@@ -121,7 +115,6 @@ WorkflowInput = (
     WorkflowFileArrayInput |
     WorkflowDirectoryInput |
     WorkflowDirectoryArrayInput |
-    WorkflowReferenceGenomeInput |
     WorkflowServiceUrlInput
 )
 
