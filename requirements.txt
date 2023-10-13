@@ -18,7 +18,7 @@ charset-normalizer==3.2.0
 click==8.1.6
 colorama==0.4.6
 coverage==7.2.7
-cryptography==41.0.3
+cryptography==41.0.4
 distlib==0.3.7
 Django==4.2.3
 djangorestframework==3.14.0
@@ -95,7 +95,7 @@ types-requests==2.31.0.2
 types-toml==0.10.8.7
 types-urllib3==1.26.25.14
 typing_extensions==4.7.1
-urllib3==2.0.4
+urllib3==2.0.6
 virtualenv==20.24.2
 wcwidth==0.2.6
 Werkzeug==2.3.6
