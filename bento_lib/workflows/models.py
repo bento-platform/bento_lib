@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, HttpUrl
+from pydantic import BaseModel, ConfigDict, HttpUrl, field_serializer
 from typing import Literal
 
 
@@ -130,9 +130,14 @@ class WorkflowDefinition(BaseModel):
     type: WorkflowType  # One of a few pre-defined values for categorizing workflow type/purpose
     description: str  # Human-readable workflow description
     file: str  # WDL file name
-    tags: list[str] = []  # Should include data type if relevant
+    tags: frozenset[str]  # Should include data type if relevant
     # Here, inputs defines UI / injected inputs for this workflow. These get transformed into a JSON parameters file
     # which is fed to the WDL workflow description / Cromwell.
     # As such, many of these workflow input types end up mapping to the same WDL type:
     #  - ex. the Bento WorkflowInput types enum/project:datraset/dataset/ref-genome all map to the WDL type String.
     inputs: list[WorkflowInput]
+
+    @field_serializer("tags")
+    def serialize_permissions(self, tags: frozenset[str], _info):
+        # make set serialization have a consistent order
+        return sorted(tags)
