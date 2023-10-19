@@ -68,7 +68,7 @@ class BaseAuthMiddleware(ABC):
             self._logger.error(message)
 
     def _gen_exc_non_200_error_from_authz(self, code: int, content: bytes):
-        self._log_error(f"Got non-200 response from authorization service: {code} {content}")
+        self._log_error(f"Got non-200 response from authorization service: {code} {content!r}")
         # Generic error - don't leak errors from authz service!
         raise BentoAuthException("Error from authz service", status_code=500)
 

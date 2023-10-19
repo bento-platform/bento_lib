@@ -72,7 +72,7 @@ def get_500():
 
 @test_app.post("/post-400")
 def post_400(body: TestBody):
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app.get("/get-403")
@@ -107,14 +107,14 @@ def fastapi_client_auth():
 
 @test_app_auth.post("/post-public", dependencies=[auth_middleware.dep_public_endpoint()])
 def auth_post_public(body: TestBody):
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth.post("/post-private", dependencies=[
     auth_middleware.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA})),
 ])
 def auth_post_private(body: TestBody):
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth.post("/post-private-no-flag", dependencies=[
@@ -122,19 +122,19 @@ def auth_post_private(body: TestBody):
 ])
 def auth_post_private_no_flag(request: Request, body: TestBody):
     auth_middleware.mark_authz_done(request)
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth.post("/post-private-no-token", dependencies=[
     auth_middleware.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), require_token=False),
 ])
 def auth_post_private_no_token(body: TestBody):
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth.post("/post-missing-authz")
 def auth_post_missing_authz(body: TestBody):
-    return JSONResponse(body.dict())  # no authz flag set, so will return a 403
+    return JSONResponse(body.model_dump(mode="json"))  # no authz flag set, so will return a 403
 
 
 @test_app_auth.get("/get-500")
@@ -197,14 +197,14 @@ def fastapi_client_auth_disabled():
 
 @test_app_auth_disabled.post("/post-public", dependencies=[auth_middleware_disabled.dep_public_endpoint()])
 def auth_disabled_post_public(body: TestBody):
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth_disabled.post("/post-private", dependencies=[
     auth_middleware_disabled.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA})),
 ])
 def auth_disabled_post_private(body: TestBody):
-    return JSONResponse(body.dict())
+    return JSONResponse(body.model_dump(mode="json"))
 
 # -----------------------------------------------------------------------------
 
@@ -215,12 +215,17 @@ def aioresponse():
         yield m
 
 
-def _expect_error(r: HttpxResponse, code: int, msg: str):
+def _expect_error(r: HttpxResponse, code: int, msgs: tuple[str, ...]):
     assert r.status_code == code
     data = r.json()
     assert data["code"] == code
-    assert len(data["errors"]) == 1
-    assert data["errors"][0]["message"] == msg
+    assert len(data["errors"]) == len(msgs)
+
+    act_msgs = []
+    for err in data["errors"]:
+        act_msgs.append(err["message"])
+
+    assert tuple(act_msgs) == msgs
 
 
 def test_fastapi_middleware_init_logger():
@@ -232,21 +237,25 @@ def test_fastapi_middleware_init_logger():
 
 
 def test_fastapi_http_exception_404(test_client: TestClient):
-    _expect_error(test_client.get("/get-404"), 404, "Hello")
+    _expect_error(test_client.get("/get-404"), 404, ("Hello",))
 
 
 def test_fastapi_http_exception_500(test_client: TestClient):
-    _expect_error(test_client.get("/get-500"), 500, "Hello")
+    _expect_error(test_client.get("/get-500"), 500, ("Hello",))
 
 
 def test_fastapi_auth_exception_403(test_client: TestClient):
-    _expect_error(test_client.get("/get-403"), 403, "Hello")
+    _expect_error(test_client.get("/get-403"), 403, ("Hello",))
 
 
 def test_fastapi_validation_exception(test_client: TestClient):
-    _expect_error(test_client.post("/post-400", json={"test2": 5}), 400, "body.test1: field required")
+    _expect_error(test_client.post("/post-400", json={"test2": 5}), 400, (
+        "body.test1: Field required",
+        "body.test2: Input should be a valid string",
+    ))
     _expect_error(
-        test_client.post("/post-400", json={"test1": "a", "test2": {"a": "b"}}), 400, "body.test2: str type expected")
+        test_client.post("/post-400", json={"test1": "a", "test2": {"a": "b"}}), 400,
+        ("body.test2: Input should be a valid string",))
 
 
 def test_fastapi_auth_public(fastapi_client_auth: TestClient):
