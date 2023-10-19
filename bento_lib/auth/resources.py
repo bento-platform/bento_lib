@@ -3,8 +3,6 @@ __all__ = [
     "build_resource",
 ]
 
-# TODO: port Pydantic models from authz instead (when we get pydantic 2)
-
 
 RESOURCE_EVERYTHING = {"everything": True}
 
