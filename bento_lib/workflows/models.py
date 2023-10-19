@@ -37,36 +37,36 @@ class WorkflowBaseInput(FrozenBaseModel):
 
 
 class WorkflowInjectedInput(WorkflowBaseInput):
-    injected: Literal[True]
+    injected: Literal[True] = True
 
 
 class WorkflowStringInput(WorkflowBaseInput):
-    type: Literal["string"]
+    type: Literal["string"] = "string"
 
 
 class WorkflowStringArrayInput(WorkflowBaseInput):
-    type: Literal["string[]"]
+    type: Literal["string[]"] = "string[]"
 
 
 class WorkflowNumberInput(WorkflowBaseInput):
-    type: Literal["number"]
+    type: Literal["number"] = "number"
 
 
 class WorkflowNumberArrayInput(WorkflowBaseInput):
-    type: Literal["number[]"]
+    type: Literal["number[]"] = "number[]"
 
 
 class WorkflowBooleanInput(WorkflowBaseInput):
-    type: Literal["boolean"]
+    type: Literal["boolean"] = "boolean"
 
 
 class WorkflowEnumInput(WorkflowBaseInput):
-    type: Literal["enum"]
+    type: Literal["enum"] = "enum"
     values: list[str] | HttpUrl  # list of values, or a URL returning an array of enum values
 
 
 class WorkflowEnumArrayInput(WorkflowBaseInput):
-    type: Literal["enum[]"]
+    type: Literal["enum[]"] = "enum[]"
     values: list[str] | HttpUrl  # list of values, or a URL returning an array of enum values
     repeatable: bool = True
 
@@ -77,28 +77,28 @@ class WorkflowProjectDatasetInput(WorkflowBaseInput):
 
 class WorkflowFileInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
-    type: Literal["file"]
+    type: Literal["file"] = "file"
     pattern: str = "*"  # file name regular expression pattern
 
 
 class WorkflowFileArrayInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
-    type: Literal["file[]"]
+    type: Literal["file[]"] = "file[]"
     pattern: str = "*"  # file name regular expression pattern
 
 
 class WorkflowDirectoryInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
-    type: Literal["directory"]
+    type: Literal["directory"] = "directory"
 
 
 class WorkflowDirectoryArrayInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
-    type: Literal["directory[]"]
+    type: Literal["directory[]"] = "directory[]"
 
 
 class WorkflowServiceUrlInput(WorkflowInjectedInput):
-    type: Literal["service-url"]
+    type: Literal["service-url"] = "service-url"
     service_kind: str
 
 
