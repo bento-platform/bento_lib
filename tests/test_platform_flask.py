@@ -114,6 +114,19 @@ def flask_client_auth():
         )
         return jsonify({"payload": payload})
 
+    @test_app_auth.route("/post-with-token-evaluate-one", methods=["POST"])
+    def auth_post_with_token_evaluate_one():
+        token = request.json["token"]
+
+        auth_middleware.mark_authz_done(request)
+        return jsonify({"payload": auth_middleware.evaluate_one(
+            request,
+            RESOURCE_EVERYTHING,
+            PERMISSION_INGEST_DATA,
+            require_token=True,
+            headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+        )})
+
     with test_app_auth.test_client() as client:
         yield client
 
@@ -207,7 +220,7 @@ def test_flask_auth(
     responses.add(
         responses.POST,
         "https://bento-auth.local/policy/evaluate",
-        json={"result": authz_res},
+        json={"result": [[authz_res]]},
         status=authz_code,
     )
     r = flask_client_auth.post(
@@ -217,24 +230,32 @@ def test_flask_auth(
 
 @responses.activate
 def test_flask_auth_500(flask_client_auth: FlaskClient):
-    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": True}, status=200)
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": [[True]]}, status=200)
     r = flask_client_auth.get("/get-500", headers=TEST_AUTHZ_HEADERS)
     assert r.status_code == 500
 
 
 @responses.activate
 def test_flask_auth_404(flask_client_auth: FlaskClient):
-    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": True}, status=200)
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": [[True]]}, status=200)
     r = flask_client_auth.get("/get-404", headers=TEST_AUTHZ_HEADERS)
     assert r.status_code == 404
 
 
 @responses.activate
 def test_flask_auth_post_with_token_in_body(flask_client_auth: FlaskClient):
-    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": True}, status=200)
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": [[True]]}, status=200)
     r = flask_client_auth.post("/post-with-token-in-body", json={"token": "test", "payload": "hello world"})
     assert r.status_code == 200
     assert r.text == '{"payload":"hello world"}\n'
+
+
+@responses.activate
+def test_flask_auth_post_with_token_evaluate_one(flask_client_auth: FlaskClient):
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": [[True]]}, status=200)
+    r = flask_client_auth.post("/post-with-token-evaluate-one", json={"token": "test"})
+    assert r.status_code == 200
+    assert r.text == '{"payload":true}\n'
 
 
 @responses.activate

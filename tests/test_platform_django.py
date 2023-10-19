@@ -33,7 +33,7 @@ def test_django_auth(
     responses.add(
         responses.POST,
         "https://bento-auth.local/policy/evaluate",
-        json={"result": authz_res},
+        json={"result": [[authz_res]]},
         status=authz_code,
     )
     r: JsonResponse = client.post(
