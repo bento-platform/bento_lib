@@ -2,6 +2,7 @@ import logging
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import JsonResponse, HttpRequest, HttpResponse
+from rest_framework.request import Request as DrfRequest
 from typing import Awaitable, Callable
 
 from bento_lib.responses.errors import http_error
@@ -21,12 +22,14 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
         if self._logger is None:
             self._logger = logging.getLogger(__name__)
 
-    def get_authz_header_value(self, request: HttpRequest) -> str | None:
+    def get_authz_header_value(self, request: DrfRequest | HttpRequest) -> str | None:
         return request.headers.get("Authorization")
 
     @staticmethod
-    def mark_authz_done(request: HttpRequest):
-        request.bento_determined_authz = True
+    def mark_authz_done(request: DrfRequest | HttpRequest):
+        # noinspection PyProtectedMember
+        req = request._request if isinstance(request, DrfRequest) else request
+        req.bento_determined_authz = True
 
     def make_django_middleware(self):
         # noinspection PyMethodParameters
