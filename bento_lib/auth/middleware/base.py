@@ -3,7 +3,7 @@ import logging
 import requests
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from ..exceptions import BentoAuthException
 
@@ -91,6 +91,46 @@ class BaseAuthMiddleware(ABC):
 
         return res.json()
 
+    @staticmethod
+    def _evaluate_body(resources: Iterable[dict], permissions: Iterable[str]) -> dict:
+        return {"resources": tuple(resources), "permissions": tuple(permissions)}
+
+    @staticmethod
+    def _matrix_tuple_cast(authz_result: list[list[bool]]) -> tuple[tuple[bool, ...]]:
+        return tuple(tuple(x) for x in authz_result)
+
+    def evaluate(
+        self,
+        request: Any,
+        resources: Iterable[dict],
+        permissions: Iterable[str],
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+        mark_authz_done: bool = False,
+    ) -> tuple[tuple[bool, ...]]:
+        if mark_authz_done:
+            self.mark_authz_done(request)
+        return self._matrix_tuple_cast(
+            self.authz_post(
+                request,
+                "/policy/evaluate",
+                self._evaluate_body(resources, permissions),
+                require_token=require_token,
+                headers_getter=headers_getter,
+            )["result"]
+        )
+
+    def evaluate_one(
+        self,
+        request: Any,
+        resource: dict,
+        permission: str,
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+        mark_authz_done: bool = False,
+    ) -> bool:
+        return self.evaluate(request, (resource,), (permission,), require_token, headers_getter, mark_authz_done)[0][0]
+
     async def async_authz_post(
         self,
         request: Any,
@@ -111,6 +151,44 @@ class BaseAuthMiddleware(ABC):
 
                 return await res.json()
 
+    async def async_evaluate(
+        self,
+        request: Any,
+        resources: Iterable[dict],
+        permissions: Iterable[str],
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+        mark_authz_done: bool = False,
+    ) -> tuple[tuple[bool, ...]]:
+        if mark_authz_done:
+            self.mark_authz_done(request)
+        return self._matrix_tuple_cast(
+            (
+                await self.async_authz_post(
+                    request,
+                    "/policy/evaluate",
+                    self._evaluate_body(resources, permissions),
+                    require_token=require_token,
+                    headers_getter=headers_getter,
+                )
+            )["result"]
+        )
+
+    async def async_evaluate_one(
+        self,
+        request: Any,
+        resource: dict,
+        permission: str,
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+        mark_authz_done: bool = False,
+    ) -> bool:
+        return (
+            await self.async_evaluate(
+                request, (resource,), (permission,), require_token, headers_getter, mark_authz_done
+            )
+        )[0][0]
+
     @staticmethod
     @abstractmethod
     def mark_authz_done(request: Any):  # pragma: no cover
@@ -124,25 +202,23 @@ class BaseAuthMiddleware(ABC):
         require_token: bool = True,
         set_authz_flag: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
-    ):
+    ) -> None:
         if not self.enabled:
             return
 
-        res = self.authz_post(
+        res = self.evaluate(
             request,
-            "/policy/evaluate",
-            body={"requested_resource": resource, "required_permissions": list(permissions)},
+            [resource],
+            list(permissions),
             require_token=require_token,
             headers_getter=headers_getter,
-        )
+            mark_authz_done=set_authz_flag,
+        )[0]
 
-        if not res.get("result"):
+        if not all(res):
             # We early-return with the flag set - we're returning Forbidden,
             # and we've determined authz, so we can just set the flag.
             raise BentoAuthException("Forbidden", status_code=403)  # Actually forbidden by authz service
-
-        if set_authz_flag:
-            self.mark_authz_done(request)
 
     async def async_check_authz_evaluate(
         self,
@@ -156,18 +232,18 @@ class BaseAuthMiddleware(ABC):
         if not self.enabled:
             return
 
-        res = await self.async_authz_post(
-            request,
-            "/policy/evaluate",
-            body={"requested_resource": resource, "required_permissions": list(permissions)},
-            require_token=require_token,
-            headers_getter=headers_getter,
-        )
+        res = (
+            await self.async_evaluate(
+                request,
+                [resource],
+                list(permissions),
+                require_token=require_token,
+                headers_getter=headers_getter,
+                mark_authz_done=set_authz_flag,
+            )
+        )[0]
 
-        if not res.get("result"):
+        if not all(res):
             # We early-return with the flag set - we're returning Forbidden,
             # and we've determined authz, so we can just set the flag.
             raise BentoAuthException("Forbidden", status_code=403)  # Actually forbidden by authz service
-
-        if set_authz_flag:
-            self.mark_authz_done(request)
