@@ -7,7 +7,10 @@ from typing import Any, Callable, Iterable
 
 from ..exceptions import BentoAuthException
 
-__all__ = ["BaseAuthMiddleware"]
+__all__ = ["EvaluationResultMatrix", "BaseAuthMiddleware"]
+
+
+EvaluationResultMatrix = tuple[tuple[bool, ...], ...]
 
 
 class BaseAuthMiddleware(ABC):
@@ -96,7 +99,7 @@ class BaseAuthMiddleware(ABC):
         return {"resources": tuple(resources), "permissions": tuple(permissions)}
 
     @staticmethod
-    def _matrix_tuple_cast(authz_result: list[list[bool]]) -> tuple[tuple[bool, ...]]:
+    def _matrix_tuple_cast(authz_result: list[list[bool]]) -> tuple[tuple[bool, ...], ...]:
         return tuple(tuple(x) for x in authz_result)
 
     def evaluate(
@@ -107,7 +110,7 @@ class BaseAuthMiddleware(ABC):
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
-    ) -> tuple[tuple[bool, ...]]:
+    ) -> EvaluationResultMatrix:
         if mark_authz_done:
             self.mark_authz_done(request)
         return self._matrix_tuple_cast(
@@ -159,7 +162,7 @@ class BaseAuthMiddleware(ABC):
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
-    ) -> tuple[tuple[bool, ...]]:
+    ) -> EvaluationResultMatrix:
         if mark_authz_done:
             self.mark_authz_done(request)
         return self._matrix_tuple_cast(
@@ -228,7 +231,7 @@ class BaseAuthMiddleware(ABC):
         require_token: bool = True,
         set_authz_flag: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
-    ):
+    ) -> None:
         if not self.enabled:
             return
 
