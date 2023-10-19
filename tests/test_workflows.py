@@ -34,3 +34,17 @@ def test_workflow_set():
 
     with pytest.raises(ValueError):
         ws.add_workflow("test", wd)  # already exists
+
+    wd2 = workflows.models.WorkflowDefinition(
+        name="Test Workflow 2",
+        type="analysis",
+        description="A test workflow",
+        tags=["experiment", "cbioportal"],
+        file="test.wdl",
+        inputs=[
+            workflows.models.WorkflowStringInput(id="input1", type="string"),
+        ]
+    )
+
+    ws.add_workflow("test2", wd2)
+    assert ws.workflow_exists("test2")
