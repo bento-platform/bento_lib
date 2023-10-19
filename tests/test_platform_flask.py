@@ -121,8 +121,8 @@ def flask_client_auth():
         auth_middleware.mark_authz_done(request)
         return jsonify({"payload": auth_middleware.evaluate_one(
             request,
-            PERMISSION_INGEST_DATA,
             RESOURCE_EVERYTHING,
+            PERMISSION_INGEST_DATA,
             require_token=True,
             headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
         )})

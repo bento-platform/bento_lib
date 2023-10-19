@@ -37,9 +37,13 @@ class TestBody(BaseModel):
     test2: str
 
 
-class TestTokenBody(BaseModel):
+class TestTokenPayloadBody(BaseModel):
     token: str
     payload: str
+
+
+class TestTokenBody(BaseModel):
+    token: str
 
 
 # Standard test app -----------------------------------------------------------
@@ -139,7 +143,7 @@ def auth_get_500():
 
 
 @test_app_auth.post("/post-with-token-in-body")
-async def auth_post_with_token_in_body(request: Request, body: TestTokenBody):
+async def auth_post_with_token_in_body(request: Request, body: TestTokenPayloadBody):
     token = body.token
     await auth_middleware.async_check_authz_evaluate(
         request,
@@ -150,6 +154,20 @@ async def auth_post_with_token_in_body(request: Request, body: TestTokenBody):
         headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
     )
     return JSONResponse({"payload": body.payload})
+
+
+@test_app_auth.post("/post-with-token-evaluate-one")
+async def auth_post_with_token_evaluate_one(request: Request, body: TestTokenBody):
+    token = body.token
+
+    auth_middleware.mark_authz_done(request)
+    return JSONResponse({"payload": await auth_middleware.async_evaluate_one(
+        request,
+        RESOURCE_EVERYTHING,
+        PERMISSION_INGEST_DATA,
+        require_token=True,
+        headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+    )})
 
 
 # Auth test app (disabled auth middleware) ------------------------------------
@@ -286,6 +304,13 @@ def test_fastapi_auth_post_with_token_in_body(aioresponse: aioresponses, fastapi
     r = fastapi_client_auth.post("/post-with-token-in-body", json={"token": "test", "payload": "hello world"})
     assert r.status_code == 200
     assert r.text == '{"payload":"hello world"}'
+
+
+def test_fastapi_auth_post_with_token_evaluate_one(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+    r = fastapi_client_auth.post("/post-with-token-evaluate-one", json={"token": "test"})
+    assert r.status_code == 200
+    assert r.text == '{"payload":true}'
 
 
 @pytest.mark.asyncio
