@@ -248,20 +248,20 @@ def test_fastapi_auth(
     aioresponse: aioresponses,
     fastapi_client_auth: TestClient,
 ):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=authz_code, payload={"result": authz_res})
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=authz_code, payload={"result": [[authz_res]]})
     r = fastapi_client_auth.post(
         test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == test_code
 
 
 def test_fastapi_auth_invalid_body(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.post("/post-private", headers=TEST_AUTHZ_HEADERS, json={"test1": "a"})
     assert r.status_code == 400
 
 
 def test_fastapi_auth_500(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.get("/get-500", headers=TEST_AUTHZ_HEADERS)
     assert r.status_code == 500
 
@@ -282,7 +282,7 @@ def test_fastapi_auth_options_call(aioresponse: aioresponses, fastapi_client_aut
 
 
 def test_fastapi_auth_post_with_token_in_body(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": True})
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.post("/post-with-token-in-body", json={"token": "test", "payload": "hello world"})
     assert r.status_code == 200
     assert r.text == '{"payload":"hello world"}'
