@@ -6,14 +6,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable
 
 from ..exceptions import BentoAuthException
+from ..types import EvaluationResultMatrix
+from .mark_authz_done_mixin import MarkAuthzDoneMixin
 
-__all__ = ["EvaluationResultMatrix", "BaseAuthMiddleware"]
+__all__ = ["BaseAuthMiddleware"]
 
 
-EvaluationResultMatrix = tuple[tuple[bool, ...], ...]
-
-
-class BaseAuthMiddleware(ABC):
+class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     def __init__(
         self,
         bento_authz_service_url: str,
@@ -191,11 +190,6 @@ class BaseAuthMiddleware(ABC):
                 request, (resource,), (permission,), require_token, headers_getter, mark_authz_done
             )
         )[0][0]
-
-    @staticmethod
-    @abstractmethod
-    def mark_authz_done(request: Any):  # pragma: no cover
-        pass
 
     def check_authz_evaluate(
         self,

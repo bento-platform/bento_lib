@@ -5,8 +5,8 @@ from flask import jsonify, request
 from functools import partial
 from typing import Callable
 
-from bento_lib.auth.middleware.flask import FlaskAuthMiddleware
-from bento_lib.responses import errors
+from ..auth.types import MarkAuthzDoneType
+from ..responses import errors
 
 
 __all__ = [
@@ -38,7 +38,7 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     service_name = kwargs.pop("service_name", "Bento Service")
 
     logger = kwargs.pop("logger", None)
-    authz: FlaskAuthMiddleware | None = kwargs.pop("authz", None)
+    authz: MarkAuthzDoneType | None = kwargs.pop("authz", None)
 
     def handle_error(e):
         if logger:
@@ -62,7 +62,7 @@ def flask_error_wrap(fn: Callable, *args, **kwargs) -> Callable:
     :return: The wrapped function
     """
 
-    authz: FlaskAuthMiddleware | None = kwargs.pop("authz", None)
+    authz: MarkAuthzDoneType | None = kwargs.pop("authz", None)
 
     def handle_error(e):
         if authz:

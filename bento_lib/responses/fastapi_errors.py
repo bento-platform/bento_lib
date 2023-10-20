@@ -8,8 +8,8 @@ from fastapi.responses import JSONResponse
 from starlette.responses import Response
 from typing import Callable
 
-from ..auth.middleware.fastapi import FastApiAuthMiddleware
 from ..auth.exceptions import BentoAuthException
+from ..auth.types import MarkAuthzDoneType
 from .errors import http_error
 
 __all__ = [
@@ -26,7 +26,7 @@ def _log_if_500(logger: logging.Logger, code: int, exc: Exception) -> None:
 
 def http_exception_handler_factory(
     logger: logging.Logger,
-    authz: FastApiAuthMiddleware | None = None,
+    authz: MarkAuthzDoneType | None = None,
     **kwargs,
 ) -> Callable[[Request, HTTPException], Response]:
     def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -41,7 +41,7 @@ def http_exception_handler_factory(
 
 def bento_auth_exception_handler_factory(
     logger: logging.Logger,
-    authz: FastApiAuthMiddleware | None = None,
+    authz: MarkAuthzDoneType | None = None,
     **kwargs,
 ) -> Callable[[Request, BentoAuthException], Response]:
     def bento_auth_exception_handler(request: Request, exc: BentoAuthException) -> JSONResponse:
@@ -55,7 +55,7 @@ def bento_auth_exception_handler_factory(
 
 
 def validation_exception_handler_factory(
-    authz: FastApiAuthMiddleware | None = None,
+    authz: MarkAuthzDoneType | None = None,
     **kwargs,
 ) -> Callable[[Request, RequestValidationError], Response]:
     def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
