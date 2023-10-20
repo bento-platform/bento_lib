@@ -5,7 +5,6 @@ from flask import jsonify, request
 from functools import partial
 from typing import Callable
 
-from ..auth.middleware.flask import FlaskAuthMiddleware
 from ..auth.types import MarkAuthzDoneType
 from ..responses import errors
 

@@ -7,15 +7,9 @@ from typing import Any, Callable, Iterable
 
 from ..exceptions import BentoAuthException
 from ..types import EvaluationResultMatrix
+from .mark_authz_done_mixin import MarkAuthzDoneMixin
 
-__all__ = ["MarkAuthzDoneMixin", "BaseAuthMiddleware"]
-
-
-class MarkAuthzDoneMixin(ABC):
-    @staticmethod
-    @abstractmethod
-    def mark_authz_done(request: Any):  # pragma: no cover
-        pass
+__all__ = ["BaseAuthMiddleware"]
 
 
 class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):

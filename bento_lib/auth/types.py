@@ -1,6 +1,6 @@
 from typing import Type
 
-from ..auth.middleware.base import MarkAuthzDoneMixin
+from ..auth.middleware.mark_authz_done_mixin import MarkAuthzDoneMixin
 
 __all__ = [
     "EvaluationResultMatrix",
