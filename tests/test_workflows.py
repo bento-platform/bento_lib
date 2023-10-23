@@ -39,6 +39,7 @@ def test_workflow_set():
         name="Test Workflow 2",
         type="analysis",
         description="A test workflow",
+        data_type="experiment",
         tags=["experiment", "cbioportal"],
         file="test.wdl",
         inputs=[
