@@ -145,7 +145,10 @@ class WorkflowDefinition(BaseModel):
     type: WorkflowType  # One of a few pre-defined values for categorizing workflow type/purpose
     description: str  # Human-readable workflow description
     file: str  # WDL file name
-    tags: frozenset[str] = frozenset(())  # Should include data type(s) if relevant
+    data_type: str | None = None  # Data type; temporary for authz until we have proper token exchange for WES  TODO
+    #  - If data_type is None, the permissions should be *more* severe, not less
+    #    (check if they have whole project/dataset access)
+    tags: frozenset[str] = frozenset()  # Should include data type(s) if relevant
     # Here, inputs defines UI / injected inputs for this workflow. These get transformed into a JSON parameters file
     # which is fed to the WDL workflow description / Cromwell.
     # As such, many of these workflow input types end up mapping to the same WDL type:
