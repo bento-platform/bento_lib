@@ -98,8 +98,21 @@ class WorkflowDirectoryArrayInput(WorkflowBaseInput):
 
 
 class WorkflowServiceUrlInput(WorkflowInjectedInput):
+    # service URL from the service registry, using bento.serviceKind as a lookup
     type: Literal["service-url"] = "service-url"
     service_kind: str
+
+
+class WorkflowConfigInput(WorkflowInjectedInput):
+    # configuration injection from the workflow executor - stored in the database
+    type: Literal["config"] = "config"
+    key: str
+
+
+class WorkflowSecretInput(WorkflowInjectedInput):
+    # secret injection from the workflow executor - not present in the database, passed ephemerally
+    type: Literal["secret"] = "secret"
+    key: str
 
 
 WorkflowInput = (
@@ -115,7 +128,9 @@ WorkflowInput = (
     WorkflowFileArrayInput |
     WorkflowDirectoryInput |
     WorkflowDirectoryArrayInput |
-    WorkflowServiceUrlInput
+    WorkflowServiceUrlInput |
+    WorkflowConfigInput |
+    WorkflowSecretInput
 )
 
 
