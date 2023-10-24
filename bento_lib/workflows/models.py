@@ -21,6 +21,8 @@ __all__ = [
     "WorkflowDirectoryInput",
     "WorkflowDirectoryArrayInput",
     "WorkflowServiceUrlInput",
+    "WorkflowConfigInput",
+    "WorkflowSecretInput",
     # Workflow definition model
     "WorkflowDefinition",
 ]
