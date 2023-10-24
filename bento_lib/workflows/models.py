@@ -74,7 +74,7 @@ class WorkflowEnumArrayInput(WorkflowBaseInput):
 
 
 class WorkflowProjectDatasetInput(WorkflowBaseInput):
-    type: Literal["project:dataset"]
+    type: Literal["project:dataset"] = "project:dataset"
 
 
 class WorkflowFileInput(WorkflowBaseInput):
