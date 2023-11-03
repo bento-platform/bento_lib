@@ -22,10 +22,10 @@ setuptools.setup(
         "pydantic>=2.3.0,<3",
         "redis>=4.5.4,<5.0",
         "requests>=2.28.1,<3",
-        "Werkzeug>=2.2.3,<3",
+        "Werkzeug>=2.2.3,<4",
     ],
     extras_require={
-        "flask": ["Flask>=2.2.5,<3"],
+        "flask": ["Flask>=2.2.5,<4"],
         "django": ["Django>=4.2.1,<5", "djangorestframework>=3.14.0,<3.15"],
         "fastapi": ["fastapi>=0.100,<0.105"],
     },
