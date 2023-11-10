@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable
 
 from ..exceptions import BentoAuthException
-from ..types import EvaluationResultMatrix
+from ..types import EvaluationResultMatrix, EvaluationResultDict
 from .mark_authz_done_mixin import MarkAuthzDoneMixin
 
 __all__ = ["BaseAuthMiddleware"]
@@ -98,8 +98,12 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         return {"resources": tuple(resources), "permissions": tuple(permissions)}
 
     @staticmethod
-    def _matrix_tuple_cast(authz_result: list[list[bool]]) -> tuple[tuple[bool, ...], ...]:
+    def _matrix_tuple_cast(authz_result: list[list[bool]]) -> EvaluationResultMatrix:
         return tuple(tuple(x) for x in authz_result)
+
+    @staticmethod
+    def _permissions_matrix_to_dict(m: EvaluationResultMatrix, permissions: Iterable[str]) -> EvaluationResultDict:
+        return tuple({p: pv for p, pv in zip(permissions, r)} for r in m)
 
     def evaluate(
         self,
@@ -121,6 +125,20 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
                 headers_getter=headers_getter,
             )["result"]
         )
+
+    def evaluate_to_dict(
+        self,
+        request: Any,
+        resources: Iterable[dict],
+        permissions: Iterable[str],
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+        mark_authz_done: bool = False,
+    ) -> EvaluationResultDict:
+        # consume iterable only once in case it's a generator
+        _perms = tuple(permissions)
+        return self._permissions_matrix_to_dict(
+            self.evaluate(request, resources, _perms, require_token, headers_getter, mark_authz_done), _perms)
 
     def evaluate_one(
         self,
@@ -175,6 +193,21 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
                 )
             )["result"]
         )
+
+    async def async_evaluate_to_dict(
+        self,
+        request: Any,
+        resources: Iterable[dict],
+        permissions: Iterable[str],
+        require_token: bool = False,
+        headers_getter: Callable[[Any], dict[str, str]] | None = None,
+        mark_authz_done: bool = False,
+    ) -> EvaluationResultDict:
+        # consume iterable only once in case it's a generator
+        _perms = tuple(permissions)
+        return self._permissions_matrix_to_dict(
+            await self.async_evaluate(request, resources, _perms, require_token, headers_getter, mark_authz_done),
+            _perms)
 
     async def async_evaluate_one(
         self,
