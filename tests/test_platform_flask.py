@@ -127,6 +127,19 @@ def flask_client_auth():
             headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
         )})
 
+    @test_app_auth.route("/post-with-token-evaluate-to-dict", methods=["POST"])
+    def auth_post_with_token_evaluate__to_dict():
+        token = request.json["token"]
+
+        auth_middleware.mark_authz_done(request)
+        return jsonify({"payload": auth_middleware.evaluate_to_dict(
+            request,
+            (RESOURCE_EVERYTHING,),
+            (PERMISSION_INGEST_DATA,),
+            require_token=True,
+            headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+        )})
+
     with test_app_auth.test_client() as client:
         yield client
 
@@ -256,6 +269,14 @@ def test_flask_auth_post_with_token_evaluate_one(flask_client_auth: FlaskClient)
     r = flask_client_auth.post("/post-with-token-evaluate-one", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":true}\n'
+
+
+@responses.activate
+def test_flask_auth_post_with_token_evaluate_to_dict(flask_client_auth: FlaskClient):
+    responses.add(responses.POST, "https://bento-auth.local/policy/evaluate", json={"result": [[True]]}, status=200)
+    r = flask_client_auth.post("/post-with-token-evaluate-to-dict", json={"token": "test"})
+    assert r.status_code == 200
+    assert r.text == '{"payload":[{"ingest:data":true}]}\n'
 
 
 @responses.activate
