@@ -170,6 +170,20 @@ async def auth_post_with_token_evaluate_one(request: Request, body: TestTokenBod
     )})
 
 
+@test_app_auth.post("/post-with-token-evaluate-to-dict")
+async def auth_post_with_token_evaluate_to_dict(request: Request, body: TestTokenBody):
+    token = body.token
+
+    auth_middleware.mark_authz_done(request)
+    return JSONResponse({"payload": await auth_middleware.async_evaluate_to_dict(
+        request,
+        (RESOURCE_EVERYTHING,),
+        (PERMISSION_INGEST_DATA,),
+        require_token=True,
+        headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+    )})
+
+
 # Auth test app (disabled auth middleware) ------------------------------------
 
 test_app_auth_disabled = FastAPI()
@@ -320,6 +334,13 @@ def test_fastapi_auth_post_with_token_evaluate_one(aioresponse: aioresponses, fa
     r = fastapi_client_auth.post("/post-with-token-evaluate-one", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":true}'
+
+
+def test_fastapi_auth_post_with_token_evaluate_to_dict(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+    r = fastapi_client_auth.post("/post-with-token-evaluate-to-dict", json={"token": "test"})
+    assert r.status_code == 200
+    assert r.text == '{"payload":[{"ingest:data":true}]}'
 
 
 @pytest.mark.asyncio
