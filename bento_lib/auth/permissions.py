@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import Iterable, NewType
 
 
 class PermissionDefinitionError(Exception):
@@ -29,12 +29,24 @@ PERMISSIONS_BY_STRING: dict[str, "Permission"] = {}
 
 
 class Permission(str):
-    def __init__(self, verb: PermissionVerb, noun: PermissionNoun, min_level_required: Level = LEVEL_DATASET):
+    def __init__(
+        self, verb: PermissionVerb,
+        noun: PermissionNoun,
+        min_level_required: Level = LEVEL_DATASET,
+        gives: Iterable["Permission"] = (),
+    ):
         super().__init__()
 
         self._verb: PermissionVerb = verb
         self._noun: PermissionNoun = noun
         self._min_level_required: Level = min_level_required
+
+        # Create full set using nested gives
+        base_gives = set(gives)  # in case our iterable is a generator, consume it only once
+        full_gives: set["Permission"] = set(base_gives)  # copy base_gives as a starting point
+        for g in base_gives:
+            full_gives |= g.gives
+        self._gives: frozenset["Permission"] = frozenset(full_gives)
 
         str_rep = str(self)
 
@@ -44,7 +56,13 @@ class Permission(str):
         PERMISSIONS.append(self)
         PERMISSIONS_BY_STRING[str_rep] = self
 
-    def __new__(cls, verb: PermissionVerb, noun: PermissionNoun, min_level_required: Level = LEVEL_DATASET):
+    def __new__(
+        cls,
+        verb: PermissionVerb,
+        noun: PermissionNoun,
+        min_level_required: Level = LEVEL_DATASET,
+        gives: Iterable["Permission"] = (),
+    ):
         return super().__new__(cls, cls._str_form(verb, noun))
 
     @classmethod
@@ -53,6 +71,10 @@ class Permission(str):
 
     def __repr__(self):
         return f"Permission({str(self)})"
+
+    @property
+    def gives(self) -> frozenset["Permission"]:
+        return self._gives
 
 
 # Verb/noun definitions ---------------------------------------------------------------------------
@@ -90,15 +112,19 @@ PERMISSIONS_NOUN = PermissionNoun("permissions")
 
 P_VIEW_PRIVATE_PORTAL = Permission(VIEW_VERB, PRIVATE_PORTAL, min_level_required=LEVEL_INSTANCE)
 
+# TODO: embedding project/dataset here is awkward
+
 P_QUERY_PROJECT_LEVEL_BOOLEAN = Permission(QUERY_VERB, PROJECT_LEVEL_BOOLEAN, min_level_required=LEVEL_PROJECT)
 P_QUERY_DATASET_LEVEL_BOOLEAN = Permission(QUERY_VERB, DATASET_LEVEL_BOOLEAN)
 
-P_QUERY_PROJECT_LEVEL_COUNTS = Permission(QUERY_VERB, PROJECT_LEVEL_COUNTS, min_level_required=LEVEL_PROJECT)
-P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS)
+P_QUERY_PROJECT_LEVEL_COUNTS = Permission(
+    QUERY_VERB, PROJECT_LEVEL_COUNTS, min_level_required=LEVEL_PROJECT, gives=(P_QUERY_PROJECT_LEVEL_BOOLEAN,))
+P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, gives=(P_QUERY_DATASET_LEVEL_BOOLEAN,))
 
 # Data-level: interacting with data inside of data services... and triggering workflows
 
-P_QUERY_DATA = Permission(QUERY_VERB, DATA)  # query at full access
+P_QUERY_DATA = Permission(
+    QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS))  # query at full access
 P_DOWNLOAD_DATA = Permission(DOWNLOAD_VERB, DATA)  # download CSVs, associated DRS objects
 P_DELETE_DATA = Permission(DELETE_VERB, DATA)  # clear data from a specific data type
 
