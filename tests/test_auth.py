@@ -6,6 +6,8 @@ from bento_lib.auth.permissions import (
     PermissionDefinitionError,
     QUERY_VERB,
     DATA,
+    P_QUERY_PROJECT_LEVEL_BOOLEAN,
+    P_QUERY_PROJECT_LEVEL_COUNTS,
     P_QUERY_DATA,
     P_DELETE_DATA,
 )
@@ -31,6 +33,15 @@ def test_permissions_repr():
 
 def test_permissions_hash():
     assert len({P_QUERY_DATA, P_QUERY_DATA, P_DELETE_DATA}) == 2
+
+
+def test_permissions_gives():
+    assert P_QUERY_PROJECT_LEVEL_BOOLEAN in P_QUERY_PROJECT_LEVEL_COUNTS.gives
+
+    assert P_QUERY_PROJECT_LEVEL_BOOLEAN in P_QUERY_DATA.gives
+    assert P_QUERY_PROJECT_LEVEL_COUNTS in P_QUERY_DATA.gives
+
+    assert P_QUERY_DATA not in P_QUERY_PROJECT_LEVEL_COUNTS.gives
 
 
 def test_build_resource():

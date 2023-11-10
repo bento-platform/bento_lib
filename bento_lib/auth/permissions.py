@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import Iterable, NewType
 
 
 class PermissionDefinitionError(Exception):
@@ -29,12 +29,24 @@ PERMISSIONS_BY_STRING: dict[str, "Permission"] = {}
 
 
 class Permission(str):
-    def __init__(self, verb: PermissionVerb, noun: PermissionNoun, min_level_required: Level = LEVEL_DATASET):
+    def __init__(
+        self, verb: PermissionVerb,
+        noun: PermissionNoun,
+        min_level_required: Level = LEVEL_DATASET,
+        gives: Iterable["Permission"] = (),
+    ):
         super().__init__()
 
         self._verb: PermissionVerb = verb
         self._noun: PermissionNoun = noun
         self._min_level_required: Level = min_level_required
+
+        # Create full set using nested gives
+        base_gives = set(gives)  # in case our iterable is a generator, consume it only once
+        full_gives: set["Permission"] = set(base_gives)  # copy base_gives as a starting point
+        for g in base_gives:
+            full_gives |= g.gives
+        self._gives: frozenset["Permission"] = frozenset(full_gives)
 
         str_rep = str(self)
 
@@ -44,7 +56,13 @@ class Permission(str):
         PERMISSIONS.append(self)
         PERMISSIONS_BY_STRING[str_rep] = self
 
-    def __new__(cls, verb: PermissionVerb, noun: PermissionNoun, min_level_required: Level = LEVEL_DATASET):
+    def __new__(
+        cls,
+        verb: PermissionVerb,
+        noun: PermissionNoun,
+        min_level_required: Level = LEVEL_DATASET,
+        gives: Iterable["Permission"] = (),
+    ):
         return super().__new__(cls, cls._str_form(verb, noun))
 
     @classmethod
@@ -53,6 +71,10 @@ class Permission(str):
 
     def __repr__(self):
         return f"Permission({str(self)})"
+
+    @property
+    def gives(self) -> frozenset["Permission"]:
+        return self._gives
 
 
 # Verb/noun definitions ---------------------------------------------------------------------------
@@ -90,15 +112,19 @@ PERMISSIONS_NOUN = PermissionNoun("permissions")
 
 P_VIEW_PRIVATE_PORTAL = Permission(VIEW_VERB, PRIVATE_PORTAL, min_level_required=LEVEL_INSTANCE)
 
+# TODO: embedding project/dataset here is awkward
+
 P_QUERY_PROJECT_LEVEL_BOOLEAN = Permission(QUERY_VERB, PROJECT_LEVEL_BOOLEAN, min_level_required=LEVEL_PROJECT)
 P_QUERY_DATASET_LEVEL_BOOLEAN = Permission(QUERY_VERB, DATASET_LEVEL_BOOLEAN)
 
-P_QUERY_PROJECT_LEVEL_COUNTS = Permission(QUERY_VERB, PROJECT_LEVEL_COUNTS, min_level_required=LEVEL_PROJECT)
-P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS)
+P_QUERY_PROJECT_LEVEL_COUNTS = Permission(
+    QUERY_VERB, PROJECT_LEVEL_COUNTS, min_level_required=LEVEL_PROJECT, gives=(P_QUERY_PROJECT_LEVEL_BOOLEAN,))
+P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, gives=(P_QUERY_DATASET_LEVEL_BOOLEAN,))
 
 # Data-level: interacting with data inside of data services... and triggering workflows
 
-P_QUERY_DATA = Permission(QUERY_VERB, DATA)  # query at full access
+P_QUERY_DATA = Permission(
+    QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS))  # query at full access
 P_DOWNLOAD_DATA = Permission(DOWNLOAD_VERB, DATA)  # download CSVs, associated DRS objects
 P_DELETE_DATA = Permission(DELETE_VERB, DATA)  # clear data from a specific data type
 
@@ -110,10 +136,28 @@ P_EXPORT_DATA = Permission(EXPORT_VERB, DATA)
 
 P_VIEW_RUNS = Permission(VIEW_VERB, RUNS)
 
-#   - notifications
+#   - notifications  TODO: notifications should have a resource embedded in them
 
 P_VIEW_NOTIFICATIONS = Permission(VIEW_VERB, NOTIFICATIONS)
 P_CREATE_NOTIFICATIONS = Permission(CREATE_VERB, NOTIFICATIONS)
+
+# ---
+
+# only {everything: true} or {project: ...} (instance- or project-level):
+#   - project metadata editing
+#   - dataset management
+P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT)
+P_CREATE_DATASET = Permission(CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT)
+#     - deleting a dataset inherently deletes data inside it, so we give delete:data to all holders of delete:dataset
+P_DELETE_DATASET = Permission(DELETE_VERB, DATASET, min_level_required=LEVEL_DATASET, gives=(P_DELETE_DATA,))
+# ---
+
+#   - dataset metadata editing
+P_EDIT_DATASET = Permission(EDIT_VERB, DATASET)
+
+# can view edit permissions for the resource which granted this permission only:
+P_VIEW_PERMISSIONS = Permission(VIEW_VERB, PERMISSIONS_NOUN)
+P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN)
 
 # ---
 
@@ -128,21 +172,7 @@ P_DELETE_DROP_BOX = Permission(DELETE_VERB, DROP_BOX, min_level_required=LEVEL_I
 #   - project management
 
 P_CREATE_PROJECT = Permission(CREATE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE)
-P_DELETE_PROJECT = Permission(DELETE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE)
-
-# ---
-
-# only {everything: true} or {project: ...} (instance- or project-level):
-#   - project metadata editing
-#   - dataset management
-P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT)
-P_CREATE_DATASET = Permission(CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT)
-P_DELETE_DATASET = Permission(DELETE_VERB, DATASET, min_level_required=LEVEL_DATASET)
-# ---
-
-#   - dataset metadata editing
-P_EDIT_DATASET = Permission(EDIT_VERB, DATASET)
-
-# can view edit permissions for the resource which granted this permission only:
-P_VIEW_PERMISSIONS = Permission(VIEW_VERB, PERMISSIONS_NOUN)
-P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN)
+#     - deleting a project inherently deletes datasets/data inside it,
+#       so we give delete:data and delete:dataset to all holders of delete:project
+P_DELETE_PROJECT = Permission(
+    DELETE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE, gives=(P_DELETE_DATASET, P_DELETE_DATA))
