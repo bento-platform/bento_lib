@@ -51,9 +51,5 @@ class GA4GHServiceInfo(_GA4GHServiceInfoBase, total=False):
     documentationUrl: str
     url: str  # Technically not part of spec; comes from service-registry
     environment: str  # TODO: Literal["dev", "prod"] if JetBrains fixes their inspection...
-
-    # TODO: deprecate in favour of bento object
-    git_tag: str
-    git_branch: str
-
+    # Bento-specific service info properties are contained inside a nested, "bento"-keyed dictionary
     bento: BentoExtraServiceInfo
