@@ -1,19 +1,19 @@
-def test_types():
+def test_service_info_types():
     # not much to do here except make sure they can be imported and used
-    import bento_lib.types as bt
+    import bento_lib.service_info as bsi
 
-    service_type: bt.GA4GHServiceType = {
+    service_type: bsi.GA4GHServiceType = {
         "group": "ca.c3g.bento",
         "artifact": "service-registry",
         "version": "1.0.0",
     }
 
-    service_org: bt.GA4GHServiceOrganization = {
+    service_org: bsi.GA4GHServiceOrganization = {
         "name": "C3G",
         "url": "http://www.computationalgenomics.ca"
     }
 
-    service_info_dict: bt.GA4GHServiceInfo = {
+    service_info_dict: bsi.GA4GHServiceInfo = {
         "id": "1",
         "name": "Bento Service Registry",
         "type": service_type,
@@ -26,3 +26,6 @@ def test_types():
     }
 
     print(service_info_dict)
+
+    # Should be valid as Pydantic input too
+    bsi.GA4GhServiceOrganizationModel.model_validate(service_org)
