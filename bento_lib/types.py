@@ -1,8 +1,12 @@
+from pydantic import BaseModel, ConfigDict
 from typing import TypedDict
 
 __all__ = [
     "GA4GHServiceType",
     "GA4GHServiceOrganization",
+    "GA4GhServiceOrganizationModel",
+    "SERVICE_ORGANIZATION_C3G",
+    "SERVICE_ORGANIZATION_C3G_PYDANTIC",
     "BentoExtraServiceInfo",
     "GA4GHServiceInfo",
 ]
@@ -19,6 +23,17 @@ class GA4GHServiceOrganization(TypedDict):
     url: str
 
 
+class GA4GhServiceOrganizationModel(BaseModel):
+    name: str
+    url: str
+    model_config = ConfigDict(extra="forbid")
+
+
+SERVICE_ORGANIZATION_C3G: GA4GHServiceOrganization = {"name": "C3G", "url": "https://www.computationalgenomics.ca"}
+SERVICE_ORGANIZATION_C3G_PYDANTIC: GA4GhServiceOrganizationModel = GA4GhServiceOrganizationModel.model_validate(
+    SERVICE_ORGANIZATION_C3G)
+
+
 # TODO: py3.11: Required[] instead of base class
 
 
@@ -30,7 +45,7 @@ class BentoExtraServiceInfo(TypedDict, total=False):
     #     without needing to provide data types/search endpoints as well
     #   - implict default: false
     workflowProvider: bool
-
+    # Git information: only added if we're in a local development mode
     gitRepository: str
     gitTag: str
     gitBranch: str
