@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-tags: true  # Fetch tags for the /service-info builder test
+          fetch-depth: 0  # Fetch everything for the /service-info builder test
       - uses: actions/setup-python@v4
         name: Set up Python
         with:
