@@ -72,6 +72,11 @@ adequately describes the associated data.
 
 All Bento channels are prefixed with `bento.`.
 
+### `logging`
+
+`logging` contains helper functions for standardized Bento logging configuration
+and formatting.
+
 ### `responses`
 
 `responses` contains standardized error message-generating functions 
