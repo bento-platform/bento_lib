@@ -22,7 +22,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch everything for the /service-info builder test
       - uses: actions/setup-python@v4
         name: Set up Python
         with:
@@ -42,7 +44,7 @@ jobs:
       matrix:
         python-version: [ '3.10', '3.11' ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         name: Set up Python
         with:

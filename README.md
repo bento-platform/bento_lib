@@ -108,10 +108,11 @@ PostgreSQL, allowing safe queries against a Postgres database.
 `search.queries` provides definitions for the Bento query AST and some helper
 methods for creating and processing ASTs.
 
-### `types`
+### `service_info`
 
-`types` contains Python type hints for different standard Bento 
-dictionaries/objects.
+`service_info` contains Python typed dictionaries, Pydantic models, and helpers
+for common structures and operations related to GA4GH's `/service-info` 
+specification.
 
 ### `workflows`
 
