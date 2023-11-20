@@ -1,3 +1,18 @@
+from pathlib import Path
+
+from bento_lib import workflows
+
+__all__ = [
+    "PERMISSION_INGEST_DATA",
+    "authz_test_case_params",
+    "authz_test_cases",
+    "TEST_AUTHZ_VALID_POST_BODY",
+    "TEST_AUTHZ_HEADERS",
+    "WDL_DIR",
+    "WORKFLOW_DEF",
+]
+
+
 PERMISSION_INGEST_DATA = "ingest:data"
 
 # cases: (authz response code, authz response result, test client URL, auth header included, assert final response)
@@ -20,3 +35,15 @@ authz_test_cases = (
 
 TEST_AUTHZ_VALID_POST_BODY = {"test1": "a", "test2": "b"}
 TEST_AUTHZ_HEADERS = {"Authorization": "Bearer test"}
+
+WDL_DIR = Path(__file__).parent / "wdls"
+
+WORKFLOW_DEF = wd = workflows.models.WorkflowDefinition(
+    name="Test Workflow",
+    type="ingestion",
+    description="A test workflow",
+    file="test.wdl",
+    inputs=[
+        workflows.models.WorkflowStringInput(id="input1", type="string"),
+    ]
+)

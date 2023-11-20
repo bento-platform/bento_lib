@@ -14,11 +14,14 @@ from pydantic import BaseModel
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
+from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
     validation_exception_handler_factory,
 )
+from bento_lib.workflows.workflow_set import WorkflowSet
+from bento_lib.workflows.fastapi import build_workflow_router
 
 from .common import (
     PERMISSION_INGEST_DATA,
@@ -26,6 +29,8 @@ from .common import (
     authz_test_cases,
     TEST_AUTHZ_VALID_POST_BODY,
     TEST_AUTHZ_HEADERS,
+    WDL_DIR,
+    WORKFLOW_DEF,
 )
 
 
@@ -97,6 +102,11 @@ test_app_auth.exception_handler(HTTPException)(http_exception_handler_factory(lo
 test_app_auth.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger, auth_middleware))
 test_app_auth.exception_handler(RequestValidationError)(validation_exception_handler_factory(auth_middleware))
 
+workflow_set = WorkflowSet(WDL_DIR)
+workflow_set.add_workflow("test", WORKFLOW_DEF)
+
+test_app_auth.include_router(build_workflow_router(auth_middleware, workflow_set))
+
 fastapi_client_auth_ = TestClient(test_app_auth)
 
 
@@ -111,14 +121,14 @@ def auth_post_public(body: TestBody):
 
 
 @test_app_auth.post("/post-private", dependencies=[
-    auth_middleware.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA})),
+    auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
 ])
 def auth_post_private(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth.post("/post-private-no-flag", dependencies=[
-    auth_middleware.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), set_authz_flag=False),
+    auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), set_authz_flag=False),
 ])
 def auth_post_private_no_flag(request: Request, body: TestBody):
     auth_middleware.mark_authz_done(request)
@@ -126,7 +136,7 @@ def auth_post_private_no_flag(request: Request, body: TestBody):
 
 
 @test_app_auth.post("/post-private-no-token", dependencies=[
-    auth_middleware.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), require_token=False),
+    auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), require_token=False),
 ])
 def auth_post_private_no_token(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
@@ -164,7 +174,7 @@ async def auth_post_with_token_evaluate_one(request: Request, body: TestTokenBod
     return JSONResponse({"payload": await auth_middleware.async_evaluate_one(
         request,
         RESOURCE_EVERYTHING,
-        PERMISSION_INGEST_DATA,
+        P_INGEST_DATA,
         require_token=True,
         headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
     )})
@@ -178,7 +188,7 @@ async def auth_post_with_token_evaluate_to_dict(request: Request, body: TestToke
     return JSONResponse({"payload": await auth_middleware.async_evaluate_to_dict(
         request,
         (RESOURCE_EVERYTHING,),
-        (PERMISSION_INGEST_DATA,),
+        (P_INGEST_DATA,),
         require_token=True,
         headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
     )})
@@ -215,7 +225,7 @@ def auth_disabled_post_public(body: TestBody):
 
 
 @test_app_auth_disabled.post("/post-private", dependencies=[
-    auth_middleware_disabled.dep_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA})),
+    auth_middleware_disabled.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
 ])
 def auth_disabled_post_private(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
@@ -358,3 +368,24 @@ async def test_fastapi_auth_disabled(aioresponse: aioresponses, fastapi_client_a
         frozenset({PERMISSION_INGEST_DATA}),
         {"everything": True},
     ) is None
+
+
+def test_fastapi_get_workflows(fastapi_client_auth: TestClient):
+    r = fastapi_client_auth.get("/workflows")
+    assert r.status_code == 200
+    assert len(r.json()["ingestion"]) == 1  # 1 ingestion workflow
+
+    r = fastapi_client_auth.get("/workflows/")  # trailing slash should be OK too
+    assert r.status_code == 200
+    assert len(r.json()["ingestion"]) == 1  # 1 ingestion workflow
+
+    r = fastapi_client_auth.get("/workflows/test")
+    assert r.status_code == 200  # workflow metadata
+    r = fastapi_client_auth.get("/workflows/test.wdl")
+    assert r.status_code == 200  # workflow WDL file
+
+    # no workflow with the ID "test2"
+    r = fastapi_client_auth.get("/workflows/test2")
+    assert r.status_code == 404
+    r = fastapi_client_auth.get("/workflows/test2.wdl")
+    assert r.status_code == 404
