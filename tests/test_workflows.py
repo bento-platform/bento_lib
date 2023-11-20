@@ -1,6 +1,9 @@
 import pytest
+from pathlib import Path
 
 from bento_lib import workflows
+
+WDL_DIR = Path(__file__).parent / "wdls"
 
 
 def test_namespaced_input():
@@ -8,7 +11,7 @@ def test_namespaced_input():
 
 
 def test_workflow_set():
-    ws = workflows.workflow_set.WorkflowSet()
+    ws = workflows.workflow_set.WorkflowSet(WDL_DIR)
 
     assert not ws.workflow_exists("test")
     assert ws.get_workflow("test") is None
@@ -28,6 +31,7 @@ def test_workflow_set():
     assert ws.workflow_exists("test")
     assert ws.get_workflow("test") == wd
     assert ws.get_workflow_resource("test") == "test.wdl"
+    assert ws.get_workflow_wdl_path("test") == WDL_DIR / "test.wdl"
 
     assert ws.workflow_dicts_by_type_and_id()["ingestion"]["test"]["name"] == "Test Workflow"
     assert ws.workflow_dicts_by_id()["test"]["name"] == "Test Workflow"
@@ -41,7 +45,7 @@ def test_workflow_set():
         description="A test workflow",
         data_type="experiment",
         tags=["experiment", "cbioportal"],
-        file="test.wdl",
+        file="test2.wdl",
         inputs=[
             workflows.models.WorkflowStringInput(id="input1", type="string"),
         ]
@@ -49,3 +53,5 @@ def test_workflow_set():
 
     ws.add_workflow("test2", wd2)
     assert ws.workflow_exists("test2")
+
+    assert ws.get_workflow_wdl_path("test3") is None  # no test3 workflow
