@@ -3,7 +3,6 @@ from pathlib import Path
 from bento_lib import workflows
 
 __all__ = [
-    "PERMISSION_INGEST_DATA",
     "authz_test_case_params",
     "authz_test_cases",
     "TEST_AUTHZ_VALID_POST_BODY",
@@ -11,9 +10,6 @@ __all__ = [
     "WDL_DIR",
     "WORKFLOW_DEF",
 ]
-
-
-PERMISSION_INGEST_DATA = "ingest:data"
 
 # cases: (authz response code, authz response result, test client URL, auth header included, assert final response)
 authz_test_case_params = "authz_code, authz_res, test_url, inc_headers, test_code"

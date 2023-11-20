@@ -8,11 +8,11 @@ from flask import Flask, jsonify, Request, request
 from flask.testing import FlaskClient
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
-from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
 from bento_lib.auth.middleware.flask import FlaskAuthMiddleware
+from bento_lib.auth.permissions import P_INGEST_DATA
+from bento_lib.auth.resources import RESOURCE_EVERYTHING
 
 from .common import (
-    PERMISSION_INGEST_DATA,
     authz_test_case_params,
     authz_test_cases,
     TEST_AUTHZ_VALID_POST_BODY,
@@ -73,18 +73,18 @@ def flask_client_auth():
         return jsonify(request.json)
 
     @test_app_auth.route("/post-private", methods=["POST"])
-    @auth_middleware.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}))
+    @auth_middleware.deco_require_permissions_on_resource(frozenset({P_INGEST_DATA}))
     def auth_post_private():
         return jsonify(request.json)
 
     @test_app_auth.route("/post-private-no-flag", methods=["POST"])
-    @auth_middleware.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), set_authz_flag=False)
+    @auth_middleware.deco_require_permissions_on_resource(frozenset({P_INGEST_DATA}), set_authz_flag=False)
     def auth_post_private_no_flag():
         auth_middleware.mark_authz_done(request)
         return jsonify(request.json)
 
     @test_app_auth.route("/post-private-no-token", methods=["POST"])
-    @auth_middleware.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}), require_token=False)
+    @auth_middleware.deco_require_permissions_on_resource(frozenset({P_INGEST_DATA}), require_token=False)
     def auth_post_private_no_token():
         return jsonify(request.json)
 
@@ -106,7 +106,7 @@ def flask_client_auth():
         payload = request.json["payload"]
         auth_middleware.check_authz_evaluate(
             request,
-            frozenset({PERMISSION_INGEST_DATA}),
+            frozenset({P_INGEST_DATA}),
             RESOURCE_EVERYTHING,
             require_token=True,
             set_authz_flag=True,
@@ -122,7 +122,7 @@ def flask_client_auth():
         return jsonify({"payload": auth_middleware.evaluate_one(
             request,
             RESOURCE_EVERYTHING,
-            PERMISSION_INGEST_DATA,
+            P_INGEST_DATA,
             require_token=True,
             headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
         )})
@@ -135,7 +135,7 @@ def flask_client_auth():
         return jsonify({"payload": auth_middleware.evaluate_to_dict(
             request,
             (RESOURCE_EVERYTHING,),
-            (PERMISSION_INGEST_DATA,),
+            (P_INGEST_DATA,),
             require_token=True,
             headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
         )})
@@ -163,7 +163,7 @@ def flask_client_auth_disabled_with_middleware():
         return jsonify(request.json)
 
     @test_app_auth_disabled.route("/post-private", methods=["POST"])
-    @auth_middleware_disabled.deco_require_permissions_on_resource(frozenset({PERMISSION_INGEST_DATA}))
+    @auth_middleware_disabled.deco_require_permissions_on_resource(frozenset({P_INGEST_DATA}))
     def auth_disabled_post_private():
         return jsonify(request.json)
 
@@ -293,6 +293,6 @@ def test_flask_auth_disabled(flask_client_auth_disabled_with_middleware: tuple[F
 
     assert auth_middleware_disabled.check_authz_evaluate(
         Request({}),
-        frozenset({PERMISSION_INGEST_DATA}),
+        frozenset({P_INGEST_DATA}),
         {"everything": True},
     ) is None

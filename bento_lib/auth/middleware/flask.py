@@ -5,7 +5,8 @@ from functools import wraps
 
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.base import BaseAuthMiddleware
-from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
+from bento_lib.auth.permissions import Permission
+from bento_lib.auth.resources import RESOURCE_EVERYTHING
 from bento_lib.responses.errors import http_error
 
 __all__ = [
@@ -75,7 +76,7 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
 
     def deco_require_permissions_on_resource(
         self,
-        permissions: frozenset[str],
+        permissions: frozenset[Permission],
         resource: dict | None = None,
         require_token: bool = True,
         set_authz_flag: bool = True,

@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable
 
 from ..exceptions import BentoAuthException
+from ..permissions import Permission
 from ..types import EvaluationResultMatrix, EvaluationResultDict
 from .mark_authz_done_mixin import MarkAuthzDoneMixin
 
@@ -94,7 +95,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         return res.json()
 
     @staticmethod
-    def _evaluate_body(resources: Iterable[dict], permissions: Iterable[str]) -> dict:
+    def _evaluate_body(resources: Iterable[dict], permissions: Iterable[Permission]) -> dict:
         return {"resources": tuple(resources), "permissions": tuple(permissions)}
 
     @staticmethod
@@ -102,14 +103,17 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         return tuple(tuple(x) for x in authz_result)
 
     @staticmethod
-    def _permissions_matrix_to_dict(m: EvaluationResultMatrix, permissions: Iterable[str]) -> EvaluationResultDict:
+    def _permissions_matrix_to_dict(
+        m: EvaluationResultMatrix,
+        permissions: Iterable[Permission],
+    ) -> EvaluationResultDict:
         return tuple({p: pv for p, pv in zip(permissions, r)} for r in m)
 
     def evaluate(
         self,
         request: Any,
         resources: Iterable[dict],
-        permissions: Iterable[str],
+        permissions: Iterable[Permission],
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
@@ -130,7 +134,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self,
         request: Any,
         resources: Iterable[dict],
-        permissions: Iterable[str],
+        permissions: Iterable[Permission],
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
@@ -144,7 +148,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self,
         request: Any,
         resource: dict,
-        permission: str,
+        permission: Permission,
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
@@ -175,7 +179,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self,
         request: Any,
         resources: Iterable[dict],
-        permissions: Iterable[str],
+        permissions: Iterable[Permission],
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
@@ -198,7 +202,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self,
         request: Any,
         resources: Iterable[dict],
-        permissions: Iterable[str],
+        permissions: Iterable[Permission],
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
@@ -213,7 +217,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self,
         request: Any,
         resource: dict,
-        permission: str,
+        permission: Permission,
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
         mark_authz_done: bool = False,
@@ -227,7 +231,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     def check_authz_evaluate(
         self,
         request: Any,
-        permissions: frozenset[str],
+        permissions: frozenset[Permission],
         resource: dict,
         require_token: bool = True,
         set_authz_flag: bool = False,
@@ -253,7 +257,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     async def async_check_authz_evaluate(
         self,
         request: Any,
-        permissions: frozenset[str],
+        permissions: frozenset[Permission],
         resource: dict,
         require_token: bool = True,
         set_authz_flag: bool = False,
