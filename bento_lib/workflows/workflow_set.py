@@ -1,5 +1,6 @@
 import werkzeug.utils
 from collections import defaultdict
+from pathlib import Path
 from .models import WorkflowDefinition
 
 __all__ = [
@@ -12,8 +13,9 @@ class WorkflowSet:
     A class for constructing a singleton object that stores all workflow descriptions in a particular service.
     """
 
-    def __init__(self):
+    def __init__(self, wdl_directory: Path):
         self._defs_by_id: dict[str, WorkflowDefinition] = {}
+        self._wdl_directory: Path = wdl_directory
 
     def add_workflow(self, id_: str, definition: WorkflowDefinition):
         if id_ in self._defs_by_id:
@@ -27,6 +29,11 @@ class WorkflowSet:
     def get_workflow_resource(self, id_: str) -> str | None:
         if (wd := self.get_workflow(id_)) is not None:
             return werkzeug.utils.secure_filename(wd.file)
+        return None
+
+    def get_workflow_wdl_path(self, id_: str) -> Path | None:
+        if (wfr := self.get_workflow_resource(id_)) is not None:
+            return self._wdl_directory / wfr
         return None
 
     def workflow_exists(self, id_: str) -> bool:
