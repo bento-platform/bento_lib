@@ -12,9 +12,9 @@ from httpx import Response as HttpxResponse
 from pydantic import BaseModel
 
 from bento_lib.auth.exceptions import BentoAuthException
-from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.auth.permissions import P_INGEST_DATA
+from bento_lib.auth.resources import RESOURCE_EVERYTHING
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
@@ -24,7 +24,6 @@ from bento_lib.workflows.workflow_set import WorkflowSet
 from bento_lib.workflows.fastapi import build_workflow_router
 
 from .common import (
-    PERMISSION_INGEST_DATA,
     authz_test_case_params,
     authz_test_cases,
     TEST_AUTHZ_VALID_POST_BODY,
@@ -157,7 +156,7 @@ async def auth_post_with_token_in_body(request: Request, body: TestTokenPayloadB
     token = body.token
     await auth_middleware.async_check_authz_evaluate(
         request,
-        frozenset({PERMISSION_INGEST_DATA}),
+        frozenset({P_INGEST_DATA}),
         RESOURCE_EVERYTHING,
         require_token=True,
         set_authz_flag=True,
@@ -365,7 +364,7 @@ async def test_fastapi_auth_disabled(aioresponse: aioresponses, fastapi_client_a
 
     assert await auth_middleware_disabled.async_check_authz_evaluate(
         Request({"type": "http"}),
-        frozenset({PERMISSION_INGEST_DATA}),
+        frozenset({P_INGEST_DATA}),
         {"everything": True},
     ) is None
 

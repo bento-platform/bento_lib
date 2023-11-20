@@ -1,10 +1,9 @@
 import json
-from bento_lib.auth.middleware.constants import RESOURCE_EVERYTHING
+from bento_lib.auth.resources import RESOURCE_EVERYTHING
+from bento_lib.auth.permissions import P_INGEST_DATA
 from django.http import HttpRequest, JsonResponse
 
 from ..django_test_project.authz import authz
-
-PERMISSION_INGEST_DATA = "ingest:data"
 
 
 def auth_post_public(request: HttpRequest):
@@ -15,7 +14,7 @@ def auth_post_public(request: HttpRequest):
 def auth_post_private(request: HttpRequest):
     authz.check_authz_evaluate(
         request,
-        frozenset({PERMISSION_INGEST_DATA}),
+        frozenset({P_INGEST_DATA}),
         RESOURCE_EVERYTHING,
         require_token=True,
         set_authz_flag=True,
@@ -26,7 +25,7 @@ def auth_post_private(request: HttpRequest):
 def auth_post_private_no_flag(request: HttpRequest):
     authz.check_authz_evaluate(
         request,
-        frozenset({PERMISSION_INGEST_DATA}),
+        frozenset({P_INGEST_DATA}),
         RESOURCE_EVERYTHING,
         require_token=True,
         set_authz_flag=False,
@@ -38,7 +37,7 @@ def auth_post_private_no_flag(request: HttpRequest):
 def auth_post_private_no_token(request: HttpRequest):
     authz.check_authz_evaluate(
         request,
-        frozenset({PERMISSION_INGEST_DATA}),
+        frozenset({P_INGEST_DATA}),
         RESOURCE_EVERYTHING,
         require_token=False,
         set_authz_flag=True,
