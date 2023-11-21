@@ -25,6 +25,7 @@ setuptools.setup(
         "Werkzeug>=2.2.3,<4",
     ],
     extras_require={
+        "asyncpg": ["asyncpg>=0.29.0,<0.30.0"],
         "flask": ["Flask>=2.2.5,<4"],
         "django": ["Django>=4.2.1,<5", "djangorestframework>=3.14.0,<3.15"],
         "fastapi": ["fastapi>=0.100,<0.105"],

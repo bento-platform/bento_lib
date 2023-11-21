@@ -10,6 +10,13 @@ Common utilities and helpers for Bento platform services.
 
 ## Running Tests
 
+For tests to complete successfully, the following external servers must be running:
+
+* A Redis server at `localhost:6379`
+* A Postgres server at `localhost:5432`
+
+Then, tests and linting can be run with the following command:
+
 ```bash
 python3 -m tox
 ```
