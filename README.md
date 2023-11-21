@@ -10,6 +10,14 @@ Common utilities and helpers for Bento platform services.
 
 ## Running Tests
 
+For tests to complete successfully, the following external servers must be running:
+
+* A Redis server at `localhost:6379`
+* A Postgres server at `localhost:5432` with `peer` access for the `postgres` 
+  role/database 
+
+Then, tests and linting can be run with the following command:
+
 ```bash
 python3 -m tox
 ```
@@ -55,6 +63,10 @@ Make sure that the tagged version is a valid semantic versioning translation of 
 ### `auth`
 
 `auth` provides Python service middleware for dealing with the Bento authorization service.
+
+### `db`
+
+`db` contains common base classes for setting up database managers.
 
 ### `drs`
 
