@@ -13,7 +13,8 @@ Common utilities and helpers for Bento platform services.
 For tests to complete successfully, the following external servers must be running:
 
 * A Redis server at `localhost:6379`
-* A Postgres server at `localhost:5432`
+* A Postgres server at `localhost:5432` with `peer` access for the `postgres` 
+  role/database 
 
 Then, tests and linting can be run with the following command:
 
