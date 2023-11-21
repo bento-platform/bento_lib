@@ -10,7 +10,7 @@ TEST_SCHEMA = pathlib.Path(__file__).parent / "data" / "test.sql"
 
 
 async def get_test_db() -> AsyncGenerator[PgAsyncDatabase, None]:
-    db_instance = PgAsyncDatabase("postgresql://localhost:5432/postgres", TEST_SCHEMA)
+    db_instance = PgAsyncDatabase("postgresql://postgres@localhost:5432/postgres", TEST_SCHEMA)
     await db_instance.initialize(pool_size=1)  # Small pool size for testing
     yield db_instance
 
