@@ -64,6 +64,10 @@ Make sure that the tagged version is a valid semantic versioning translation of 
 
 `auth` provides Python service middleware for dealing with the Bento authorization service.
 
+### `db`
+
+`db` contains common base classes for setting up database managers.
+
 ### `drs`
 
 `drs` provides utilities for fetching data and record metadata from 
