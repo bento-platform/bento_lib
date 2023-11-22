@@ -8,15 +8,18 @@ from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSetti
 from typing import Any
 
 __all__ = [
-    "CorsOriginsParsingSource",
+    "CorsOriginsParsingEnvSettingsSource",
     "BentoBaseConfig",
 ]
 
 
-class CorsOriginsParsingSource(EnvSettingsSource):
+CORS_ORIGINS_DEFAULT: tuple[str, ...] = ()
+
+
+class CorsOriginsParsingEnvSettingsSource(EnvSettingsSource):
     def prepare_field_value(self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool) -> Any:
         if field_name == "cors_origins":
-            return tuple(x.strip() for x in value.split(";")) if value is not None else ()
+            return tuple(x.strip() for x in value.split(";")) if value is not None else CORS_ORIGINS_DEFAULT
         return json.loads(value) if value_is_complex else value
 
 
@@ -36,7 +39,7 @@ class BentoBaseConfig(BaseSettings):
 
     log_level: LogLevelLiteral = "debug"
 
-    cors_origins: tuple[str, ...] = ("*",)
+    cors_origins: tuple[str, ...] = CORS_ORIGINS_DEFAULT
 
     @classmethod
     def settings_customise_sources(
@@ -47,4 +50,9 @@ class BentoBaseConfig(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        return (CorsOriginsParsingSource(settings_cls),)
+        return (
+            init_settings,
+            CorsOriginsParsingEnvSettingsSource(settings_cls),
+            dotenv_settings,
+            file_secret_settings,
+        )
