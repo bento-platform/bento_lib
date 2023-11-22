@@ -16,7 +16,7 @@ __all__ = [
 class CorsOriginsParsingSource(EnvSettingsSource):
     def prepare_field_value(self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool) -> Any:
         if field_name == "cors_origins":
-            return tuple(x.strip() for x in value.split(";"))
+            return tuple(x.strip() for x in value.split(";")) if value is not None else ()
         return json.loads(value) if value_is_complex else value
 
 
