@@ -9,6 +9,7 @@ from .types import BentoExtraServiceInfo, GA4GHServiceType, GA4GHServiceOrganiza
 
 __all__ = [
     "build_service_info",
+    "build_service_info_from_pydantic_config",
 ]
 
 

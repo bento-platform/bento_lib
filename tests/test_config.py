@@ -1,5 +1,8 @@
+import logging
 import os
+import pytest
 from bento_lib.config.pydantic import BentoBaseConfig
+from bento_lib.service_info.helpers import build_service_info_from_pydantic_config
 
 
 TEST_CONFIG_VALUES = dict(
@@ -22,3 +25,16 @@ def test_base_pydantic_config_env():
         assert BentoBaseConfig.model_validate(TEST_CONFIG_VALUES).cors_origins == ("a", "b")
     finally:
         os.environ["CORS_ORIGINS"] = ""
+
+
+@pytest.mark.asyncio
+async def test_build_service_info_for_config():
+    # Make sure we can build service info from an instance of a Pydantic config with no validation errors
+    res = await build_service_info_from_pydantic_config(
+        BentoBaseConfig.model_validate(TEST_CONFIG_VALUES),
+        logging.getLogger(__name__),
+        {"serviceKind": "asdf", "dataService": False},
+        {"group": "ca.c3g.bento", "artifact": "beacon", "version": "1.0.0"},
+        "1.2.0",
+    )
+    assert res
