@@ -38,8 +38,9 @@ class BentoExtraServiceInfo(TypedDict, total=False):
     #     without needing to provide data types/search endpoints as well
     #   - implict default: false
     workflowProvider: bool
-    # Git information: only added if we're in a local development mode
+    # Static Git information: should be set by service developers
     gitRepository: str
+    # Dynamic Git information: only added if we're in a local development mode
     gitTag: str
     gitBranch: str
     gitCommit: str
