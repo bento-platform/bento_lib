@@ -258,6 +258,14 @@ def _expect_error(r: HttpxResponse, code: int, msgs: tuple[str, ...]):
     assert tuple(act_msgs) == msgs
 
 
+def test_fastapi_auth_middleware_from_config():
+    assert isinstance(auth_middleware, FastApiAuthMiddleware)
+
+    assert auth_middleware._bento_authz_service_url == test_app_auth_config.bento_authz_service_url
+    assert auth_middleware._enabled
+    assert auth_middleware._logger == logger
+
+
 def test_fastapi_middleware_init_logger():
     inst = FastApiAuthMiddleware(bento_authz_service_url="https://bento-auth.local")
     inst._log_error("doesn't appear")
