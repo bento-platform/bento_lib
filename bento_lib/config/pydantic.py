@@ -4,7 +4,7 @@ from bento_lib.logging import LogLevelLiteral
 from bento_lib.service_info.constants import SERVICE_ORGANIZATION_C3G
 from bento_lib.service_info.types import GA4GHServiceOrganizationModel
 from pydantic.fields import FieldInfo
-from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource
+from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
 from typing import Any
 
 __all__ = [
@@ -40,6 +40,9 @@ class BentoBaseConfig(BaseSettings):
     log_level: LogLevelLiteral = "debug"
 
     cors_origins: tuple[str, ...] = CORS_ORIGINS_DEFAULT
+
+    # Make Config instances hashable + immutable
+    model_config = SettingsConfigDict(frozen=True)
 
     @classmethod
     def settings_customise_sources(

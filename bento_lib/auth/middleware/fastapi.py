@@ -4,11 +4,11 @@ from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from typing import Awaitable, Callable
 
-from bento_lib.responses.errors import http_error
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.base import BaseAuthMiddleware
 from bento_lib.auth.permissions import Permission
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
+from bento_lib.responses.errors import http_error
 
 __all__ = [
     "FastApiAuthMiddleware",

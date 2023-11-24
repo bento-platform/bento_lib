@@ -5,6 +5,7 @@ import requests
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable
 
+from bento_lib.config.pydantic import BentoBaseConfig
 from ..exceptions import BentoAuthException
 from ..permissions import Permission
 from ..types import EvaluationResultMatrix, EvaluationResultDict
@@ -35,6 +36,16 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self._beacon_meta_callback: Callable[[], dict] | None = beacon_meta_callback
 
         self._bento_authz_service_url: str = bento_authz_service_url
+
+    @classmethod
+    def build_from_pydantic_config(cls, config: BentoBaseConfig, logger: logging.Logger, **kwargs):
+        return cls(
+            bento_authz_service_url=config.bento_authz_service_url,
+            debug_mode=config.bento_debug,
+            enabled=config.bento_authz_enabled,
+            logger=logger,
+            **kwargs,
+        )
 
     @property
     def enabled(self) -> bool:
