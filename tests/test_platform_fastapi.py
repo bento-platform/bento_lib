@@ -15,6 +15,7 @@ from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
+from bento_lib.config.pydantic import BentoBaseConfig
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
@@ -87,14 +88,20 @@ def get_403():
 # Auth test app ---------------------------------------------------------------
 
 test_app_auth = FastAPI()
+test_app_auth_config = BentoBaseConfig(
+    service_id="auth_test",
+    service_name="Auth Test",
+    bento_authz_service_url="https://bento-auth.local",
+    cors_origins=("*",),
+)
 test_app_auth.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=test_app_auth_config.cors_origins,
     allow_headers=["Authorization"],
     allow_credentials=True,
     allow_methods=["*"],
 )
-auth_middleware = FastApiAuthMiddleware(bento_authz_service_url="https://bento-auth.local", logger=logger)
+auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(test_app_auth_config, logger)
 auth_middleware.attach(test_app_auth)
 
 test_app_auth.exception_handler(HTTPException)(http_exception_handler_factory(logger, auth_middleware))
