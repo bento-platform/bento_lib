@@ -1,3 +1,4 @@
+import psycopg2.sql
 from bento_lib.search import build_search_response, data_structure, operations, postgres, queries
 from datetime import datetime
 from pytest import mark, raises
@@ -141,6 +142,23 @@ TEST_SCHEMA = {
                                     "search": {
                                         "operations": [operations.SEARCH_OP_EQ],
                                         "queryable": "all"
+                                    }
+                                },
+                                "test2": {
+                                    "type": "object",
+                                    "properties": {
+                                        "test": {
+                                            "type": "string",
+                                            "search": {
+                                                "operations": [operations.SEARCH_OP_EQ],
+                                                "queryable": "all"
+                                            }
+                                        }
+                                    },
+                                    "search": {
+                                        "database": {
+                                            "type": "json"
+                                        }
                                     }
                                 }
                             },
@@ -643,6 +661,11 @@ TEST_QUERIES = [
     {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "[%duM\\%\\_my]"],  # 40
      "ds": (False, False, 2, 0),
      "ps": (False, ("[%duM\\%\\_my]",))},
+
+    # Testing nested Postgres JSON schema-creation
+    {"query": ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test2", "test"], "a"],
+     "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
+     "ps": (False, ("a",))},
 ]
 
 TEST_LARGE_QUERY_1 = [
@@ -717,7 +740,7 @@ TEST_DATA_1 = {
         {
             "procedure": {"code": {"id": "TEST", "label": "TEST LABEL"}},
             "tumor_grade": [{"id": "TG1", "label": "TG1 LABEL"}, {"id": "TG2", "label": "TG2 LABEL"}],
-            "test_postgres_array": [{"test": "test_value"}],
+            "test_postgres_array": [{"test": "test_value", "test2": {"test": "a"}}],
             "test_json_array": [{"test": "test_value"}],
         },
         {
@@ -727,7 +750,7 @@ TEST_DATA_1 = {
                 {"id": "TG4", "label": "TG4 LABEL"},
                 {"id": "TG5", "label": "TG5 LABEL"},
             ],
-            "test_postgres_array": [{"test": "test_value"}],
+            "test_postgres_array": [{"test": "test_value", "test2": {"test": "a"}}],
             "test_json_array": [{"test": "test_value"}],
         }
     ],
@@ -888,15 +911,27 @@ def test_queries_and_ast():
 
 def test_postgres_schemas():
     null_schema = postgres.json_schema_to_postgres_schema("test", {"type": "integer"})
-    assert null_schema[0] is None and null_schema[1] is None
+    assert null_schema[0] is None and null_schema[1] is None and null_schema[2] is None
 
     for s, p in zip(JSON_SCHEMA_TYPES, POSTGRES_TYPES):
-        assert postgres.json_schema_to_postgres_schema("test", {
+        res = postgres.json_schema_to_postgres_schema("test", {
             "type": "object",
             "properties": {
                 "test2": {"type": s}
             }
-        })[1] == f"test(test2 {p})"
+        })
+        assert res[1] == "test"
+        assert res[2] == psycopg2.sql.Composed([
+            psycopg2.sql.SQL("("),
+            psycopg2.sql.Composed([
+                psycopg2.sql.Composed([
+                    psycopg2.sql.Identifier("test2"),
+                    psycopg2.sql.SQL(" "),
+                    psycopg2.sql.SQL(p)
+                ])
+            ]),
+            psycopg2.sql.SQL(")"),
+        ])
 
 
 def test_postgres_collect_resolve_join_tables():
