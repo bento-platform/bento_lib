@@ -20,6 +20,7 @@ SQLComposableWithParams = Tuple[sql.Composable, tuple]
 
 QUERY_ROOT = q.Literal("$root")
 SQL_ROOT = sql.Identifier("_root")
+SQL_NOTHING = sql.SQL("")
 
 
 # TODO: Python 3.7: Data Class
@@ -41,6 +42,7 @@ class JoinAndSelectData:
         relations: OptionalComposablePair,
         aliases: OptionalComposablePair,
         current_alias_str: Optional[str],
+        current_alias_sql_schema: Optional[sql.SQL],
         key_link: Optional[Tuple[str, str]],
         field_alias: Optional[str],
         search_properties: dict,
@@ -49,6 +51,7 @@ class JoinAndSelectData:
         self.relations: OptionalComposablePair = relations
         self.aliases: OptionalComposablePair = aliases
         self.current_alias_str: Optional[str] = current_alias_str
+        self.current_alias_sql_schema: Optional[sql.SQL] = current_alias_sql_schema
         self.key_link: Optional[Tuple[str, str]] = key_link
         self.field_alias: Optional[str] = field_alias
         self.search_properties: dict = search_properties
@@ -80,7 +83,10 @@ def json_schema_to_postgres_type(schema: JSONSchema) -> str:
         return "TEXT"  # TODO
 
 
-def json_schema_to_postgres_schema(name: str, schema: JSONSchema) -> Tuple[Optional[sql.Composable], Optional[str]]:
+def json_schema_to_postgres_schema(
+    name: str,
+    schema: JSONSchema,
+) -> Tuple[Optional[sql.Composable], Optional[str], Optional[sql.Composable]]:
     """
     Maps a JSON object schema to a Postgres schema for on-the-fly mapping.
     :param name: the name to give the fake table.
@@ -88,15 +94,17 @@ def json_schema_to_postgres_schema(name: str, schema: JSONSchema) -> Tuple[Optio
     """
 
     if schema["type"] != "object":
-        return None, None
+        return None, None, None
 
     return (
-        sql.SQL("{}({})").format(
-            sql.Identifier(name),
-            sql.SQL(", ").join(sql.SQL("{} {}").format(sql.Identifier(p), sql.SQL(json_schema_to_postgres_type(s)))
-                               for p, s in schema["properties"].items())),
-        "{}({})".format(name, ", ".join("{} {}".format(p, json_schema_to_postgres_type(s))
-                                        for p, s in schema["properties"].items()))
+        sql.Identifier(name),
+        name,
+        sql.SQL("({})").format(
+            sql.SQL(", ").join(
+                sql.SQL("{} {}").format(sql.Identifier(p), sql.SQL(json_schema_to_postgres_type(s)))
+                for p, s in schema["properties"].items()
+            )
+        ),
     )
 
 
@@ -145,6 +153,7 @@ def collect_resolve_join_tables(
     new_aliased_resolve_path = re.sub(r"[$\[\]]+", "", f"{aliased_resolve_path_str}_{schema_field}")
     current_alias = None
     current_alias_str = None
+    current_alias_sql_schema = None
 
     if current_relation is None and schema["type"] in ("array", "object"):
         if db_field is None:
@@ -165,7 +174,10 @@ def collect_resolve_join_tables(
             else:  # object
                 # will be used to call either json_to_record(...) or jsonb_to_record(...):
                 relation_sql_template = "{structure_type}_to_record({field})"
-                current_alias, current_alias_str = json_schema_to_postgres_schema(new_aliased_resolve_path, schema)
+                current_alias, current_alias_str, current_alias_sql_schema = json_schema_to_postgres_schema(
+                    new_aliased_resolve_path, schema)
+                import sys
+                print(current_alias, current_alias_str, current_alias_sql_schema, file=sys.stderr)
 
             current_relation = sql.SQL(relation_sql_template).format(
                 structure_type=sql.SQL(structure_type),  # json or jsonb here
@@ -224,6 +236,7 @@ def collect_resolve_join_tables(
         relations=relations,
         aliases=aliases,
         current_alias_str=current_alias_str,
+        current_alias_sql_schema=current_alias_sql_schema,
         key_link=key_link,
         field_alias=db_field,
         search_properties=search_properties,
@@ -306,14 +319,19 @@ def join_fragment(ast: q.AST, schema: JSONSchema) -> sql.Composable:
         # (e.g., nested objects stored in their own relations).
         # If there is just 1 entry in terms, no join will occur, and it'll just be set to its alias.
         sql.SQL(" LEFT JOIN ").join((
-            sql.SQL("{r1} AS {a1}").format(r1=terms[0].relations.current, a1=terms[0].aliases.current),
+            sql.SQL("{r1} AS {a1}{s1}").format(
+                r1=terms[0].relations.current,
+                a1=terms[0].aliases.current,
+                s1=terms[0].current_alias_sql_schema or SQL_NOTHING,
+            ),
             *(
-                sql.SQL("{r1} AS {a1} ON {a0}.{f0} = {a1}.{f1}").format(
+                sql.SQL("{r1} AS {a1}{s1} ON {a0}.{f0} = {a1}.{f1}").format(
                     r1=term.relations.current,
                     a0=term.aliases.parent,
                     a1=term.aliases.current,
                     f0=sql.Identifier(term.key_link[0]),
-                    f1=sql.Identifier(term.key_link[1])
+                    f1=sql.Identifier(term.key_link[1]),
+                    s1=term.current_alias_sql_schema or SQL_NOTHING,
                 )
                 for term in terms[1:]
                 if term.key_link is not None
@@ -322,7 +340,11 @@ def join_fragment(ast: q.AST, schema: JSONSchema) -> sql.Composable:
 
         # Then, include any additional (non-terms[0]) non-joined relations.
         *(
-            sql.SQL("{r1} AS {a1}").format(r1=term.relations.current, a1=term.aliases.current)
+            sql.SQL("{r1} AS {a1}{s1}").format(
+                r1=term.relations.current,
+                a1=term.aliases.current,
+                s1=term.current_alias_sql_schema or SQL_NOTHING,
+            )
             for term in terms[1:]
             if term.key_link is None and term.relations.current is not None
         ),
