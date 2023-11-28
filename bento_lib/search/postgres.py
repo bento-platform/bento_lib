@@ -2,7 +2,7 @@ import functools
 import re
 
 from psycopg2 import sql
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Literal, Optional, Tuple
 
 from . import queries as q
 from ._types import JSONSchema
@@ -61,10 +61,11 @@ class JoinAndSelectData:
         return f"<JoinAndSelectData relations={self.relations} aliases={self.aliases}>"
 
 
-def json_schema_to_postgres_type(schema: JSONSchema) -> str:
+def json_schema_to_postgres_type(schema: JSONSchema, structure_type: Literal["json", "jsonb"]) -> str:
     """
     Maps a JSON schema to a Postgres type for on the fly mapping.
     :param schema: JSON schema to map.
+    :param structure_type: Whether we are deconstructing a JSON or JSONB field.
     """
     if schema["type"] == "string":
         return "TEXT"
@@ -73,9 +74,9 @@ def json_schema_to_postgres_type(schema: JSONSchema) -> str:
     elif schema["type"] == "number":
         return "DOUBLE PRECISION"
     elif schema["type"] == "object":
-        return "JSON"  # TODO: JSON or JSONB
+        return structure_type.upper()
     elif schema["type"] == "array":
-        return "JSON"  # TODO: JSON or JSONB
+        return structure_type.upper()
     elif schema["type"] == "boolean":
         return "BOOLEAN"
     else:
@@ -86,11 +87,13 @@ def json_schema_to_postgres_type(schema: JSONSchema) -> str:
 def json_schema_to_postgres_schema(
     name: str,
     schema: JSONSchema,
+    structure_type: Literal["json", "jsonb"],
 ) -> Tuple[Optional[sql.Composable], Optional[str], Optional[sql.Composable]]:
     """
     Maps a JSON object schema to a Postgres schema for on-the-fly mapping.
     :param name: the name to give the fake table.
     :param schema: JSON schema to map.
+    :param structure_type: Whether we are deconstructing a JSON or JSONB field.
     """
 
     if schema["type"] != "object":
@@ -101,7 +104,10 @@ def json_schema_to_postgres_schema(
         name,
         sql.SQL("({})").format(
             sql.SQL(", ").join(
-                sql.SQL("{} {}").format(sql.Identifier(p), sql.SQL(json_schema_to_postgres_type(s)))
+                sql.SQL("{} {}").format(
+                    sql.Identifier(p),
+                    sql.SQL(json_schema_to_postgres_type(s, structure_type)),
+                )
                 for p, s in schema["properties"].items()
             )
         ),
@@ -175,7 +181,7 @@ def collect_resolve_join_tables(
                 # will be used to call either json_to_record(...) or jsonb_to_record(...):
                 relation_sql_template = "{structure_type}_to_record({field})"
                 current_alias, current_alias_str, current_alias_sql_schema = json_schema_to_postgres_schema(
-                    new_aliased_resolve_path, schema)
+                    new_aliased_resolve_path, schema, structure_type)
 
             current_relation = sql.SQL(relation_sql_template).format(
                 structure_type=sql.SQL(structure_type),  # json or jsonb here
