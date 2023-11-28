@@ -910,7 +910,7 @@ def test_queries_and_ast():
 
 
 def test_postgres_schemas():
-    null_schema = postgres.json_schema_to_postgres_schema("test", {"type": "integer"})
+    null_schema = postgres.json_schema_to_postgres_schema("test", {"type": "integer"}, "json")
     assert null_schema[0] is None and null_schema[1] is None and null_schema[2] is None
 
     for s, p in zip(JSON_SCHEMA_TYPES, POSTGRES_TYPES):
@@ -919,7 +919,7 @@ def test_postgres_schemas():
             "properties": {
                 "test2": {"type": s}
             }
-        })
+        }, "json")
         assert res[1] == "test"
         assert res[2] == psycopg2.sql.Composed([
             psycopg2.sql.SQL("("),
