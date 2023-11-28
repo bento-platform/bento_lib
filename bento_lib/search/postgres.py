@@ -176,8 +176,6 @@ def collect_resolve_join_tables(
                 relation_sql_template = "{structure_type}_to_record({field})"
                 current_alias, current_alias_str, current_alias_sql_schema = json_schema_to_postgres_schema(
                     new_aliased_resolve_path, schema)
-                import sys
-                print(current_alias, current_alias_str, current_alias_sql_schema, file=sys.stderr)
 
             current_relation = sql.SQL(relation_sql_template).format(
                 structure_type=sql.SQL(structure_type),  # json or jsonb here

@@ -957,8 +957,7 @@ def test_postgres_invalid_schemas():
 def test_postgres_valid_queries(query):
     e = query["query"]
     i, p = query["ps"]
-    sql, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
-    print("Generated SQL", sql)
+    _, params = postgres.search_query_to_psycopg2_sql(e, TEST_SCHEMA, i)
     assert params == p
 
 
