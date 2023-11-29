@@ -16,19 +16,19 @@ setuptools.setup(
 
     python_requires=">=3.10.0",
     install_requires=[
-        "aiohttp>=3.8.4,<4",
-        "jsonschema>=4.17.3,<5",
-        "psycopg2-binary>=2.9.5,<3.0",
-        "pydantic>=2.3.0,<3",
-        "redis>=4.5.4,<5.0",
-        "requests>=2.28.1,<3",
+        "aiohttp>=3.9.1,<4",
+        "jsonschema>=4.20.0,<5",
+        "psycopg2-binary>=2.9.9,<3.0",
+        "pydantic>=2.5.2,<3",
+        "redis>=5.0.1,<6",
+        "requests>=2.31.0,<3",
         "Werkzeug>=2.2.3,<4",
     ],
     extras_require={
         "asyncpg": ["asyncpg>=0.29.0,<0.30.0"],
         "flask": ["Flask>=2.2.5,<4"],
-        "django": ["Django>=4.2.1,<5", "djangorestframework>=3.14.0,<3.15"],
-        "fastapi": ["fastapi>=0.100,<0.105", "pydantic_settings>=2.1.0,<3"],
+        "django": ["Django>=4.2.7,<5", "djangorestframework>=3.14.0,<3.15"],
+        "fastapi": ["fastapi>=0.104,<0.105", "pydantic_settings>=2.1.0,<3"],
     },
 
     author=config["package"]["authors"],
