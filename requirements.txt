@@ -1,6 +1,6 @@
 aiofiles==23.2.1
-aiohttp==3.8.6
-aioresponses==0.7.4
+aiohttp==3.9.1
+aioresponses==0.7.6
 aiosignal==1.3.1
 annotated-types==0.5.0
 anyio==3.7.1
@@ -19,7 +19,7 @@ charset-normalizer==3.3.0
 click==8.1.7
 colorama==0.4.6
 coverage==7.3.2
-cryptography==41.0.6
+cryptography==41.0.4
 distlib==0.3.7
 Django==4.2.7
 djangorestframework==3.14.0
@@ -85,7 +85,7 @@ sqlparse==0.4.4
 starlette==0.27.0
 toml==0.10.2
 tomli==2.0.1
-tox==4.11.3
+tox==4.11.4
 types-aiofiles==23.2.0.0
 types-colorama==0.4.15.12
 types-cryptography==3.3.23.2
@@ -98,8 +98,8 @@ types-requests==2.31.0.10
 types-toml==0.10.8.7
 types-urllib3==1.26.25.14
 typing_extensions==4.8.0
-urllib3==2.0.7
-virtualenv==20.24.5
+urllib3==2.1.0
+virtualenv==20.24.7
 wcwidth==0.2.8
 Werkzeug==3.0.1
 wsproto==1.2.0
