@@ -24,7 +24,8 @@ class GA4GHServiceOrganization(TypedDict):
 class GA4GHServiceOrganizationModel(BaseModel):
     name: str
     url: str
-    model_config = ConfigDict(extra="forbid")
+    # frozen=True makes this hashable + immutable
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 # TODO: py3.11: Required[] instead of base class
