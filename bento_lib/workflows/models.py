@@ -36,6 +36,7 @@ class WorkflowBaseInput(FrozenBaseModel):
     id: str
     required: bool = True
     type: str
+    help: str = ""  # Help text to render alongside fields in GUI forms.
 
 
 class WorkflowInjectedInput(WorkflowBaseInput):

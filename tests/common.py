@@ -40,6 +40,6 @@ WORKFLOW_DEF = wd = workflows.models.WorkflowDefinition(
     description="A test workflow",
     file="test.wdl",
     inputs=[
-        workflows.models.WorkflowStringInput(id="input1", type="string"),
+        workflows.models.WorkflowStringInput(id="input1", type="string", help="Some string input"),
     ]
 )
