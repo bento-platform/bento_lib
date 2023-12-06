@@ -20,6 +20,7 @@ setuptools.setup(
         "jsonschema>=4.20.0,<5",
         "psycopg2-binary>=2.9.9,<3.0",
         "pydantic>=2.5.2,<3",
+        "pydantic_settings>=2.1.0,<3",
         "redis>=5.0.1,<6",
         "requests>=2.31.0,<3",
         "Werkzeug>=2.2.3,<4",
@@ -28,7 +29,7 @@ setuptools.setup(
         "asyncpg": ["asyncpg>=0.29.0,<0.30.0"],
         "flask": ["Flask>=2.2.5,<4"],
         "django": ["Django>=4.2.7,<5", "djangorestframework>=3.14.0,<3.15"],
-        "fastapi": ["fastapi>=0.104,<0.105", "pydantic_settings>=2.1.0,<3"],
+        "fastapi": ["fastapi>=0.104,<0.105"],
     },
 
     author=config["package"]["authors"],
