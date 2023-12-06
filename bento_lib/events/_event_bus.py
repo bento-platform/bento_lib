@@ -4,7 +4,8 @@ import logging
 import redis
 import uuid
 
-from typing import Callable, Dict, Optional, Union
+from datetime import datetime, timezone
+from typing import Callable
 
 __all__ = ["EventBus"]
 
@@ -13,7 +14,7 @@ SERVICE_CHANNEL_TPL = "bento.service.{}"
 DATA_TYPE_CHANNEL_TPL = "bento.data_type.{}"
 
 # Types
-Serializable = Union[bool, float, int, str, dict, list, tuple, None]
+Serializable = bool | float | int | str | dict | list | tuple | None
 
 # Redis
 default_connection_data = {"host": "localhost", "port": 6379}
@@ -38,7 +39,7 @@ class EventBus:
         :param allow_fake: Whether to allow for "fake" connections, i.e. no true connection to Redis.
         """
 
-        self._rc: Optional[redis.Redis] = None
+        self._rc: redis.Redis | None = None
 
         logger = kwargs.pop("logger", None) or logging.getLogger(__name__)
         self._logger: logging.Logger = logger
@@ -54,13 +55,13 @@ class EventBus:
                 raise e
             logger.warning(f"Starting event bus in 'fake' mode (tried connection data: {connection_data})")
 
-        self._ps: Optional[redis.client.PubSub] = None
+        self._ps: redis.client.PubSub | None = None
 
         self._ps_handlers: dict[str, Callable[[dict], None]] = {}
-        self._event_thread: Optional[redis.client.PubSubWorkerThread] = None
+        self._event_thread: redis.client.PubSubWorkerThread | None = None
 
-        self._service_event_types: Dict[str, dict] = {}
-        self._data_type_event_types: Dict[str, dict] = {}
+        self._service_event_types: dict[str, dict] = {}
+        self._data_type_event_types: dict[str, dict] = {}
 
     @staticmethod
     def _callback_deserialize(callback: Callable[[dict], None]) -> Callable[[dict], None]:
@@ -124,7 +125,10 @@ class EventBus:
     @staticmethod
     def _make_event(event_type: str, event_data, attrs: dict) -> str:
         return json.dumps({
-            "id": str(uuid.uuid4()),  # So other services can decide how to claim specific events or whatever
+            # Generate a random ID, so other services can decide how to claim specific events or whatever:
+            "id": str(uuid.uuid4()),
+            # Events can arrive out-of-order; we can put them back in order using this generation-time timestamp:
+            "ts": datetime.now(timezone.utc).isoformat(),
             "type": event_type.lower(),
             "data": event_data,
             **attrs
@@ -163,13 +167,13 @@ class EventBus:
         """
         return self._add_schema(self._data_type_event_types, event_type, event_schema)
 
-    def get_service_event_types(self) -> Dict[str, dict]:
+    def get_service_event_types(self) -> dict[str, dict]:
         """
         :return: A dictionary of registered service event types and their associated schemas.
         """
         return {**self._service_event_types}
 
-    def get_data_type_event_types(self) -> Dict[str, dict]:
+    def get_data_type_event_types(self) -> dict[str, dict]:
         """
         :return: A dictionary of registered data type event types and their associated schemas.
         """
@@ -177,7 +181,7 @@ class EventBus:
 
     def _publish_event(
         self,
-        event_types: Dict[str, dict],
+        event_types: dict[str, dict],
         channel: str,
         event_type: str,
         event_data: Serializable,
