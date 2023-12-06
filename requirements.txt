@@ -38,12 +38,12 @@ httpx==0.25.2
 Hypercorn==0.15.0
 hyperframe==6.0.1
 idna==3.6
-importlib-metadata==6.8.0
+importlib-metadata==7.0.0
 iniconfig==2.0.0
 itsdangerous==2.1.2
 Jinja2==3.1.2
 jsonschema==4.20.0
-jsonschema-specifications==2023.11.1
+jsonschema-specifications==2023.11.2
 MarkupSafe==2.1.3
 mccabe==0.7.0
 more-itertools==10.1.0
@@ -67,7 +67,7 @@ pyparsing==3.1.1
 pyproject-api==1.6.1
 pyrsistent==0.20.0
 pytest==7.4.3
-pytest-asyncio==0.21.1
+pytest-asyncio==0.23.2
 pytest-cov==4.1.0
 pytest-django==4.7.0
 python-dateutil==2.8.2
@@ -75,10 +75,10 @@ python-dotenv==1.0.0
 pytz==2023.3.post1
 PyYAML==6.0.1
 redis==5.0.1
-referencing==0.31.0
+referencing==0.31.1
 requests==2.31.0
 responses==0.24.1
-rpds-py==0.13.1
+rpds-py==0.13.2
 six==1.16.0
 sniffio==1.3.0
 sqlparse==0.4.4
@@ -91,7 +91,7 @@ types-aiofiles==23.2.0.0
 types-colorama==0.4.15.12
 types-cryptography==3.3.23.2
 types-jsonschema==4.20.0.0
-types-psycopg2==2.9.21.18
+types-psycopg2==2.9.21.19
 types-pyOpenSSL==23.3.0.0
 types-PyYAML==6.0.12.12
 types-redis==4.6.0.11
@@ -100,9 +100,9 @@ types-toml==0.10.8.7
 types-urllib3==1.26.25.14
 typing_extensions==4.8.0
 urllib3==2.1.0
-virtualenv==20.24.7
+virtualenv==20.25.0
 wcwidth==0.2.12
 Werkzeug==3.0.1
 wsproto==1.2.0
-yarl==1.9.3
+yarl==1.9.4
 zipp==3.17.0
