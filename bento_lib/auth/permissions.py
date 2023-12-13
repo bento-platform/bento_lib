@@ -104,8 +104,9 @@ RUNS = PermissionNoun("runs")
 PROJECT = PermissionNoun("project")
 DATASET = PermissionNoun("dataset")
 
+#  - Other non-project/dataset-attached items:
 NOTIFICATIONS = PermissionNoun("notifications")
-
+REFERENCE_MATERIAL = PermissionNoun("reference_material")
 PERMISSIONS_NOUN = PermissionNoun("permissions")
 
 # Permissions definitions -------------------------------------------------------------------------
@@ -128,7 +129,7 @@ P_QUERY_DATA = Permission(
 P_DOWNLOAD_DATA = Permission(DOWNLOAD_VERB, DATA)  # download CSVs, associated DRS objects
 P_DELETE_DATA = Permission(DELETE_VERB, DATA)  # clear data from a specific data type
 
-#   - workflow-relevant items: (types of workflows....)
+#  - workflow-relevant items: (types of workflows....)
 
 P_INGEST_DATA = Permission(INGEST_VERB, DATA)
 P_ANALYZE_DATA = Permission(ANALYZE_VERB, DATA)
@@ -136,7 +137,7 @@ P_EXPORT_DATA = Permission(EXPORT_VERB, DATA)
 
 P_VIEW_RUNS = Permission(VIEW_VERB, RUNS)
 
-#   - notifications  TODO: notifications should have a resource embedded in them
+#  - notifications  TODO: notifications should have a resource embedded in them
 
 P_VIEW_NOTIFICATIONS = Permission(VIEW_VERB, NOTIFICATIONS)
 P_CREATE_NOTIFICATIONS = Permission(CREATE_VERB, NOTIFICATIONS)
@@ -144,15 +145,15 @@ P_CREATE_NOTIFICATIONS = Permission(CREATE_VERB, NOTIFICATIONS)
 # ---
 
 # only {everything: true} or {project: ...} (instance- or project-level):
-#   - project metadata editing
-#   - dataset management
+#  - project metadata editing
+#  - dataset management
 P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT)
 P_CREATE_DATASET = Permission(CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT)
 #     - deleting a dataset inherently deletes data inside it, so we give delete:data to all holders of delete:dataset
 P_DELETE_DATASET = Permission(DELETE_VERB, DATASET, min_level_required=LEVEL_DATASET, gives=(P_DELETE_DATA,))
 # ---
 
-#   - dataset metadata editing
+#  - dataset metadata editing
 P_EDIT_DATASET = Permission(EDIT_VERB, DATASET)
 
 # can view edit permissions for the resource which granted this permission only:
@@ -163,16 +164,23 @@ P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN)
 
 # only {everything: true} (instance-level):
 
-#   - drop box
+#  - drop box
 
 P_VIEW_DROP_BOX = Permission(VIEW_VERB, DROP_BOX, min_level_required=LEVEL_INSTANCE)
 P_INGEST_DROP_BOX = Permission(INGEST_VERB, DROP_BOX, min_level_required=LEVEL_INSTANCE)
 P_DELETE_DROP_BOX = Permission(DELETE_VERB, DROP_BOX, min_level_required=LEVEL_INSTANCE)
 
-#   - project management
+#  - project management
 
 P_CREATE_PROJECT = Permission(CREATE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE)
 #     - deleting a project inherently deletes datasets/data inside it,
 #       so we give delete:data and delete:dataset to all holders of delete:project
 P_DELETE_PROJECT = Permission(
     DELETE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE, gives=(P_DELETE_DATASET, P_DELETE_DATA))
+
+#  - reference material
+
+#     * ingest gives create+edit permissions for genomes and annotations
+P_INGEST_REFERENCE_MATERIAL = Permission(INGEST_VERB, REFERENCE_MATERIAL, min_level_required=LEVEL_INSTANCE)
+P_DELETE_REFERENCE_MATERIAL = Permission(DELETE_VERB, REFERENCE_MATERIAL, min_level_required=LEVEL_INSTANCE)
+#     * could add a P_VIEW_REFERENCE_MATERIAL which we by default give to everyone including anonymous...
