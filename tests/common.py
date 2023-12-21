@@ -41,5 +41,6 @@ WORKFLOW_DEF = wd = workflows.models.WorkflowDefinition(
     file="test.wdl",
     inputs=[
         workflows.models.WorkflowStringInput(id="input1", type="string", help="Some string input"),
+        workflows.models.WorkflowEnumInput(id="input2", type="enum", values="{{ provider.url }}/list"),
     ]
 )
