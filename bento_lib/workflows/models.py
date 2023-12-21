@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, HttpUrl, field_serializer
+from pydantic import BaseModel, ConfigDict, field_serializer
 from typing import Literal
 
 
@@ -65,12 +65,12 @@ class WorkflowBooleanInput(WorkflowBaseInput):
 
 class WorkflowEnumInput(WorkflowBaseInput):
     type: Literal["enum"] = "enum"
-    values: list[str] | HttpUrl  # list of values, or a URL returning an array of enum values
+    values: list[str] | str  # list of values, or a URL returning an array of enum values
 
 
 class WorkflowEnumArrayInput(WorkflowBaseInput):
     type: Literal["enum[]"] = "enum[]"
-    values: list[str] | HttpUrl  # list of values, or a URL returning an array of enum values
+    values: list[str] | str  # list of values, or a URL returning an array of enum values
     repeatable: bool = True
 
 
