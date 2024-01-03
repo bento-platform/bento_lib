@@ -1,3 +1,4 @@
+import logging
 import sys
 import traceback
 
@@ -37,7 +38,7 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
 
     service_name = kwargs.pop("service_name", "Bento Service")
 
-    logger = kwargs.pop("logger", None)
+    logger: logging.Logger | None = kwargs.pop("logger", None)
     authz: MarkAuthzDoneType | None = kwargs.pop("authz", None)
 
     def handle_error(e):
@@ -84,6 +85,9 @@ flask_bad_request_error = _flask_error(400)
 flask_unauthorized_error = _flask_error(401)
 flask_forbidden_error = _flask_error(403)
 flask_not_found_error = _flask_error(404)
+flask_not_acceptable_error = _flask_error(406)
+flask_request_timeout_error = _flask_error(408)
+flask_range_not_satisfiable_error = _flask_error(416)
 
 flask_internal_server_error = _flask_error(500)
 flask_not_implemented_error = _flask_error(501)
