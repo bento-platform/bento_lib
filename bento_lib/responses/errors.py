@@ -12,6 +12,9 @@ __all__ = [
     "unauthorized_error",
     "forbidden_error",
     "not_found_error",
+    "not_acceptable_error",
+    "request_timeout_error",
+    "range_not_satisfiable_error",
 
     "internal_server_error",
     "not_implemented_error",
@@ -87,6 +90,9 @@ bad_request_error = _e(400)
 unauthorized_error = _e(401)
 forbidden_error = _e(403)
 not_found_error = _e(404)
+not_acceptable_error = _e(406)
+request_timeout_error = _e(408)
+range_not_satisfiable_error = _e(416)
 
 internal_server_error = _e(500)
 not_implemented_error = _e(501)
