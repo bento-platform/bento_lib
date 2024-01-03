@@ -12,6 +12,9 @@ __all__ = [
     "unauthorized_error",
     "forbidden_error",
     "not_found_error",
+    "not_acceptable_error",
+    "request_timeout_error",
+    "range_not_satisfiable_error",
 
     "internal_server_error",
     "not_implemented_error",

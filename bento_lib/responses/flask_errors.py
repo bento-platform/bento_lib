@@ -20,6 +20,9 @@ __all__ = [
     "flask_unauthorized_error",
     "flask_forbidden_error",
     "flask_not_found_error",
+    "flask_not_acceptable_error",
+    "flask_request_timeout_error",
+    "flask_range_not_satisfiable_error",
 
     "flask_internal_server_error",
     "flask_not_implemented_error",
