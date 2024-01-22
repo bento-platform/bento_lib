@@ -127,7 +127,10 @@ class EventBus:
         return json.dumps({
             # Generate a random ID, so other services can decide how to claim specific events or whatever:
             "id": str(uuid.uuid4()),
-            # Events can arrive out-of-order; we can put them back in order using this generation-time timestamp:
+            # Events can arrive out-of-order; we can put them back in order using this generation-time timestamp
+            # (UTC timezone, in milliseconds):
+            "timestamp": round(datetime.now(timezone.utc).timestamp() * 1000),
+            # legacy version: "ts"  TODO: deprecated: remove
             "ts": datetime.now(timezone.utc).isoformat(),
             "type": event_type.lower(),
             "data": event_data,

@@ -64,6 +64,7 @@ def test_service_events():
             assert event["data"] == TEST_EVENT_BODY
             assert event["id"]
             assert event["ts"]
+            assert isinstance(event["timestamp"], int)
 
         event_bus.add_handler(bento_lib.events.ALL_SERVICE_EVENTS, handle_service_event)
         event_bus.start_event_loop()
