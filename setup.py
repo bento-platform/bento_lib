@@ -29,7 +29,7 @@ setuptools.setup(
         "asyncpg": ["asyncpg>=0.29.0,<0.30.0"],
         "flask": ["Flask>=2.2.5,<4"],
         "django": ["Django>=4.2.7,<5", "djangorestframework>=3.14.0,<3.15"],
-        "fastapi": ["fastapi>=0.104,<0.109"],
+        "fastapi": ["fastapi>=0.104,<0.110"],
     },
 
     author=config["package"]["authors"],
