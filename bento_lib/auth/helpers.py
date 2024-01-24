@@ -2,6 +2,7 @@ from .permissions import Permission, LEVEL_PROJECT, LEVEL_DATASET, PERMISSIONS
 
 __all__ = [
     "permission_valid_for_resource",
+    "valid_permissions_for_resource",
 ]
 
 
