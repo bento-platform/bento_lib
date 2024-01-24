@@ -1,15 +1,19 @@
 import json
 
 import pytest
+from bento_lib.auth.helpers import permission_valid_for_resource, valid_permissions_for_resource
 from bento_lib.auth.permissions import (
     Permission,
     PermissionDefinitionError,
+    PERMISSIONS,
+    LEVEL_INSTANCE,
     QUERY_VERB,
     DATA,
     P_QUERY_PROJECT_LEVEL_BOOLEAN,
     P_QUERY_PROJECT_LEVEL_COUNTS,
     P_QUERY_DATA,
     P_DELETE_DATA,
+    P_VIEW_DROP_BOX,
 )
 from bento_lib.auth.resources import RESOURCE_EVERYTHING, build_resource
 
@@ -53,3 +57,25 @@ def test_build_resource():
         {"dataset": "z", "project": "a"}, sort_keys=True)
     assert json.dumps(build_resource(project="a", dataset="z", data_type="t"), sort_keys=True) == json.dumps(
         {"data_type": "t", "dataset": "z", "project": "a"}, sort_keys=True)
+
+
+def test_permissions_valid_for_resource():
+    assert permission_valid_for_resource(P_QUERY_DATA, RESOURCE_EVERYTHING)
+    assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa"})
+    assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa", "dataset": "bbb"})
+
+    # project and above
+    assert permission_valid_for_resource(P_QUERY_PROJECT_LEVEL_BOOLEAN, RESOURCE_EVERYTHING)
+    assert permission_valid_for_resource(P_QUERY_PROJECT_LEVEL_BOOLEAN, {"project": "aaa"})
+    assert not permission_valid_for_resource(P_QUERY_PROJECT_LEVEL_BOOLEAN, {"project": "aaa", "dataset": "bbb"})
+
+    # instance only
+    assert permission_valid_for_resource(P_VIEW_DROP_BOX, RESOURCE_EVERYTHING)
+    assert not permission_valid_for_resource(P_VIEW_DROP_BOX, {"project": "aaa"})
+    assert not permission_valid_for_resource(P_VIEW_DROP_BOX, {"project": "aaa", "dataset": "bbb"})
+
+
+def test_all_valid_permissions_for_resource():
+    assert valid_permissions_for_resource(RESOURCE_EVERYTHING) == PERMISSIONS
+    assert valid_permissions_for_resource({"project": "aaa"}) == [
+        p for p in PERMISSIONS if p.min_level_required != LEVEL_INSTANCE]

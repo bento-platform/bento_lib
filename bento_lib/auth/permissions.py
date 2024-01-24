@@ -76,6 +76,10 @@ class Permission(str):
     def gives(self) -> frozenset["Permission"]:
         return self._gives
 
+    @property
+    def min_level_required(self) -> Level:
+        return self._min_level_required
+
 
 # Verb/noun definitions ---------------------------------------------------------------------------
 

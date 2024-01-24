@@ -10,5 +10,6 @@ build
 dist
 htmlcov
 env
+bento_lib/search/elastic.py
 __pycache__
 *.egg-info
