@@ -42,15 +42,23 @@ jobs:
         name: Set up Python
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up Poetry
+        run: python -m pip install 'poetry>=1.7.1,<1.8'
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m poetry install --all-extras
       - name: Test
-        run: mkdir -p tmp && pytest -svv --cov=bento_lib --cov-branch
+        run: mkdir -p tmp && poetry run pytest -svv --cov=bento_lib --cov-branch --cov-report=xml
         env:
           TEST_REDIS_HOST: localhost
           TEST_REDIS_PORT: 6379
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+          file: ./coverage.xml
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   install:
     runs-on: ubuntu-latest
     strategy:

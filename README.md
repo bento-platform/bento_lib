@@ -8,7 +8,33 @@
 Common utilities and helpers for Bento platform services.
 
 
-## Running Tests
+## Installing
+
+`bento_lib` can be added to a new service through normal installation, with any extras 
+that may be needed:
+
+```bash
+# Add to a project using Poetry for dependencies
+poetry add bento_lib
+
+# Install using pip with the FastAPI extra
+pip install bento_lib[fastapi]
+
+# etc...
+```
+
+
+## Developing
+
+Clone the repository and set up the Poetry environment using the following commands:
+
+```bash
+git clone git@github.com:bento-platform/bento_lib.git
+poetry install --all-extras
+```
+
+
+### Running Tests
 
 For tests to complete successfully, the following external servers must be running:
 
@@ -19,29 +45,27 @@ For tests to complete successfully, the following external servers must be runni
 Then, tests and linting can be run with the following command:
 
 ```bash
-python3 -m tox
+poetry run tox
 ```
 
 
-## Releasing
+### Releasing
 
 
-### 1. Release Checklist
+#### 1. Release Checklist
 
   * [ ] All tests pass and test coverage has not been reduced
 
-  * [ ] Package version has been updated (following semver) in 
-    `bento_lib/package.cfg`
+  * [ ] Package version has been updated (following semver) in `pyproject.toml`
     
-  * [ ] The latest changes have been merged from the `develop` branch into the
-    `master` branch
+  * [ ] The latest changes have been merged into the `master` branch
     
   * [ ] A release has been created, tagged in the format of `v#.#.#` and named
     in the format of `Version #.#.#`, listing any changes made, in the GitHub 
     releases page **tagged from the master branch!**
     
 
-#### 1A. Note on Versioning
+##### 1A. Note on Versioning
 
 The `bento_lib` project uses [semantic versioning](https://semver.org/) for
 releasing. If the API is broken in any way, including minor differences in the
@@ -51,11 +75,11 @@ way, we guarantee that projects relying on this API do not accidentally break
 upon upgrading.
 
 
-### 2. Releasing automatically
+#### 2. Releasing automatically
 
 When a version is tagged on GitHub, a build + release CI pipeline is automatically triggered.
 Make sure that the tagged version is a valid semantic versioning translation of the version in
-`package.cfg`, and that the versions otherwise match.
+`pyproject.toml`, and that the versions otherwise match.
 
 
 ## Modules
