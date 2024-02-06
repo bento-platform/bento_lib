@@ -19,7 +19,7 @@ charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6
 coverage==7.4.0
-cryptography==41.0.7
+cryptography==42.0.0
 distlib==0.3.8
 Django==4.2.7
 djangorestframework==3.14.0
