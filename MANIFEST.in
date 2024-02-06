@@ -1,3 +1,0 @@
-include bento_lib/schemas/*.json
-include bento_lib/package.cfg
-prune tests

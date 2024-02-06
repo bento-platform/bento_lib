@@ -42,8 +42,10 @@ jobs:
         name: Set up Python
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up Poetry
+        run: python -m pip install 'poetry>=1.7.1,<1.8'
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m poetry install --all-extras
       - name: Test
         run: mkdir -p tmp && pytest -svv --cov=bento_lib --cov-branch
         env:
