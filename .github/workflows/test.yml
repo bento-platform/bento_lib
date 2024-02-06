@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: python -m poetry install --all-extras
       - name: Test
-        run: mkdir -p tmp && pytest -svv --cov=bento_lib --cov-branch
+        run: mkdir -p tmp && poetry run pytest -svv --cov=bento_lib --cov-branch
         env:
           TEST_REDIS_HOST: localhost
           TEST_REDIS_PORT: 6379
