@@ -4,6 +4,7 @@
 .idea/rSettings.xml
 .idea/workspace.xml
 .coverage
+coverage.xml
 .pytest_cache
 .tox/
 build
