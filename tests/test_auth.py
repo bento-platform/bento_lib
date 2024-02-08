@@ -29,6 +29,8 @@ def test_permissions_equality():
     assert P_QUERY_DATA != P_DELETE_DATA
     assert P_QUERY_DATA != "a"
     assert P_QUERY_DATA != 5
+    assert P_QUERY_DATA.verb == QUERY_VERB
+    assert P_QUERY_DATA.noun == DATA
 
 
 def test_permissions_repr():
