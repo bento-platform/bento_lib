@@ -73,6 +73,14 @@ class Permission(str):
         return f"Permission({str(self)})"
 
     @property
+    def verb(self) -> PermissionVerb:
+        return self._verb
+
+    @property
+    def noun(self) -> PermissionNoun:
+        return self._noun
+
+    @property
     def gives(self) -> frozenset["Permission"]:
         return self._gives
 
