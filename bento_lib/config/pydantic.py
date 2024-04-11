@@ -1,7 +1,7 @@
 import json
 
 from bento_lib.logging import LogLevelLiteral
-from bento_lib.service_info.constants import SERVICE_ORGANIZATION_C3G
+from bento_lib.service_info.constants import SERVICE_ORGANIZATION_C3G_PYDANTIC
 from bento_lib.service_info.types import GA4GHServiceOrganizationModel
 from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
@@ -35,7 +35,7 @@ class BentoBaseConfig(BaseSettings):
     service_description: str = ""  # If description is blank, it should be stripped out in the response
     # service_url_base_path: str = "http://127.0.0.1:5000"  # Base path to construct URIs from
     service_contact_url: str = "mailto:info@c3g.ca"
-    service_organization: GA4GHServiceOrganizationModel = SERVICE_ORGANIZATION_C3G
+    service_organization: GA4GHServiceOrganizationModel = SERVICE_ORGANIZATION_C3G_PYDANTIC
 
     log_level: LogLevelLiteral = "debug"
 
