@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 from functools import partial
 from werkzeug.http import HTTP_STATUS_CODES
 
@@ -58,7 +58,7 @@ def http_error(
     return {
         "code": code,
         "message": message,
-        "timestamp": datetime.datetime.utcnow().isoformat("T") + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat("T").split("+")[0] + "Z",
         **({"errors": [_error_message(e) for e in errors]} if errors else {}),
 
         # The DRS spec has a slightly different error specification - if a
