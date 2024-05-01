@@ -33,6 +33,7 @@ class Permission(str):
         self, verb: PermissionVerb,
         noun: PermissionNoun,
         min_level_required: Level = LEVEL_DATASET,
+        supports_data_type_narrowing: bool | None = None,
         gives: Iterable["Permission"] = (),
     ):
         super().__init__()
@@ -40,6 +41,10 @@ class Permission(str):
         self._verb: PermissionVerb = verb
         self._noun: PermissionNoun = noun
         self._min_level_required: Level = min_level_required
+        self._supports_data_type_narrowing: bool = (
+            supports_data_type_narrowing if supports_data_type_narrowing is not None
+            else min_level_required != LEVEL_INSTANCE
+        )
 
         # Create full set using nested gives
         base_gives = set(gives)  # in case our iterable is a generator, consume it only once
@@ -61,6 +66,7 @@ class Permission(str):
         verb: PermissionVerb,
         noun: PermissionNoun,
         min_level_required: Level = LEVEL_DATASET,
+        supports_data_type_narrowing: bool | None = None,
         gives: Iterable["Permission"] = (),
     ):
         return super().__new__(cls, cls._str_form(verb, noun))
@@ -87,6 +93,10 @@ class Permission(str):
     @property
     def min_level_required(self) -> Level:
         return self._min_level_required
+
+    @property
+    def supports_data_type_narrowing(self) -> bool:
+        return self._supports_data_type_narrowing
 
 
 # Verb/noun definitions ---------------------------------------------------------------------------
@@ -159,10 +169,12 @@ P_CREATE_NOTIFICATIONS = Permission(CREATE_VERB, NOTIFICATIONS)
 # only {everything: true} or {project: ...} (instance- or project-level):
 #  - project metadata editing
 #  - dataset management
-P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT)
-P_CREATE_DATASET = Permission(CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT)
+P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False)
+P_CREATE_DATASET = Permission(
+    CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False)
 #     - deleting a dataset inherently deletes data inside it, so we give delete:data to all holders of delete:dataset
-P_DELETE_DATASET = Permission(DELETE_VERB, DATASET, min_level_required=LEVEL_DATASET, gives=(P_DELETE_DATA,))
+P_DELETE_DATASET = Permission(
+    DELETE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False, gives=(P_DELETE_DATA,))
 # ---
 
 #  - dataset metadata editing
