@@ -13,6 +13,7 @@ from bento_lib.auth.permissions import (
     P_QUERY_PROJECT_LEVEL_COUNTS,
     P_QUERY_DATA,
     P_DELETE_DATA,
+    P_DELETE_DATASET,
     P_VIEW_DROP_BOX,
 )
 from bento_lib.auth.resources import RESOURCE_EVERYTHING, build_resource
@@ -65,6 +66,8 @@ def test_permissions_valid_for_resource():
     assert permission_valid_for_resource(P_QUERY_DATA, RESOURCE_EVERYTHING)
     assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa"})
     assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa", "dataset": "bbb"})
+    assert permission_valid_for_resource(
+        P_QUERY_DATA, {"project": "aaa", "dataset": "bbb", "data_type": "phenopacket"})
 
     # project and above
     assert permission_valid_for_resource(P_QUERY_PROJECT_LEVEL_BOOLEAN, RESOURCE_EVERYTHING)
@@ -75,6 +78,9 @@ def test_permissions_valid_for_resource():
     assert permission_valid_for_resource(P_VIEW_DROP_BOX, RESOURCE_EVERYTHING)
     assert not permission_valid_for_resource(P_VIEW_DROP_BOX, {"project": "aaa"})
     assert not permission_valid_for_resource(P_VIEW_DROP_BOX, {"project": "aaa", "dataset": "bbb"})
+
+    # data type narrowing
+    assert not permission_valid_for_resource(P_DELETE_DATASET, {"project": "aaa", "data_type": "phenopacket"})
 
 
 def test_all_valid_permissions_for_resource():
