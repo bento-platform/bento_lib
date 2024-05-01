@@ -111,14 +111,14 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
 
     @staticmethod
     def _matrix_tuple_cast(authz_result: list[list[bool]]) -> EvaluationResultMatrix:
-        return tuple(tuple(x) for x in authz_result)
+        return tuple(map(tuple, authz_result))
 
     @staticmethod
     def _permissions_matrix_to_dict(
         m: EvaluationResultMatrix,
         permissions: Iterable[Permission],
     ) -> EvaluationResultDict:
-        return tuple({p: pv for p, pv in zip(permissions, r)} for r in m)
+        return tuple(dict(zip(permissions, r)) for r in m)
 
     def evaluate(
         self,
