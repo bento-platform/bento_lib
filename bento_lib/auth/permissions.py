@@ -164,6 +164,13 @@ P_VIEW_RUNS = Permission(VIEW_VERB, RUNS)
 P_VIEW_NOTIFICATIONS = Permission(VIEW_VERB, NOTIFICATIONS)
 P_CREATE_NOTIFICATIONS = Permission(CREATE_VERB, NOTIFICATIONS)
 
+#  - dataset metadata editing
+P_EDIT_DATASET = Permission(EDIT_VERB, DATASET, supports_data_type_narrowing=False)
+
+#  - can view edit permissions for the resource which granted this permission only:
+P_VIEW_PERMISSIONS = Permission(VIEW_VERB, PERMISSIONS_NOUN)
+P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN)
+
 # ---
 
 # only {everything: true} or {project: ...} (instance- or project-level):
@@ -175,15 +182,6 @@ P_CREATE_DATASET = Permission(
 #     - deleting a dataset inherently deletes data inside it, so we give delete:data to all holders of delete:dataset
 P_DELETE_DATASET = Permission(
     DELETE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False, gives=(P_DELETE_DATA,))
-# ---
-
-#  - dataset metadata editing
-P_EDIT_DATASET = Permission(EDIT_VERB, DATASET)
-
-# can view edit permissions for the resource which granted this permission only:
-P_VIEW_PERMISSIONS = Permission(VIEW_VERB, PERMISSIONS_NOUN)
-P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN)
-
 # ---
 
 # only {everything: true} (instance-level):
