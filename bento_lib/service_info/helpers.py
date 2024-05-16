@@ -3,13 +3,14 @@ import copy
 import logging
 
 from bento_lib.config.pydantic import BentoBaseConfig
-from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD
+from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD, SERVICE_GROUP_BENTO
 from .types import BentoExtraServiceInfo, GA4GHServiceType, GA4GHServiceOrganization, GA4GHServiceInfo
 
 
 __all__ = [
     "build_service_info",
     "build_service_info_from_pydantic_config",
+    "build_bento_service_type",
 ]
 
 
@@ -80,3 +81,15 @@ async def build_service_info_from_pydantic_config(
         "version": version,
         "bento": bento_service_info,
     }, debug=config.bento_debug, local=config.bento_container_local, logger=logger)
+
+
+def build_service_type(group: str, artifact: str, version: str) -> GA4GHServiceType:
+    return {
+        "group": group,
+        "artifact": artifact,
+        "version": version,
+    }
+
+
+def build_bento_service_type(artifact: str, version: str) -> GA4GHServiceType:
+    return build_service_type(SERVICE_GROUP_BENTO, artifact, version)
