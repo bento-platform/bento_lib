@@ -61,3 +61,21 @@ async def test_service_info_build():
     assert "gitTag" in d["bento"]
     # assert "gitBranch" in d["bento"]  - Isn't present in GitHub CI
     assert "gitCommit" in d["bento"]
+
+
+def test_service_type_build():
+    assert bsi.helpers.build_service_type("a", "b", "c") == {
+        "group": "a",
+        "artifact": "b",
+        "version": "c",
+    }
+
+
+def test_bento_service_type_build():
+    assert bsi.helpers.build_bento_service_type("a", "b") == {
+        "group": bsi.constants.SERVICE_GROUP_BENTO,
+        "artifact": "a",
+        "version": "b",
+    }
+
+    assert bsi.helpers.build_bento_service_type(service_type["artifact"], service_type["version"]) == service_type
