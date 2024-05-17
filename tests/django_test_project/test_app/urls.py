@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("post-exempted", views.auth_post_exempted, name="post-exempted"),
     path("post-private", views.auth_post_private, name="post-private"),
     path("post-private-no-flag", views.auth_post_private_no_flag, name="post-private-no-flag"),
     path("post-private-no-token", views.auth_post_private_no_token, name="post-private-no-token"),

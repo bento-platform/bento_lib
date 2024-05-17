@@ -13,6 +13,7 @@ from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 
 from .common import (
+    authz_test_exempt_patterns,
     authz_test_case_params,
     authz_test_cases,
     TEST_AUTHZ_VALID_POST_BODY,
@@ -59,13 +60,20 @@ def flask_client():
 @pytest.fixture
 def flask_client_auth():
     test_app_auth = Flask(__name__)
-    auth_middleware = FlaskAuthMiddleware(bento_authz_service_url="https://bento-auth.local", logger=logger)
+    auth_middleware = FlaskAuthMiddleware(
+        bento_authz_service_url="https://bento-auth.local",
+        logger=logger,
+        exempt_request_patterns=authz_test_exempt_patterns)
     auth_middleware.attach(test_app_auth)
 
     test_app_auth.register_error_handler(
         Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error, authz=auth_middleware))
     test_app_auth.register_error_handler(
         NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True, authz=auth_middleware))
+
+    @test_app_auth.route("/post-exempted", methods=["POST"])
+    def auth_post_exempted():
+        return jsonify(request.json)
 
     @test_app_auth.route("/post-public", methods=["POST"])
     @auth_middleware.deco_public_endpoint

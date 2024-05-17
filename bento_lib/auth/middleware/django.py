@@ -77,6 +77,12 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
 
         # Don't handle BentoAuthException here - middleware handles it elsewhere
         response = await get_response(request)  # We've just crammed a new property in there... no state object
+
+        if not self.enabled or self.request_is_exempt(request.method, request.path):
+            # - Skip checks if the authorization middleware is disabled
+            # - Allow pre-flight responses through, as well as any configured exempt URLs
+            return response
+
         if not request.bento_determined_authz:
             # Next in response chain didn't properly think about auth; return 403
             return self._make_auth_error(BentoAuthException("Forbidden", status_code=403))

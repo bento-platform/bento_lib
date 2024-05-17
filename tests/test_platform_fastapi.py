@@ -25,6 +25,7 @@ from bento_lib.workflows.workflow_set import WorkflowSet
 from bento_lib.workflows.fastapi import build_workflow_router
 
 from .common import (
+    authz_test_exempt_patterns,
     authz_test_case_params,
     authz_test_cases,
     TEST_AUTHZ_VALID_POST_BODY,
@@ -101,7 +102,8 @@ test_app_auth.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
 )
-auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(test_app_auth_config, logger)
+auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(
+    test_app_auth_config, logger, exempt_request_patterns=authz_test_exempt_patterns)
 auth_middleware.attach(test_app_auth)
 
 test_app_auth.exception_handler(HTTPException)(http_exception_handler_factory(logger, auth_middleware))
@@ -119,6 +121,11 @@ fastapi_client_auth_ = TestClient(test_app_auth)
 @pytest.fixture
 def fastapi_client_auth():
     return fastapi_client_auth_
+
+
+@test_app_auth.post("/post-exempted")
+def auth_post_exempted(body: TestBody):
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 @test_app_auth.post("/post-public", dependencies=[auth_middleware.dep_public_endpoint()])
