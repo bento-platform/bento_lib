@@ -6,6 +6,10 @@ from django.http import HttpRequest, JsonResponse
 from ..django_test_project.authz import authz
 
 
+def auth_post_exempted(request: HttpRequest):
+    return JsonResponse(json.loads(request.body))
+
+
 def auth_post_public(request: HttpRequest):
     authz.mark_authz_done(request)
     return JsonResponse(json.loads(request.body))

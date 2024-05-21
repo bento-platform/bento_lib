@@ -23,19 +23,20 @@ def test_django_authz_logger_init():
 def test_django_auth(
     # case variables
     authz_code: int,
-    authz_res: bool,
+    authz_res: bool | None,
     test_url: str,
     inc_headers: bool,
     test_code: int,
     # fixtures
     client: Client,
 ):
-    responses.add(
-        responses.POST,
-        "https://bento-auth.local/policy/evaluate",
-        json={"result": [[authz_res]]},
-        status=authz_code,
-    )
+    if authz_res is not None:
+        responses.add(
+            responses.POST,
+            "https://bento-auth.local/policy/evaluate",
+            json={"result": [[authz_res]]},
+            status=authz_code,
+        )
     r: JsonResponse = client.post(
         test_url,
         headers=(TEST_AUTHZ_HEADERS if inc_headers else {}),

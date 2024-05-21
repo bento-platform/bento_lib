@@ -50,9 +50,9 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         return self._make_auth_error(BentoAuthException("Forbidden", status_code=403))
 
     def middleware_post(self, response: Response) -> Response:
-        if not self.enabled or request.method == "OPTIONS":
+        if not self.enabled or self.request_is_exempt(request.method, request.path):
             # - Skip checks if the authorization middleware is disabled
-            # - Allow pre-flight responses through
+            # - Allow pre-flight responses through, as well as any configured exempt URLs
             return response
         if not g.bento_determined_authz:
             return self._make_forbidden()

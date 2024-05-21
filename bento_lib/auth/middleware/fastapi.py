@@ -30,9 +30,9 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
             self._logger = logging.getLogger(__name__)
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-        if not self.enabled or request.method == "OPTIONS":
+        if not self.enabled or self.request_is_exempt(request.method, request.url.path):
             # - Skip checks if the authorization middleware is disabled
-            # - Allow pre-flight responses through
+            # - Allow pre-flight responses through, as well as any configured exempt URLs
             return await call_next(request)
 
         # Set flag saying the request hasn't had its permissions determined yet.

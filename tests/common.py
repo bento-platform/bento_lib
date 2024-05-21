@@ -1,8 +1,10 @@
-from pathlib import Path
+import re
 
 from bento_lib import workflows
+from pathlib import Path
 
 __all__ = [
+    "authz_test_exempt_patterns",
     "authz_test_case_params",
     "authz_test_cases",
     "TEST_AUTHZ_VALID_POST_BODY",
@@ -12,9 +14,11 @@ __all__ = [
 ]
 
 # cases: (authz response code, authz response result, test client URL, auth header included, assert final response)
+authz_test_exempt_patterns = ((r"POST", re.compile(r"/post-exempted")),)
 authz_test_case_params = "authz_code, authz_res, test_url, inc_headers, test_code"
 authz_test_cases = (
     # allowed through
+    (200, None, "/post-exempted", False, 200),
     (200, True, "/post-private", True, 200),
     (200, True, "/post-private-no-flag", True, 200),
     # forbidden

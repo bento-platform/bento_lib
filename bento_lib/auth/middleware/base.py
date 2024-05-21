@@ -1,5 +1,6 @@
 import aiohttp
 import logging
+import re
 import requests
 
 from abc import ABC, abstractmethod
@@ -14,6 +15,12 @@ from .mark_authz_done_mixin import MarkAuthzDoneMixin
 __all__ = ["BaseAuthMiddleware"]
 
 
+def _compile_to_regex_if_needed(pattern: str | re.Pattern) -> re.Pattern:
+    if isinstance(pattern, str):
+        return re.compile(pattern)
+    return pattern
+
+
 class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     def __init__(
         self,
@@ -21,6 +28,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         drs_compat: bool = False,
         sr_compat: bool = False,
         beacon_meta_callback: Callable[[], dict] | None = None,
+        exempt_request_patterns: tuple[tuple[re.Pattern | str, re.Pattern | str], ...] = (),
         debug_mode: bool = False,
         enabled: bool = True,
         logger: logging.Logger | None = None,
@@ -34,6 +42,11 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self._drs_compat: bool = drs_compat
         self._sr_compat: bool = sr_compat
         self._beacon_meta_callback: Callable[[], dict] | None = beacon_meta_callback
+
+        self._exempt_request_patterns: frozenset[tuple[re.Pattern, re.Pattern]] = frozenset(
+            (_compile_to_regex_if_needed(method_pattern), _compile_to_regex_if_needed(path_pattern))
+            for method_pattern, path_pattern in exempt_request_patterns
+        )
 
         self._bento_authz_service_url: str = bento_authz_service_url
 
@@ -50,6 +63,10 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     @property
     def enabled(self) -> bool:
         return self._enabled
+
+    def request_is_exempt(self, method: str, path: str) -> bool:
+        return method == "OPTIONS" or any(
+            mp.fullmatch(method) and pp.fullmatch(path) for mp, pp in self._exempt_request_patterns)
 
     @abstractmethod
     def get_authz_header_value(self, request: Any) -> str | None:  # pragma: no cover
