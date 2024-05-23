@@ -10,6 +10,7 @@ from typing import Any
 __all__ = [
     "CorsOriginsParsingEnvSettingsSource",
     "BentoBaseConfig",
+    "BentoFastAPIBaseConfig",
 ]
 
 
@@ -59,3 +60,8 @@ class BentoBaseConfig(BaseSettings):
             dotenv_settings,
             file_secret_settings,
         )
+
+
+class BentoFastAPIBaseConfig(BentoBaseConfig):
+    service_docs_path: str = "/docs"
+    service_openapi_path: str = "/openapi.json"

@@ -1,7 +1,7 @@
 import logging
 import os
 import pytest
-from bento_lib.config.pydantic import BentoBaseConfig
+from bento_lib.config.pydantic import BentoBaseConfig, BentoFastAPIBaseConfig
 from bento_lib.service_info.helpers import build_service_info_from_pydantic_config
 
 
@@ -25,6 +25,16 @@ def test_base_pydantic_config_env():
         assert BentoBaseConfig.model_validate(TEST_CONFIG_VALUES).cors_origins == ("a", "b")
     finally:
         os.environ["CORS_ORIGINS"] = ""
+
+
+def test_fastapi_pydantic_config():
+    assert BentoFastAPIBaseConfig.model_validate(TEST_CONFIG_VALUES).service_docs_path == "/docs"
+
+    try:
+        os.environ["SERVICE_DOCS_PATH"] = "/docs-alt"
+        assert BentoFastAPIBaseConfig.model_validate(TEST_CONFIG_VALUES).service_docs_path == "/docs-alt"
+    finally:
+        os.environ["SERVICE_DOCS_PATH"] = ""
 
 
 @pytest.mark.asyncio
