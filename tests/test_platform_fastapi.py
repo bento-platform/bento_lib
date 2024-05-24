@@ -4,23 +4,24 @@ import pytest
 from aioresponses import aioresponses
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 from httpx import Response as HttpxResponse
 from pydantic import BaseModel
 
+from bento_lib.apps.fastapi import BentoFastAPI
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
-from bento_lib.config.pydantic import BentoBaseConfig
+from bento_lib.config.pydantic import BentoFastAPIBaseConfig
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
     validation_exception_handler_factory,
 )
+from bento_lib.service_info.helpers import build_bento_service_type
 from bento_lib.workflows.workflow_set import WorkflowSet
 from bento_lib.workflows.fastapi import build_workflow_router
 
@@ -36,6 +37,9 @@ from .common import (
 
 
 logger = logging.getLogger(__name__)
+
+TEST_APP_VERSION = "0.1.0"
+TEST_APP_SERVICE_TYPE = build_bento_service_type("test", TEST_APP_VERSION)
 
 
 class TestBody(BaseModel):
@@ -54,10 +58,13 @@ class TestTokenBody(BaseModel):
 
 # Standard test app -----------------------------------------------------------
 
-test_app = FastAPI()
-test_app.exception_handler(HTTPException)(http_exception_handler_factory(logger, None))
-test_app.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger, None))
-test_app.exception_handler(RequestValidationError)(validation_exception_handler_factory(None))
+test_app_config = BentoFastAPIBaseConfig(
+    service_id="test",
+    service_name="Test App",
+    bento_authz_service_url="https://bento-auth.local",
+    cors_origins=("*",),
+)
+test_app = BentoFastAPI(None, test_app_config, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
 test_client_ = TestClient(test_app)
 
 
@@ -88,27 +95,18 @@ def get_403():
 
 # Auth test app ---------------------------------------------------------------
 
-test_app_auth = FastAPI()
-test_app_auth_config = BentoBaseConfig(
+test_app_auth_config = BentoFastAPIBaseConfig(
     service_id="auth_test",
     service_name="Auth Test",
     bento_authz_service_url="https://bento-auth.local",
     cors_origins=("*",),
 )
-test_app_auth.add_middleware(
-    CORSMiddleware,
-    allow_origins=test_app_auth_config.cors_origins,
-    allow_headers=["Authorization"],
-    allow_credentials=True,
-    allow_methods=["*"],
-)
 auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(
     test_app_auth_config, logger, exempt_request_patterns=authz_test_exempt_patterns)
-auth_middleware.attach(test_app_auth)
+test_app_auth = BentoFastAPI(auth_middleware, test_app_auth_config, logger, {}, TEST_APP_SERVICE_TYPE,
+                             TEST_APP_VERSION)
 
-test_app_auth.exception_handler(HTTPException)(http_exception_handler_factory(logger, auth_middleware))
-test_app_auth.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger, auth_middleware))
-test_app_auth.exception_handler(RequestValidationError)(validation_exception_handler_factory(auth_middleware))
+auth_middleware.attach(test_app_auth)
 
 workflow_set = WorkflowSet(WDL_DIR)
 workflow_set.add_workflow("test", WORKFLOW_DEF)
@@ -304,6 +302,19 @@ def test_fastapi_validation_exception(test_client: TestClient):
 
 
 def test_fastapi_auth_public(fastapi_client_auth: TestClient):
+    # can get service info (set up by boilerplate BentoFastAPI class)
+    r = fastapi_client_auth.get("/service-info")
+    assert r.status_code == 200
+    rd = r.json()
+    assert rd["version"] == TEST_APP_VERSION
+
+    # can get service-info again; should use cached version now
+    r = fastapi_client_auth.get("/service-info")
+    assert r.status_code == 200
+    rd2 = r.json()
+    assert rd == rd2
+
+    # can post to the public post endpoint
     r = fastapi_client_auth.post("/post-public", json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == 200
 
