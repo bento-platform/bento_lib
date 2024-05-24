@@ -84,6 +84,11 @@ Make sure that the tagged version is a valid semantic versioning translation of 
 
 ## Modules
 
+### `apps`
+
+`apps` provides Python classes for setting up applications, wrapping a framework's base class with
+additional code to set up error handling and basic Bento service boilerplate.
+
 ### `auth`
 
 `auth` provides Python service middleware for dealing with the Bento authorization service.

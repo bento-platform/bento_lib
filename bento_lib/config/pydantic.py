@@ -34,7 +34,7 @@ class BentoBaseConfig(BaseSettings):
     service_id: str
     service_name: str
     service_description: str = ""  # If description is blank, it should be stripped out in the response
-    # service_url_base_path: str = "http://127.0.0.1:5000"  # Base path to construct URIs from
+    service_url_base_path: str = "http://127.0.0.1:5000"  # Base path to construct URIs from
     service_contact_url: str = "mailto:info@c3g.ca"
     service_organization: GA4GHServiceOrganizationModel = SERVICE_ORGANIZATION_C3G_PYDANTIC
 
