@@ -28,6 +28,7 @@ class BentoFastAPI(FastAPI):
         bento_extra_service_info: BentoExtraServiceInfo,
         service_type: GA4GHServiceType,
         version: str,
+        exc_handler_kwargs: dict | None = None,
         *args,
         **kwargs,
     ):
@@ -63,9 +64,13 @@ class BentoFastAPI(FastAPI):
             authz_middleware.attach(self)
 
         # Set up exception handlers for standard Bento/FastAPI errors
-        self.exception_handler(BentoAuthException)(bento_auth_exception_handler_factory(logger, authz_middleware))
-        self.exception_handler(StarletteHTTPException)(http_exception_handler_factory(logger, authz_middleware))
-        self.exception_handler(RequestValidationError)(validation_exception_handler_factory(authz_middleware))
+        exc_handler_kwargs = exc_handler_kwargs or {}
+        self.exception_handler(BentoAuthException)(
+            bento_auth_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs))
+        self.exception_handler(StarletteHTTPException)(
+            http_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs))
+        self.exception_handler(RequestValidationError)(
+            validation_exception_handler_factory(authz_middleware, **exc_handler_kwargs))
 
         # Set up service info endpoint
 
