@@ -160,6 +160,12 @@ methods for creating and processing ASTs.
 for common structures and operations related to GA4GH's `/service-info` 
 specification.
 
+### `streaming`
+
+`streaming` contains helper code for streaming bytes via HTTP from files, and 
+proxied HTTP resources, including exception definitions and HTTP `Range` header 
+parsing. 
+
 ### `workflows`
 
 `workflows` contains common code used for handling workflow metadata processing
