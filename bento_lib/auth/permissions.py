@@ -169,7 +169,7 @@ P_EDIT_DATASET = Permission(EDIT_VERB, DATASET, supports_data_type_narrowing=Fal
 
 #  - can view edit permissions for the resource which granted this permission only:
 P_VIEW_PERMISSIONS = Permission(VIEW_VERB, PERMISSIONS_NOUN)
-P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN)
+P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN, gives=(P_VIEW_PERMISSIONS,))
 
 # ---
 
