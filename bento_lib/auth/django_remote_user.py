@@ -25,7 +25,7 @@ class BentoRemoteUserMiddleware(RemoteUserMiddleware):
 
 class BentoRemoteUserBackend(RemoteUserBackend):
     # noinspection PyMethodMayBeStatic
-    def configure_user(self, request, user):
+    def configure_user(self, request, user, created: bool = True):
         is_owner = request.META.get(DJANGO_USER_ROLE_HEADER, ROLE_USER) == ROLE_OWNER
         user.is_staff = is_owner
         user.is_superuser = is_owner
