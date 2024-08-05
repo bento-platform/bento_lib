@@ -26,6 +26,7 @@ from bento_lib.workflows.workflow_set import WorkflowSet
 from bento_lib.workflows.fastapi import build_workflow_router
 
 from .common import (
+    authz_test_include_patterns,
     authz_test_exempt_patterns,
     authz_test_case_params,
     authz_test_cases,
@@ -105,7 +106,11 @@ app_test_auth_config = BentoFastAPIBaseConfig(
     cors_origins=("*",),
 )
 auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(
-    app_test_auth_config, logger, exempt_request_patterns=authz_test_exempt_patterns)
+    app_test_auth_config,
+    logger,
+    include_request_patterns=authz_test_include_patterns,
+    exempt_request_patterns=authz_test_exempt_patterns,
+)
 app_test_auth = BentoFastAPI(auth_middleware, app_test_auth_config, logger, {}, TEST_APP_SERVICE_TYPE,
                              TEST_APP_VERSION)
 
@@ -206,6 +211,11 @@ async def auth_post_with_token_evaluate_to_dict(request: Request, body: TestToke
         require_token=True,
         headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
     )})
+
+
+@app_test_auth.put("/put-test")
+async def auth_put_not_included(body: TestBody):
+    return JSONResponse(body.model_dump(mode="json"))
 
 
 # Auth test app (disabled auth middleware) ------------------------------------
@@ -386,6 +396,11 @@ def test_fastapi_auth_post_with_token_evaluate_to_dict(aioresponse: aioresponses
     r = fastapi_client_auth.post("/post-with-token-evaluate-to-dict", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":[{"ingest:data":true}]}'
+
+
+def test_fastapi_auth_put_not_included(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+    r = fastapi_client_auth.put("/put-test", json=TEST_AUTHZ_VALID_POST_BODY)  # no authz needed
+    assert r.status_code == 200
 
 
 @pytest.mark.asyncio

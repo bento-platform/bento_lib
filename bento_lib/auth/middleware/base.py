@@ -15,10 +15,30 @@ from .mark_authz_done_mixin import MarkAuthzDoneMixin
 __all__ = ["BaseAuthMiddleware"]
 
 
-def _compile_to_regex_if_needed(pattern: str | re.Pattern) -> re.Pattern:
+NonNormalizedPattern = re.Pattern | str
+
+# Order: method pattern, path pattern
+NonNormalizedRequestPattern = tuple[NonNormalizedPattern, NonNormalizedPattern]
+NonNormalizedRequestPatterns = tuple[NonNormalizedRequestPattern, ...]
+RequestPattern = tuple[re.Pattern, re.Pattern]
+RequestPatterns = frozenset[RequestPattern]
+
+
+def _compile_to_regex_if_needed(pattern: NonNormalizedPattern) -> re.Pattern:
     if isinstance(pattern, str):
         return re.compile(pattern)
     return pattern
+
+
+def _normalize_request_patterns(patterns: NonNormalizedRequestPatterns) -> RequestPatterns:
+    return frozenset(
+        (_compile_to_regex_if_needed(method_pattern), _compile_to_regex_if_needed(path_pattern))
+        for method_pattern, path_pattern in patterns
+    )
+
+
+def _request_pattern_match(method: str, path: str, patterns: RequestPatterns) -> tuple[bool, ...]:
+    return tuple(bool(mp.fullmatch(method) and pp.fullmatch(path)) for mp, pp in patterns)
 
 
 class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
@@ -28,7 +48,8 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         drs_compat: bool = False,
         sr_compat: bool = False,
         beacon_meta_callback: Callable[[], dict] | None = None,
-        exempt_request_patterns: tuple[tuple[re.Pattern | str, re.Pattern | str], ...] = (),
+        include_request_patterns: NonNormalizedRequestPatterns | None = None,
+        exempt_request_patterns: NonNormalizedRequestPatterns = (),
         debug_mode: bool = False,
         enabled: bool = True,
         logger: logging.Logger | None = None,
@@ -43,10 +64,10 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self._sr_compat: bool = sr_compat
         self._beacon_meta_callback: Callable[[], dict] | None = beacon_meta_callback
 
-        self._exempt_request_patterns: frozenset[tuple[re.Pattern, re.Pattern]] = frozenset(
-            (_compile_to_regex_if_needed(method_pattern), _compile_to_regex_if_needed(path_pattern))
-            for method_pattern, path_pattern in exempt_request_patterns
+        self._include_request_patterns: RequestPatterns | None = (
+            _normalize_request_patterns(include_request_patterns) if include_request_patterns is not None else None
         )
+        self._exempt_request_patterns: RequestPatterns = _normalize_request_patterns(exempt_request_patterns)
 
         self._bento_authz_service_url: str = bento_authz_service_url
 
@@ -65,8 +86,14 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         return self._enabled
 
     def request_is_exempt(self, method: str, path: str) -> bool:
-        return method == "OPTIONS" or any(
-            mp.fullmatch(method) and pp.fullmatch(path) for mp, pp in self._exempt_request_patterns)
+        return (
+            method == "OPTIONS"
+            or (
+                self._include_request_patterns is not None
+                and not any(_request_pattern_match(method, path, self._include_request_patterns))
+            )
+            or any(_request_pattern_match(method, path, self._exempt_request_patterns))
+        )
 
     @abstractmethod
     def get_authz_header_value(self, request: Any) -> str | None:  # pragma: no cover

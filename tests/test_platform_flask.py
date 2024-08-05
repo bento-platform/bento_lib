@@ -13,6 +13,7 @@ from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 
 from .common import (
+    authz_test_include_patterns,
     authz_test_exempt_patterns,
     authz_test_case_params,
     authz_test_cases,
@@ -63,7 +64,9 @@ def flask_client_auth():
     auth_middleware = FlaskAuthMiddleware(
         bento_authz_service_url="https://bento-auth.local",
         logger=logger,
-        exempt_request_patterns=authz_test_exempt_patterns)
+        include_request_patterns=authz_test_include_patterns,
+        exempt_request_patterns=authz_test_exempt_patterns,
+    )
     auth_middleware.attach(test_app_auth)
 
     test_app_auth.register_error_handler(
