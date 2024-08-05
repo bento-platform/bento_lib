@@ -43,77 +43,80 @@ TEST_APP_SERVICE_TYPE = build_bento_service_type("test", TEST_APP_VERSION)
 
 
 class TestBody(BaseModel):
+    __test__ = False
     test1: str
     test2: str
 
 
 class TestTokenPayloadBody(BaseModel):
+    __test__ = False
     token: str
     payload: str
 
 
 class TestTokenBody(BaseModel):
+    __test__ = False
     token: str
 
 
 # Standard test app -----------------------------------------------------------
 
-test_app_config = BentoFastAPIBaseConfig(
+app_config_test = BentoFastAPIBaseConfig(
     service_id="test",
     service_name="Test App",
     bento_authz_service_url="https://bento-auth.local",
     cors_origins=("*",),
 )
-test_app = BentoFastAPI(None, test_app_config, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
-test_client_ = TestClient(test_app)
+app_test = BentoFastAPI(None, app_config_test, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
+client_test = TestClient(app_test)
 
 
 @pytest.fixture
 def test_client():
-    return test_client_
+    return client_test
 
 
-@test_app.get("/get-404")
+@app_test.get("/get-404")
 def get_404():
     raise HTTPException(status_code=404, detail="Hello")
 
 
-@test_app.get("/get-500")
+@app_test.get("/get-500")
 def get_500():
     raise HTTPException(status_code=500, detail="Hello")
 
 
-@test_app.post("/post-400")
+@app_test.post("/post-400")
 def post_400(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app.get("/get-403")
+@app_test.get("/get-403")
 def get_403():
     raise BentoAuthException("Hello", status_code=403)
 
 
 # Auth test app ---------------------------------------------------------------
 
-test_app_auth_config = BentoFastAPIBaseConfig(
+app_test_auth_config = BentoFastAPIBaseConfig(
     service_id="auth_test",
     service_name="Auth Test",
     bento_authz_service_url="https://bento-auth.local",
     cors_origins=("*",),
 )
 auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(
-    test_app_auth_config, logger, exempt_request_patterns=authz_test_exempt_patterns)
-test_app_auth = BentoFastAPI(auth_middleware, test_app_auth_config, logger, {}, TEST_APP_SERVICE_TYPE,
+    app_test_auth_config, logger, exempt_request_patterns=authz_test_exempt_patterns)
+app_test_auth = BentoFastAPI(auth_middleware, app_test_auth_config, logger, {}, TEST_APP_SERVICE_TYPE,
                              TEST_APP_VERSION)
 
-auth_middleware.attach(test_app_auth)
+auth_middleware.attach(app_test_auth)
 
 workflow_set = WorkflowSet(WDL_DIR)
 workflow_set.add_workflow("test", WORKFLOW_DEF)
 
-test_app_auth.include_router(build_workflow_router(auth_middleware, workflow_set))
+app_test_auth.include_router(build_workflow_router(auth_middleware, workflow_set))
 
-fastapi_client_auth_ = TestClient(test_app_auth)
+fastapi_client_auth_ = TestClient(app_test_auth)
 
 
 @pytest.fixture
@@ -121,24 +124,24 @@ def fastapi_client_auth():
     return fastapi_client_auth_
 
 
-@test_app_auth.post("/post-exempted")
+@app_test_auth.post("/post-exempted")
 def auth_post_exempted(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app_auth.post("/post-public", dependencies=[auth_middleware.dep_public_endpoint()])
+@app_test_auth.post("/post-public", dependencies=[auth_middleware.dep_public_endpoint()])
 def auth_post_public(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app_auth.post("/post-private", dependencies=[
+@app_test_auth.post("/post-private", dependencies=[
     auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
 ])
 def auth_post_private(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app_auth.post("/post-private-no-flag", dependencies=[
+@app_test_auth.post("/post-private-no-flag", dependencies=[
     auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), set_authz_flag=False),
 ])
 def auth_post_private_no_flag(request: Request, body: TestBody):
@@ -146,24 +149,24 @@ def auth_post_private_no_flag(request: Request, body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app_auth.post("/post-private-no-token", dependencies=[
+@app_test_auth.post("/post-private-no-token", dependencies=[
     auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), require_token=False),
 ])
 def auth_post_private_no_token(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app_auth.post("/post-missing-authz")
+@app_test_auth.post("/post-missing-authz")
 def auth_post_missing_authz(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))  # no authz flag set, so will return a 403
 
 
-@test_app_auth.get("/get-500")
+@app_test_auth.get("/get-500")
 def auth_get_500():
     raise HTTPException(500, "Internal Server Error")
 
 
-@test_app_auth.post("/post-with-token-in-body")
+@app_test_auth.post("/post-with-token-in-body")
 async def auth_post_with_token_in_body(request: Request, body: TestTokenPayloadBody):
     token = body.token
     await auth_middleware.async_check_authz_evaluate(
@@ -177,7 +180,7 @@ async def auth_post_with_token_in_body(request: Request, body: TestTokenPayloadB
     return JSONResponse({"payload": body.payload})
 
 
-@test_app_auth.post("/post-with-token-evaluate-one")
+@app_test_auth.post("/post-with-token-evaluate-one")
 async def auth_post_with_token_evaluate_one(request: Request, body: TestTokenBody):
     token = body.token
 
@@ -191,7 +194,7 @@ async def auth_post_with_token_evaluate_one(request: Request, body: TestTokenBod
     )})
 
 
-@test_app_auth.post("/post-with-token-evaluate-to-dict")
+@app_test_auth.post("/post-with-token-evaluate-to-dict")
 async def auth_post_with_token_evaluate_to_dict(request: Request, body: TestTokenBody):
     token = body.token
 
@@ -207,22 +210,22 @@ async def auth_post_with_token_evaluate_to_dict(request: Request, body: TestToke
 
 # Auth test app (disabled auth middleware) ------------------------------------
 
-test_app_auth_disabled = FastAPI()
+app_test_auth_disabled = FastAPI()
 auth_middleware_disabled = FastApiAuthMiddleware(
     bento_authz_service_url="https://bento-auth.local",
     logger=logger,
     enabled=False,
 )
-auth_middleware_disabled.attach(test_app_auth_disabled)
+auth_middleware_disabled.attach(app_test_auth_disabled)
 
-test_app_auth_disabled.exception_handler(HTTPException)(
+app_test_auth_disabled.exception_handler(HTTPException)(
     http_exception_handler_factory(logger, auth_middleware_disabled))
-test_app_auth_disabled.exception_handler(BentoAuthException)(
+app_test_auth_disabled.exception_handler(BentoAuthException)(
     bento_auth_exception_handler_factory(logger, auth_middleware_disabled))
-test_app_auth_disabled.exception_handler(RequestValidationError)(
+app_test_auth_disabled.exception_handler(RequestValidationError)(
     validation_exception_handler_factory(auth_middleware_disabled))
 
-fastapi_client_auth_disabled_ = TestClient(test_app_auth_disabled)
+fastapi_client_auth_disabled_ = TestClient(app_test_auth_disabled)
 
 
 @pytest.fixture
@@ -230,12 +233,12 @@ def fastapi_client_auth_disabled():
     return fastapi_client_auth_disabled_
 
 
-@test_app_auth_disabled.post("/post-public", dependencies=[auth_middleware_disabled.dep_public_endpoint()])
+@app_test_auth_disabled.post("/post-public", dependencies=[auth_middleware_disabled.dep_public_endpoint()])
 def auth_disabled_post_public(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@test_app_auth_disabled.post("/post-private", dependencies=[
+@app_test_auth_disabled.post("/post-private", dependencies=[
     auth_middleware_disabled.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
 ])
 def auth_disabled_post_private(body: TestBody):
@@ -266,7 +269,7 @@ def _expect_error(r: HttpxResponse, code: int, msgs: tuple[str, ...]):
 def test_fastapi_auth_middleware_from_config():
     assert isinstance(auth_middleware, FastApiAuthMiddleware)
 
-    assert auth_middleware._bento_authz_service_url == test_app_auth_config.bento_authz_service_url
+    assert auth_middleware._bento_authz_service_url == app_test_auth_config.bento_authz_service_url
     assert auth_middleware._enabled
     assert auth_middleware._logger == logger
 
