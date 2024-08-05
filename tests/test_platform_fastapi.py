@@ -398,8 +398,8 @@ def test_fastapi_auth_post_with_token_evaluate_to_dict(aioresponse: aioresponses
     assert r.text == '{"payload":[{"ingest:data":true}]}'
 
 
-def test_fastapi_auth_put_not_included(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    r = fastapi_client_auth.put("/put-test", json=TEST_AUTHZ_VALID_POST_BODY)  # no authz needed
+def test_fastapi_auth_put_not_included(fastapi_client_auth: TestClient):
+    r = fastapi_client_auth.put("/put-test", json=TEST_AUTHZ_VALID_POST_BODY)  # no authz needed, not included
     assert r.status_code == 200
 
 

@@ -151,6 +151,10 @@ def flask_client_auth():
             headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
         )})
 
+    @test_app_auth.route("/put-test", methods=["PUT"])
+    def auth_put_not_included():
+        return jsonify(request.json)
+
     with test_app_auth.test_client() as client:
         yield client
 
@@ -288,6 +292,11 @@ def test_flask_auth_post_with_token_evaluate_to_dict(flask_client_auth: FlaskCli
     r = flask_client_auth.post("/post-with-token-evaluate-to-dict", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":[{"ingest:data":true}]}\n'
+
+
+def test_flask_auth_put_not_included(flask_client_auth: FlaskClient):
+    r = flask_client_auth.put("/put-test", json=TEST_AUTHZ_VALID_POST_BODY)  # no authz needed, not included
+    assert r.status_code == 200
 
 
 @responses.activate
