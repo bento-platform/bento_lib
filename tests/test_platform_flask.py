@@ -13,6 +13,7 @@ from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 
 from .common import (
+    authz_test_include_patterns,
     authz_test_exempt_patterns,
     authz_test_case_params,
     authz_test_cases,
@@ -63,7 +64,9 @@ def flask_client_auth():
     auth_middleware = FlaskAuthMiddleware(
         bento_authz_service_url="https://bento-auth.local",
         logger=logger,
-        exempt_request_patterns=authz_test_exempt_patterns)
+        include_request_patterns=authz_test_include_patterns,
+        exempt_request_patterns=authz_test_exempt_patterns,
+    )
     auth_middleware.attach(test_app_auth)
 
     test_app_auth.register_error_handler(
@@ -147,6 +150,10 @@ def flask_client_auth():
             require_token=True,
             headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
         )})
+
+    @test_app_auth.route("/put-test", methods=["PUT"])
+    def auth_put_not_included():
+        return jsonify(request.json)
 
     with test_app_auth.test_client() as client:
         yield client
@@ -285,6 +292,11 @@ def test_flask_auth_post_with_token_evaluate_to_dict(flask_client_auth: FlaskCli
     r = flask_client_auth.post("/post-with-token-evaluate-to-dict", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":[{"ingest:data":true}]}\n'
+
+
+def test_flask_auth_put_not_included(flask_client_auth: FlaskClient):
+    r = flask_client_auth.put("/put-test", json=TEST_AUTHZ_VALID_POST_BODY)  # no authz needed, not included
+    assert r.status_code == 200
 
 
 @responses.activate
