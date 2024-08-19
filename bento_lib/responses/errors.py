@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime, timezone
 from functools import partial
+from typing import Callable
 from werkzeug.http import HTTP_STATUS_CODES
 
-from typing import Callable
+from bento_lib._internal import internal_logger
 
 
 __all__ = [
@@ -32,6 +34,7 @@ def http_error(
     drs_compat: bool = False,
     sr_compat: bool = False,
     beacon_meta_callback: Callable[[], dict] | None = None,
+    logger: logging.Logger | None = None,
 ):
     """
     Builds a dictionary for an HTTP error JSON response.
@@ -41,16 +44,19 @@ def http_error(
     :param sr_compat: Whether to generate a GA4GH Service Registry backwards-compatible response.
     :param beacon_meta_callback: Callback for generating GA4GH Beacon V2 backwards-compatible meta field for
            error response. If this is specified, Beacon V2-compatible errors will be enabled.
+    :param logger: A logger object to use for internal function error logging.
     :return: A dictionary to encode in JSON for the error response.
     """
 
+    logger = logger or internal_logger
+
     if code not in HTTP_STATUS_CODES:
-        print(f"[Bento Lib] Error: Could not find code {code} in valid HTTP status codes.")
+        logger.error(f"Could not find code {code} in valid HTTP status codes.")
         code = 500
         errors = (*errors, f"An invalid status code of {code} was specified by the service.")
 
     if code < 400:
-        print(f"[Bento Lib] Error: Code {code} is not an HTTP error code.")
+        logger.error(f"Code {code} is not an HTTP error code.")
         code = 500
         errors = (*errors, f"A non-error status code of {code} was specified by the service.")
 

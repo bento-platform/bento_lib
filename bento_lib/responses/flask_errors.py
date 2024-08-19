@@ -1,11 +1,11 @@
 import logging
-import sys
 import traceback
 
 from flask import jsonify, request
 from functools import partial
 from typing import Callable
 
+from .._internal import internal_logger
 from ..auth.types import MarkAuthzDoneType
 from ..responses import errors
 
@@ -34,24 +34,16 @@ __all__ = [
 def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     """
     Function to wrap flask_* error creators with something that supports the application.register_error_handler method,
-    while also printing a traceback. Optionally, the keyword argument service_name can be passed in to make the error
-    logging more precise.
+    while also printing a traceback.
     :param fn: The flask error-generating function to wrap
     :return: The wrapped function
     """
 
-    service_name = kwargs.pop("service_name", "Bento Service")
-
-    logger: logging.Logger | None = kwargs.pop("logger", None)
+    logger: logging.Logger = kwargs.pop("logger", internal_logger)
     authz: MarkAuthzDoneType | None = kwargs.pop("authz", None)
 
     def handle_error(e):
-        if logger:
-            logger.error(f"Encountered error:\n{traceback.format_exception(type(e), e, e.__traceback__)}")
-        else:
-            print(f"[{service_name}] Encountered error:", file=sys.stderr)
-            # TODO: py3.10: print_exception(e)
-            traceback.print_exception(type(e), e, e.__traceback__)
+        logger.error(f"Encountered error:\n{traceback.format_exception(type(e), e, e.__traceback__)}")
         if authz:
             authz.mark_authz_done(request)
         return fn(str(e), *args, **kwargs)
