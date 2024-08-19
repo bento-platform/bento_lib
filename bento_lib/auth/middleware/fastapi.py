@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
@@ -8,6 +9,7 @@ from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.base import BaseAuthMiddleware
 from bento_lib.auth.permissions import Permission
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
+from bento_lib.config.pydantic import BentoFastAPIBaseConfig
 from bento_lib.responses.errors import http_error
 
 __all__ = [
@@ -16,6 +18,24 @@ __all__ = [
 
 
 class FastApiAuthMiddleware(BaseAuthMiddleware):
+    @classmethod
+    def build_from_fastapi_pydantic_config(cls, config: BentoFastAPIBaseConfig, logger: logging.Logger, **kwargs):
+        """
+        Build a FastAPI authorization middlware instance from a Bento Pydantic FastAPI config instance and a logger
+        instance. This automatically exempts the FastAPI-generated docs OpenAPI schema paths from requiring
+        authorization.
+        :param config: instance of the FastAPI subclass of the Bento Pydantic config class.
+        :param logger: A Python logger to instantiate the FastAPI authorization middlware with.
+        :param kwargs: Keyword arguments to pass to the FastAPI authorization middleware constructor.
+        :return: An instance of the authorization middleware.
+        """
+        exempt_request_patterns = (
+            (r"GET", re.escape(config.service_docs_path)),
+            (r"GET", re.escape(config.service_openapi_path)),
+            *kwargs.pop("exempt_request_patterns", ()),
+        )
+        return cls.build_from_pydantic_config(config, logger, exempt_request_patterns=exempt_request_patterns, **kwargs)
+
     def attach(self, app: FastAPI):
         """
         Attach the middleware to an application. Must be called in order for requests to be checked.

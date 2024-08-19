@@ -6,7 +6,7 @@ import requests
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable
 
-from bento_lib.config.pydantic import BentoBaseConfig, BentoFastAPIBaseConfig
+from bento_lib.config.pydantic import BentoBaseConfig
 from ..exceptions import BentoAuthException
 from ..permissions import Permission
 from ..types import EvaluationResultMatrix, EvaluationResultDict
@@ -80,15 +80,6 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
             logger=logger,
             **kwargs,
         )
-
-    @classmethod
-    def build_from_fastapi_pydantic_config(cls, config: BentoFastAPIBaseConfig, logger: logging.Logger, **kwargs):
-        exempt_request_patterns = (
-            (r"GET", re.escape(config.service_docs_path)),
-            (r"GET", re.escape(config.service_openapi_path)),
-            *kwargs.pop("exempt_request_patterns", ()),
-        )
-        return cls.build_from_pydantic_config(config, logger, exempt_request_patterns=exempt_request_patterns, **kwargs)
 
     @property
     def enabled(self) -> bool:
