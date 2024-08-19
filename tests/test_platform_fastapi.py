@@ -105,7 +105,7 @@ app_test_auth_config = BentoFastAPIBaseConfig(
     bento_authz_service_url="https://bento-auth.local",
     cors_origins=("*",),
 )
-auth_middleware = FastApiAuthMiddleware.build_from_pydantic_config(
+auth_middleware = FastApiAuthMiddleware.build_from_fastapi_pydantic_config(
     app_test_auth_config,
     logger,
     include_request_patterns=authz_test_include_patterns,
@@ -326,6 +326,18 @@ def test_fastapi_auth_public(fastapi_client_auth: TestClient):
     assert r.status_code == 200
     rd2 = r.json()
     assert rd == rd2
+
+    # can get the FastAPI docs
+    r = fastapi_client_auth.get("/docs")
+    assert r.status_code == 200
+
+    # can get the OpenAPI schema
+    r = fastapi_client_auth.get("/openapi.json")
+    assert r.status_code == 200
+
+    # can post to the exempted post endpoint
+    r = fastapi_client_auth.post("/post-exempted", json=TEST_AUTHZ_VALID_POST_BODY)
+    assert r.status_code == 200
 
     # can post to the public post endpoint
     r = fastapi_client_auth.post("/post-public", json=TEST_AUTHZ_VALID_POST_BODY)
