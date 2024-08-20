@@ -29,7 +29,8 @@ async def stream_file(
            big-endian encoded) of the stream.
     :param file_size: The whole file's size, if already known. If this has already been calculated/stored, this saves a
            stat() call.
-    :param refget_mode: TODO
+    :param refget_mode: Whether to raise Refget-compliant errors, rather than correct errors (GA4GH...), i.e.,
+           400 instead of 416 for past-EOF errors.
     """
 
     final_file_size: int = file_size or (await aiofiles.os.stat(path)).st_size
