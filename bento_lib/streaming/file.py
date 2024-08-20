@@ -36,7 +36,8 @@ async def stream_file(
     final_file_size: int = file_size or (await aiofiles.os.stat(path)).st_size
     final_interval = interval if interval else (0, final_file_size - 1)
 
-    validate_interval(final_interval, final_file_size, refget_mode=refget_mode)
+    # Strictly enforce interval order, since we currently can't handle inverted intervals.
+    validate_interval(final_interval, final_file_size, refget_mode=refget_mode, enforce_not_inverted=True)
 
     start, end = final_interval
     response_size: int = end - start + 1  # Inclusive interval - need to add 1

@@ -8,25 +8,41 @@ DUMMY_CONTENT_LENGTH = 10000
 
 
 def test_streaming_exceptions():
-    e = s.StreamingRangeNotSatisfiable("Not satisfiable", 100)
+    e = s.StreamingRangeNotSatisfiable("Not satisfiable", "start>=length", 100)
     assert e.n_bytes == 100
     assert str(e) == "Not satisfiable"
+    assert e.reason == "start>=length"
 
 
-@pytest.mark.parametrize(
-    "interval,refget_mode,exc",
-    [
-        ((100, 0), False, s.StreamingRangeNotSatisfiable),  # inverted range
-        ((0, 100000), False, s.StreamingRangeNotSatisfiable),  # past end of file
-        ((100000, 200000), False, s.StreamingRangeNotSatisfiable),  # past end of file
-        # Refget mode: 400 instead of 416 for past-EOF errors
-        ((0, 100000), True, s.StreamingBadRange),  # past end of file
-        ((100000, 200000), True, s.StreamingBadRange),  # past end of file
-    ]
-)
-def test_validate_interval_errors(interval: tuple[int, int], refget_mode: bool, exc: Type[Exception]):
-    with pytest.raises(exc):
-        r.validate_interval(interval, DUMMY_CONTENT_LENGTH, refget_mode=refget_mode)
+validate_interval_params: list[
+    tuple[tuple[int, int], bool, bool | None, Type[Exception], s.RangeNotSatisfiableReason | None]
+] = [
+    ((100, 0), False, None, s.StreamingRangeNotSatisfiable, "inverted"),  # inverted range
+    ((100, 0), False, True, s.StreamingRangeNotSatisfiable, "inverted"),  # inverted range
+    ((0, 100000), False, None, s.StreamingRangeNotSatisfiable, "end>=length"),  # past end of file
+    ((100000, 200000), False, None, s.StreamingRangeNotSatisfiable, "start>=length"),  # past end of file
+    # Refget mode: 400 instead of 416 for past-EOF errors
+    ((0, 100000), True, None, s.StreamingBadRange, None),  # past end of file
+    ((100000, 200000), True, None, s.StreamingBadRange, None),  # past end of file
+    ((100, 0), True, True, s.StreamingRangeNotSatisfiable, "inverted"),  # inverted range
+]
+
+
+@pytest.mark.parametrize("interval,refget_mode,enforce_interval_order,exc,reason", validate_interval_params)
+def test_validate_interval_errors(
+    interval: tuple[int, int],
+    refget_mode: bool,
+    enforce_interval_order: bool | None,
+    exc: Type[Exception],
+    reason: s.RangeNotSatisfiableReason | None,
+):
+    with pytest.raises(exc) as e:
+        r.validate_interval(
+            interval, DUMMY_CONTENT_LENGTH, refget_mode=refget_mode, enforce_not_inverted=enforce_interval_order
+        )
+
+    if reason is not None:
+        assert e.value.reason == reason
 
 
 @pytest.mark.parametrize(
@@ -131,14 +147,27 @@ async def test_file_streaming_ranges(interval: tuple[int, int], expected: bytes,
 
 @pytest.mark.asyncio()
 async def test_file_streaming_range_errors():
-    with pytest.raises(s.StreamingRangeNotSatisfiable):
+    with pytest.raises(s.StreamingRangeNotSatisfiable) as e:
         stream = f.stream_file(SARS_COV_2_FASTA_PATH, (1000000000, 1000000010), TEST_CHUNK_SIZE)  # past EOF
         await anext(stream)
+        assert getattr(e, "reason") == "start>=length"
 
     with pytest.raises(s.StreamingRangeNotSatisfiable):
         stream = f.stream_file(SARS_COV_2_FASTA_PATH, (0, 10000000000), TEST_CHUNK_SIZE)  # past EOF
         await anext(stream)
+        assert getattr(e, "reason") == "end>=length"
 
     with pytest.raises(s.StreamingRangeNotSatisfiable):
         stream = f.stream_file(SARS_COV_2_FASTA_PATH, (10000, 5000), TEST_CHUNK_SIZE)  # start > end
+        await anext(stream)
+        assert getattr(e, "reason") == "inverted"
+
+    # Refget mode:
+
+    with pytest.raises(s.StreamingBadRange):
+        stream = f.stream_file(SARS_COV_2_FASTA_PATH, (1000000000, 1000000010), TEST_CHUNK_SIZE, refget_mode=True)
+        await anext(stream)
+
+    with pytest.raises(s.StreamingBadRange):
+        stream = f.stream_file(SARS_COV_2_FASTA_PATH, (0, 10000000000), TEST_CHUNK_SIZE, refget_mode=True)
         await anext(stream)
