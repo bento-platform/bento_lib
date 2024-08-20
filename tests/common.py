@@ -10,6 +10,8 @@ __all__ = [
     "authz_test_cases",
     "TEST_AUTHZ_VALID_POST_BODY",
     "TEST_AUTHZ_HEADERS",
+    "DATA_DIR",
+    "SARS_COV_2_FASTA_PATH",
     "WDL_DIR",
     "WORKFLOW_DEF",
 ]
@@ -37,6 +39,9 @@ authz_test_cases = (
 
 TEST_AUTHZ_VALID_POST_BODY = {"test1": "a", "test2": "b"}
 TEST_AUTHZ_HEADERS = {"Authorization": "Bearer test"}
+
+DATA_DIR = Path(__file__).parent / "data"
+SARS_COV_2_FASTA_PATH = DATA_DIR / "sars_cov_2.fa"
 
 WDL_DIR = Path(__file__).parent / "wdls"
 

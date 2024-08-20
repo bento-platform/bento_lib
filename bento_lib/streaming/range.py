@@ -2,13 +2,35 @@ import re
 
 from .exceptions import StreamingRangeNotSatisfiable, StreamingBadRange
 
-__all__ = ["parse_range_header"]
+__all__ = ["validate_interval", "parse_range_header"]
 
 
 BYTE_RANGE_INTERVAL_SPLIT = re.compile(r",\s*")
 BYTE_RANGE_START_ONLY = re.compile(r"^(\d+)-$")
 BYTE_RANGE_START_END = re.compile(r"^(\d+)-(\d+)$")
 BYTE_RANGE_SUFFIX = re.compile(r"^-(\d+)$")
+
+
+def validate_interval(interval: tuple[int, int], content_length: int, refget_mode: bool = False) -> None:
+    int_start, int_end = interval
+
+    # Order of these checks is important - we want to give a 416 if start/end is beyond content length (which also
+    # results in an inverted interval)
+
+    if int_start >= content_length:
+        # both ends of the range are 0-indexed, inclusive - so it starts at 0 and ends at content_length - 1
+        if refget_mode:  # sigh... GA4GH moment
+            raise StreamingBadRange(f"start is beyond content length: {int_start} >= {content_length}")
+        raise StreamingRangeNotSatisfiable(f"not satisfiable: {int_start} >= {content_length}", content_length)
+
+    if int_end >= content_length:
+        # both ends of the range are 0-indexed, inclusive - so it starts at 0 and ends at content_length - 1
+        if refget_mode:  # sigh... GA4GH moment
+            raise StreamingBadRange(f"end is beyond content length: {int_end} >= {content_length}")
+        raise StreamingRangeNotSatisfiable(f"not satisfiable: {int_end} >= {content_length}", content_length)
+
+    if not refget_mode and int_start > int_end:
+        raise StreamingRangeNotSatisfiable(f"inverted interval: {interval}", content_length)
 
 
 def parse_range_header(
@@ -50,26 +72,9 @@ def parse_range_header(
 
     # validate intervals are not inverted and do not overlap each other:
     for i, int1 in enumerate(intervals):
-        int1_start, int1_end = int1
+        validate_interval(int1, content_length, refget_mode=refget_mode)
 
-        # Order of these checks is important - we want to give a 416 if start/end is beyond content length (which also
-        # results in an inverted interval)
-
-        if int1_start >= content_length:
-            # both ends of the range are 0-indexed, inclusive - so it starts at 0 and ends at content_length - 1
-            if refget_mode:  # sigh... GA4GH moment
-                raise StreamingBadRange(f"start is beyond content length: {int1_start} >= {content_length}")
-            raise StreamingRangeNotSatisfiable(f"not satisfiable: {int1_start} >= {content_length}", content_length)
-
-        if int1_end >= content_length:
-            # both ends of the range are 0-indexed, inclusive - so it starts at 0 and ends at content_length - 1
-            if refget_mode:  # sigh... GA4GH moment
-                raise StreamingBadRange(f"end is beyond content length: {int1_end} >= {content_length}")
-            raise StreamingRangeNotSatisfiable(f"not satisfiable: {int1_end} >= {content_length}", content_length)
-
-        if not refget_mode and int1_start > int1_end:
-            raise StreamingRangeNotSatisfiable(f"inverted interval: {int1}", content_length)
-
+        _, int1_end = int1
         if i < n_intervals - 1:
             int2 = intervals[i + 1]
             int2_start, int2_end = int2
