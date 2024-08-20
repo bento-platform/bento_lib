@@ -1,4 +1,8 @@
+from typing import Literal
+
 __all__ = [
+    "StreamingException",
+    "RangeNotSatisfiableReason",
     "StreamingRangeNotSatisfiable",
     "StreamingBadRange",
     "StreamingProxyingError",
@@ -8,31 +12,46 @@ __all__ = [
 ]
 
 
-class StreamingRangeNotSatisfiable(Exception):
-    def __init__(self, message: str, n_bytes: int | None):
+class StreamingException(Exception):
+    """
+    Generic streaming exception / base class for other bento_lib.streaming exceptions.
+    """
+    pass
+
+
+RangeNotSatisfiableReason = Literal["start>=length", "end>=length", "inverted", "overlap"]
+
+
+class StreamingRangeNotSatisfiable(StreamingException):
+    def __init__(self, message: str, reason: RangeNotSatisfiableReason, n_bytes: int | None):
         self._n_bytes: int | None = n_bytes
+        self._reason: RangeNotSatisfiableReason = reason
         super().__init__(message)
+
+    @property
+    def reason(self) -> RangeNotSatisfiableReason:
+        return self._reason
 
     @property
     def n_bytes(self) -> int:
         return self._n_bytes
 
 
-class StreamingBadRange(Exception):
+class StreamingBadRange(StreamingException):
     pass
 
 
-class StreamingProxyingError(Exception):
+class StreamingProxyingError(StreamingException):
     pass
 
 
-class StreamingResponseExceededLimit(Exception):
+class StreamingResponseExceededLimit(StreamingException):
     pass
 
 
-class StreamingBadURI(Exception):
+class StreamingBadURI(StreamingException):
     pass
 
 
-class StreamingUnsupportedURIScheme(Exception):
+class StreamingUnsupportedURIScheme(StreamingException):
     pass
