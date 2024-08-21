@@ -43,11 +43,12 @@ class DrsResolver:
         self._drs_record_cache[drs_uri] = (now, res)
         return res
 
-    async def fetch_drs_record_by_uri_async(self, drs_uri: str) -> dict:
+    async def fetch_drs_record_by_uri_async(self, drs_uri: str, session_kwargs: dict | None = None) -> dict:
         """
         Asynchronously fetches and, for a time, caches a DRS record using its drs://-schemed URI.
         Cache is shared between this function and its synchronous version.
         :param drs_uri: A resolvable drs://-schemed URI for a DRS object record.
+        :param session_kwargs: Optional dictionary of parameters to pass to the aiohttp.ClientSession constructor.
         :return: The fetched record dictionary.
         """
 
@@ -57,6 +58,6 @@ class DrsResolver:
         if cache_record is not None and now - cache_record[0] <= self._cache_ttl:
             return cache_record[1]
 
-        res = await fetch_drs_record_by_uri_async(drs_uri)
+        res = await fetch_drs_record_by_uri_async(drs_uri, session_kwargs)
         self._drs_record_cache[drs_uri] = (now, res)
         return res
