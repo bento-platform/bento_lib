@@ -26,7 +26,7 @@ TEST_DRS_REPLY = {
     **TEST_DRS_REPLY_NO_ACCESS,
     "access_methods": [{
         "type": "file",
-        "access_url": "file:///test.txt",
+        "access_url": {"url": "file:///test.txt"},
     }],
 }
 
