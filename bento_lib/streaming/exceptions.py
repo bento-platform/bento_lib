@@ -19,7 +19,7 @@ class StreamingException(Exception):
     pass
 
 
-RangeNotSatisfiableReason = Literal["start>=length", "end>=length", "inverted", "overlap"]
+RangeNotSatisfiableReason = Literal["start>=length", "end>=length", "inverted", "overlap", "proxied"]
 
 
 class StreamingRangeNotSatisfiable(StreamingException):
