@@ -1,5 +1,6 @@
 import bento_lib.responses.flask_errors as fe
 
+import asyncio
 import logging
 import pytest
 import responses
@@ -80,12 +81,14 @@ def flask_client_auth():
 
     @test_app_auth.route("/post-public", methods=["POST"])
     @auth_middleware.deco_public_endpoint
-    def auth_post_public():
+    async def auth_post_public():  # ensure Flask public decorator works for async code too
+        await asyncio.sleep(0.1)
         return jsonify(request.json)
 
     @test_app_auth.route("/post-private", methods=["POST"])
     @auth_middleware.deco_require_permissions_on_resource(frozenset({P_INGEST_DATA}))
-    def auth_post_private():
+    async def auth_post_private():  # ensure Flask private decorator works for async code too
+        await asyncio.sleep(0.1)
         return jsonify(request.json)
 
     @test_app_auth.route("/post-private-no-flag", methods=["POST"])

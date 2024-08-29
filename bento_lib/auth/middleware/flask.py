@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, Request, Response, request, g
+from flask import Flask, Request, Response, current_app, g, request
 from functools import wraps
 
 from bento_lib.auth.exceptions import BentoAuthException
@@ -91,14 +91,14 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
                         self.check_authz_evaluate(request, permissions, resource, require_token, set_authz_flag)
                     except BentoAuthException as e:
                         return self._make_auth_error(e)
-                return func(*args, **kwargs)
+                return current_app.ensure_sync(func)(*args, **kwargs)
             return wrapper
         return decorator
 
     def deco_public_endpoint(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            res = func(*args, **kwargs)
+            res = current_app.ensure_sync(func)(*args, **kwargs)
             if self.enabled:
                 self.mark_authz_done(request)
             return res
