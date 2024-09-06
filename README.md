@@ -132,6 +132,12 @@ configuration and formatting, including structured logging using
 
 * [setting up structured logging in FastAPI](./docs/logging/fastapi_structlog.md)
 
+### `ontologies`
+
+`ontologies` contains models, types, and helpers for working with ontology terms,
+especially in the context of terms which must be eventually ingested into 
+[Katsu](https://github.com/bento-platform/katsu).
+
 ### `responses`
 
 `responses` contains standardized error message-generating functions 
