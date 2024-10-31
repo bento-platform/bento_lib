@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Set up Poetry
-        run: python -m pip install 'poetry>=1.8.3,<1.9'
+        run: python -m pip install 'poetry>=1.8.4,<1.9'
       - name: Install dependencies
         run: python -m poetry install --all-extras
       - name: Test
