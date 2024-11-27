@@ -34,7 +34,7 @@ flask = { version = ">=2.2.5,<4", optional = true }
 jsonschema = ">=4.23.0,<5"
 psycopg2-binary = ">=2.9.9,<3.0"
 pydantic = ">=2.8.2,<3"
-pydantic-settings = ">=2.4.0,<2.6"  # avoid >=2.6.x for now: https://github.com/pydantic/pydantic-settings/issues/445
+pydantic-settings = ">=2.6.1"
 redis = ">=5.0.8,<6"
 requests = ">=2.32.3,<3"
 werkzeug = ">=2.2.3,<4"
