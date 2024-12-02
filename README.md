@@ -118,6 +118,12 @@ All Bento channels are prefixed with `bento.`.
 `logging` contains helper functions for standardized Bento logging configuration
 and formatting.
 
+### `ontologies`
+
+`ontologies` contains models, types, and helpers for working with ontology terms,
+especially in the context of terms which must be eventually ingested into 
+[Katsu](https://github.com/bento-platform/katsu).
+
 ### `responses`
 
 `responses` contains standardized error message-generating functions 
