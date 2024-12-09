@@ -81,13 +81,13 @@ class WorkflowProjectDatasetInput(WorkflowBaseInput):
 class WorkflowFileInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
     type: Literal["file"] = "file"
-    pattern: str = "*"  # file name regular expression pattern
+    pattern: str = ".+"  # file name regular expression pattern
 
 
 class WorkflowFileArrayInput(WorkflowBaseInput):
     # can be sourced from drop box / DRS / workflow outputs, whatever the UI decides works
     type: Literal["file[]"] = "file[]"
-    pattern: str = "*"  # file name regular expression pattern
+    pattern: str = ".+"  # file name regular expression pattern
 
 
 class WorkflowDirectoryInput(WorkflowBaseInput):
