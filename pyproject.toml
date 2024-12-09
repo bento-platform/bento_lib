@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bento-lib"
-version = "12.2.3"
+version = "12.2.4"
 description = "A set of common utilities and helpers for Bento platform services."
 authors = [
     "David Lougheed <david.lougheed@mail.mcgill.ca>",
