@@ -97,6 +97,11 @@ additional code to set up error handling and basic Bento service boilerplate.
 
 `db` contains common base classes for setting up database managers.
 
+### `discovery`
+
+`discovery` contains models and helper functions for the Bento Discovery Configuration specification, used
+in [Katsu](https://github.com/bento-platform/katsu).
+
 ### `drs`
 
 `drs` provides utilities for fetching data and record metadata from 
