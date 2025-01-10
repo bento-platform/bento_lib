@@ -71,7 +71,7 @@ def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):
     root_logger.setLevel(log_level_from_str(log_level))
 
 
-def configure_structlog_uvicorn():
+def configure_structlog_uvicorn():  # pragma: no cover
     for lgr in ("uvicorn", "uvicorn.error"):
         # Propogate these loggers' messages to the root logger (using the StreamHandler above, formatted by structlog)
         logging.getLogger(lgr).handlers.clear()
