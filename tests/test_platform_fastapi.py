@@ -16,6 +16,7 @@ from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
+from bento_lib.logging.structured.fastapi import build_structlog_fastapi_middleware
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
@@ -69,6 +70,7 @@ app_config_test = BentoFastAPIBaseConfig(
     cors_origins=("*",),
 )
 app_test = BentoFastAPI(None, app_config_test, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
+app_test.middleware("http")(build_structlog_fastapi_middleware("test"))
 client_test = TestClient(app_test)
 
 
