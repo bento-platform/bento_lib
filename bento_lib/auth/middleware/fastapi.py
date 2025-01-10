@@ -10,6 +10,7 @@ from bento_lib.auth.middleware.base import BaseAuthMiddleware
 from bento_lib.auth.permissions import Permission
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
+from bento_lib.logging.types import StdOrBoundLogger
 from bento_lib.responses.errors import http_error
 
 __all__ = [
@@ -19,7 +20,7 @@ __all__ = [
 
 class FastApiAuthMiddleware(BaseAuthMiddleware):
     @classmethod
-    def build_from_fastapi_pydantic_config(cls, config: BentoFastAPIBaseConfig, logger: logging.Logger, **kwargs):
+    def build_from_fastapi_pydantic_config(cls, config: BentoFastAPIBaseConfig, logger: StdOrBoundLogger, **kwargs):
         """
         Build a FastAPI authorization middlware instance from a Bento Pydantic FastAPI config instance and a logger
         instance. This automatically exempts the FastAPI-generated docs OpenAPI schema paths from requiring

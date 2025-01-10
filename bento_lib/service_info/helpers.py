@@ -1,8 +1,8 @@
 import asyncio
 import copy
-import logging
 
 from bento_lib.config.pydantic import BentoBaseConfig
+from bento_lib.logging.types import StdOrBoundLogger
 from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD, SERVICE_GROUP_BENTO
 from .types import BentoExtraServiceInfo, GA4GHServiceType, GA4GHServiceOrganization, GA4GHServiceInfo
 
@@ -26,7 +26,7 @@ async def build_service_info(
     base_service_info: GA4GHServiceInfo,
     debug: bool,
     local: bool,
-    logger: logging.Logger,
+    logger: StdOrBoundLogger,
 ) -> GA4GHServiceInfo:
     service_info_dict: GA4GHServiceInfo = copy.deepcopy(base_service_info)
     service_info_dict["environment"] = SERVICE_ENVIRONMENT_DEV if debug else SERVICE_ENVIRONMENT_PROD
@@ -56,6 +56,7 @@ async def build_service_info(
 
     except Exception as e:  # pragma: no cover
         except_name = type(e).__name__
+        # TODO: If we port to just structlog, this should be an async call (aerror) instead.
         logger.error(f"Error retrieving git information: {str(except_name)}")
 
     return service_info_dict  # updated service info with the git info
@@ -64,7 +65,7 @@ async def build_service_info(
 async def build_service_info_from_pydantic_config(
     # dependencies
     config: BentoBaseConfig,
-    logger: logging.Logger,
+    logger: StdOrBoundLogger,
     # values for service info
     bento_service_info: BentoExtraServiceInfo,
     service_type: GA4GHServiceType,

@@ -7,6 +7,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Callable
 
+from bento_lib.logging.types import StdOrBoundLogger
+
 __all__ = ["EventBus"]
 
 # Channel templates
@@ -42,7 +44,7 @@ class EventBus:
         self._rc: redis.Redis | None = None
 
         logger = kwargs.pop("logger", None) or logging.getLogger(__name__)
-        self._logger: logging.Logger = logger
+        self._logger: StdOrBoundLogger = logger
 
         connection_data: dict = kwargs or default_connection_data
 
