@@ -1,10 +1,10 @@
-import logging
 from datetime import datetime, timezone
 from functools import partial
 from typing import Callable
 from werkzeug.http import HTTP_STATUS_CODES
 
 from bento_lib._internal import internal_logger
+from bento_lib.logging.types import StdOrBoundLogger
 
 
 __all__ = [
@@ -34,7 +34,7 @@ def http_error(
     drs_compat: bool = False,
     sr_compat: bool = False,
     beacon_meta_callback: Callable[[], dict] | None = None,
-    logger: logging.Logger | None = None,
+    logger: StdOrBoundLogger | None = None,
 ):
     """
     Builds a dictionary for an HTTP error JSON response.

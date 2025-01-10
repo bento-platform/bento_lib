@@ -115,8 +115,8 @@ All Bento channels are prefixed with `bento.`.
 
 ### `logging`
 
-`logging` contains helper functions for standardized Bento logging configuration
-and formatting.
+`logging` contains helper functions and types for standardized Bento logging 
+configuration and formatting.
 
 ### `responses`
 

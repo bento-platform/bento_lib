@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +6,7 @@ from urllib.parse import urlparse
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
+from bento_lib.logging.types import StdOrBoundLogger
 from bento_lib.responses.fastapi_errors import (
     bento_auth_exception_handler_factory,
     http_exception_handler_factory,
@@ -24,7 +23,7 @@ class BentoFastAPI(FastAPI):
         self,
         authz_middleware: FastApiAuthMiddleware | None,
         config: BentoFastAPIBaseConfig,
-        logger: logging.Logger,
+        logger: StdOrBoundLogger,
         bento_extra_service_info: BentoExtraServiceInfo,
         service_type: GA4GHServiceType,
         version: str,
@@ -43,8 +42,8 @@ class BentoFastAPI(FastAPI):
 
         super().__init__(*args, **app_kwargs)
 
-        self._config = config
-        self._logger = logger
+        self._config: BentoFastAPIBaseConfig = config
+        self._logger: StdOrBoundLogger = logger
         self._bento_extra_service_info = bento_extra_service_info
         self._service_type = service_type
         self._version = version
