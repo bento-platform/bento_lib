@@ -7,6 +7,7 @@ from .. import log_level_from_str, LogLevelLiteral
 
 
 __all__ = [
+    "drop_color_message_key",
     "configure_structlog",
 ]
 
@@ -41,13 +42,7 @@ CONSOLE_LOG_PROCESSORS: list[Processor] = [
 ]
 
 
-def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):
-    structlog.configure(
-        processors=STRUCTLOG_COMMON_PROCESSORS + [structlog.stdlib.ProcessorFormatter.wrap_for_formatter],
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
-    )
-
+def _build_root_logger_handler(json_logs: bool) -> logging.StreamHandler:
     # handler to used for every log message
     #  - use stdout instead of stderr: https://12factor.net/logs
     handler = logging.StreamHandler(stream=sys.stdout)
@@ -65,9 +60,19 @@ def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):
         )
     )
 
+    return handler
+
+
+def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):  # pragma: no cover
+    structlog.configure(
+        processors=STRUCTLOG_COMMON_PROCESSORS + [structlog.stdlib.ProcessorFormatter.wrap_for_formatter],
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
-    root_logger.addHandler(handler)
+    root_logger.addHandler(_build_root_logger_handler(json_logs))
     root_logger.setLevel(log_level_from_str(log_level))
 
 
