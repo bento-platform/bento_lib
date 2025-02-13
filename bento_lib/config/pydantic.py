@@ -1,11 +1,13 @@
 import json
 
-from bento_lib.logging import LogLevelLiteral
-from bento_lib.service_info.constants import SERVICE_ORGANIZATION_C3G_PYDANTIC
-from bento_lib.service_info.types import GA4GHServiceOrganizationModel
+from pydantic import Field
 from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
 from typing import Any
+
+from bento_lib.logging import LogLevelLiteral
+from bento_lib.service_info.constants import SERVICE_ORGANIZATION_C3G_PYDANTIC
+from bento_lib.service_info.types import GA4GHServiceOrganizationModel
 
 __all__ = [
     "CorsOriginsParsingEnvSettingsSource",
@@ -27,7 +29,11 @@ class CorsOriginsParsingEnvSettingsSource(EnvSettingsSource):
 class BentoBaseConfig(BaseSettings):
     bento_debug: bool = False
     bento_container_local: bool = False
+    # by default, show JSON logs for services which aren't in container-local development mode (if structlog is set up).
+    # this can be overridden via environment variable:
+    bento_json_logs: bool = Field(default_factory=lambda c: not c["bento_container_local"])
     bento_validate_ssl: bool = True
+
     bento_authz_enabled: bool = True
     bento_authz_service_url: str  # Bento authorization service base URL
 

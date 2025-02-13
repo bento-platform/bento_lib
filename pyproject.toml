@@ -37,7 +37,9 @@ pydantic = ">=2.8.2,<3"
 pydantic-settings = ">=2.6.1"
 redis = ">=5.0.8,<6"
 requests = ">=2.32.3,<3"
-structlog = "^24.4.0"
+rich = "^13.9.4"  # for logger exception formatting in development
+structlog = ">=24.4.0,<26"
+uvicorn = { version = "*", optional = true }
 werkzeug = ">=2.2.3,<4"
 
 [tool.poetry.group.dev.dependencies]
@@ -69,7 +71,7 @@ types-urllib3 = "^1.26.25.14"
 asyncpg = ["asyncpg"]
 flask = ["flask"]
 django = ["django", "djangorestframework"]
-fastapi = ["fastapi"]
+fastapi = ["fastapi", "uvicorn"]
 
 [build-system]
 requires = ["poetry-core"]
