@@ -16,7 +16,6 @@ from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
-from bento_lib.logging.structured.fastapi import build_structlog_fastapi_middleware
 from bento_lib.responses.fastapi_errors import (
     http_exception_handler_factory,
     bento_auth_exception_handler_factory,
@@ -69,8 +68,15 @@ app_config_test = BentoFastAPIBaseConfig(
     bento_authz_service_url="https://bento-auth.local",
     cors_origins=("*",),
 )
-app_test = BentoFastAPI(None, app_config_test, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
-app_test.middleware("http")(build_structlog_fastapi_middleware("test"))
+app_test = BentoFastAPI(
+    None,
+    app_config_test,
+    logger,
+    {},
+    TEST_APP_SERVICE_TYPE,
+    TEST_APP_VERSION,
+    configure_structlog_access_logger=True,
+)
 client_test = TestClient(app_test)
 
 
@@ -113,6 +119,7 @@ auth_middleware = FastApiAuthMiddleware.build_from_fastapi_pydantic_config(
     include_request_patterns=authz_test_include_patterns,
     exempt_request_patterns=authz_test_exempt_patterns,
 )
+# Don't configure access logger here to test for both possibilities.
 app_test_auth = BentoFastAPI(auth_middleware, app_test_auth_config, logger, {}, TEST_APP_SERVICE_TYPE,
                              TEST_APP_VERSION)
 

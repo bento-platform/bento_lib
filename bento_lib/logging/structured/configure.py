@@ -8,6 +8,9 @@ from .. import log_level_from_str, LogLevelLiteral
 
 __all__ = [
     "drop_color_message_key",
+    "STRUCTLOG_COMMON_PROCESSORS",
+    "JSON_LOG_PROCESSORS",
+    "CONSOLE_LOG_PROCESSORS",
     "configure_structlog",
 ]
 
