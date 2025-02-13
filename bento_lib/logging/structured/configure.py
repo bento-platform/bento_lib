@@ -3,6 +3,7 @@ import structlog.processors
 import sys
 from structlog.types import EventDict, Processor
 
+from bento_lib.config.pydantic import BentoBaseConfig
 from .. import log_level_from_str, LogLevelLiteral
 
 
@@ -12,6 +13,8 @@ __all__ = [
     "JSON_LOG_PROCESSORS",
     "CONSOLE_LOG_PROCESSORS",
     "configure_structlog",
+    "configure_structlog_from_bento_config",
+    "configure_structlog_uvicorn",
 ]
 
 
@@ -77,6 +80,10 @@ def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):  # pragma:
     root_logger.handlers.clear()
     root_logger.addHandler(_build_root_logger_handler(json_logs))
     root_logger.setLevel(log_level_from_str(log_level))
+
+
+def configure_structlog_from_bento_config(config: BentoBaseConfig):  # pragma: no cover
+    configure_structlog(json_logs=config.bento_json_logs, log_level=config.log_level)
 
 
 def configure_structlog_uvicorn():  # pragma: no cover
