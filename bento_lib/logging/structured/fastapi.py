@@ -7,6 +7,8 @@ __all__ = [
     "build_structlog_fastapi_middleware",
 ]
 
+# For use in FastAPI, also see /docs/logging/fastapi_structlog.md
+
 
 def build_structlog_fastapi_middleware(service_kind: str):
     """
