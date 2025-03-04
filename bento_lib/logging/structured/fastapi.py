@@ -9,6 +9,12 @@ __all__ = [
 
 
 def build_structlog_fastapi_middleware(service_kind: str):
+    """
+    Helper to build an access-logging middleware for a FastAPI service, formatting access log messages using structlog.
+    :param service_kind: Bento Service Kind (e.g., "reference") for the service installing this middleware.
+    :return: Access log middleware function for use in a FastAPI instance.
+    """
+
     access_logger = structlog.stdlib.get_logger(f"{service_kind}.access")
     service_logger = structlog.stdlib.get_logger(f"{service_kind}.logger")
 
