@@ -28,6 +28,8 @@ def drop_color_message_key(_logger, _method_name, event_dict: EventDict) -> Even
     return event_dict
 
 
+# These common processors are used for all log messages, both ones emitted using structlog and ones formatted from
+# standard-library logger objects.
 STRUCTLOG_COMMON_PROCESSORS: list[Processor] = [
     structlog.contextvars.merge_contextvars,
     structlog.stdlib.add_logger_name,
@@ -39,7 +41,11 @@ STRUCTLOG_COMMON_PROCESSORS: list[Processor] = [
     structlog.processors.TimeStamper(fmt="iso"),
 ]
 
+# If we're outputting logs in JSON format, make sure to:
+#  - format tracebacks as dictionaries (to render as JSON), and
+#  - render the log object as JSON
 JSON_LOG_PROCESSORS: list[Processor] = [structlog.processors.dict_tracebacks, structlog.processors.JSONRenderer()]
+# If we're outputting 'pretty' logs to stdout, use a normal console renderer
 CONSOLE_LOG_PROCESSORS: list[Processor] = [
     structlog.dev.ConsoleRenderer(
         # Use a rich exception formatter, but don't show locals since it ends up being exceedingly verbose:
@@ -49,6 +55,12 @@ CONSOLE_LOG_PROCESSORS: list[Processor] = [
 
 
 def _build_root_logger_handler(json_logs: bool) -> logging.StreamHandler:
+    """
+    Create a stdout stream handler for the root logger, which is responsible for formatting structlog-emitted log
+    messages, as well as processing _and_ formatting foreign (stdlib logger-emitted) messages.
+    :param json_logs: Whether the root logger stream handler should output messages as JSON or human-readable text.
+    """
+
     # handler to used for every log message
     #  - use stdout instead of stderr: https://12factor.net/logs
     handler = logging.StreamHandler(stream=sys.stdout)
@@ -70,12 +82,19 @@ def _build_root_logger_handler(json_logs: bool) -> logging.StreamHandler:
 
 
 def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):  # pragma: no cover
+    """
+    Configure root structlog for the downstream service.
+    :param json_logs: Whether to output logs as JSON. If this is false, a human-readable text format is used instead.
+    :param log_level: The log level to output at.
+    """
+
     structlog.configure(
         processors=STRUCTLOG_COMMON_PROCESSORS + [structlog.stdlib.ProcessorFormatter.wrap_for_formatter],
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
 
+    # Set up root logger with a structlog handler and the specified log level.
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.addHandler(_build_root_logger_handler(json_logs))
@@ -83,10 +102,21 @@ def configure_structlog(json_logs: bool, log_level: LogLevelLiteral):  # pragma:
 
 
 def configure_structlog_from_bento_config(config: BentoBaseConfig):  # pragma: no cover
+    """
+    Configure root structlog for the downstream Bento service if the service is using the BentoBaseConfig Pydantic model
+    for configuration. The JSON log boolean and output log level are extracted from the config object.
+    :param config: BentoBaseConfig-inheriting configuration object instance.
+    """
     configure_structlog(json_logs=config.bento_json_logs, log_level=config.log_level)
 
 
 def configure_structlog_uvicorn():  # pragma: no cover
+    """
+    Configure uvicorn loggers to be compatible with structlog as configured above. Error/message loggers are changed
+    to propogate to the root logger configured in configure_structlog(...), and the default uvicorn access logger is
+    *silenced* (to be replaced by a custom access logger elsewhere!)
+    """
+
     for lgr in ("uvicorn", "uvicorn.error"):
         # Propogate these loggers' messages to the root logger (using the StreamHandler above, formatted by structlog)
         logging.getLogger(lgr).handlers.clear()
