@@ -30,12 +30,16 @@ def drop_color_message_key(_logger, _method_name, event_dict: EventDict) -> Even
 
 # These common processors are used for all log messages, both ones emitted using structlog and ones formatted from
 # standard-library logger objects.
+# Most of these are self-explanatory; see https://www.structlog.org/en/stable/processors.html for general information on
+# structlog processors.
 STRUCTLOG_COMMON_PROCESSORS: list[Processor] = [
+    # see https://www.structlog.org/en/stable/api.html#structlog.contextvars.merge_contextvars
     structlog.contextvars.merge_contextvars,
     structlog.stdlib.add_logger_name,
     structlog.stdlib.add_log_level,
     # format events (messages) with % using positional arguments, like Python's standard logging library:
     structlog.stdlib.PositionalArgumentsFormatter(),
+    # add any extra arguments passed as args/kwargs to the log call to the final object:
     structlog.stdlib.ExtraAdder(),
     drop_color_message_key,  # removes uvicorn's "color_message" extra
     structlog.processors.TimeStamper(fmt="iso"),

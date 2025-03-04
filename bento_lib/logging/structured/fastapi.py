@@ -26,6 +26,8 @@ def build_structlog_fastapi_middleware(service_kind: str):
         except Exception as e:  # pragma: no cover
             await service_logger.aexception("uncaught exception", exc_info=e)
         finally:
+            # When the response has finished or errored out, write the access log message:
+
             duration = time.perf_counter_ns() - start_time
 
             status_code = response.status_code
@@ -39,13 +41,16 @@ def build_structlog_fastapi_middleware(service_kind: str):
                 # The message format mirrors the original uvicorn access message, which we aim to replace here with
                 # something more structured.
                 f"{client_host}:{client_port} - \"{http_method} {url} HTTP/{http_version}\" {status_code}",
+                # HTTP information, extracted from the request and response objects:
                 http={
                     "url": url,
                     "status_code": status_code,
                     "method": http_method,
                     "version": http_version,
                 },
+                # Network information, extracted from the request object:
                 network={"client": {"host": client_host, "port": client_port}},
+                # Duration in nanoseconds, computed in-middleware:
                 duration=duration,
             )
 

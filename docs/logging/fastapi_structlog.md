@@ -52,3 +52,6 @@ app = BentoFastAPI(
 )
 # ...
 ```
+
+This internally calls `build_structlog_fastapi_middleware(...)` in `bento_lib.logging.structured.fastapi` and attaches
+it as HTTP middleware to the FastAPI application.
