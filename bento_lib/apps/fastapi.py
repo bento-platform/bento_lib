@@ -7,6 +7,7 @@ from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
 from bento_lib.logging.types import StdOrBoundLogger
+from bento_lib.logging.structured.fastapi import build_structlog_fastapi_middleware
 from bento_lib.responses.fastapi_errors import (
     bento_auth_exception_handler_factory,
     http_exception_handler_factory,
@@ -28,6 +29,7 @@ class BentoFastAPI(FastAPI):
         service_type: GA4GHServiceType,
         version: str,
         exc_handler_kwargs: dict | None = None,
+        configure_structlog_access_logger: bool = False,
         *args,
         **kwargs,
     ):
@@ -44,9 +46,9 @@ class BentoFastAPI(FastAPI):
 
         self._config: BentoFastAPIBaseConfig = config
         self._logger: StdOrBoundLogger = logger
-        self._bento_extra_service_info = bento_extra_service_info
-        self._service_type = service_type
-        self._version = version
+        self._bento_extra_service_info: BentoExtraServiceInfo = bento_extra_service_info
+        self._service_type: GA4GHServiceType = service_type
+        self._version: str = version
 
         # Set up CORS
         self.add_middleware(
@@ -56,6 +58,13 @@ class BentoFastAPI(FastAPI):
             allow_headers=["Authorization", "Cache-Control"],
             allow_methods=["*"],
         )
+
+        # If enabled: set up custom structlog access logging middleware
+        #  - This is registered BEFORE the authorization middleware
+        if configure_structlog_access_logger:
+            self.middleware("http")(
+                build_structlog_fastapi_middleware(bento_extra_service_info.get("serviceKind", "service"))
+            )
 
         # Set up authorization
         #  - Non-standard middleware setup so that we can import the instance and use it for dependencies too
