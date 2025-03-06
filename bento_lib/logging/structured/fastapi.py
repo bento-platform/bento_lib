@@ -23,6 +23,9 @@ def build_structlog_fastapi_middleware(service_kind: str):
     async def access_log_middleware(request: Request, call_next) -> Response:
         start_time = time.perf_counter_ns()
 
+        # To return if an exception occurs while calling the next in the middleware chain
+        response: Response = Response(status_code=500)
+
         try:
             response = await call_next(request)
         except Exception as e:  # pragma: no cover
@@ -33,6 +36,7 @@ def build_structlog_fastapi_middleware(service_kind: str):
             duration = time.perf_counter_ns() - start_time
 
             status_code = response.status_code
+            # noinspection PyTypeChecker
             url = get_path_with_query_string(request.scope)
             client_host = request.client.host
             client_port = request.client.port
