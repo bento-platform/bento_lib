@@ -189,7 +189,12 @@ class EventBus:
         return {**self._data_type_event_types}
 
     def _publish_event(
-        self, event_types: dict[str, dict], channel: str, event_type: str, event_data: Serializable, attrs: dict
+        self,
+        event_types: dict[str, dict],
+        channel: str,
+        event_type: str,
+        event_data: Serializable,
+        attrs: dict,
     ) -> bool:
         event_type = event_type.lower()
 
