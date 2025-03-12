@@ -14,6 +14,7 @@ from .common import (
 
 def test_django_authz_logger_init():
     from bento_lib.auth.middleware.django import DjangoAuthMiddleware
+
     mw = DjangoAuthMiddleware("https://bento-auth.local")
     assert mw._logger is not None
 
@@ -41,16 +42,14 @@ def test_django_auth(
         test_url,
         headers=(TEST_AUTHZ_HEADERS if inc_headers else {}),
         data=TEST_AUTHZ_VALID_POST_BODY,
-        content_type="application/json")
+        content_type="application/json",
+    )
     assert r.status_code == test_code
 
 
 def test_django_exc(client: Client):
     with pytest.raises(Exception):
-        client.post(
-            "/post-exc",
-            data=TEST_AUTHZ_VALID_POST_BODY,
-            content_type="application/json")
+        client.post("/post-exc", data=TEST_AUTHZ_VALID_POST_BODY, content_type="application/json")
 
 
 def test_disabled(client: Client):

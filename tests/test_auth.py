@@ -55,19 +55,21 @@ def test_build_resource():
     assert build_resource() == RESOURCE_EVERYTHING
     assert json.dumps(build_resource(project="a")) == json.dumps({"project": "a"})
     assert json.dumps(build_resource(project="a", data_type="z"), sort_keys=True) == json.dumps(
-        {"data_type": "z", "project": "a"}, sort_keys=True)
+        {"data_type": "z", "project": "a"}, sort_keys=True
+    )
     assert json.dumps(build_resource(project="a", dataset="z"), sort_keys=True) == json.dumps(
-        {"dataset": "z", "project": "a"}, sort_keys=True)
+        {"dataset": "z", "project": "a"}, sort_keys=True
+    )
     assert json.dumps(build_resource(project="a", dataset="z", data_type="t"), sort_keys=True) == json.dumps(
-        {"data_type": "t", "dataset": "z", "project": "a"}, sort_keys=True)
+        {"data_type": "t", "dataset": "z", "project": "a"}, sort_keys=True
+    )
 
 
 def test_permissions_valid_for_resource():
     assert permission_valid_for_resource(P_QUERY_DATA, RESOURCE_EVERYTHING)
     assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa"})
     assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa", "dataset": "bbb"})
-    assert permission_valid_for_resource(
-        P_QUERY_DATA, {"project": "aaa", "dataset": "bbb", "data_type": "phenopacket"})
+    assert permission_valid_for_resource(P_QUERY_DATA, {"project": "aaa", "dataset": "bbb", "data_type": "phenopacket"})
 
     # project and above
     assert permission_valid_for_resource(P_QUERY_PROJECT_LEVEL_BOOLEAN, RESOURCE_EVERYTHING)
@@ -86,4 +88,5 @@ def test_permissions_valid_for_resource():
 def test_all_valid_permissions_for_resource():
     assert valid_permissions_for_resource(RESOURCE_EVERYTHING) == PERMISSIONS
     assert valid_permissions_for_resource({"project": "aaa"}) == [
-        p for p in PERMISSIONS if p.min_level_required != LEVEL_INSTANCE]
+        p for p in PERMISSIONS if p.min_level_required != LEVEL_INSTANCE
+    ]

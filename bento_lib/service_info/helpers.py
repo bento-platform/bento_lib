@@ -17,7 +17,8 @@ __all__ = [
 
 async def _git_stdout(*args) -> str:
     git_proc = await asyncio.create_subprocess_exec(
-        "git", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        "git", *args, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
     res, _ = await git_proc.communicate()
     return res.decode().rstrip()
 
@@ -73,16 +74,21 @@ async def build_service_info_from_pydantic_config(
 ) -> GA4GHServiceInfo:
     desc = config.service_description
     service_org: GA4GHServiceOrganization = config.service_organization.model_dump(mode="json")
-    return await build_service_info({
-        "id": config.service_id,
-        "name": config.service_name,
-        "type": service_type,
-        **({"description": desc} if desc else {}),
-        "organization": service_org,
-        "contactUrl": config.service_contact_url,
-        "version": version,
-        "bento": bento_service_info,
-    }, debug=config.bento_debug, local=config.bento_container_local, logger=logger)
+    return await build_service_info(
+        {
+            "id": config.service_id,
+            "name": config.service_name,
+            "type": service_type,
+            **({"description": desc} if desc else {}),
+            "organization": service_org,
+            "contactUrl": config.service_contact_url,
+            "version": version,
+            "bento": bento_service_info,
+        },
+        debug=config.bento_debug,
+        local=config.bento_container_local,
+        logger=logger,
+    )
 
 
 def build_service_type(group: str, artifact: str, version: str) -> GA4GHServiceType:

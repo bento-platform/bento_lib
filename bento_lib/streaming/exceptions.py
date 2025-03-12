@@ -16,6 +16,7 @@ class StreamingException(Exception):
     """
     Generic streaming exception / base class for other bento_lib.streaming exceptions.
     """
+
     pass
 
 

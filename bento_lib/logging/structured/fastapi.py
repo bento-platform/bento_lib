@@ -46,7 +46,7 @@ def build_structlog_fastapi_middleware(service_kind: str):
             await access_logger.ainfo(
                 # The message format mirrors the original uvicorn access message, which we aim to replace here with
                 # something more structured.
-                f"{client_host}:{client_port} - \"{http_method} {url} HTTP/{http_version}\" {status_code}",
+                f'{client_host}:{client_port} - "{http_method} {url} HTTP/{http_version}" {status_code}',
                 # HTTP information, extracted from the request and response objects:
                 http={
                     "url": url,

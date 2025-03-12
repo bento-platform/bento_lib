@@ -17,10 +17,7 @@ def test_django_remote_auth_backend():
 
     b = bento_lib.auth.django_remote_user.BentoRemoteUserBackend()
     r = HttpRequest()
-    r.META = {
-        DJANGO_USER_HEADER: "test",
-        DJANGO_USER_ROLE_HEADER: "owner"
-    }
+    r.META = {DJANGO_USER_HEADER: "test", DJANGO_USER_ROLE_HEADER: "owner"}
 
     u = User(username="test", password="test")
     b.configure_user(r, u)
