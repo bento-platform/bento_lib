@@ -16,6 +16,6 @@ authz = DjangoAuthMiddleware(
     debug_mode=settings.DEBUG,
     enabled=middleware_settings.get("ENABLED", True),
     logger=middleware_settings.get("LOGGER"),
-    exempt_request_patterns=authz_test_exempt_patterns
+    exempt_request_patterns=authz_test_exempt_patterns,
 )
 authz_middleware = authz.make_django_middleware()

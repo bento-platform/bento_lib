@@ -74,11 +74,14 @@ class BentoFastAPI(FastAPI):
         # Set up exception handlers for standard Bento/FastAPI errors
         exc_handler_kwargs = exc_handler_kwargs or {}
         self.exception_handler(BentoAuthException)(
-            bento_auth_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs))
+            bento_auth_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs)
+        )
         self.exception_handler(StarletteHTTPException)(
-            http_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs))
+            http_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs)
+        )
         self.exception_handler(RequestValidationError)(
-            validation_exception_handler_factory(authz_middleware, **exc_handler_kwargs))
+            validation_exception_handler_factory(authz_middleware, **exc_handler_kwargs)
+        )
 
         # Set up service info endpoint
 
@@ -93,5 +96,6 @@ class BentoFastAPI(FastAPI):
     async def get_service_info(self) -> GA4GHServiceInfo:
         if not self._service_info:
             self._service_info = await build_service_info_from_pydantic_config(
-                self._config, self._logger, self._bento_extra_service_info, self._service_type, self._version)
+                self._config, self._logger, self._bento_extra_service_info, self._service_type, self._version
+            )
         return self._service_info

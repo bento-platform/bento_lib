@@ -119,21 +119,21 @@ class WorkflowSecretInput(WorkflowInjectedInput):
 
 
 WorkflowInput = (
-    WorkflowStringInput |
-    WorkflowStringArrayInput |
-    WorkflowNumberInput |
-    WorkflowNumberArrayInput |
-    WorkflowBooleanInput |
-    WorkflowEnumInput |
-    WorkflowEnumArrayInput |
-    WorkflowProjectDatasetInput |
-    WorkflowFileInput |
-    WorkflowFileArrayInput |
-    WorkflowDirectoryInput |
-    WorkflowDirectoryArrayInput |
-    WorkflowServiceUrlInput |
-    WorkflowConfigInput |
-    WorkflowSecretInput
+    WorkflowStringInput
+    | WorkflowStringArrayInput
+    | WorkflowNumberInput
+    | WorkflowNumberArrayInput
+    | WorkflowBooleanInput
+    | WorkflowEnumInput
+    | WorkflowEnumArrayInput
+    | WorkflowProjectDatasetInput
+    | WorkflowFileInput
+    | WorkflowFileArrayInput
+    | WorkflowDirectoryInput
+    | WorkflowDirectoryArrayInput
+    | WorkflowServiceUrlInput
+    | WorkflowConfigInput
+    | WorkflowSecretInput
 )
 
 
@@ -144,6 +144,7 @@ class WorkflowDefinition(BaseModel):
     """
     Class defining meta-information about a workflow in the context of a Bento node.
     """
+
     name: str  # Human-readable workflow name
     type: WorkflowType  # One of a few pre-defined values for categorizing workflow type/purpose
     description: str  # Human-readable workflow description

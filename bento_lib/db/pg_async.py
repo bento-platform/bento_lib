@@ -17,7 +17,6 @@ class PgAsyncDatabaseException(Exception):
 
 
 class PgAsyncDatabase:
-
     def __init__(self, db_uri: str, schema_path: Path):
         self._db_uri: str = db_uri
         self._schema_path: Path = schema_path
@@ -32,6 +31,7 @@ class PgAsyncDatabase:
 
         if not self._pool:  # Initialize the connection pool if needed
             if not self._pool_init_task:
+
                 async def _init():
                     pool = await asyncpg.create_pool(self._db_uri, min_size=pool_size, max_size=pool_size)
 
@@ -61,6 +61,7 @@ class PgAsyncDatabase:
 
         if self._pool:
             if not self._pool_closing_task:
+
                 async def _close():
                     await self._pool.close()
                     # must come after the "await" in this function, so that we can properly re-use the task that is

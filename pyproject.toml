@@ -45,15 +45,15 @@ werkzeug = ">=2.2.3,<4"
 [tool.poetry.group.dev.dependencies]
 aioresponses = "^0.7.6"
 coverage = "^7.4.1"
-flake8 = "^7.0.0"
 httpx = "^0.28.1"
-mypy = "~1.14.1"
+mypy = "~1.15.0"
 pytest = "^8.3.2"
 pytest-asyncio = "^0.23.8"
 pytest-cov = "^6.0.0"
 pytest-django = "^4.8.0"
 python-dateutil = "^2.8.2"
 responses = "^0.25.0"
+ruff = "^0.9.10"
 tox = "^4.13.0"
 types-aiofiles = "^24.1.0.20240626"
 types-colorama = "^0.4.15.20240205"
@@ -76,3 +76,7 @@ fastapi = ["fastapi", "uvicorn"]
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

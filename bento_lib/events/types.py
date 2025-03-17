@@ -27,7 +27,7 @@ EVENT_CREATE_NOTIFICATION_SCHEMA = {
         "notification_type": {"type": "string"},
         "action_target": {"type": "string"},
     },
-    "required": ["title", "description", "notification_type", "action_target"]
+    "required": ["title", "description", "notification_type", "action_target"],
 }
 
 EVENT_NOTIFICATION = "notification"
@@ -40,7 +40,7 @@ EVENT_NOTIFICATION_SCHEMA = {
         "notification_type": {"type": "string"},
         "action_target": {"type": "string"},
         "read": {"type": "boolean"},
-        "timestamp": {"type": "string"}
+        "timestamp": {"type": "string"},
     },
-    "required": ["id", "title", "description", "notification_type", "action_target", "read", "timestamp"]
+    "required": ["id", "title", "description", "notification_type", "action_target", "read", "timestamp"],
 }

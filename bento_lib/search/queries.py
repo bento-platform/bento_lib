@@ -35,20 +35,20 @@ __all__ = [
     "FUNCTION_RESOLVE",
     "FUNCTION_LIST",
     "FUNCTION_HELPER_WC",
-
+    # -------------------------------------------
     "VALID_FUNCTIONS",
-
+    # -------------------------------------------
     "FUNCTION_SEARCH_OP_MAP",
-
+    # -------------------------------------------
     "LiteralValue",
     "FunctionName",
     "Query",
     "AST",
     "Args",
-
+    # -------------------------------------------
     "Expression",
     "Literal",
-
+    # -------------------------------------------
     "convert_query_to_ast",
     "convert_query_to_ast_and_preprocess",
     "ast_to_and_asts",
@@ -137,15 +137,15 @@ FUNCTION_SEARCH_OP_MAP = {
     FUNCTION_EQ: SEARCH_OP_EQ,
     FUNCTION_GT: SEARCH_OP_GT,
     FUNCTION_GE: SEARCH_OP_GE,
-
+    # -------------------------------------------
     FUNCTION_CO: SEARCH_OP_CO,
     FUNCTION_ICO: SEARCH_OP_ICO,
-
+    # -------------------------------------------
     FUNCTION_IN: SEARCH_OP_IN,
-
+    # -------------------------------------------
     FUNCTION_ISW: SEARCH_OP_ISW,
     FUNCTION_IEW: SEARCH_OP_IEW,
-
+    # -------------------------------------------
     FUNCTION_LIKE: SEARCH_OP_LIKE,
     FUNCTION_ILIKE: SEARCH_OP_ILIKE,
 }
@@ -153,7 +153,7 @@ FUNCTION_SEARCH_OP_MAP = {
 # literal types are scalar that are used in queries to compare the value for a
 # given field for example 20, in a query for age greater than 20.
 # In the AST they are distinct from Expressions
-literal_types = str, int, float, bool    # TODO: How to handle dict in practical cases?
+literal_types = str, int, float, bool  # TODO: How to handle dict in practical cases?
 LiteralValue = Union[str, int, float, bool]
 
 FunctionName = str
@@ -189,8 +189,9 @@ class Expression(AST):
         self.args: Args = tuple(args)
 
     def __eq__(self, other):
-        return (isinstance(other, Expression) and self.fn == other.fn and
-                all(a == b for a, b in zip(self.args, other.args)))
+        return (
+            isinstance(other, Expression) and self.fn == other.fn and all(a == b for a, b in zip(self.args, other.args))
+        )
 
     @property
     def value(self) -> Expression:
@@ -294,7 +295,7 @@ def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
     # etc.
 
     if not ast.type == "e" or ast.fn != FUNCTION_AND:
-        return ast,
+        return (ast,)
 
     return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
 
@@ -320,7 +321,7 @@ def check_operation_permissions(
     ast: AST,
     schema: JSONSchema,
     search_getter: Callable[[Tuple[Literal, ...], dict], dict],
-    internal: bool = False
+    internal: bool = False,
 ):
     if ast.type == "l":
         return
@@ -342,7 +343,10 @@ def check_operation_permissions(
         return
 
     # TODO: Make this check recursive (#11) or somehow deal with boolean values
-    if any(FUNCTION_SEARCH_OP_MAP[ast.fn] not in search_getter(a.args, schema).get("operations", [])
-           for a in ast.args if a.type == "e" and a.fn == FUNCTION_RESOLVE):
+    if any(
+        FUNCTION_SEARCH_OP_MAP[ast.fn] not in search_getter(a.args, schema).get("operations", [])
+        for a in ast.args
+        if a.type == "e" and a.fn == FUNCTION_RESOLVE
+    ):
         # TODO: Custom exception?
         raise ValueError(f"Schema forbids using function: {ast.fn}\nAST: {ast}\nSchema: \n{schema}")

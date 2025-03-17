@@ -3,7 +3,6 @@
 __all__ = [
     "BENTO_USER_HEADER",
     "BENTO_USER_ROLE_HEADER",
-
     "DJANGO_USER_HEADER",
     "DJANGO_USER_ROLE_HEADER",
 ]

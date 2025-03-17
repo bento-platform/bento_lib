@@ -67,10 +67,12 @@ class EventBus:
 
     @staticmethod
     def _callback_deserialize(callback: Callable[[dict], None]) -> Callable[[dict], None]:
-        return lambda message: callback({
-            **message,
-            "data": json.loads(message["data"]) if message["type"] in ("message", "pmessage") else message["data"]
-        })
+        return lambda message: callback(
+            {
+                **message,
+                "data": json.loads(message["data"]) if message["type"] in ("message", "pmessage") else message["data"],
+            }
+        )
 
     def add_handler(self, pattern: str, callback: Callable[[dict], None]) -> bool:
         """
@@ -126,18 +128,20 @@ class EventBus:
 
     @staticmethod
     def _make_event(event_type: str, event_data, attrs: dict) -> str:
-        return json.dumps({
-            # Generate a random ID, so other services can decide how to claim specific events or whatever:
-            "id": str(uuid.uuid4()),
-            # Events can arrive out-of-order; we can put them back in order using this generation-time timestamp
-            # (UTC timezone, in milliseconds):
-            "timestamp": round(datetime.now(timezone.utc).timestamp() * 1000),
-            # legacy version: "ts"  TODO: deprecated: remove
-            "ts": datetime.now(timezone.utc).isoformat(),
-            "type": event_type.lower(),
-            "data": event_data,
-            **attrs
-        })
+        return json.dumps(
+            {
+                # Generate a random ID, so other services can decide how to claim specific events or whatever:
+                "id": str(uuid.uuid4()),
+                # Events can arrive out-of-order; we can put them back in order using this generation-time timestamp
+                # (UTC timezone, in milliseconds):
+                "timestamp": round(datetime.now(timezone.utc).timestamp() * 1000),
+                # legacy version: "ts"  TODO: deprecated: remove
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "type": event_type.lower(),
+                "data": event_data,
+                **attrs,
+            }
+        )
 
     @staticmethod
     def _add_schema(event_types: dict, event_type: str, event_schema: dict) -> bool:
@@ -190,7 +194,7 @@ class EventBus:
         channel: str,
         event_type: str,
         event_data: Serializable,
-        attrs: dict
+        attrs: dict,
     ) -> bool:
         event_type = event_type.lower()
 
@@ -221,7 +225,7 @@ class EventBus:
             channel=SERVICE_CHANNEL_TPL.format(service_artifact),
             event_type=event_type,
             event_data=event_data,
-            attrs={"service_artifact": service_artifact}
+            attrs={"service_artifact": service_artifact},
         )
 
     def publish_data_type_event(self, data_type: str, event_type: str, event_data: Serializable) -> bool:
@@ -237,5 +241,5 @@ class EventBus:
             channel=DATA_TYPE_CHANNEL_TPL.format(data_type),
             event_type=event_type,
             event_data=event_data,
-            attrs={"data_type": data_type}
+            attrs={"data_type": data_type},
         )

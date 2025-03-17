@@ -75,7 +75,8 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
                     drs_compat=self._drs_compat,
                     sr_compat=self._sr_compat,
                     beacon_meta_callback=self._beacon_meta_callback,
-                ))
+                ),
+            )
 
         # Otherwise, return the response as normal
         return res
@@ -92,6 +93,7 @@ class FastApiAuthMiddleware(BaseAuthMiddleware):
             if not self.enabled:
                 return
             self.mark_authz_done(request)
+
         return Depends(_inner)
 
     def dep_require_permissions_on_resource(
