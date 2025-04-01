@@ -8,11 +8,11 @@ from typing import Awaitable, Callable
 from .common import LogHTTPInfo, LogNetworkInfo, LogNetworkClientInfo, log_access
 
 __all__ = [
-    "BentoDjangoRequestMiddleware",
+    "BentoDjangoAccessLoggerMiddleware",
 ]
 
 
-class BentoDjangoRequestMiddleware:
+class BentoDjangoAccessLoggerMiddleware:
     """
     TODO
     """
