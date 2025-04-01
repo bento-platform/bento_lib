@@ -14,7 +14,9 @@ __all__ = [
 
 class BentoDjangoAccessLoggerMiddleware:
     """
-    TODO
+    Quasi-factory class to build an access-logging Django middleware class via the make_django_middleware() method.
+    Similar to the authorization middleware for Django/FastAPI, we set this up as a "middleware factory" so that we can
+    inject logger instances.
     """
 
     def __init__(self, access_logger: BoundLogger, service_logger: BoundLogger):
