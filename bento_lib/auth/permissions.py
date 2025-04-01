@@ -148,8 +148,8 @@ P_QUERY_PROJECT_LEVEL_COUNTS = Permission(
 P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, gives=(P_QUERY_DATASET_LEVEL_BOOLEAN,))
 
 # Data catalog: permissions to view project/dataset metadata
-P_VIEW_DATASETS = Permission(VIEW_VERB, DATASET, min_level_required=LEVEL_INSTANCE)
-P_VIEW_PROJECTS = Permission(VIEW_VERB, PROJECT, min_level_required=LEVEL_INSTANCE)
+P_VIEW_DATASETS = Permission(VIEW_VERB, DATASET)
+P_VIEW_PROJECTS = Permission(VIEW_VERB, PROJECT, min_level_required=LEVEL_PROJECT)
 
 # Data-level: interacting with data inside of data services... and triggering workflows
 
