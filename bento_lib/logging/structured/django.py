@@ -39,8 +39,6 @@ class BentoDjangoAccessLoggerMiddleware:
             async def __call__(inner_self, request: HttpRequest):
                 start_time = time.perf_counter_ns()
 
-                print(request.META)  # figure this out
-
                 response: HttpResponse = HttpResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 try:
                     response = await inner_self.get_response(request)
@@ -59,7 +57,10 @@ class BentoDjangoAccessLoggerMiddleware:
                             version=None,
                         ),
                         network_info=LogNetworkInfo(
-                            client=LogNetworkClientInfo(host=request.get_host(), port=request.get_port())
+                            client=LogNetworkClientInfo(
+                                # Match what uvicorn shows:
+                                host=request.META["REMOTE_HOST"], port=request.META["REMOTE_PORT"]
+                            )
                         ),
                     )
 
