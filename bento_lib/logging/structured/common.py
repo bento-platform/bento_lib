@@ -18,8 +18,8 @@ class LogHTTPInfo(BaseModel):
 
 
 class LogNetworkClientInfo(BaseModel):
-    host: str
-    port: int
+    host: str | None
+    port: int | None
 
 
 class LogNetworkInfo(BaseModel):
@@ -27,7 +27,7 @@ class LogNetworkInfo(BaseModel):
 
 
 def _client_str(client: LogNetworkClientInfo) -> str:
-    return f"{client.host}:{client.port}"
+    return f"{client.host or ''}{':' + str(client.port) if client.port else ''}"
 
 
 def _http_str(http: LogHTTPInfo) -> str:
@@ -43,7 +43,7 @@ async def log_access(logger: BoundLogger, start_time_ns: int, http_info: LogHTTP
     await logger.ainfo(
         # The message format mirrors the original uvicorn access message, which we aim to replace here with
         # something more structured.
-        f"{_client_str(network_info.client)} - {_http_str(http_info)}",
+        f"{_client_str(network_info.client) or '<unknown>'} - {_http_str(http_info)}",
         # HTTP information, extracted from the request and response objects:
         http=http_info.model_dump(mode="json", exclude_none=True),
         # Network information, extracted from the request object:

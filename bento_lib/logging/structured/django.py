@@ -59,8 +59,8 @@ class BentoDjangoAccessLoggerMiddleware:
                         network_info=LogNetworkInfo(
                             client=LogNetworkClientInfo(
                                 # Match what uvicorn shows:
-                                host=request.META["REMOTE_HOST"],
-                                port=request.META["REMOTE_PORT"],
+                                host=request.META.get("REMOTE_HOST"),
+                                port=request.META.get("REMOTE_PORT"),
                             )
                         ),
                     )
