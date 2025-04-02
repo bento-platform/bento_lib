@@ -39,6 +39,8 @@ class BentoDjangoAccessLoggerMiddleware:
             async def __call__(inner_self, request: HttpRequest):
                 start_time = time.perf_counter_ns()
 
+                print(request.META)  # figure this out
+
                 response: HttpResponse = HttpResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 try:
                     response = await inner_self.get_response(request)
