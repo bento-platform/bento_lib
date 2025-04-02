@@ -2,6 +2,7 @@ import time
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import HttpRequest, HttpResponse
+from rest_framework import status
 from structlog.stdlib import BoundLogger
 from typing import Awaitable, Callable
 
@@ -38,7 +39,7 @@ class BentoDjangoAccessLoggerMiddleware:
             async def __call__(inner_self, request: HttpRequest):
                 start_time = time.perf_counter_ns()
 
-                response: HttpResponse = HttpResponse(status=500)
+                response: HttpResponse = HttpResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 try:
                     response = await inner_self.get_response(request)
                 except Exception as e:  # pragma: no cover
