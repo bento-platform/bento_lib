@@ -1,4 +1,6 @@
-from .configure import configure_structlog
+from .configure import configure_structlog, configure_structlog_uvicorn
 
-# re-export configure_structlog() function
-__all__ = ["configure_structlog"]
+# re-export functions:
+#  - configure_structlog()
+#  - configure_structlog_uvicorn()
+__all__ = ["configure_structlog", "configure_structlog_uvicorn"]
