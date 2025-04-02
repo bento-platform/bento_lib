@@ -31,7 +31,8 @@ def _client_str(client: LogNetworkClientInfo) -> str:
 
 
 def _http_str(http: LogHTTPInfo) -> str:
-    return f'"{http.method} {http.url} HTTP/{http.version}" {http.status_code}'
+    http_str = f"HTTP/{http.version}" if http.version else "HTTP"
+    return f'"{http.method} {http.url} {http_str}" {http.status_code}'
 
 
 async def log_access(logger: BoundLogger, start_time_ns: int, http_info: LogHTTPInfo, network_info: LogNetworkInfo):
