@@ -14,6 +14,8 @@ __all__ = [
     # date
     "DateFieldConfig",
     "DateFieldDefinition",
+    # sum type:
+    "FieldDefinition",
 ]
 
 
@@ -70,3 +72,6 @@ class DateFieldConfig(BaseModel):
 class DateFieldDefinition(BaseFieldDefinition):
     data_type: Literal["date"] = DataTypeField
     config: DateFieldConfig
+
+
+FieldDefinition = DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition

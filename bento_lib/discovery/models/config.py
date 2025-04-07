@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .fields import DateFieldDefinition, NumberFieldDefinition, StringFieldDefinition
+from .fields import FieldDefinition
 from .overview import OverviewSection
 from .search import SearchSection
 
@@ -18,5 +18,5 @@ class DiscoveryConfigRules(BaseModel):
 class DiscoveryConfig(BaseModel):
     overview: list[OverviewSection]
     search: list[SearchSection]
-    fields: dict[str, DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition]
+    fields: dict[str, FieldDefinition]
     rules: DiscoveryConfigRules
