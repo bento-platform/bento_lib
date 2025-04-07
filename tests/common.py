@@ -12,6 +12,11 @@ __all__ = [
     "TEST_AUTHZ_HEADERS",
     "DATA_DIR",
     "DISCOVERY_CONFIG_PATH",
+    "DISCOVERY_CONFIG_INVALID_1_PATH",
+    "DISCOVERY_CONFIG_INVALID_2_PATH",
+    "DISCOVERY_CONFIG_INVALID_3_PATH",
+    "DISCOVERY_CONFIG_INVALID_4_PATH",
+    "DISCOVERY_CONFIG_INVALID_5_PATH",
     "SARS_COV_2_FASTA_PATH",
     "WDL_DIR",
     "WORKFLOW_DEF",
@@ -44,6 +49,11 @@ TEST_AUTHZ_HEADERS = {"Authorization": "Bearer test"}
 DATA_DIR = Path(__file__).parent / "data"
 
 DISCOVERY_CONFIG_PATH = DATA_DIR / "discovery_config.json"
+DISCOVERY_CONFIG_INVALID_1_PATH = DATA_DIR / "discovery_config_invalid_1.json"
+DISCOVERY_CONFIG_INVALID_2_PATH = DATA_DIR / "discovery_config_invalid_2.json"
+DISCOVERY_CONFIG_INVALID_3_PATH = DATA_DIR / "discovery_config_invalid_3.json"
+DISCOVERY_CONFIG_INVALID_4_PATH = DATA_DIR / "discovery_config_invalid_4.json"
+DISCOVERY_CONFIG_INVALID_5_PATH = DATA_DIR / "discovery_config_invalid_5.json"
 SARS_COV_2_FASTA_PATH = DATA_DIR / "sars_cov_2.fa"
 
 WDL_DIR = Path(__file__).parent / "wdls"

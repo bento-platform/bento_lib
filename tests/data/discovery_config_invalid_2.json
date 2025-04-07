@@ -1,0 +1,19 @@
+{
+  "overview": [
+    {
+      "section_title": "Test",
+      "charts": [
+        {
+          "field": "age",
+          "chart_type": "histogram"
+        }
+      ]
+    }
+  ],
+  "search": [],
+  "fields": {},
+  "rules": {
+    "count_threshold": 5,
+    "max_query_parameters": 2
+  }
+}
