@@ -17,11 +17,14 @@ __all__ = [
 ]
 
 
+DataTypeField = Field(validation_alias=AliasChoices("data_type", "datatype"))
+
+
 class BaseFieldDefinition(BaseModel):
     mapping: str
     title: str  # TODO: make optional and pull from Bento schema if not set
     description: str  # TODO: make optional and pull from Bento schema if not set
-    datatype: Literal["string", "number", "date"] = Field(validation_alias=AliasChoices("data_type", "datatype"))
+    data_type: Literal["string", "number", "date"] = DataTypeField
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = None
     group_by: str | None = None
@@ -35,7 +38,7 @@ class StringFieldConfig(BaseModel):
 
 
 class StringFieldDefinition(BaseFieldDefinition):
-    datatype: Literal["string"]
+    data_type: Literal["string"] = DataTypeField
     config: StringFieldConfig
 
 
@@ -44,7 +47,7 @@ class BaseNumberFieldConfig(BaseModel):
 
 
 class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
-    bins: list[int]
+    bins: list[int | float]
 
 
 class AutoBinsNumberFieldConfig(BaseNumberFieldConfig):
@@ -56,14 +59,14 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig):
 
 
 class NumberFieldDefinition(BaseFieldDefinition):
-    datatype: Literal["number"]
+    data_type: Literal["number"] = DataTypeField
     config: ManualBinsNumberFieldConfig | AutoBinsNumberFieldConfig
 
 
 class DateFieldConfig(BaseModel):
-    bin_by: str  # TODO
+    bin_by: Literal["month"]  # Currently only binning by month is implemented
 
 
 class DateFieldDefinition(BaseFieldDefinition):
-    datatype: Literal["date"]
+    data_type: Literal["date"] = DataTypeField
     config: DateFieldConfig
