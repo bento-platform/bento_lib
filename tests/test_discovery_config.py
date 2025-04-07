@@ -27,3 +27,5 @@ def test_overview_charts_def():
 def test_load_discovery_config():
     with open(DISCOVERY_CONFIG_PATH, "r") as fh:
         cfg = config.DiscoveryConfig.model_validate_json(fh.read())
+
+    assert cfg.overview[0].section_title == "General"
