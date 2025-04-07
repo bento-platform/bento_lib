@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 
-def _load_discovery_config_json(config_path: Path) -> DiscoveryConfig:
+def _load_discovery_config_json(config_path: Path | str) -> DiscoveryConfig:
     with open(config_path, "r") as fh:
         return DiscoveryConfig.model_validate_json(fh.read())
 
@@ -40,7 +40,7 @@ def _validate_references_and_duplicates(cfg: DiscoveryConfig) -> None:
             seen_search_fields.add(f)
 
 
-def load_discovery_config(config_path: Path) -> DiscoveryConfig:
+def load_discovery_config(config_path: Path | str) -> DiscoveryConfig:
     # 1. load the config object (or raise a Pydantic validation error if the config is in the wrong format)
     cfg = _load_discovery_config_json(config_path)
 
