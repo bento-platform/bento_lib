@@ -11,6 +11,7 @@ __all__ = [
     "TEST_AUTHZ_VALID_POST_BODY",
     "TEST_AUTHZ_HEADERS",
     "DATA_DIR",
+    "DISCOVERY_CONFIG_PATH",
     "SARS_COV_2_FASTA_PATH",
     "WDL_DIR",
     "WORKFLOW_DEF",
@@ -41,6 +42,8 @@ TEST_AUTHZ_VALID_POST_BODY = {"test1": "a", "test2": "b"}
 TEST_AUTHZ_HEADERS = {"Authorization": "Bearer test"}
 
 DATA_DIR = Path(__file__).parent / "data"
+
+DISCOVERY_CONFIG_PATH = DATA_DIR / "discovery_config.json"
 SARS_COV_2_FASTA_PATH = DATA_DIR / "sars_cov_2.fa"
 
 WDL_DIR = Path(__file__).parent / "wdls"
