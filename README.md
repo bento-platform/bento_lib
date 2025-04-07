@@ -102,6 +102,10 @@ additional code to set up error handling and basic Bento service boilerplate.
 `discovery` contains models and helper functions for the Bento Discovery Configuration specification, used
 in [Katsu](https://github.com/bento-platform/katsu).
 
+#### Guides
+
+* [Discovery configuration: structure and validation](./docs/discovery/discovery_config.md)
+
 ### `drs`
 
 `drs` provides utilities for fetching data and record metadata from 
