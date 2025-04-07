@@ -68,7 +68,15 @@ app_config_test = BentoFastAPIBaseConfig(
     bento_authz_service_url="https://bento-auth.local",
     cors_origins=("*",),
 )
-app_test = BentoFastAPI(None, app_config_test, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
+app_test = BentoFastAPI(
+    None,
+    app_config_test,
+    logger,
+    {},
+    TEST_APP_SERVICE_TYPE,
+    TEST_APP_VERSION,
+    configure_structlog_access_logger=True,
+)
 client_test = TestClient(app_test)
 
 
@@ -111,8 +119,8 @@ auth_middleware = FastApiAuthMiddleware.build_from_fastapi_pydantic_config(
     include_request_patterns=authz_test_include_patterns,
     exempt_request_patterns=authz_test_exempt_patterns,
 )
-app_test_auth = BentoFastAPI(auth_middleware, app_test_auth_config, logger, {}, TEST_APP_SERVICE_TYPE,
-                             TEST_APP_VERSION)
+# Don't configure access logger here to test for both possibilities.
+app_test_auth = BentoFastAPI(auth_middleware, app_test_auth_config, logger, {}, TEST_APP_SERVICE_TYPE, TEST_APP_VERSION)
 
 auth_middleware.attach(app_test_auth)
 
@@ -139,24 +147,33 @@ def auth_post_public(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@app_test_auth.post("/post-private", dependencies=[
-    auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
-])
+@app_test_auth.post(
+    "/post-private",
+    dependencies=[
+        auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
+    ],
+)
 def auth_post_private(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@app_test_auth.post("/post-private-no-flag", dependencies=[
-    auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), set_authz_flag=False),
-])
+@app_test_auth.post(
+    "/post-private-no-flag",
+    dependencies=[
+        auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), set_authz_flag=False),
+    ],
+)
 def auth_post_private_no_flag(request: Request, body: TestBody):
     auth_middleware.mark_authz_done(request)
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@app_test_auth.post("/post-private-no-token", dependencies=[
-    auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), require_token=False),
-])
+@app_test_auth.post(
+    "/post-private-no-token",
+    dependencies=[
+        auth_middleware.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA}), require_token=False),
+    ],
+)
 def auth_post_private_no_token(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
@@ -190,13 +207,17 @@ async def auth_post_with_token_evaluate_one(request: Request, body: TestTokenBod
     token = body.token
 
     auth_middleware.mark_authz_done(request)
-    return JSONResponse({"payload": await auth_middleware.async_evaluate_one(
-        request,
-        RESOURCE_EVERYTHING,
-        P_INGEST_DATA,
-        require_token=True,
-        headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
-    )})
+    return JSONResponse(
+        {
+            "payload": await auth_middleware.async_evaluate_one(
+                request,
+                RESOURCE_EVERYTHING,
+                P_INGEST_DATA,
+                require_token=True,
+                headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+            )
+        }
+    )
 
 
 @app_test_auth.post("/post-with-token-evaluate-to-dict")
@@ -204,13 +225,17 @@ async def auth_post_with_token_evaluate_to_dict(request: Request, body: TestToke
     token = body.token
 
     auth_middleware.mark_authz_done(request)
-    return JSONResponse({"payload": await auth_middleware.async_evaluate_to_dict(
-        request,
-        (RESOURCE_EVERYTHING,),
-        (P_INGEST_DATA,),
-        require_token=True,
-        headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
-    )})
+    return JSONResponse(
+        {
+            "payload": await auth_middleware.async_evaluate_to_dict(
+                request,
+                (RESOURCE_EVERYTHING,),
+                (P_INGEST_DATA,),
+                require_token=True,
+                headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+            )
+        }
+    )
 
 
 @app_test_auth.put("/put-test")
@@ -229,11 +254,14 @@ auth_middleware_disabled = FastApiAuthMiddleware(
 auth_middleware_disabled.attach(app_test_auth_disabled)
 
 app_test_auth_disabled.exception_handler(HTTPException)(
-    http_exception_handler_factory(logger, auth_middleware_disabled))
+    http_exception_handler_factory(logger, auth_middleware_disabled)
+)
 app_test_auth_disabled.exception_handler(BentoAuthException)(
-    bento_auth_exception_handler_factory(logger, auth_middleware_disabled))
+    bento_auth_exception_handler_factory(logger, auth_middleware_disabled)
+)
 app_test_auth_disabled.exception_handler(RequestValidationError)(
-    validation_exception_handler_factory(auth_middleware_disabled))
+    validation_exception_handler_factory(auth_middleware_disabled)
+)
 
 fastapi_client_auth_disabled_ = TestClient(app_test_auth_disabled)
 
@@ -248,11 +276,15 @@ def auth_disabled_post_public(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
 
 
-@app_test_auth_disabled.post("/post-private", dependencies=[
-    auth_middleware_disabled.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
-])
+@app_test_auth_disabled.post(
+    "/post-private",
+    dependencies=[
+        auth_middleware_disabled.dep_require_permissions_on_resource(frozenset({P_INGEST_DATA})),
+    ],
+)
 def auth_disabled_post_private(body: TestBody):
     return JSONResponse(body.model_dump(mode="json"))
+
 
 # -----------------------------------------------------------------------------
 
@@ -305,13 +337,19 @@ def test_fastapi_auth_exception_403(test_client: TestClient):
 
 
 def test_fastapi_validation_exception(test_client: TestClient):
-    _expect_error(test_client.post("/post-400", json={"test2": 5}), 400, (
-        "body.test1: Field required",
-        "body.test2: Input should be a valid string",
-    ))
     _expect_error(
-        test_client.post("/post-400", json={"test1": "a", "test2": {"a": "b"}}), 400,
-        ("body.test2: Input should be a valid string",))
+        test_client.post("/post-400", json={"test2": 5}),
+        400,
+        (
+            "body.test1: Field required",
+            "body.test2: Input should be a valid string",
+        ),
+    )
+    _expect_error(
+        test_client.post("/post-400", json={"test1": "a", "test2": {"a": "b"}}),
+        400,
+        ("body.test2: Input should be a valid string",),
+    )
 
 
 def test_fastapi_auth_public(fastapi_client_auth: TestClient):
@@ -358,7 +396,8 @@ def test_fastapi_auth(
 ):
     aioresponse.post("https://bento-auth.local/policy/evaluate", status=authz_code, payload={"result": [[authz_res]]})
     r = fastapi_client_auth.post(
-        test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY)
+        test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY
+    )
     assert r.status_code == test_code
 
 
@@ -382,10 +421,13 @@ def test_fastapi_auth_missing_token(aioresponse: aioresponses, fastapi_client_au
 
 def test_fastapi_auth_options_call(aioresponse: aioresponses, fastapi_client_auth: TestClient):
     # allow OPTIONS through
-    r = fastapi_client_auth.options("/post-private", headers={
-        "Origin": "http://localhost",
-        "Access-Control-Request-Method": "POST",
-    })
+    r = fastapi_client_auth.options(
+        "/post-private",
+        headers={
+            "Origin": "http://localhost",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
     assert r.status_code == 200
 
 
@@ -425,11 +467,14 @@ async def test_fastapi_auth_disabled(aioresponse: aioresponses, fastapi_client_a
     r = fastapi_client_auth_disabled.post("/post-private", json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == 200
 
-    assert await auth_middleware_disabled.async_check_authz_evaluate(
-        Request({"type": "http"}),
-        frozenset({P_INGEST_DATA}),
-        {"everything": True},
-    ) is None
+    assert (
+        await auth_middleware_disabled.async_check_authz_evaluate(
+            Request({"type": "http"}),
+            frozenset({P_INGEST_DATA}),
+            {"everything": True},
+        )
+        is None
+    )
 
 
 def test_fastapi_get_workflows(fastapi_client_auth: TestClient):

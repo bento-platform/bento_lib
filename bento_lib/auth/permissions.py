@@ -30,7 +30,8 @@ PERMISSIONS_BY_STRING: dict[str, "Permission"] = {}
 
 class Permission(str):
     def __init__(
-        self, verb: PermissionVerb,
+        self,
+        verb: PermissionVerb,
         noun: PermissionNoun,
         min_level_required: Level = LEVEL_DATASET,
         supports_data_type_narrowing: bool | None = None,
@@ -42,7 +43,8 @@ class Permission(str):
         self._noun: PermissionNoun = noun
         self._min_level_required: Level = min_level_required
         self._supports_data_type_narrowing: bool = (
-            supports_data_type_narrowing if supports_data_type_narrowing is not None
+            supports_data_type_narrowing
+            if supports_data_type_narrowing is not None
             else min_level_required != LEVEL_INSTANCE
         )
 
@@ -141,13 +143,15 @@ P_QUERY_PROJECT_LEVEL_BOOLEAN = Permission(QUERY_VERB, PROJECT_LEVEL_BOOLEAN, mi
 P_QUERY_DATASET_LEVEL_BOOLEAN = Permission(QUERY_VERB, DATASET_LEVEL_BOOLEAN)
 
 P_QUERY_PROJECT_LEVEL_COUNTS = Permission(
-    QUERY_VERB, PROJECT_LEVEL_COUNTS, min_level_required=LEVEL_PROJECT, gives=(P_QUERY_PROJECT_LEVEL_BOOLEAN,))
+    QUERY_VERB, PROJECT_LEVEL_COUNTS, min_level_required=LEVEL_PROJECT, gives=(P_QUERY_PROJECT_LEVEL_BOOLEAN,)
+)
 P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, gives=(P_QUERY_DATASET_LEVEL_BOOLEAN,))
 
 # Data-level: interacting with data inside of data services... and triggering workflows
 
 P_QUERY_DATA = Permission(
-    QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS))  # query at full access
+    QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS)
+)  # query at full access
 P_DOWNLOAD_DATA = Permission(DOWNLOAD_VERB, DATA)  # download CSVs, associated DRS objects
 P_DELETE_DATA = Permission(DELETE_VERB, DATA)  # clear data from a specific data type
 
@@ -178,10 +182,12 @@ P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN, gives=(P_VIEW_PERMI
 #  - dataset management
 P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False)
 P_CREATE_DATASET = Permission(
-    CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False)
+    CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False
+)
 #     - deleting a dataset inherently deletes data inside it, so we give delete:data to all holders of delete:dataset
 P_DELETE_DATASET = Permission(
-    DELETE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False, gives=(P_DELETE_DATA,))
+    DELETE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False, gives=(P_DELETE_DATA,)
+)
 # ---
 
 # only {everything: true} (instance-level):
@@ -198,7 +204,8 @@ P_CREATE_PROJECT = Permission(CREATE_VERB, PROJECT, min_level_required=LEVEL_INS
 #     - deleting a project inherently deletes datasets/data inside it,
 #       so we give delete:data and delete:dataset to all holders of delete:project
 P_DELETE_PROJECT = Permission(
-    DELETE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE, gives=(P_DELETE_DATASET, P_DELETE_DATA))
+    DELETE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE, gives=(P_DELETE_DATASET, P_DELETE_DATA)
+)
 
 #  - reference material
 

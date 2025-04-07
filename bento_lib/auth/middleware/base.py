@@ -1,5 +1,4 @@
 import aiohttp
-import logging
 import re
 import requests
 
@@ -7,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Iterable
 
 from bento_lib.config.pydantic import BentoBaseConfig
+from bento_lib.logging.types import StdOrBoundLogger
 from ..exceptions import BentoAuthException
 from ..permissions import Permission
 from ..types import EvaluationResultMatrix, EvaluationResultDict
@@ -52,13 +52,13 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         exempt_request_patterns: NonNormalizedRequestPatterns = (),
         debug_mode: bool = False,
         enabled: bool = True,
-        logger: logging.Logger | None = None,
+        logger: StdOrBoundLogger | None = None,
     ):
         self._debug: bool = debug_mode
         self._verify_ssl: bool = not debug_mode
 
         self._enabled: bool = enabled
-        self._logger: logging.Logger | None = logger
+        self._logger: StdOrBoundLogger | None = logger
 
         self._drs_compat: bool = drs_compat
         self._sr_compat: bool = sr_compat
@@ -72,7 +72,7 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         self._bento_authz_service_url: str = bento_authz_service_url
 
     @classmethod
-    def build_from_pydantic_config(cls, config: BentoBaseConfig, logger: logging.Logger, **kwargs):
+    def build_from_pydantic_config(cls, config: BentoBaseConfig, logger: StdOrBoundLogger, **kwargs):
         return cls(
             bento_authz_service_url=config.bento_authz_service_url,
             debug_mode=config.bento_debug,
@@ -142,7 +142,8 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
             self.mk_authz_url(path),
             json=body,
             headers=self._extract_token_and_build_headers(request, require_token, headers_getter),
-            verify=self._verify_ssl)
+            verify=self._verify_ssl,
+        )
 
         if res.status_code != 200:  # Invalid authorization service response
             raise self._gen_exc_non_200_error_from_authz(res.status_code, res.content)
@@ -197,7 +198,8 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         # consume iterable only once in case it's a generator
         _perms = tuple(permissions)
         return self._permissions_matrix_to_dict(
-            self.evaluate(request, resources, _perms, require_token, headers_getter, mark_authz_done), _perms)
+            self.evaluate(request, resources, _perms, require_token, headers_getter, mark_authz_done), _perms
+        )
 
     def evaluate_one(
         self,
@@ -220,11 +222,11 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     ) -> dict:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    self.mk_authz_url(path),
-                    json=body,
-                    headers=self._extract_token_and_build_headers(request, require_token, headers_getter),
-                    ssl=(None if self._verify_ssl else False)) as res:
-
+                self.mk_authz_url(path),
+                json=body,
+                headers=self._extract_token_and_build_headers(request, require_token, headers_getter),
+                ssl=(None if self._verify_ssl else False),
+            ) as res:
                 if res.status != 200:  # Invalid authorization service response
                     raise self._gen_exc_non_200_error_from_authz(res.status, await res.content.read())
 
@@ -266,7 +268,8 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         _perms = tuple(permissions)
         return self._permissions_matrix_to_dict(
             await self.async_evaluate(request, resources, _perms, require_token, headers_getter, mark_authz_done),
-            _perms)
+            _perms,
+        )
 
     async def async_evaluate_one(
         self,

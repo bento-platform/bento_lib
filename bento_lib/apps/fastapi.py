@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +6,8 @@ from urllib.parse import urlparse
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
+from bento_lib.logging.types import StdOrBoundLogger
+from bento_lib.logging.structured.fastapi import build_structlog_fastapi_middleware
 from bento_lib.responses.fastapi_errors import (
     bento_auth_exception_handler_factory,
     http_exception_handler_factory,
@@ -24,11 +24,12 @@ class BentoFastAPI(FastAPI):
         self,
         authz_middleware: FastApiAuthMiddleware | None,
         config: BentoFastAPIBaseConfig,
-        logger: logging.Logger,
+        logger: StdOrBoundLogger,
         bento_extra_service_info: BentoExtraServiceInfo,
         service_type: GA4GHServiceType,
         version: str,
         exc_handler_kwargs: dict | None = None,
+        configure_structlog_access_logger: bool = False,
         *args,
         **kwargs,
     ):
@@ -43,11 +44,11 @@ class BentoFastAPI(FastAPI):
 
         super().__init__(*args, **app_kwargs)
 
-        self._config = config
-        self._logger = logger
-        self._bento_extra_service_info = bento_extra_service_info
-        self._service_type = service_type
-        self._version = version
+        self._config: BentoFastAPIBaseConfig = config
+        self._logger: StdOrBoundLogger = logger
+        self._bento_extra_service_info: BentoExtraServiceInfo = bento_extra_service_info
+        self._service_type: GA4GHServiceType = service_type
+        self._version: str = version
 
         # Set up CORS
         self.add_middleware(
@@ -58,6 +59,13 @@ class BentoFastAPI(FastAPI):
             allow_methods=["*"],
         )
 
+        # If enabled: set up custom structlog access logging middleware
+        #  - This is registered BEFORE the authorization middleware
+        if configure_structlog_access_logger:
+            self.middleware("http")(
+                build_structlog_fastapi_middleware(bento_extra_service_info.get("serviceKind", "service"))
+            )
+
         # Set up authorization
         #  - Non-standard middleware setup so that we can import the instance and use it for dependencies too
         if authz_middleware:
@@ -66,11 +74,14 @@ class BentoFastAPI(FastAPI):
         # Set up exception handlers for standard Bento/FastAPI errors
         exc_handler_kwargs = exc_handler_kwargs or {}
         self.exception_handler(BentoAuthException)(
-            bento_auth_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs))
+            bento_auth_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs)
+        )
         self.exception_handler(StarletteHTTPException)(
-            http_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs))
+            http_exception_handler_factory(logger, authz_middleware, **exc_handler_kwargs)
+        )
         self.exception_handler(RequestValidationError)(
-            validation_exception_handler_factory(authz_middleware, **exc_handler_kwargs))
+            validation_exception_handler_factory(authz_middleware, **exc_handler_kwargs)
+        )
 
         # Set up service info endpoint
 
@@ -85,5 +96,6 @@ class BentoFastAPI(FastAPI):
     async def get_service_info(self) -> GA4GHServiceInfo:
         if not self._service_info:
             self._service_info = await build_service_info_from_pydantic_config(
-                self._config, self._logger, self._bento_extra_service_info, self._service_type, self._version)
+                self._config, self._logger, self._bento_extra_service_info, self._service_type, self._version
+            )
         return self._service_info

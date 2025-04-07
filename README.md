@@ -120,8 +120,13 @@ All Bento channels are prefixed with `bento.`.
 
 ### `logging`
 
-`logging` contains helper functions for standardized Bento logging configuration
-and formatting.
+`logging` contains helper functions and types for standardized Bento logging 
+configuration and formatting, including structured logging using 
+[`structlog`](https://www.structlog.org/en/stable/).
+
+#### Guides
+
+* [setting up structured logging in FastAPI](./docs/logging/fastapi_structlog.md)
 
 ### `responses`
 
