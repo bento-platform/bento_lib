@@ -50,6 +50,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "tests.django_test_project.django_test_project.authz.authz_middleware",
+    "tests.django_test_project.django_test_project.logger.access_middleware",
 ]
 
 ROOT_URLCONF = "tests.django_test_project.django_test_project.urls"
