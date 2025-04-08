@@ -2,6 +2,7 @@ from importlib import metadata
 
 from . import apps
 from . import auth
+from . import discovery
 from . import drs
 from . import events
 from . import schemas
@@ -15,6 +16,7 @@ __all__ = [
     "__version__",
     "apps",
     "auth",
+    "discovery",
     "drs",
     "events",
     "schemas",

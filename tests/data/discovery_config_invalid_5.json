@@ -1,0 +1,46 @@
+{
+  "overview": [
+    {
+      "section_title": "Measurements",
+      "charts": [
+        {
+          "field": "lab_test_result_value",
+          "chart_type": "histogram"
+        }
+      ]
+    }
+  ],
+  "search": [
+    {
+      "section_title": "Measurements",
+      "fields": [
+        "lab_test_result_value",
+        "lab_test_result_value"
+      ]
+    }
+  ],
+  "fields": {
+    "lab_test_result_value": {
+      "mapping": "individual/extra_properties/lab_test_result_value",
+      "title": "Lab Test Result",
+      "description": "Numeric measures from a laboratory test",
+      "datatype": "number",
+      "config": {
+        "bins": [
+          200,
+          300,
+          500,
+          1000,
+          1500,
+          2000
+        ],
+        "minimum": 0,
+        "units": "mg/L"
+      }
+    }
+  },
+  "rules": {
+    "count_threshold": 5,
+    "max_query_parameters": 2
+  }
+}
