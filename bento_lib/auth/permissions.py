@@ -147,6 +147,10 @@ P_QUERY_PROJECT_LEVEL_COUNTS = Permission(
 )
 P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, gives=(P_QUERY_DATASET_LEVEL_BOOLEAN,))
 
+# Data catalog: permissions to view project/dataset metadata
+P_VIEW_DATASETS = Permission(VIEW_VERB, DATASET)
+P_VIEW_PROJECTS = Permission(VIEW_VERB, PROJECT, min_level_required=LEVEL_PROJECT)
+
 # Data-level: interacting with data inside of data services... and triggering workflows
 
 P_QUERY_DATA = Permission(
@@ -182,7 +186,7 @@ P_EDIT_PERMISSIONS = Permission(EDIT_VERB, PERMISSIONS_NOUN, gives=(P_VIEW_PERMI
 #  - dataset management
 P_EDIT_PROJECT = Permission(EDIT_VERB, PROJECT, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False)
 P_CREATE_DATASET = Permission(
-    CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False
+    CREATE_VERB, DATASET, min_level_required=LEVEL_PROJECT, supports_data_type_narrowing=False, gives=(P_VIEW_DATASETS,)
 )
 #     - deleting a dataset inherently deletes data inside it, so we give delete:data to all holders of delete:dataset
 P_DELETE_DATASET = Permission(
@@ -200,7 +204,7 @@ P_DELETE_DROP_BOX = Permission(DELETE_VERB, DROP_BOX, min_level_required=LEVEL_I
 
 #  - project management
 
-P_CREATE_PROJECT = Permission(CREATE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE)
+P_CREATE_PROJECT = Permission(CREATE_VERB, PROJECT, min_level_required=LEVEL_INSTANCE, gives=(P_VIEW_PROJECTS,))
 #     - deleting a project inherently deletes datasets/data inside it,
 #       so we give delete:data and delete:dataset to all holders of delete:project
 P_DELETE_PROJECT = Permission(
