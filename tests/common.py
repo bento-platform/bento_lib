@@ -17,6 +17,7 @@ __all__ = [
     "DISCOVERY_CONFIG_INVALID_3_PATH",
     "DISCOVERY_CONFIG_INVALID_4_PATH",
     "DISCOVERY_CONFIG_INVALID_5_PATH",
+    "DISCOVERY_CONFIG_WARNING_PATH",
     "SARS_COV_2_FASTA_PATH",
     "WDL_DIR",
     "WORKFLOW_DEF",
@@ -54,6 +55,7 @@ DISCOVERY_CONFIG_INVALID_2_PATH = DATA_DIR / "discovery_config_invalid_2.json"
 DISCOVERY_CONFIG_INVALID_3_PATH = DATA_DIR / "discovery_config_invalid_3.json"
 DISCOVERY_CONFIG_INVALID_4_PATH = DATA_DIR / "discovery_config_invalid_4.json"
 DISCOVERY_CONFIG_INVALID_5_PATH = DATA_DIR / "discovery_config_invalid_5.json"
+DISCOVERY_CONFIG_WARNING_PATH = DATA_DIR / "discovery_config_warning.json"
 SARS_COV_2_FASTA_PATH = DATA_DIR / "sars_cov_2.fa"
 
 WDL_DIR = Path(__file__).parent / "wdls"

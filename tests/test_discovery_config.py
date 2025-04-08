@@ -14,6 +14,7 @@ from .common import (
     DISCOVERY_CONFIG_INVALID_3_PATH,
     DISCOVERY_CONFIG_INVALID_4_PATH,
     DISCOVERY_CONFIG_INVALID_5_PATH,
+    DISCOVERY_CONFIG_WARNING_PATH,
 )
 
 
@@ -86,3 +87,10 @@ def test_load_invalid_discovery_configs(path: Path, exc: Type[Exception], exc_st
     with pytest.raises(exc) as e:
         load_discovery_config(path)
     assert str(e.value) == exc_str
+
+
+def test_discovery_config_warning(log_output):
+    load_discovery_config(DISCOVERY_CONFIG_WARNING_PATH)
+    assert log_output.entries == [
+        {"field": "lab_test_result_value", "field_idx": 0, "event": "field not referenced", "log_level": "warning"}
+    ]
