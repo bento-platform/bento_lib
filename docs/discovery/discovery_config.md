@@ -19,12 +19,12 @@ my_cfg: DiscoveryConfig = load_discovery_config("my_config.json")
 
 The `load_discovery_config` function may raise for any number of reasons (see sections below).
 
-### If the structure is incorrect
+### ERROR: The structure is incorrect
 
 If the structure of the file is incorrect versus the Pydantic model definition, a Pydantic 
 [`ValidationError`](https://docs.pydantic.dev/latest/api/pydantic_core/#pydantic_core.ValidationError) will be raised.
 
-### If a field is referenced without being defined
+### ERROR: A field is referenced without being defined
 
 If a field (via a chart or a search field) is referenced without being defined in the configuration `"fields": {...}` 
 JSON block, a `DiscoveryValidationError` will be raised with a message containing the location of where the error 
@@ -35,6 +35,26 @@ Examples of invalid discovery configurations can be found at:
 * [`/tests/data/discovery_config_invalid_2.json`](../../tests/data/discovery_config_invalid_2.json)
 * [`/tests/data/discovery_config_invalid_3.json`](../../tests/data/discovery_config_invalid_3.json)
 
-### If duplicate charts or search fields are defined
+### ERROR: If duplicate charts or search fields are defined
 
-A field may only be used once as a chart, and once as a search field. TODO
+A field may only be used once as a chart, and once as a search field. Any more than that will produce a 
+`DiscoveryValidationError` with a message containing the location of where the error occurred and the phrase
+"field already seen".
+
+Examples of invalid discovery configurations can be found at:
+
+* [`/tests/data/discovery_config_invalid_4.json`](../../tests/data/discovery_config_invalid_4.json)
+* [`/tests/data/discovery_config_invalid_5.json`](../../tests/data/discovery_config_invalid_5.json)
+
+### WARNING: A field is defined without being used anywhere in the configuration
+
+If a field is defined in the configuration `"fields": {...}` block, but not used anywhere, a warning will be emitted,
+which will look something like the following:
+
+```
+2025-04-08 10:53:18 [warning  ] field not referenced           field=lab_test_result_value field_idx=0
+```
+
+An example of a discovery configuration which will produce this warning can be found at:
+
+* [`/tests/data/discovery_config_warning.json`](../../tests/data/discovery_config_warning.json)
