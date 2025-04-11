@@ -45,7 +45,7 @@ class StringFieldDefinition(BaseFieldDefinition):
 
 
 class BaseNumberFieldConfig(BaseModel):
-    units: str
+    units: str | None = None  # Units are optional - some fields may be numerical but unitless (e.g., a ratio)
 
 
 class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
