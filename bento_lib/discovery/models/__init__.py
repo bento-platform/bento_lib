@@ -1,6 +1,7 @@
 from . import config, fields, overview, search
 from .config import DiscoveryConfig, DiscoveryConfigRules
 from .fields import FieldDefinition, DateFieldDefinition, NumberFieldDefinition, StringFieldDefinition
+from .overview import OverviewChart, OverviewSection
 
 __all__ = [
     "config",
@@ -13,4 +14,6 @@ __all__ = [
     "DateFieldDefinition",
     "NumberFieldDefinition",
     "StringFieldDefinition",
+    "OverviewChart",
+    "OverviewSection",
 ]

@@ -4,8 +4,12 @@ from pathlib import Path
 from pydantic import ValidationError
 from typing import Type
 
-from bento_lib.discovery.helpers import load_discovery_config_from_dict, load_discovery_config
-from bento_lib.discovery.models import fields, overview
+from bento_lib.discovery import (
+    load_discovery_config_from_dict,
+    load_discovery_config,
+    NumberFieldDefinition,
+    OverviewChart,
+)
 
 from .common import (
     DISCOVERY_CONFIG_PATH,
@@ -19,7 +23,7 @@ from .common import (
 
 
 def test_overview_charts_def():
-    m1 = overview.OverviewChart.model_validate(
+    m1 = OverviewChart.model_validate(
         {
             "field": "age",
             "chart_type": "histogram",
@@ -29,7 +33,7 @@ def test_overview_charts_def():
     assert m1.field == "age"
     assert m1.chart_type == "histogram"
 
-    m2 = overview.OverviewChart.model_validate(
+    m2 = OverviewChart.model_validate(
         {
             "field": "map",
             "chart_type": "choropleth",
@@ -255,7 +259,7 @@ TEST_NUMBER_FIELD_BASE = {
 )
 def test_invalid_number_configs(partial_config, err_str: str):
     with pytest.raises(ValidationError) as e:
-        fields.NumberFieldDefinition.model_validate(
+        NumberFieldDefinition.model_validate(
             {
                 **TEST_NUMBER_FIELD_BASE,
                 "config": {**TEST_NUMBER_FIELD_BASE["config"], **partial_config},
