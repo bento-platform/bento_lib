@@ -2,6 +2,8 @@ from . import helpers
 from . import models
 from .helpers import load_discovery_config_from_dict, load_discovery_config
 from .models import (
+    RULES_FULL_PERMISSIONS,
+    RULES_NO_PERMISSIONS,
     DiscoveryConfig,
     DiscoveryConfigRules,
     FieldDefinition,
@@ -20,6 +22,8 @@ __all__ = [
     "models",
     "load_discovery_config_from_dict",
     "load_discovery_config",
+    "RULES_FULL_PERMISSIONS",
+    "RULES_NO_PERMISSIONS",
     "DiscoveryConfig",
     "DiscoveryConfigRules",
     "FieldDefinition",
