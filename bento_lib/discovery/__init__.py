@@ -1,7 +1,26 @@
 from . import helpers
 from . import models
-from .models import DiscoveryConfig
+from .helpers import load_discovery_config_from_dict, load_discovery_config
+from .models import (
+    DiscoveryConfig,
+    DiscoveryConfigRules,
+    FieldDefinition,
+    DateFieldDefinition,
+    NumberFieldDefinition,
+    StringFieldDefinition,
+)
 
-# Re-export DiscoveryConfig, since it's an important model which will be imported frequently.
+# Re-export DiscoveryConfig and related models, since they're important and will be imported frequently by Katsu.
 
-__all__ = ["helpers", "models", "DiscoveryConfig"]
+__all__ = [
+    "helpers",
+    "models",
+    "load_discovery_config_from_dict",
+    "load_discovery_config",
+    "DiscoveryConfig",
+    "DiscoveryConfigRules",
+    "FieldDefinition",
+    "DateFieldDefinition",
+    "NumberFieldDefinition",
+    "StringFieldDefinition",
+]
