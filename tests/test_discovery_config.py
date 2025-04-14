@@ -180,6 +180,21 @@ TEST_NUMBER_FIELD_BASE = {
             {"bins": [10, 20, 30], "minimum": 5, "maximum": 25},
             "Value error, maximum cannot be less than last bin",
         ),
+        (
+            # non-increasing bins 1
+            {"bins": [5, 5, 10]},
+            "Value error, bins must be in increasing order",
+        ),
+        (
+            # non-increasing bins 2
+            {"bins": [10, 5, 10]},
+            "Value error, bins must be in increasing order",
+        ),
+        (
+            # non-increasing bins 3
+            {"bins": [10, 15, 10], "minimum": 5, "maximum": 20},
+            "Value error, bins must be in increasing order",
+        ),
         # automatic bin configs -----------------------------------------------
         (
             # 'swapped' maximum/minimum (max cannot be < min)

@@ -64,6 +64,10 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
         if self.maximum is not None and self.maximum < self.bins[-1]:
             raise ValueError("maximum cannot be less than last bin")
 
+        for c in range(1, len(self.bins)):
+            if self.bins[c - 1] >= self.bins[c]:
+                raise ValueError("bins must be in increasing order")
+
         return self
 
 
