@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bento-lib"
-version = "12.5.0"
+version = "13.0.0"
 description = "A set of common utilities and helpers for Bento platform services."
 authors = [
     "David Lougheed <david.lougheed@mail.mcgill.ca>",
@@ -27,20 +27,20 @@ python = "^3.10"
 aiofiles = ">=24.1.0,<25"
 aiohttp = ">=3.10.10,<4"
 asyncpg = { version = ">=0.29.0,<0.31.0", optional = true }
-django = { version = ">=5.0.8,<5.2", optional = true }
-djangorestframework = { version = ">=3.14.0,<3.17", optional = true }
-fastapi = { version = ">=0.112.1,<0.116", optional = true }
-flask = { version = ">=2.2.5,<4", optional = true }
+django = { version = ">=5.1.8,<5.3", optional = true }
+djangorestframework = { version = ">=3.16.0,<3.17", optional = true }
+fastapi = { version = ">=0.115.12,<0.116", optional = true }
+flask = { version = ">=3.0.3,<4", optional = true }
 jsonschema = ">=4.23.0,<5"
 psycopg2-binary = ">=2.9.9,<3.0"
-pydantic = ">=2.8.2,<3"
-pydantic-settings = ">=2.6.1"
-redis = ">=5.0.8,<6"
+pydantic = ">=2.11.3,<3"
+pydantic-settings = ">=2.8.1"
+redis = ">=5.2.1,<6"
 requests = ">=2.32.3,<3"
-rich = ">=13.9.4,<15"  # for logger exception formatting in development
-structlog = ">=24.4.0,<26"
+rich = ">=14.0.0,<15"  # for logger exception formatting in development
+structlog = ">=25.2.0,<26"
 uvicorn = { version = "*", optional = true }
-werkzeug = ">=2.2.3,<4"
+werkzeug = ">=3.0.6,<4"
 
 [tool.poetry.group.dev.dependencies]
 aioresponses = "^0.7.6"
@@ -50,7 +50,7 @@ mypy = "~1.15.0"
 pytest = "^8.3.2"
 pytest-asyncio = "^0.23.8"
 pytest-cov = "^6.0.0"
-pytest-django = "^4.8.0"
+pytest-django = "^4.11.1"
 python-dateutil = "^2.8.2"
 responses = "^0.25.0"
 ruff = "^0.11.2"
