@@ -19,7 +19,12 @@ __all__ = [
 ]
 
 
-DataTypeField = Field(validation_alias=AliasChoices("data_type", "datatype"))
+DataTypeField = Field(
+    ...,
+    title="Data type",
+    description="Data type of the field (string, number, or date).",
+    validation_alias=AliasChoices("datatype", "data_type"),
+)
 
 
 class BaseFieldDefinition(BaseModel):
