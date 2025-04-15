@@ -23,9 +23,18 @@ DataTypeField = Field(validation_alias=AliasChoices("data_type", "datatype"))
 
 
 class BaseFieldDefinition(BaseModel):
-    mapping: str
-    title: str  # TODO: make optional and pull from Bento schema if not set
-    description: str  # TODO: make optional and pull from Bento schema if not set
+    mapping: str = Field(
+        ...,
+        title="Mapping",
+        description=(
+            "Slash-delimited field mapping, i.e., a path to a field in a discovery-enabled Bento clinical/phenotypic/"
+            "experimental data model."
+        ),
+    )
+    # TODO: make optional and pull from Bento schema if not set:
+    title: str = Field(..., title="Title", description="Field title")
+    # TODO: make optional and pull from Bento schema if not set:
+    description: str = Field(..., title="Description", description="Field description")
     data_type: Literal["string", "number", "date"] = DataTypeField
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = None
@@ -36,20 +45,43 @@ class BaseFieldDefinition(BaseModel):
 
 
 class StringFieldConfig(BaseModel):
-    enum: list[str] | None
+    enum: list[str] | None = Field(
+        ...,
+        title="Enum",
+        description=(
+            "Possible values for this string field which can be used for filtering. If null, these will be "
+            "auto-populated from data service(s), excluding values which have counts below or at the threshold set in "
+            "the discovery rules."
+        ),
+    )
 
 
 class StringFieldDefinition(BaseFieldDefinition):
     data_type: Literal["string"] = DataTypeField
-    config: StringFieldConfig
+    config: StringFieldConfig = Field(..., title="Config", description="Additional configuration for the string field.")
 
 
 class BaseNumberFieldConfig(BaseModel):
-    units: str | None = None  # Units are optional - some fields may be numerical but unitless (e.g., a ratio)
+    units: str | None = Field(
+        default=None,
+        title="Units",
+        description=(
+            "Units for the number field, e.g., mL, cm, or kg/m^2. Units are optional, as some fields may be numerical "
+            "but unitless, e.g., a ratio."
+        ),
+    )
 
 
 class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
-    bins: list[int | float] = Field(..., min_length=2)
+    bins: list[int | float] = Field(
+        ...,
+        min_length=2,
+        title="Bins",
+        description=(
+            "List of bins for the number field, for filtering and histogram rendering. Bins must be be sorted "
+            "smallest-to-largest and must be increasing, i.e., two bins cannot have the same value."
+        ),
+    )
     minimum: int | None = None
     maximum: int | None = None
 
@@ -129,16 +161,21 @@ class NumberFieldDefinition(BaseFieldDefinition):
     config: Annotated[
         Annotated[ManualBinsNumberFieldConfig, Tag("manual")] | Annotated[AutoBinsNumberFieldConfig, Tag("auto")],
         Discriminator(_number_field_config_discriminator),
-    ]
+    ] = Field(..., title="Config", description="Additional configuration for the number field.")
 
 
 class DateFieldConfig(BaseModel):
-    bin_by: Literal["month"]  # Currently only binning by month is implemented
+    # Currently only binning by month is implemented:
+    bin_by: Literal["month"] = Field(
+        ...,
+        title="Bin by",
+        description="Specifies how to bin the date field for filtering and chart rendering.",
+    )
 
 
 class DateFieldDefinition(BaseFieldDefinition):
     data_type: Literal["date"] = DataTypeField
-    config: DateFieldConfig
+    config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
 
 FieldDefinition = DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition

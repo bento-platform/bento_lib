@@ -51,7 +51,11 @@ class DiscoveryConfig(BaseModel):
     overview: list[OverviewSection] = []
     search: list[SearchSection] = []
     fields: dict[str, FieldDefinition] = {}
-    rules: DiscoveryConfigRules = RULES_NO_PERMISSIONS  # Default rules should be as strict as possible
+    rules: DiscoveryConfigRules = Field(
+        default=RULES_NO_PERMISSIONS,  # Default rules should be as strict as possible
+        title="Discovery rules",
+        description="Rules controlling censorship of count responses when a request does not have full data access.",
+    )
 
     @model_validator(mode="after")
     def check_field_references(self) -> "DiscoveryConfig":
