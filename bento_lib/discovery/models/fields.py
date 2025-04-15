@@ -78,6 +78,27 @@ class BaseNumberFieldConfig(BaseModel):
 
 
 class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
+    """
+    Number field configuration with custom chart/search histogram bins.
+    It expects a list of bin boundaries `bins`, and optionally `minimum` and `maximum`.
+
+    There are three broad cases for a lower or upper boundary of the bin range, depending on the value of the
+    lowest/highest bin and minimum/maximum. For instance, the following cases apply to the lower boundary:
+
+        If minimum is None, the minimum is unbounded:
+            so given {"bins": [2, 4, 6, ...]}, the generated bins are:
+                <2  [2, 4)  [4, 6)  ...
+        If minimum is set to a value below the lowest bin, this extra bin includes only values in [minimum, lowest bin):
+            so given {"minimum": 1, "bins": [2, 4, 6, ...]}, the generated bins are:
+                <2* [2, 4)  [4, 6)  ...
+                *but only includes values in [0, 2)
+        If minimum is equal to the lowest bin, there will not be this extra bin:
+            so given {"minimum": 2, "bins": [2, 4, 6, ...]}, the generated bins are:
+                [2, 4)  [4, 6)  ...
+
+    This same general logic is mirrored for the maximum and largest bin.
+    """
+
     bins: list[int | float] = Field(
         ...,
         min_length=2,
