@@ -45,7 +45,7 @@ def test_overview_charts_def():
 
 
 def test_load_discovery_config_dict():
-    cfg = load_discovery_config_from_dict(
+    cfg, warnings = load_discovery_config_from_dict(
         {
             "overview": [
                 {
@@ -87,20 +87,23 @@ def test_load_discovery_config_dict():
     assert len(cfg.search) == 1
     assert len(cfg.fields) == 1
     assert cfg.rules.count_threshold == 5
+    assert len(warnings) == 0
 
 
 def test_load_discovery_config_dict_blank():
-    cfg = load_discovery_config_from_dict({})
+    cfg, warnings = load_discovery_config_from_dict({})
     assert cfg.overview == []
     assert cfg.search == []
     assert cfg.fields == {}
     assert cfg.rules.max_query_parameters == 0
     assert cfg.rules.count_threshold == sys.maxsize
+    assert len(warnings) == 0
 
 
 def test_load_discovery_config():
-    cfg = load_discovery_config(DISCOVERY_CONFIG_PATH)
+    cfg, warnings = load_discovery_config(DISCOVERY_CONFIG_PATH)
     assert cfg.overview[0].section_title == "General"
+    assert len(warnings) == 0
 
 
 @pytest.mark.parametrize(
@@ -148,10 +151,11 @@ def test_load_invalid_discovery_configs(path: Path, exc: Type[Exception], exc_st
 
 
 def test_discovery_config_warning(log_output):
-    load_discovery_config(DISCOVERY_CONFIG_WARNING_PATH)
+    _, warnings = load_discovery_config(DISCOVERY_CONFIG_WARNING_PATH)
     assert log_output.entries == [
         {"field": "lab_test_result_value", "field_idx": 0, "event": "field not referenced", "log_level": "warning"}
     ]
+    assert warnings == (((0,), "field not referenced (field=lab_test_result_value)"),)
 
 
 TEST_NUMBER_FIELD_BASE = {

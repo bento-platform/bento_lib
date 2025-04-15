@@ -14,6 +14,7 @@ from .models import (
     OverviewSection,
     SearchSection,
 )
+from .types import WarningsTuple
 
 # Re-export DiscoveryConfig and related models, since they're important and will be imported frequently by Katsu.
 
@@ -33,4 +34,5 @@ __all__ = [
     "OverviewChart",
     "OverviewSection",
     "SearchSection",
+    "WarningsTuple",
 ]
