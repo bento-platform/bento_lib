@@ -1,5 +1,5 @@
 import sys
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..exceptions import DiscoveryValidationError
 from .fields import FieldDefinition
@@ -12,7 +12,6 @@ __all__ = [
     "RULES_FULL_PERMISSIONS",
     "DiscoveryConfig",
 ]
-
 
 FIELD_DEF_NOT_FOUND = "field definition not found"
 FIELD_ALREADY_SEEN = "field already seen"
@@ -56,6 +55,11 @@ class DiscoveryConfig(BaseModel):
         title="Discovery rules",
         description="Rules controlling censorship of count responses when a request does not have full data access.",
     )
+
+    # Disallow extra properties at the root level, to prevent mistaken uploads of bad discovery configurations.
+    # Given that every field has a default, if we didn't do this a completely different JSON just results in an "empty"
+    # configuration rather than alerting the user that they probably made a mistake.
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"additionalProperties": False})
 
     @model_validator(mode="after")
     def check_field_references(self) -> "DiscoveryConfig":
