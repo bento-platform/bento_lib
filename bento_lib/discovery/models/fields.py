@@ -87,14 +87,14 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
 
         If minimum is None, the minimum is unbounded:
             so given {"bins": [2, 4, 6, ...]}, the generated bins are:
-                <2  [2, 4)  [4, 6)  ...
+                <2   [2, 4)   [4, 6)   ...
         If minimum is set to a value below the lowest bin, this extra bin includes only values in [minimum, lowest bin):
             so given {"minimum": 1, "bins": [2, 4, 6, ...]}, the generated bins are:
-                <2* [2, 4)  [4, 6)  ...
+                <2*  [2, 4)   [4, 6)   ...
                 *but only includes values in [0, 2)
         If minimum is equal to the lowest bin, there will not be this extra bin:
             so given {"minimum": 2, "bins": [2, 4, 6, ...]}, the generated bins are:
-                [2, 4)  [4, 6)  ...
+                [2, 4)   [4, 6)   ...
 
     This same general logic is mirrored for the maximum and largest bin.
     """
@@ -132,6 +132,17 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
 class AutoBinsNumberFieldConfig(BaseNumberFieldConfig):
     """
     Configuration for a number field with automatically-generated bins.
+
+    There are two broad cases for a lower or upper boundary of the bin range, depending on the value of the
+    lowest/highest bin and taper_left/right. For instance, the following cases apply to the lower boundary:
+
+        If minimum == taper_left, bins are generated from taper_left to taper_right:
+            so given {"minimum": 5, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
+                [5, 15)   [15, 25)   [25, 35)   ...
+        If minimum < taper_left, an "everything below taper_left" bin is added for values within [minumum, taper_left):
+            so given {"minimum": 0, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
+                <5*  [5, 15)   [15, 25)   [25, 35)   ...
+                *but only includes values in [0, 5)
 
     Note: limited to operations on integer values for simplicity.
     A word of caution: when implementing handling of floating point values, be aware of string format (might need to
