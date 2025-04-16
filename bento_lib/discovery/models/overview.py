@@ -20,6 +20,9 @@ class OverviewChart(BaseModel):
 
 
 class OverviewSection(BaseModel):
+    """
+    Groups charts into a section with a title, e.g., {"section_title": "Demographics", "charts": [{...}, {...}]}
+    """
     section_title: str = Field(
         ...,
         title="Section title",

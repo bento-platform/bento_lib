@@ -62,6 +62,10 @@ class StringFieldConfig(BaseModel):
 
 
 class StringFieldDefinition(BaseFieldDefinition):
+    """
+    Defines a string field for discovery purposes, including configuration for chart/filter values (`config.enum`).
+    """
+
     data_type: Literal["string"] = DataTypeField
     config: StringFieldConfig = Field(..., title="Config", description="Additional configuration for the string field.")
 
@@ -194,6 +198,10 @@ def _number_field_config_discriminator(v: dict | BaseModel) -> str:
 
 
 class NumberFieldDefinition(BaseFieldDefinition):
+    """
+    Defines a number field for discovery purposes, including configuration for value binning to generate histograms.
+    """
+
     data_type: Literal["number"] = DataTypeField
 
     # See https://docs.pydantic.dev/latest/concepts/unions/#discriminated-unions-with-callable-discriminator
@@ -215,6 +223,10 @@ class DateFieldConfig(BaseModel):
 
 
 class DateFieldDefinition(BaseFieldDefinition):
+    """
+    Defines a number field for discovery purposes, including date binning configuration.
+    """
+
     data_type: Literal["date"] = DataTypeField
     config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
