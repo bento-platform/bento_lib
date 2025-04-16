@@ -108,8 +108,8 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
             "smallest-to-largest and must be increasing, i.e., two bins cannot have the same value."
         ),
     )
-    minimum: int | None = None
-    maximum: int | None = None
+    minimum: int | None = Field(None, title="Minimum", description="Minimum value to include in binned data")
+    maximum: int | None = Field(None, title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
     def check_bin_config(self) -> "ManualBinsNumberFieldConfig":
