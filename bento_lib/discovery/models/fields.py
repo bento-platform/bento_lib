@@ -138,11 +138,15 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig):
     add precision to config?) computations of modulo.
     """
 
-    bin_size: int
-    taper_left: int
-    taper_right: int
-    minimum: int
-    maximum: int
+    bin_size: int = Field(..., title="Bin size", description="How wide to make the automatically-generated bins")
+    taper_left: int = Field(
+        ..., title="Taper left", description="Upper limit (exclusive) of smallest bin, unless minimum = taper_left."
+    )
+    taper_right: int = Field(
+        ..., title="Taper right", description="Lower limit (inclusive) of largest bin, unless maximum = taper_right."
+    )
+    minimum: int = Field(..., title="Minimum", description="Minimum value to include in binned data")
+    maximum: int = Field(..., title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
     def check_bin_config(self) -> "AutoBinsNumberFieldConfig":
