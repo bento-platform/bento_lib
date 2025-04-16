@@ -37,6 +37,39 @@ def test_overview_charts_def():
         {
             "field": "map",
             "chart_type": "choropleth",
+            "color_mode": {
+                "mode": "continuous",
+                "min_color": "rgba(178, 226, 226, 0.6)",
+                "max_color": "rgba(35, 139, 69, 0.6)",
+            },
+            "center": [70.15, -95.5],
+            "zoom": 1.75,
+            "category_prop": "pop",
+            "features": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "area": 4031260000000.0,
+                            "perimeter": 8812080.0,
+                            "pop": "ARCTIC BASIN",
+                        },
+                        "geometry": {
+                            "type": "Polygon",
+                            # truncated from real values because otherwise it takes up too much room in the code:
+                            "coordinates": [
+                                [
+                                    [114.781740188598945, 80.782754898070891],
+                                    [114.781740188598945, 81.782754898070891],  # fake 4th coord :)
+                                    [73.338808059692511, 83.163591384887681],
+                                    [114.781740188598945, 80.782754898070891],
+                                ]
+                            ],
+                        },
+                    },
+                ],
+            },
         }
     )
 
