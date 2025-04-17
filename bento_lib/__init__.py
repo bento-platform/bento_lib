@@ -17,8 +17,6 @@ __all__ = [
     "__version__",
     "apps",
     "auth",
-    "drs",
-    "events",
     "discovery",
     "drs",
     "events",
