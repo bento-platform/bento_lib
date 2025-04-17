@@ -1,6 +1,7 @@
 from geojson_pydantic import Polygon, Feature, FeatureCollection
 from pydantic import BaseModel, Field, RootModel
 from typing import Any, Literal
+from ._internal import NoAdditionalProperties
 
 __all__ = [
     "BarChart",
@@ -13,7 +14,7 @@ __all__ = [
 ]
 
 
-class BaseOverviewChart(BaseModel):
+class BaseOverviewChart(BaseModel, NoAdditionalProperties):
     field: str = Field(
         ...,
         title="Field",
@@ -50,7 +51,7 @@ class PieChart(BaseOverviewChart):
     chart_type: Literal["pie"] = "pie"
 
 
-class ChoroplethColorModeContinuous(BaseModel):
+class ChoroplethColorModeContinuous(BaseModel, NoAdditionalProperties):
     mode: Literal["continuous"] = "continuous"
     min_color: str
     max_color: str
@@ -95,7 +96,7 @@ class OverviewChart(RootModel):
         return getattr(self.root, item)
 
 
-class OverviewSection(BaseModel):
+class OverviewSection(BaseModel, NoAdditionalProperties):
     """
     Groups charts into a section with a title, e.g., {"section_title": "Demographics", "charts": [{...}, {...}]}
     """

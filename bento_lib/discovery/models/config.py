@@ -1,10 +1,11 @@
 import sys
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from ..exceptions import DiscoveryValidationError
 from .fields import FieldDefinition
 from .overview import OverviewSection
 from .search import SearchSection
+from ._internal import NoAdditionalProperties
 
 __all__ = [
     "DiscoveryConfigRules",
@@ -17,7 +18,7 @@ FIELD_DEF_NOT_FOUND = "field definition not found"
 FIELD_ALREADY_SEEN = "field already seen"
 
 
-class DiscoveryConfigRules(BaseModel):
+class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
     count_threshold: int = Field(
         ...,
         title="Count threshold",
@@ -46,7 +47,12 @@ RULES_FULL_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
 )
 
 
-class DiscoveryConfig(BaseModel):
+# Disallow extra properties at the root level, to prevent mistaken uploads of bad discovery configurations.
+# Given that every field has a default, if we didn't do this a completely different JSON just results in an "empty"
+# configuration rather than alerting the user that they probably made a mistake.
+
+
+class DiscoveryConfig(BaseModel, NoAdditionalProperties):
     overview: list[OverviewSection] = []
     search: list[SearchSection] = []
     fields: dict[str, FieldDefinition] = {}
@@ -55,11 +61,6 @@ class DiscoveryConfig(BaseModel):
         title="Discovery rules",
         description="Rules controlling censorship of count responses when a request does not have full data access.",
     )
-
-    # Disallow extra properties at the root level, to prevent mistaken uploads of bad discovery configurations.
-    # Given that every field has a default, if we didn't do this a completely different JSON just results in an "empty"
-    # configuration rather than alerting the user that they probably made a mistake.
-    model_config = ConfigDict(extra="forbid", json_schema_extra={"additionalProperties": False})
 
     @model_validator(mode="after")
     def check_field_references(self) -> "DiscoveryConfig":

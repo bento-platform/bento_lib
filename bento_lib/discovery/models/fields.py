@@ -1,5 +1,6 @@
-from pydantic import AliasChoices, BaseModel, Discriminator, Field, Tag, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
 from typing import Annotated, Literal
+from ._internal import NoAdditionalProperties
 
 __all__ = [
     "BaseFieldDefinition",
@@ -27,7 +28,7 @@ DataTypeField = Field(
 )
 
 
-class BaseFieldDefinition(BaseModel):
+class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     mapping: str = Field(
         ...,
         title="Mapping",
@@ -49,7 +50,7 @@ class BaseFieldDefinition(BaseModel):
     # ------------------------------------------------------------------------------------------------------------------
 
 
-class StringFieldConfig(BaseModel):
+class StringFieldConfig(BaseModel, NoAdditionalProperties):
     enum: list[str] | None = Field(
         ...,
         title="Enum",
@@ -59,6 +60,8 @@ class StringFieldConfig(BaseModel):
             "the discovery rules."
         ),
     )
+
+    model_config = ConfigDict(extra="forbid", json_schema_extra={"additionalProperties": False})
 
 
 class StringFieldDefinition(BaseFieldDefinition):
@@ -70,7 +73,7 @@ class StringFieldDefinition(BaseFieldDefinition):
     config: StringFieldConfig = Field(..., title="Config", description="Additional configuration for the string field.")
 
 
-class BaseNumberFieldConfig(BaseModel):
+class BaseNumberFieldConfig(BaseModel, NoAdditionalProperties):
     units: str | None = Field(
         default=None,
         title="Units",
@@ -213,7 +216,7 @@ class NumberFieldDefinition(BaseFieldDefinition):
     ] = Field(..., title="Config", description="Additional configuration for the number field.")
 
 
-class DateFieldConfig(BaseModel):
+class DateFieldConfig(BaseModel, NoAdditionalProperties):
     # Currently only binning by month is implemented:
     bin_by: Literal["month"] = Field(
         ...,
