@@ -1,5 +1,5 @@
 import sys
-from pydantic import BaseModel, Field, RootModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from ..exceptions import DiscoveryValidationError
 from .fields import FieldDefinition

@@ -81,7 +81,7 @@ class BaseNumberFieldConfig(BaseModel, NoAdditionalProperties):
     )
 
 
-class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
+class ManualBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     """
     Number field configuration with custom chart/search histogram bins.
     It expects a list of bin boundaries `bins`, and optionally `minimum` and `maximum`.
@@ -133,7 +133,7 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
         return self
 
 
-class AutoBinsNumberFieldConfig(BaseNumberFieldConfig):
+class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     """
     Configuration for a number field with automatically-generated bins.
 
@@ -197,7 +197,7 @@ def _number_field_config_discriminator(v: dict | BaseModel) -> str:
     return "manual" if (isinstance(v, dict) and "bins" in v) or hasattr(v, "bins") else "auto"
 
 
-class NumberFieldDefinition(BaseFieldDefinition):
+class NumberFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     """
     Defines a number field for discovery purposes, including configuration for value binning to generate histograms.
     """
@@ -222,7 +222,7 @@ class DateFieldConfig(BaseModel, NoAdditionalProperties):
     )
 
 
-class DateFieldDefinition(BaseFieldDefinition):
+class DateFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     """
     Defines a number field for discovery purposes, including date binning configuration.
     """
