@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field, HttpUrl, model_validator
-from typing import Annotated
 
 from .types import PhenoV2Resource, PhenoV2OntologyClassDict
 
@@ -27,21 +26,35 @@ class OntologyResource(BaseModel):
     #   always equivalent to the ID prefix in lower case. Examples: hp, go, mp, mondo Consult http://obofoundry.org for
     #   a complete list. For other resources which do not use native CURIE identifiers (e.g. SNOMED, UniProt, ClinVar),
     #   use the prefix in identifiers.org."
-    id: str
+    id: str = Field(
+        ...,
+        title="ID",
+        description="Ontology ID. For OBO ontologies, this must be the official OBO ID for Phenopackets compatibility.",
+        min_length=1,
+    )
 
     # From Phenopackets v2: "The name of the ontology referred to by the id element, for example, The Human Phenotype
     #   Ontology. For OBO Ontologies, the value of this string SHOULD be the same as the title field on
     #   http://obofoundry.org. Other resources should use the official title for that resource. Note that this field is
     #   purely for information purposes and software should not encode any assumptions."
-    name: str
-    url: HttpUrl
+    name: str = Field(..., title="Name", description="Ontology name, e.g., The Human Phenotype Ontology", min_length=1)
+    url: HttpUrl = Field(..., title="URL", description="URL to the machine-readable ontology definition file")
     # From Phenopackets v2: "The prefix used in the CURIE of an OntologyClass e.g. HP, MP, ECO for example an HPO term
     #   will have a CURIE like this - HP:0012828 which should be used in combination with the iri_prefix to form a
     #   fully-resolvable IRI."
     # Since we use it in a CURIE prefix context, it must match a valid NCName:
     # https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-NCName
-    namespace_prefix: Annotated[str, Field(pattern=NC_NAME_PATTERN)]
-    iri_prefix: HttpUrl
+    namespace_prefix: str = Field(
+        ...,
+        title="Namespace prefix",
+        description="Prefix used in the CURIE of an ontology term",
+        pattern=NC_NAME_PATTERN,
+    )
+    iri_prefix: HttpUrl = Field(
+        ...,
+        title="IRI prefix",
+        description="URL prefix used in combination with part of a CURIE to fully resolve an ontology term",
+    )
 
     def make_term(self, id_: str, label: str) -> "ResourceOntologyTerm":
         return ResourceOntologyTerm(ontology=self, id=id_, label=label)
