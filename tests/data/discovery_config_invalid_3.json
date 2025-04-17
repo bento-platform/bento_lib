@@ -1,0 +1,21 @@
+{
+  "overview": [
+    {
+      "section_title": "Test",
+      "charts": []
+    }
+  ],
+  "search": [
+    {
+      "section_title": "Measurements",
+      "fields": [
+        "lab_test_result_value"
+      ]
+    }
+  ],
+  "fields": {},
+  "rules": {
+    "count_threshold": 5,
+    "max_query_parameters": 2
+  }
+}

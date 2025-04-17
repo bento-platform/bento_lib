@@ -8,7 +8,6 @@ from . import queries
 
 __all__ = [
     "build_search_response",
-
     "data_structure",
     "operations",
     "postgres",
@@ -17,7 +16,4 @@ __all__ = [
 
 
 def build_search_response(results: Union[Dict, List, Tuple], start_time: datetime) -> Dict:
-    return {
-        "results": results,
-        "time": (datetime.now() - start_time).total_seconds()
-    }
+    return {"results": results, "time": (datetime.now() - start_time).total_seconds()}

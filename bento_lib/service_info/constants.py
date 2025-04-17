@@ -15,6 +15,7 @@ SERVICE_ENVIRONMENT_PROD: Literal["prod"] = "prod"
 
 SERVICE_ORGANIZATION_C3G: GA4GHServiceOrganization = {"name": "C3G", "url": "https://www.computationalgenomics.ca"}
 SERVICE_ORGANIZATION_C3G_PYDANTIC: GA4GHServiceOrganizationModel = GA4GHServiceOrganizationModel.model_validate(
-    SERVICE_ORGANIZATION_C3G)
+    SERVICE_ORGANIZATION_C3G
+)
 
 SERVICE_GROUP_BENTO = "ca.c3g.bento"

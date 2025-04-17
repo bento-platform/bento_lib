@@ -121,7 +121,8 @@ def _like_op(case_insensitive: bool):
 
 
 def _validate_data_structure_against_schema(
-        data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True) -> None:
+    data_structure: QueryableStructure, schema: JSONSchema, secure_errors: bool = True
+) -> None:
     """
     Validates a queryable data structure of some type against a JSON schema. This is an important validation step,
     because (assuming the schema is correct) it allows methods to make more assumptions about the integrity of the
@@ -142,8 +143,10 @@ def _validate_data_structure_against_schema(
         errors_str = "\n".join(errors)
 
         if secure_errors:
-            raise ValueError(f"Invalid data structure for schema (schema ID: {schema.get('$id', 'N/A')});"
-                             f"encountered {len(errors)} validation errors (masked for privacy)")
+            raise ValueError(
+                f"Invalid data structure for schema (schema ID: {schema.get('$id', 'N/A')});"
+                f"encountered {len(errors)} validation errors (masked for privacy)"
+            )
 
         raise ValueError(
             f"Invalid data structure: \n"
@@ -151,7 +154,8 @@ def _validate_data_structure_against_schema(
             f"For schema: \n"
             f"{json.dumps(schema)} \n"
             f"Validation Errors: \n"
-            f"{errors_str}")
+            f"{errors_str}"
+        )
 
 
 def _validate_not_wc(e: q.AST) -> None:
@@ -200,14 +204,13 @@ def evaluate_no_validate(
         # access to the data.
         # TODO: This could be made more granular (some people could be given access to specific objects / tables)
         q.check_operation_permissions(
-            ast,
-            schema,
-            lambda rl, s: _resolve_properties_and_check(rl, s, index_combination),
-            internal)
+            ast, schema, lambda rl, s: _resolve_properties_and_check(rl, s, index_combination), internal
+        )
 
     # Evaluate the non-literal expression recursively.
-    return QUERY_CHECK_SWITCH[ast.fn](ast.args, data_structure, schema, index_combination, internal,
-                                      resolve_checks, check_permissions)
+    return QUERY_CHECK_SWITCH[ast.fn](
+        ast.args, data_structure, schema, index_combination, internal, resolve_checks, check_permissions
+    )
 
 
 def evaluate(
@@ -222,12 +225,14 @@ def evaluate(
 ):
     # The 'validate' flag is used to avoid redundantly validating the integrity of child data structures
     _validate_data_structure_against_schema(data_structure, schema, secure_errors=secure_errors)
-    return evaluate_no_validate(ast, data_structure, schema, index_combination, internal, resolve_checks,
-                                check_permissions)
+    return evaluate_no_validate(
+        ast, data_structure, schema, index_combination, internal, resolve_checks, check_permissions
+    )
 
 
-def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schema: JSONSchema,
-                           resolve_checks: bool) -> Iterable[ArrayLengthData]:
+def _collect_array_lengths(
+    ast: q.AST, data_structure: QueryableStructure, schema: JSONSchema, resolve_checks: bool
+) -> Iterable[ArrayLengthData]:
     """
     To evaluate a query in a manner consistent with the Postgres evaluator (and facilitate richer queries), each array
     item needs to be fixed in a particular evaluation of a query that involves array accesses. This helper function
@@ -256,13 +261,15 @@ def _collect_array_lengths(ast: q.AST, data_structure: QueryableStructure, schem
 
     # If the current expression is a non-resolve function, recurse into its arguments and collect any additional array
     # accesses; construct a list of possibly redundant array accesses with the arrays' lengths.
-    als = tuple(chain.from_iterable(_collect_array_lengths(e, data_structure, schema, resolve_checks)
-                                    for e in ast.args))
+    als = tuple(
+        chain.from_iterable(_collect_array_lengths(e, data_structure, schema, resolve_checks) for e in ast.args)
+    )
     return (
-        a1 for i1, a1 in enumerate(als)
+        a1
+        for i1, a1 in enumerate(als)
         if not any(
             a1[0] == a2[0] and len(a1[2]) <= len(a2[2])  # Deduplicate identical or subset items
-            for a2 in als[i1+1:]
+            for a2 in als[i1 + 1 :]
         )
     )
 
@@ -279,8 +286,9 @@ def _dict_combine(dicts: Iterable[dict]):
     return c
 
 
-def _create_index_combinations(parent_template: IndexCombination, array_data: ArrayLengthData) \
-        -> Iterable[IndexCombination]:
+def _create_index_combinations(
+    parent_template: IndexCombination, array_data: ArrayLengthData
+) -> Iterable[IndexCombination]:
     """
     Creates combinations of array indices from a particular array (including children, NOT including siblings.)
     :param parent_template: A dictionary with information about the array's parent's current fixed indexed configuration
@@ -301,8 +309,9 @@ def _create_index_combinations(parent_template: IndexCombination, array_data: Ar
         yield from _create_all_index_combinations(item_template, (array_data[2][i],))
 
 
-def _create_all_index_combinations(parent_template: IndexCombination, arrays_data: Iterable[ArrayLengthData]) \
-        -> Iterable[IndexCombination]:
+def _create_all_index_combinations(
+    parent_template: IndexCombination, arrays_data: Iterable[ArrayLengthData]
+) -> Iterable[IndexCombination]:
     """
     Creates combinations of array indexes for all siblings in an iterable of arrays' length data.
     :param parent_template: A dictionary with information about the arrays' parent's current fixed indexed configuration
@@ -318,7 +327,7 @@ def _create_all_index_combinations(parent_template: IndexCombination, arrays_dat
     return map(
         _dict_combine,
         # Loop through and recurse
-        product(*map(partial(_create_index_combinations, parent_template), arrays_data))
+        product(*map(partial(_create_index_combinations, parent_template), arrays_data)),
     )
 
 
@@ -369,8 +378,9 @@ def check_ast_against_data_structure(
     return any(starmap(_evaluate, index_combinations))
 
 
-def _binary_op(op: BBOperator)\
-        -> Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
+def _binary_op(
+    op: BBOperator,
+) -> Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
     """
     Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
     return a Boolean result.
@@ -389,7 +399,7 @@ def _binary_op(op: BBOperator)\
         ic: Optional[IndexCombination],
         internal: bool,
         resolve_checks: bool,
-        check_permissions: bool
+        check_permissions: bool,
     ) -> bool:
         # TODO: Standardize type safety / behaviour!!!
 
@@ -454,10 +464,13 @@ def _get_child_resolve_array_lengths(
     :param resolve_checks: Whether to run resolve checks. Should only be run once per query/ds/schema combo
     :return: A tuple of the current array's element-wise array length data
     """
-    return filter(_is_not_none, (
-        _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path, resolve_checks)
-        for array_item_ds in resolving_ds
-    ))
+    return filter(
+        _is_not_none,
+        (
+            _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path, resolve_checks)
+            for array_item_ds in resolving_ds
+        ),
+    )
 
 
 def _resolve_array_lengths(
@@ -499,11 +512,14 @@ def _resolve_array_lengths(
             path,
             len(resolving_ds),
             tuple(
-                _get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path, resolve_checks)))
+                _get_child_resolve_array_lengths(resolve[1:], resolving_ds, schema["items"], new_path, resolve_checks)
+            ),
+        )
 
     # Otherwise, it's an object, so keep traversing without doing anything
-    return _resolve_array_lengths(resolve[1:], resolving_ds[resolve_value], schema["properties"][resolve_value],
-                                  new_path, resolve_checks)
+    return _resolve_array_lengths(
+        resolve[1:], resolving_ds[resolve_value], schema["properties"][resolve_value], new_path, resolve_checks
+    )
 
 
 def _resolve_properties_and_check(
@@ -560,8 +576,11 @@ def _resolve(
 
     for current_resolve in resolve:
         current_resolve_value = current_resolve.value
-        resolving_ds = (resolving_ds[index_combination[path]] if current_resolve_value == "[item]"
-                        else resolving_ds[current_resolve_value])
+        resolving_ds = (
+            resolving_ds[index_combination[path]]
+            if current_resolve_value == "[item]"
+            else resolving_ds[current_resolve_value]
+        )
         path = f"{path}.{current_resolve_value}"
 
     return resolving_ds
@@ -587,28 +606,29 @@ def _list(
 
 QUERY_CHECK_SWITCH: Dict[
     q.FunctionName,
-    Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool],
-             QueryableStructure]
+    Callable[
+        [q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], QueryableStructure
+    ],
 ] = {
     q.FUNCTION_AND: _binary_op(and_),
     q.FUNCTION_OR: _binary_op(or_),
     q.FUNCTION_NOT: lambda args, *rest: not_(evaluate_no_validate(args[0], *rest)),
-
+    # ---------------------------------------------------------------
     q.FUNCTION_LT: _binary_op(lt),
     q.FUNCTION_LE: _binary_op(le),
     q.FUNCTION_EQ: _binary_op(eq),
     q.FUNCTION_GT: _binary_op(gt),
     q.FUNCTION_GE: _binary_op(ge),
-
+    # ---------------------------------------------------------------
     q.FUNCTION_CO: _binary_op(contains),
     q.FUNCTION_ICO: _binary_op(_icontains),
     q.FUNCTION_IN: _binary_op(_in),
-
+    # ---------------------------------------------------------------
     q.FUNCTION_ISW: _binary_op(_i_starts_with),
     q.FUNCTION_IEW: _binary_op(_i_ends_with),
     q.FUNCTION_LIKE: _binary_op(_like_op(case_insensitive=False)),
     q.FUNCTION_ILIKE: _binary_op(_like_op(case_insensitive=True)),
-
+    # ---------------------------------------------------------------
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,
 }

@@ -1,13 +1,12 @@
 import logging
-from typing import Literal
 
+from .types import LogLevelLiteral
+
+# re-export LogLevelLiteral for backwards compatibility
 __all__ = [
     "LogLevelLiteral",
     "log_level_from_str",
 ]
-
-
-LogLevelLiteral = Literal["debug", "info", "warning", "error"]
 
 
 log_level_str_to_log_level: dict[str, int] = {

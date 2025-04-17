@@ -12,14 +12,10 @@ NUMBER_SEARCH = {
         operations.SEARCH_OP_EQ,
         operations.SEARCH_OP_IN,
     ],
-    "queryable": "all"
+    "queryable": "all",
 }
 
-JSONB_DB_SEARCH = {
-    "database": {
-        "type": "jsonb"
-    }
-}
+JSONB_DB_SEARCH = {"database": {"type": "jsonb"}}
 
 TEST_SCHEMA = {
     "type": "object",
@@ -29,8 +25,8 @@ TEST_SCHEMA = {
             "search": {
                 "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
                 "queryable": "internal",
-                "database": {"field": "phenopacket_id"}
-            }
+                "database": {"field": "phenopacket_id"},
+            },
         },
         "biosamples": {
             "type": "array",
@@ -54,8 +50,8 @@ TEST_SCHEMA = {
                                                 operations.SEARCH_OP_LIKE,
                                                 operations.SEARCH_OP_ILIKE,
                                             ],
-                                            "queryable": "all"
-                                        }
+                                            "queryable": "all",
+                                        },
                                     },
                                     "label": {
                                         "type": "string",
@@ -67,20 +63,17 @@ TEST_SCHEMA = {
                                                 operations.SEARCH_OP_LIKE,
                                                 operations.SEARCH_OP_ILIKE,
                                             ],
-                                            "queryable": "all"
-                                        }
-                                    }
+                                            "queryable": "all",
+                                        },
+                                    },
                                 },
                                 "search": {
                                     "database": {
                                         "relation": "patients_ontology",
                                         "primary_key": "id",
-                                        "relationship": {
-                                            "type": "MANY_TO_ONE",
-                                            "foreign_key": "code_id"
-                                        }
+                                        "relationship": {"type": "MANY_TO_ONE", "foreign_key": "code_id"},
                                     }
-                                }
+                                },
                             }
                         },
                         "search": {
@@ -89,10 +82,10 @@ TEST_SCHEMA = {
                                 "primary_key": "id",
                                 "relationship": {
                                     "type": "MANY_TO_ONE",
-                                    "foreign_key": "procedure_id"  # TODO: Wrong name?
-                                }
+                                    "foreign_key": "procedure_id",  # TODO: Wrong name?
+                                },
                             }
-                        }
+                        },
                     },
                     "tumor_grade": {
                         "type": "array",
@@ -103,10 +96,10 @@ TEST_SCHEMA = {
                                     "type": "string",
                                     "search": {
                                         "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                                        "queryable": "all"
-                                    }
+                                        "queryable": "all",
+                                    },
                                 },
-                                "label": {"type": "string"}
+                                "label": {"type": "string"},
                             },
                             "search": {
                                 "database": {
@@ -114,10 +107,10 @@ TEST_SCHEMA = {
                                     "primary_key": "id",  # Ontology primary key
                                     "relationship": {
                                         "type": "MANY_TO_ONE",
-                                        "foreign_key": "code_id"  # M2M child key
-                                    }
+                                        "foreign_key": "code_id",  # M2M child key
+                                    },
                                 }
-                            }
+                            },
                         },
                         "search": {
                             "database": {
@@ -125,12 +118,11 @@ TEST_SCHEMA = {
                                 "relationship": {
                                     "type": "ONE_TO_MANY",
                                     "parent_foreign_key": "biosample_id",
-                                    "parent_primary_key": "biosample_id"
-                                }
+                                    "parent_primary_key": "biosample_id",
+                                },
                             }
-                        }
+                        },
                     },
-
                     # lazy
                     "test_postgres_array": {
                         "type": "array",
@@ -139,42 +131,23 @@ TEST_SCHEMA = {
                             "properties": {
                                 "test": {
                                     "type": "string",
-                                    "search": {
-                                        "operations": [operations.SEARCH_OP_EQ],
-                                        "queryable": "all"
-                                    }
+                                    "search": {"operations": [operations.SEARCH_OP_EQ], "queryable": "all"},
                                 },
                                 "test2": {
                                     "type": "object",
                                     "properties": {
                                         "test": {
                                             "type": "string",
-                                            "search": {
-                                                "operations": [operations.SEARCH_OP_EQ],
-                                                "queryable": "all"
-                                            }
+                                            "search": {"operations": [operations.SEARCH_OP_EQ], "queryable": "all"},
                                         }
                                     },
-                                    "search": {
-                                        "database": {
-                                            "type": "json"
-                                        }
-                                    }
-                                }
+                                    "search": {"database": {"type": "json"}},
+                                },
                             },
-                            "search": {
-                                "database": {
-                                    "type": "json"
-                                }
-                            }
+                            "search": {"database": {"type": "json"}},
                         },
-                        "search": {
-                            "database": {
-                                "type": "array"
-                            }
-                        }
+                        "search": {"database": {"type": "array"}},
                     },
-
                     # lazy
                     "test_json_array": {
                         "type": "array",
@@ -183,24 +156,13 @@ TEST_SCHEMA = {
                             "properties": {
                                 "test": {
                                     "type": "string",
-                                    "search": {
-                                        "operations": [operations.SEARCH_OP_EQ],
-                                        "queryable": "all"
-                                    }
+                                    "search": {"operations": [operations.SEARCH_OP_EQ], "queryable": "all"},
                                 }
                             },
-                            "search": {
-                                "database": {
-                                    "type": "json"
-                                }
-                            }
+                            "search": {"database": {"type": "json"}},
                         },
-                        "search": {
-                            "database": {
-                                "type": "json"
-                            }
-                        }
-                    }
+                        "search": {"database": {"type": "json"}},
+                    },
                 },
                 "search": {
                     "database": {
@@ -208,10 +170,10 @@ TEST_SCHEMA = {
                         "primary_key": "biosample_id",
                         "relationship": {
                             "type": "MANY_TO_ONE",
-                            "foreign_key": "biosample_id"  # M2M child key
-                        }
+                            "foreign_key": "biosample_id",  # M2M child key
+                        },
                     }
-                }
+                },
             },
             "search": {
                 "queryable": "all",
@@ -220,10 +182,10 @@ TEST_SCHEMA = {
                     "relationship": {
                         "type": "ONE_TO_MANY",
                         "parent_foreign_key": "phenopacket_id",
-                        "parent_primary_key": "phenopacket_id"
-                    }
-                }
-            }
+                        "parent_primary_key": "phenopacket_id",
+                    },
+                },
+            },
         },
         "subject": {
             "type": "object",
@@ -232,23 +194,17 @@ TEST_SCHEMA = {
                     "type": "string",
                     "search": {
                         "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                        "queryable": "internal"
-                    }
+                        "queryable": "internal",
+                    },
                 },
                 "karyotypic_sex": {
                     "type": "string",
-                    "search": {
-                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                        "queryable": "all"
-                    }
+                    "search": {"operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN], "queryable": "all"},
                 },
                 "sex": {
                     "type": "string",
                     "enum": ["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"],
-                    "search": {
-                        "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                        "queryable": "all"
-                    }
+                    "search": {"operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN], "queryable": "all"},
                 },
                 "taxonomy": {
                     "type": "object",
@@ -257,25 +213,22 @@ TEST_SCHEMA = {
                             "type": "string",
                             "search": {
                                 "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                                "queryable": "all"
-                            }
+                                "queryable": "all",
+                            },
                         },
-                        "label": {"type": "string"}
+                        "label": {"type": "string"},
                     },
                     "required": ["id", "label"],
-                    "search": JSONB_DB_SEARCH
-                }
+                    "search": JSONB_DB_SEARCH,
+                },
             },
             "search": {
                 "database": {
                     "relation": "patients_individual",
                     "primary_key": "individual_id",
-                    "relationship": {
-                        "type": "MANY_TO_ONE",
-                        "foreign_key": "subject_id"
-                    }
+                    "relationship": {"type": "MANY_TO_ONE", "foreign_key": "subject_id"},
                 }
-            }
+            },
         },
         "test_op_1": {
             "type": "array",
@@ -283,7 +236,7 @@ TEST_SCHEMA = {
                 "type": "number",
                 "search": NUMBER_SEARCH,
             },
-            "search": JSONB_DB_SEARCH
+            "search": JSONB_DB_SEARCH,
         },
         "test_op_2": {
             "type": "array",
@@ -291,30 +244,20 @@ TEST_SCHEMA = {
                 "type": "number",
                 "search": NUMBER_SEARCH,
             },
-            "search": JSONB_DB_SEARCH
+            "search": JSONB_DB_SEARCH,
         },
         "test_op_3": {
             "type": "array",
-            "items": {
-                "type": "array",
-                "items": {
-                    "type": "number",
-                    "search": NUMBER_SEARCH
-                },
-                "search": JSONB_DB_SEARCH
-            },
-            "search": JSONB_DB_SEARCH
+            "items": {"type": "array", "items": {"type": "number", "search": NUMBER_SEARCH}, "search": JSONB_DB_SEARCH},
+            "search": JSONB_DB_SEARCH,
         },
         # TODO: Metadata (one-to-one) example
     },
     "search": {
         "operations": [],
         "queryable": "all",
-        "database": {
-            "relation": "patients_phenopacket",
-            "primary_key": "phenopacket_id"
-        }
-    }
+        "database": {"relation": "patients_phenopacket", "primary_key": "phenopacket_id"},
+    },
 }
 
 TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
@@ -322,10 +265,7 @@ TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
     "properties": {
         "id": {
             "type": "string",
-            "search": {
-                "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                "queryable": "all"
-            }
+            "search": {"operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN], "queryable": "all"},
         },
         "children": {
             "type": "array",
@@ -336,34 +276,28 @@ TEST_SCHEMA_2_DATA_TYPE_SCHEMA = {
                         "type": "string",
                         "search": {
                             "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                            "queryable": "all"
-                        }
+                            "queryable": "all",
+                        },
                     },
                     "prop": {
                         "type": "string",
                         "search": {
                             "operations": [operations.SEARCH_OP_EQ, operations.SEARCH_OP_IN],
-                            "queryable": "all"
-                        }
-                    }
-                }
-            }
-        }
-    }
+                            "queryable": "all",
+                        },
+                    },
+                },
+            },
+        },
+    },
 }
 
 TEST_SCHEMA_2 = {
     "type": "object",
     "properties": {
-        "data_type_1": {
-            "type": "array",
-            "items": TEST_SCHEMA_2_DATA_TYPE_SCHEMA
-        },
-        "data_type_2": {
-            "type": "array",
-            "items": TEST_SCHEMA_2_DATA_TYPE_SCHEMA
-        }
-    }
+        "data_type_1": {"type": "array", "items": TEST_SCHEMA_2_DATA_TYPE_SCHEMA},
+        "data_type_2": {"type": "array", "items": TEST_SCHEMA_2_DATA_TYPE_SCHEMA},
+    },
 }
 
 # TODO: Postgres module should validate instead of throwing errors...
@@ -372,47 +306,25 @@ TEST_INVALID_SCHEMA = {
     "properties": {
         "biosamples": {
             "type": "array",
-            "items": {
-                "type": "object"
-            },
+            "items": {"type": "object"},
             "search": {
                 "database": {
                     "relation": "patients_phenopacket_biosamples",
                     "relationship": {
                         "type": "INVALID_RELATION_TYPE",
                         "parent_foreign_key": "phenopacket_id",
-                        "parent_primary_key": "phenopacket_id"
-                    }
+                        "parent_primary_key": "phenopacket_id",
+                    },
                 }
-            }
+            },
         },
-        "subject": {
-            "type": "object",
-            "search": {
-                "database": {
-                    "relation": "patients_individual"
-                }
-            }
-        },
-        "bad_array": {
-            "type": "array",
-            "items": {"type": "string"}
-        }
+        "subject": {"type": "object", "search": {"database": {"relation": "patients_individual"}}},
+        "bad_array": {"type": "array", "items": {"type": "string"}},
     },
-    "search": {
-        "database": {
-            "relation": "patients_phenopacket",
-            "primary_key": "phenopacket_id"
-        }
-    }
+    "search": {"database": {"relation": "patients_phenopacket", "primary_key": "phenopacket_id"}},
 }
 
-TEST_INVALID_SCHEMA_2 = {
-    "type": "array",
-    "items": {
-        "type": "string"
-    }
-}
+TEST_INVALID_SCHEMA_2 = {"type": "array", "items": {"type": "string"}}
 
 TEST_FUNCTIONS = (
     [queries.FUNCTION_AND, True, False],
@@ -427,7 +339,7 @@ TEST_FUNCTIONS = (
     [queries.FUNCTION_ICO, "LABEL", "label"],
     [queries.FUNCTION_RESOLVE, "biosamples", "[item]", "procedure", "code", "id"],
     [queries.FUNCTION_IN, 5, {1, 2, 3, 4, 5}],
-    [queries.FUNCTION_LIST, 1, 2, 3, 4, 5]
+    [queries.FUNCTION_LIST, 1, 2, 3, 4, 5],
 )
 
 TEST_INVALID_FUNCTIONS = (
@@ -449,15 +361,10 @@ TEST_INVALID_EXPRESSION_SYNTAX = (
     [queries.FUNCTION_GE, 5],
     [queries.FUNCTION_CO, "hello"],
     [queries.FUNCTION_ICO, "LABEL"],
-    *TEST_INVALID_FUNCTIONS
+    *TEST_INVALID_FUNCTIONS,
 )
 
-TEST_INVALID_LITERALS = (
-    dict(),
-    tuple(),
-    set(),
-    lambda x: x
-)
+TEST_INVALID_LITERALS = (dict(), tuple(), set(), lambda x: x)
 
 REDUCE_NOT_1 = [queries.FUNCTION_NOT, [queries.FUNCTION_NOT, True]]
 REDUCE_NOT_2 = [queries.FUNCTION_NOT, REDUCE_NOT_1]
@@ -466,7 +373,7 @@ REDUCE_NOT_3 = [queries.FUNCTION_AND, REDUCE_NOT_1, REDUCE_NOT_2]
 TEST_REDUCE_NOTS = (
     (REDUCE_NOT_1, True),
     (REDUCE_NOT_2, [queries.FUNCTION_NOT, True]),
-    (REDUCE_NOT_3, [queries.FUNCTION_AND, True, [queries.FUNCTION_NOT, True]])
+    (REDUCE_NOT_3, [queries.FUNCTION_AND, True, [queries.FUNCTION_NOT, True]]),
 )
 
 TEST_QUERY_1 = ["#eq", ["#resolve", "subject", "karyotypic_sex"], "XO"]
@@ -477,7 +384,7 @@ TEST_QUERY_6 = "some_non_bool_value"
 TEST_QUERY_13 = [
     "#and",
     ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TEST"],
-    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
+    ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"],
 ]  # True with TEST_DATA_1 - same [item]s!
 TEST_QUERY_16 = ["#lt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]]
 TEST_QUERY_17 = ["#and", TEST_QUERY_16, ["#eq", ["#resolve", "test_op_2", "[item]"], 11]]
@@ -492,86 +399,123 @@ TEST_QUERIES = [
     #  - Number of Index Combinations (against TEST_DATA_1)
     #  - Number of Matching Index Combinations (against TEST_DATA_1)
     # ps: (internal: bool, postgres params: tuple)
-
-    {"query": TEST_QUERY_1,  # 1
-     "ds": (False, True, 1, 1),  # No index accesses
-     "ps": (False, ("XO",))},
-    {"query": TEST_QUERY_2,  # 2
-     "ds": (False, True, 2, 1),  # Accessing 2 biosamples
-     "ps": (False, ("%TE%",))},
-    {"query": ["#and", TEST_QUERY_1, TEST_QUERY_2],  # 3
-     "ds": (False, True, 2, 1),  # Accessing 2 biosamples
-     "ps": (False, ("XO", "%TE%"))},
-    {"query": ["#or", TEST_QUERY_3, False],  # 4
-     "ds": (False, True, 2, 1),  # Accessing 2 biosamples
-     "ps": (False, ("XO", "%TE%", False))},
-    {"query": TEST_QUERY_5,  # 5
-     "ds": (False, False, 2, 0),  # Accessing 2 biosamples
-     "ps": (False, ("XO", "%TE%", False))},
-    {"query": TEST_QUERY_6,  # 6
-     "ds": (False, False, 1, 0),  # No index accesses
-     "ps": (False, ("some_non_bool_value",))},
-    {"query": ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f"],  # 7
-     "ds": (True, True, 1, 1),  # No index accesses
-     "ps": (True, ("1ac54805-4145-4829-93e2-f362de55f28f",))},
-    {"query": ["#eq", ["#resolve", "subject", "sex"], "MALE"],  # 8
-     "ds": (False, True, 1, 1),  # No index accesses
-     "ps": (False, ("MALE",))},
-    {"query": ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:9606"],  # 9
-     "ds": (False, True, 1, 1),
-     "ps": (False, ("NCBITaxon:9606",))},
+    {
+        "query": TEST_QUERY_1,  # 1
+        "ds": (False, True, 1, 1),  # No index accesses
+        "ps": (False, ("XO",)),
+    },
+    {
+        "query": TEST_QUERY_2,  # 2
+        "ds": (False, True, 2, 1),  # Accessing 2 biosamples
+        "ps": (False, ("%TE%",)),
+    },
+    {
+        "query": ["#and", TEST_QUERY_1, TEST_QUERY_2],  # 3
+        "ds": (False, True, 2, 1),  # Accessing 2 biosamples
+        "ps": (False, ("XO", "%TE%")),
+    },
+    {
+        "query": ["#or", TEST_QUERY_3, False],  # 4
+        "ds": (False, True, 2, 1),  # Accessing 2 biosamples
+        "ps": (False, ("XO", "%TE%", False)),
+    },
+    {
+        "query": TEST_QUERY_5,  # 5
+        "ds": (False, False, 2, 0),  # Accessing 2 biosamples
+        "ps": (False, ("XO", "%TE%", False)),
+    },
+    {
+        "query": TEST_QUERY_6,  # 6
+        "ds": (False, False, 1, 0),  # No index accesses
+        "ps": (False, ("some_non_bool_value",)),
+    },
+    {
+        "query": ["#eq", ["#resolve", "id"], "1ac54805-4145-4829-93e2-f362de55f28f"],  # 7
+        "ds": (True, True, 1, 1),  # No index accesses
+        "ps": (True, ("1ac54805-4145-4829-93e2-f362de55f28f",)),
+    },
+    {
+        "query": ["#eq", ["#resolve", "subject", "sex"], "MALE"],  # 8
+        "ds": (False, True, 1, 1),  # No index accesses
+        "ps": (False, ("MALE",)),
+    },
+    {
+        "query": ["#eq", ["#resolve", "subject", "taxonomy", "id"], "NCBITaxon:9606"],  # 9
+        "ds": (False, True, 1, 1),
+        "ps": (False, ("NCBITaxon:9606",)),
+    },
     # 10
-    {"query": ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"],
-     "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
-     "ps": (False, ("test_value",))},
+    {
+        "query": ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test"], "test_value"],
+        "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
+        "ps": (False, ("test_value",)),
+    },
     # 11
-    {"query": ["#eq", ["#resolve", "biosamples", "[item]", "test_json_array", "[item]", "test"], "test_value"],
-     "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_json_array item
-     "ps": (False, ("test_value",))},
+    {
+        "query": ["#eq", ["#resolve", "biosamples", "[item]", "test_json_array", "[item]", "test"], "test_value"],
+        "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_json_array item
+        "ps": (False, ("test_value",)),
+    },
     {
         # Test array item access - [item] at a certain path point should mean the same object across the whole query.
         "query": [  # 12
             "#and",
             ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "TEST"],
-            ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG4"]
+            ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG4"],
         ],  # False with TEST_DATA_1 - different [item]s!
         "ds": (False, False, 5, 0),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
         "ps": (False, ("%TEST%", "TG4")),
     },
-    {"query": TEST_QUERY_13,  # True with TEST_DATA_1 - same [item]s!
-     "ds": (False, True, 5, 1),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
-     "ps": (False, ("%TEST%", "TG2"))},
+    {
+        "query": TEST_QUERY_13,  # True with TEST_DATA_1 - same [item]s!
+        "ds": (False, True, 5, 1),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
+        "ps": (False, ("%TEST%", "TG2")),
+    },
     {
         # True with TEST_DATA_1 - different [item]s but one of them is correct in both
         "query": [
             "#or",
             ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], "DUMMY"],
-            ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"]
+            ["#eq", ["#resolve", "biosamples", "[item]", "tumor_grade", "[item]", "id"], "TG2"],
         ],
         "ds": (False, True, 5, 4),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3
         "ps": (False, ("%DUMMY%", "TG2")),
     },
-    {"query": ["#gt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]],  # 15
-     "ds": (False, False, 9, 0),  # Accessing 3 elements in test_op_n array
-     "ps": (False, ())},
-    {"query": TEST_QUERY_16,  # 16
-     "ds": (False, True, 9, 9),  # Accessing 3 elements in test_op_n array
-     "ps": (False, ())},
-    {"query": TEST_QUERY_17,  # 17
-     "ds": (False, True, 9, 3),  # Accessing 3 elements in test_op_n array
-     "ps": (False, (11,))},
-    {"query": TEST_QUERY_18,  # 18
-     "ds": (False, True, 9, 3),  # Accessing 3 elements in test_op_n array
-     "ps": (False, (7,))},
-    {"query": ["#and", TEST_QUERY_13, TEST_QUERY_17],  # 19
-     "ds": (False, True, 45, 3),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
-     "ps": (False, ("%TEST%", "TG2", 11))},
-    {"query": ["#and", TEST_QUERY_13, TEST_QUERY_18],  # 20
-     "ds": (False, True, 45, 3),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
-     "ps": (False, ("%TEST%", "TG2", 7))},
-    {"query": ["#eq", ["#resolve", "test_op_2", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]],  # 21
-     "ds": (False, True, 27, 1),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
-     "ps": (False, ())},
+    {
+        "query": ["#gt", ["#resolve", "test_op_1", "[item]"], ["#resolve", "test_op_2", "[item]"]],  # 15
+        "ds": (False, False, 9, 0),  # Accessing 3 elements in test_op_n array
+        "ps": (False, ()),
+    },
+    {
+        "query": TEST_QUERY_16,  # 16
+        "ds": (False, True, 9, 9),  # Accessing 3 elements in test_op_n array
+        "ps": (False, ()),
+    },
+    {
+        "query": TEST_QUERY_17,  # 17
+        "ds": (False, True, 9, 3),  # Accessing 3 elements in test_op_n array
+        "ps": (False, (11,)),
+    },
+    {
+        "query": TEST_QUERY_18,  # 18
+        "ds": (False, True, 9, 3),  # Accessing 3 elements in test_op_n array
+        "ps": (False, (7,)),
+    },
+    {
+        "query": ["#and", TEST_QUERY_13, TEST_QUERY_17],  # 19
+        "ds": (False, True, 45, 3),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
+        "ps": (False, ("%TEST%", "TG2", 11)),
+    },
+    {
+        "query": ["#and", TEST_QUERY_13, TEST_QUERY_18],  # 20
+        "ds": (False, True, 45, 3),  # Accessing 2 biosamples, one with 2 tumor grades, the other with 3 +PLUS+ "
+        "ps": (False, ("%TEST%", "TG2", 7)),
+    },
+    {
+        "query": ["#eq", ["#resolve", "test_op_2", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]],  # 21
+        "ds": (False, True, 27, 1),  # Accessing 3 elements in test_op_2, plus 9 in test_op_3 (non-flattened)
+        "ps": (False, ()),
+    },
     {
         # 22
         "query": ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], ["#resolve", "test_op_3", "[item]", "[item]"]],
@@ -583,99 +527,130 @@ TEST_QUERIES = [
         "query": [
             "#and",
             ["#eq", ["#resolve", "test_op_1", "[item]"], 6],
-            ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], 8]
+            ["#eq", ["#resolve", "test_op_3", "[item]", "[item]"], 8],
         ],
         "ds": (False, True, 27, 1),  # test_op_3: 9, test_op_1: 3
         "ps": (False, (6, 8)),
     },
-    {"query": ["#ico", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"],  # 24
-     "ds": (False, True, 2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
-     "ps": (True, ("%label%",))},
-    {"query": ["#in", ["#resolve", "subject", "karyotypic_sex"], ["#list", "XO", "XX"]],  # 25
-     "ds": (False, True, 1, 1),  # in statement, search in list of string values
-     "ps": (True, (("XO", "XX"),))},
+    {
+        "query": ["#ico", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"],  # 24
+        "ds": (False, True, 2, 2),  # Case-insensitive contains; accessing two biosamples' procedure code labels
+        "ps": (True, ("%label%",)),
+    },
+    {
+        "query": ["#in", ["#resolve", "subject", "karyotypic_sex"], ["#list", "XO", "XX"]],  # 25
+        "ds": (False, True, 1, 1),  # in statement, search in list of string values
+        "ps": (True, (("XO", "XX"),)),
+    },
     # Starts with 'label' - no matches since both end with 'label' instead:
-    {"query": ["#isw", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"],  # 26
-     "ds": (False, False, 2, 0),  # Starts with 'label' - no matches since both end with 'label' instead
-     "ps": (True, ("label%",))},
+    {
+        "query": ["#isw", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "label"],  # 26
+        "ds": (False, False, 2, 0),  # Starts with 'label' - no matches since both end with 'label' instead
+        "ps": (True, ("label%",)),
+    },
     # Ends with 'label' + case-insensitive - 2 matches
-    {"query": ["#iew", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "Label"],  # 27
-     "ds": (False, True, 2, 2),  # Ends with 'label' + case-insensitive - 2 matches
-     "ps": (True, ("%Label",))},
+    {
+        "query": ["#iew", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "Label"],  # 27
+        "ds": (False, True, 2, 2),  # Ends with 'label' + case-insensitive - 2 matches
+        "ps": (True, ("%Label",)),
+    },
     # Starts with 'dummy' - only 1 of 2 match; case-insensitive
-    {"query": ["#isw", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "duMmy"],  # 28
-     "ds": (False, True, 2, 1),  # Starts with 'dummy' - only 1 of 2 match; case-insensitive
-     "ps": (True, ("duMmy%",))},
-
+    {
+        "query": ["#isw", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "duMmy"],  # 28
+        "ds": (False, True, 2, 1),  # Starts with 'dummy' - only 1 of 2 match; case-insensitive
+        "ps": (True, ("duMmy%",)),
+    },
     # One hundred million I?LIKE query tests !!!
-
     # 26 but using #like
-    {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "LABEL%"],  # 29
-     "ds": (False, False, 2, 0),
-     "ps": (False, ("LABEL%",))},
+    {
+        "query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "LABEL%"],  # 29
+        "ds": (False, False, 2, 0),
+        "ps": (False, ("LABEL%",)),
+    },
     # 26 but using #ilike
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "LaBeL%"],  # 30
-     "ds": (False, False, 2, 0),
-     "ps": (False, ("LaBeL%",))},
-
+    {
+        "query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "LaBeL%"],  # 30
+        "ds": (False, False, 2, 0),
+        "ps": (False, ("LaBeL%",)),
+    },
     # 27 but with #like - 2 matches (correct case)
-    {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%LABEL"],  # 31
-     "ds": (False, True, 2, 2),
-     "ps": (True, ("%LABEL",))},
+    {
+        "query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%LABEL"],  # 31
+        "ds": (False, True, 2, 2),
+        "ps": (True, ("%LABEL",)),
+    },
     #  - no matches since it is case-sensitive
-    {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%L_BeL"],  # 32
-     "ds": (False, False, 2, 0),
-     "ps": (False, ("%L_BeL",))},
+    {
+        "query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%L_BeL"],  # 32
+        "ds": (False, False, 2, 0),
+        "ps": (False, ("%L_BeL",)),
+    },
     #  - 2 matches; case-insensitive
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%LaBE_"],  # 33
-     "ds": (False, True, 2, 2),
-     "ps": (True, ("%LaBE_",))},
-
+    {
+        "query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%LaBE_"],  # 33
+        "ds": (False, True, 2, 2),
+        "ps": (True, ("%LaBE_",)),
+    },
     # 28 but with like - only 1 of 2 match for both
-    {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%DUMM_%"],  # 34
-     "ds": (False, True, 2, 1),
-     "ps": (True, ("%DUMM_%",))},
-    {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "DU_MY%"],  # 35
-     "ds": (False, True, 2, 1),
-     "ps": (True, ("DU_MY%",))},
-
+    {
+        "query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%DUMM_%"],  # 34
+        "ds": (False, True, 2, 1),
+        "ps": (True, ("%DUMM_%",)),
+    },
+    {
+        "query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "DU_MY%"],  # 35
+        "ds": (False, True, 2, 1),
+        "ps": (True, ("DU_MY%",)),
+    },
     #  - 0 matches (bad case)
-    {"query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "DUmmY%"],  # 36
-     "ds": (False, False, 2, 0),
-     "ps": (False, ("DUmmY%",))},
-
+    {
+        "query": ["#like", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "DUmmY%"],  # 36
+        "ds": (False, False, 2, 0),
+        "ps": (False, ("DUmmY%",)),
+    },
     # 28 but with ilike - only 1 of 2 match
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "duMmy%"],  # 37
-     "ds": (False, True, 2, 1),
-     "ps": (True, ("duMmy%",))},
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%duM%my%"],  # 38
-     "ds": (False, True, 2, 1),
-     "ps": (True, ("%duM%my%",))},
-
+    {
+        "query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "duMmy%"],  # 37
+        "ds": (False, True, 2, 1),
+        "ps": (True, ("duMmy%",)),
+    },
+    {
+        "query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%duM%my%"],  # 38
+        "ds": (False, True, 2, 1),
+        "ps": (True, ("%duM%my%",)),
+    },
     #  - no matches (bad pattern)
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%duM%my"],  # 39
-     "ds": (False, False, 2, 0),
-     "ps": (False, ("%duM%my",))},
-
+    {
+        "query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "%duM%my"],  # 39
+        "ds": (False, False, 2, 0),
+        "ps": (False, ("%duM%my",)),
+    },
     #  - no matches (bad pattern); testing escaped % and Regex escapes
-    {"query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "[%duM\\%\\_my]"],  # 40
-     "ds": (False, False, 2, 0),
-     "ps": (False, ("[%duM\\%\\_my]",))},
-
+    {
+        "query": ["#ilike", ["#resolve", "biosamples", "[item]", "procedure", "code", "label"], "[%duM\\%\\_my]"],  # 40
+        "ds": (False, False, 2, 0),
+        "ps": (False, ("[%duM\\%\\_my]",)),
+    },
     # Testing nested Postgres JSON schema-creation
-    {"query": ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test2", "test"], "a"],
-     "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
-     "ps": (False, ("a",))},
+    {
+        "query": ["#eq", ["#resolve", "biosamples", "[item]", "test_postgres_array", "[item]", "test2", "test"], "a"],
+        "ds": (False, True, 2, 2),  # Accessing 2 biosamples, each with 1 test_postgres_array item
+        "ps": (False, ("a",)),
+    },
 ]
 
 TEST_LARGE_QUERY_1 = [
     "#and",
-    ["#eq",
-     ["#resolve", "data_type_1", "[item]", "children", "[item]", "id"],
-     ["#resolve", "data_type_2", "[item]", "children", "[item]", "id"]],
-    ["#and",
-     ["#eq", ["#resolve", "data_type_1", "[item]", "children", "[item]", "prop"], "prop500"],
-     ["#eq", ["#resolve", "data_type_2", "[item]", "children", "[item]", "prop"], "prop500"]]
+    [
+        "#eq",
+        ["#resolve", "data_type_1", "[item]", "children", "[item]", "id"],
+        ["#resolve", "data_type_2", "[item]", "children", "[item]", "id"],
+    ],
+    [
+        "#and",
+        ["#eq", ["#resolve", "data_type_1", "[item]", "children", "[item]", "prop"], "prop500"],
+        ["#eq", ["#resolve", "data_type_2", "[item]", "children", "[item]", "prop"], "prop500"],
+    ],
 ]
 
 TEST_EXPR_1 = TEST_QUERY_6
@@ -708,18 +683,28 @@ TEST_QUERY_STR = (
 TEST_LIST_ANDS = (
     (TEST_QUERY_1, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),)),
     (TEST_QUERY_2, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),)),
-    (TEST_QUERY_3, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
-                    queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2))),
-    (TEST_QUERY_5, (queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
-                    queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),
-                    queries.convert_query_to_ast_and_preprocess(False))),
+    (
+        TEST_QUERY_3,
+        (
+            queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
+            queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),
+        ),
+    ),
+    (
+        TEST_QUERY_5,
+        (
+            queries.convert_query_to_ast_and_preprocess(TEST_QUERY_1),
+            queries.convert_query_to_ast_and_preprocess(TEST_QUERY_2),
+            queries.convert_query_to_ast_and_preprocess(False),
+        ),
+    ),
 )
 
 TEST_UNLIST_ANDS = (
     (TEST_QUERY_1, TEST_QUERY_1),
     (TEST_QUERY_2, TEST_QUERY_2),
     (TEST_QUERY_3, TEST_QUERY_3),
-    (TEST_QUERY_5, ["#and", TEST_QUERY_1, ["#and", TEST_QUERY_2, False]])
+    (TEST_QUERY_5, ["#and", TEST_QUERY_1, ["#and", TEST_QUERY_2, False]]),
 )
 
 TEST_DATA_1 = {
@@ -728,10 +713,7 @@ TEST_DATA_1 = {
         "id": "S1",
         "karyotypic_sex": "XO",
         "sex": "MALE",
-        "taxonomy": {
-            "id": "NCBITaxon:9606",
-            "label": "Homo sapiens"
-        }
+        "taxonomy": {"id": "NCBITaxon:9606", "label": "Homo sapiens"},
     },
     "test_op_1": [5, 6, 7],
     "test_op_2": [9, 10, 11],
@@ -752,19 +734,13 @@ TEST_DATA_1 = {
             ],
             "test_postgres_array": [{"test": "test_value", "test2": {"test": "a"}}],
             "test_json_array": [{"test": "test_value"}],
-        }
+        },
     ],
 }
 
 TEST_DATA_2 = {
-    "data_type_1": [{
-        "id": "test1",
-        "children": [{"id": f"child{i}", "prop": f"prop{i}"} for i in range(1000)]
-    }],
-    "data_type_2": [{
-        "id": "test2",
-        "children": [{"id": f"child{i}", "prop": f"prop{i}"} for i in range(999, -1, -1)]
-    }]
+    "data_type_1": [{"id": "test1", "children": [{"id": f"child{i}", "prop": f"prop{i}"} for i in range(1000)]}],
+    "data_type_2": [{"id": "test2", "children": [{"id": f"child{i}", "prop": f"prop{i}"} for i in range(999, -1, -1)]}],
 }
 
 INVALID_DATA = [{True, False}]
@@ -810,8 +786,12 @@ DS_INVALID_EXPRESSIONS = (
     (TEST_EXPR_7, False, Exception, {}),
     (TEST_EXPR_7, False, Exception, None),
     (["#_wc", "v1", "anywhere"], False, NotImplementedError, None),
-    (["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"],
-      ["#_wc", "v1", "anywhere"]], False, NotImplementedError, {"_root.biosamples": 0}),
+    (
+        ["#co", ["#resolve", "biosamples", "[item]", "procedure", "code", "id"], ["#_wc", "v1", "anywhere"]],
+        False,
+        NotImplementedError,
+        {"_root.biosamples": 0},
+    ),
     (["#isw", 5, 3], False, TypeError, None),  # Invalid with wrong types (DS only)
     (["#iew", 5, 3], False, TypeError, None),  # Invalid with wrong types (DS only)
     (["#like", 5, 3], False, TypeError, None),  # Invalid with wrong types (DS only)
@@ -835,9 +815,13 @@ def test_build_search_response():
 
     assert isinstance(test_response, dict)
     assert tuple(sorted(test_response.keys())) == ("results", "time")
-    assert any((isinstance(test_response["results"], dict),
-                isinstance(test_response["results"], list),
-                isinstance(test_response["results"], tuple)))
+    assert any(
+        (
+            isinstance(test_response["results"], dict),
+            isinstance(test_response["results"], list),
+            isinstance(test_response["results"], tuple),
+        )
+    )
 
     t = float(test_response["time"])
     assert t >= 0
@@ -890,23 +874,27 @@ def test_invalid_literals(v):
 
 def test_query_not_preprocessing():
     for b, a in TEST_REDUCE_NOTS:
-        assert queries.convert_query_to_ast_and_preprocess(b) == \
-               queries.convert_query_to_ast_and_preprocess(a)
+        assert queries.convert_query_to_ast_and_preprocess(b) == queries.convert_query_to_ast_and_preprocess(a)
 
 
 def test_queries_and_ast():
     for q, s in TEST_QUERY_STR:
         assert str(queries.convert_query_to_ast_and_preprocess(q)) == s
 
-    for b, a, in TEST_LIST_ANDS:
-        assert all(bi == ai for bi, ai in
-                   zip(queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b)), a))
+    for (
+        b,
+        a,
+    ) in TEST_LIST_ANDS:
+        assert all(
+            bi == ai for bi, ai in zip(queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b)), a)
+        )
 
     assert queries.and_asts_to_ast(()) is None
 
     for b, a in TEST_UNLIST_ANDS:
-        assert queries.and_asts_to_ast(queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b))) == \
-               queries.convert_query_to_ast_and_preprocess(a)
+        assert queries.and_asts_to_ast(
+            queries.ast_to_and_asts(queries.convert_query_to_ast_and_preprocess(b))
+        ) == queries.convert_query_to_ast_and_preprocess(a)
 
 
 def test_postgres_schemas():
@@ -914,24 +902,23 @@ def test_postgres_schemas():
     assert null_schema[0] is None and null_schema[1] is None and null_schema[2] is None
 
     for s, p in zip(JSON_SCHEMA_TYPES, POSTGRES_TYPES):
-        res = postgres.json_schema_to_postgres_schema("test", {
-            "type": "object",
-            "properties": {
-                "test2": {"type": s}
-            }
-        }, "json")
+        res = postgres.json_schema_to_postgres_schema(
+            "test", {"type": "object", "properties": {"test2": {"type": s}}}, "json"
+        )
         assert res[1] == "test"
-        assert res[2] == psycopg2.sql.Composed([
-            psycopg2.sql.SQL("("),
-            psycopg2.sql.Composed([
-                psycopg2.sql.Composed([
-                    psycopg2.sql.Identifier("test2"),
-                    psycopg2.sql.SQL(" "),
-                    psycopg2.sql.SQL(p)
-                ])
-            ]),
-            psycopg2.sql.SQL(")"),
-        ])
+        assert res[2] == psycopg2.sql.Composed(
+            [
+                psycopg2.sql.SQL("("),
+                psycopg2.sql.Composed(
+                    [
+                        psycopg2.sql.Composed(
+                            [psycopg2.sql.Identifier("test2"), psycopg2.sql.SQL(" "), psycopg2.sql.SQL(p)]
+                        )
+                    ]
+                ),
+                psycopg2.sql.SQL(")"),
+            ]
+        )
 
 
 def test_postgres_collect_resolve_join_tables():
@@ -974,10 +961,12 @@ def test_postgres_invalid_expressions(e, i, ex):
 
 @mark.parametrize("e, i, v, ic", DS_VALID_EXPRESSIONS)
 def test_data_structure_search_1(e, i, v, ic):
-    assert data_structure.evaluate(
-        queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=False) == v
-    assert data_structure.evaluate(
-        queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=True) == v
+    assert (
+        data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=False) == v
+    )
+    assert (
+        data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, secure_errors=True) == v
+    )
 
 
 # noinspection PyProtectedMember
@@ -987,22 +976,49 @@ def test_data_structure_search_2(query):
     i, v, ni, nm = query["ds"]
 
     # These are all valid, so we should be able to try out the different options with no negative effects
-    assert data_structure.check_ast_against_data_structure(
-        queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False) == v
+    assert (
+        data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False
+        )
+        == v
+    )
 
-    assert data_structure.check_ast_against_data_structure(
-        queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=False,
-        skip_schema_validation=True) == v
+    assert (
+        data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q),
+            TEST_DATA_1,
+            TEST_SCHEMA,
+            i,
+            secure_errors=False,
+            skip_schema_validation=True,
+        )
+        == v
+    )
 
-    assert data_structure.check_ast_against_data_structure(
-        queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True) == v
+    assert (
+        data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True
+        )
+        == v
+    )
 
-    assert data_structure.check_ast_against_data_structure(
-        queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, secure_errors=True,
-        skip_schema_validation=True) == v
+    assert (
+        data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q),
+            TEST_DATA_1,
+            TEST_SCHEMA,
+            i,
+            secure_errors=True,
+            skip_schema_validation=True,
+        )
+        == v
+    )
 
-    ics = tuple(data_structure.check_ast_against_data_structure(
-        queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, return_all_index_combinations=True))
+    ics = tuple(
+        data_structure.check_ast_against_data_structure(
+            queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, i, return_all_index_combinations=True
+        )
+    )
 
     assert len(ics) == nm
 
@@ -1012,8 +1028,9 @@ def test_data_structure_search_3(query):
     q = query["query"]
     i, v, ni, nm = query["ds"]
 
-    als = data_structure._collect_array_lengths(queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA,
-                                                resolve_checks=True)
+    als = data_structure._collect_array_lengths(
+        queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, resolve_checks=True
+    )
     ics = tuple(data_structure._create_all_index_combinations({}, als))
     assert len(ics) == ni
     assert nm <= len(ics)
@@ -1022,11 +1039,9 @@ def test_data_structure_search_3(query):
 @mark.parametrize("e, i, ex, ic", DS_INVALID_EXPRESSIONS)
 def test_data_structure_search_4(e, i, ex, ic):
     with raises(ex):
-        data_structure.evaluate(
-            queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=False)
+        data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=False)
     with raises(ex):
-        data_structure.evaluate(
-            queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=True)
+        data_structure.evaluate(queries.convert_query_to_ast(e), TEST_DATA_1, TEST_SCHEMA, ic, i, secure_errors=True)
 
 
 def test_data_structure_search_5():
@@ -1034,20 +1049,24 @@ def test_data_structure_search_5():
 
     with raises(ValueError):
         data_structure.evaluate(
-            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=False)
+            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=False
+        )
 
     with raises(ValueError):
         data_structure.evaluate(
-            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=True)
+            queries.convert_query_to_ast(TEST_EXPR_1), INVALID_DATA, TEST_SCHEMA, {}, secure_errors=True
+        )
 
 
 def test_large_data_structure_query():
     def large_query():
         assert data_structure.check_ast_against_data_structure(
-            queries.convert_query_to_ast(TEST_LARGE_QUERY_1), TEST_DATA_2, TEST_SCHEMA_2, False)
+            queries.convert_query_to_ast(TEST_LARGE_QUERY_1), TEST_DATA_2, TEST_SCHEMA_2, False
+        )
 
     # Test large query
     import cProfile
+
     cProfile.runctx("large_query()", {}, locals(), sort="tottime")
 
 
@@ -1057,4 +1076,5 @@ def test_check_operation_permissions(e, i, _v, ic):
     queries.check_operation_permissions(
         queries.convert_query_to_ast(e),
         TEST_SCHEMA,
-        search_getter=lambda rl, s: data_structure._resolve_properties_and_check(rl, s, ic))
+        search_getter=lambda rl, s: data_structure._resolve_properties_and_check(rl, s, ic),
+    )

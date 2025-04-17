@@ -36,7 +36,8 @@ def flask_client():
     application.register_error_handler(Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error))
     application.register_error_handler(
         InternalServerError,
-        fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error, logger=logging.getLogger(__name__)))
+        fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error, logger=logging.getLogger(__name__)),
+    )
     application.register_error_handler(BadRequest, fe.flask_error_wrap(fe.flask_bad_request_error))
     application.register_error_handler(NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True))
 
@@ -71,9 +72,11 @@ def flask_client_auth():
     auth_middleware.attach(test_app_auth)
 
     test_app_auth.register_error_handler(
-        Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error, authz=auth_middleware))
+        Exception, fe.flask_error_wrap_with_traceback(fe.flask_internal_server_error, authz=auth_middleware)
+    )
     test_app_auth.register_error_handler(
-        NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True, authz=auth_middleware))
+        NotFound, fe.flask_error_wrap(fe.flask_not_found_error, drs_compat=True, authz=auth_middleware)
+    )
 
     @test_app_auth.route("/post-exempted", methods=["POST"])
     def auth_post_exempted():
@@ -133,26 +136,34 @@ def flask_client_auth():
         token = request.json["token"]
 
         auth_middleware.mark_authz_done(request)
-        return jsonify({"payload": auth_middleware.evaluate_one(
-            request,
-            RESOURCE_EVERYTHING,
-            P_INGEST_DATA,
-            require_token=True,
-            headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
-        )})
+        return jsonify(
+            {
+                "payload": auth_middleware.evaluate_one(
+                    request,
+                    RESOURCE_EVERYTHING,
+                    P_INGEST_DATA,
+                    require_token=True,
+                    headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+                )
+            }
+        )
 
     @test_app_auth.route("/post-with-token-evaluate-to-dict", methods=["POST"])
     def auth_post_with_token_evaluate__to_dict():
         token = request.json["token"]
 
         auth_middleware.mark_authz_done(request)
-        return jsonify({"payload": auth_middleware.evaluate_to_dict(
-            request,
-            (RESOURCE_EVERYTHING,),
-            (P_INGEST_DATA,),
-            require_token=True,
-            headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
-        )})
+        return jsonify(
+            {
+                "payload": auth_middleware.evaluate_to_dict(
+                    request,
+                    (RESOURCE_EVERYTHING,),
+                    (P_INGEST_DATA,),
+                    require_token=True,
+                    headers_getter=(lambda _r: {"Authorization": f"Bearer {token}"}),
+                )
+            }
+        )
 
     @test_app_auth.route("/put-test", methods=["PUT"])
     def auth_put_not_included():
@@ -255,7 +266,8 @@ def test_flask_auth(
         status=authz_code,
     )
     r = flask_client_auth.post(
-        test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY)
+        test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY
+    )
     assert r.status_code == test_code
 
 
@@ -314,8 +326,11 @@ def test_flask_auth_disabled(flask_client_auth_disabled_with_middleware: tuple[F
     r = flask_client_auth_disabled.post("/post-private", json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == 200
 
-    assert auth_middleware_disabled.check_authz_evaluate(
-        Request({}),
-        frozenset({P_INGEST_DATA}),
-        {"everything": True},
-    ) is None
+    assert (
+        auth_middleware_disabled.check_authz_evaluate(
+            Request({}),
+            frozenset({P_INGEST_DATA}),
+            {"everything": True},
+        )
+        is None
+    )

@@ -118,5 +118,6 @@ async def test_pg_async_db_parallel_exc_close_then_connect(pg_async_db: PgAsyncD
     async def _c():
         async with pg_async_db.connect():
             pass
+
     await asyncio.gather(pg_async_db.close(), _c())
     assert pg_async_db._pool is not None

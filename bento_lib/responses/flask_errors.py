@@ -1,4 +1,3 @@
-import logging
 import traceback
 
 from flask import jsonify, request
@@ -7,15 +6,16 @@ from typing import Callable
 
 from .._internal import internal_logger
 from ..auth.types import MarkAuthzDoneType
+from ..logging.types import StdOrBoundLogger
 from ..responses import errors
 
 
 __all__ = [
     "flask_error_wrap_with_traceback",
     "flask_error_wrap",
-
+    # -------------------------------------------
     "flask_error",
-
+    # -------------------------------------------
     "flask_bad_request_error",
     "flask_unauthorized_error",
     "flask_forbidden_error",
@@ -24,7 +24,7 @@ __all__ = [
     "flask_not_acceptable_error",
     "flask_request_timeout_error",
     "flask_range_not_satisfiable_error",
-
+    # -------------------------------------------
     "flask_internal_server_error",
     "flask_not_implemented_error",
 ]
@@ -39,7 +39,7 @@ def flask_error_wrap_with_traceback(fn: Callable, *args, **kwargs) -> Callable:
     :return: The wrapped function
     """
 
-    logger: logging.Logger = kwargs.pop("logger", internal_logger)
+    logger: StdOrBoundLogger = kwargs.pop("logger", internal_logger)
     authz: MarkAuthzDoneType | None = kwargs.pop("authz", None)
 
     def handle_error(e):

@@ -63,7 +63,8 @@ class DjangoAuthMiddleware(BaseAuthMiddleware):
                 sr_compat=self._sr_compat,
                 beacon_meta_callback=self._beacon_meta_callback,
             ),
-            status=e.status_code)
+            status=e.status_code,
+        )
 
     async def dispatch(
         self,

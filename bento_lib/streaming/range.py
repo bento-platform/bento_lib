@@ -40,19 +40,20 @@ def validate_interval(
         if refget_mode:  # sigh... GA4GH moment
             raise StreamingBadRange(f"start is beyond content length: {int_start} >= {content_length}")
         raise StreamingRangeNotSatisfiable(
-            f"not satisfiable: {int_start} >= {content_length}", "start>=length", content_length)
+            f"not satisfiable: {int_start} >= {content_length}", "start>=length", content_length
+        )
 
     if int_end >= content_length:
         # both ends of the range are 0-indexed, inclusive - so it starts at 0 and ends at content_length - 1
         if refget_mode:  # sigh... GA4GH moment
             raise StreamingBadRange(f"end is beyond content length: {int_end} >= {content_length}")
         raise StreamingRangeNotSatisfiable(
-            f"not satisfiable: {int_end} >= {content_length}", "end>=length", content_length)
+            f"not satisfiable: {int_end} >= {content_length}", "end>=length", content_length
+        )
 
     should_check_inverted = (not refget_mode) if enforce_not_inverted is None else enforce_not_inverted
     if should_check_inverted and int_start > int_end:
-        raise StreamingRangeNotSatisfiable(
-            f"inverted interval: {interval}", "inverted", content_length)
+        raise StreamingRangeNotSatisfiable(f"inverted interval: {interval}", "inverted", content_length)
 
 
 def parse_range_header(

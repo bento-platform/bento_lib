@@ -2,6 +2,7 @@ from importlib import metadata
 
 from . import apps
 from . import auth
+from . import discovery
 from . import drs
 from . import events
 from . import ontologies
@@ -18,10 +19,13 @@ __all__ = [
     "auth",
     "drs",
     "events",
+    "discovery",
+    "drs",
+    "events",
     "ontologies",
     "schemas",
     "search",
     "service_info",
     "streaming",
-    "workflows"
+    "workflows",
 ]

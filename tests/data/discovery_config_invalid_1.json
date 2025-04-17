@@ -1,0 +1,9 @@
+{
+  "overview": {},
+  "search": [],
+  "fields": {},
+  "rules": {
+    "count_threshold": 5,
+    "max_query_parameters": 2
+  }
+}

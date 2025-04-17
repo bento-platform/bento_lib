@@ -46,7 +46,7 @@ class JoinAndSelectData:
         key_link: Optional[Tuple[str, str]],
         field_alias: Optional[str],
         search_properties: dict,
-        unresolved: Tuple[q.Literal, ...]
+        unresolved: Tuple[q.Literal, ...],
     ):
         self.relations: OptionalComposablePair = relations
         self.aliases: OptionalComposablePair = aliases
@@ -123,7 +123,7 @@ def collect_resolve_join_tables(
     resolve: Tuple[q.Literal, ...],
     schema: JSONSchema,
     parent_relation: Optional[Tuple[Optional[sql.Composable], Optional[sql.Composable]]] = None,
-    aliased_resolve_path: Optional[str] = None
+    aliased_resolve_path: Optional[str] = None,
 ) -> Tuple[JoinAndSelectData, ...]:
     """
     Recursively collects tables to join for compiling the query.
@@ -181,15 +181,16 @@ def collect_resolve_join_tables(
                 # will be used to call either json_to_record(...) or jsonb_to_record(...):
                 relation_sql_template = "{structure_type}_to_record({field})"
                 current_alias, current_alias_str, current_alias_sql_schema = json_schema_to_postgres_schema(
-                    new_aliased_resolve_path, schema, structure_type)
+                    new_aliased_resolve_path, schema, structure_type
+                )
 
             current_relation = sql.SQL(relation_sql_template).format(
                 structure_type=sql.SQL(structure_type),  # json or jsonb here
                 field=sql.SQL(".").join(
                     # TODO: Write comment about logic here - array vs obj
-                    (parent_relation[1], sql.Identifier(db_field))
-                    if db_field != "[item]" else (parent_relation[1],)
-                ))
+                    (parent_relation[1], sql.Identifier(db_field)) if db_field != "[item]" else (parent_relation[1],)
+                ),
+            )
 
         elif structure_type == "array" and schema["type"] == "array":  # Postgres array
             # TODO: document what unnest is up to
@@ -217,8 +218,8 @@ def collect_resolve_join_tables(
 
     # Parent, Current
     aliases = OptionalComposablePair(
-        parent=sql.Identifier(aliased_resolve_path) if aliased_resolve_path is not None else None,
-        current=current_alias)
+        parent=sql.Identifier(aliased_resolve_path) if aliased_resolve_path is not None else None, current=current_alias
+    )
 
     key_link = None
     if "relationship" in search_database_properties:
@@ -249,7 +250,7 @@ def collect_resolve_join_tables(
 
     if len(resolve) == 1:
         # We're at the end of the resolve list - this is the last part of the 'drill-down' for the field
-        return join_table_data,  # Return single tuple of relation
+        return (join_table_data,)  # Return single tuple of relation
 
     if schema["type"] not in ("array", "object"):
         # Primitive type, len(resolve) > 1
@@ -311,52 +312,56 @@ def join_fragment(ast: q.AST, schema: JSONSchema) -> sql.Composable:
         search_database_properties = _get_search_and_database_properties(schema)[1]
         relation = search_database_properties.get("relation")
         return sql.SQL("{r1} AS {a1}").format(
-            r1=sql.Identifier(relation) if relation else sql.SQL("(SELECT NULL)"),
-            a1=SQL_ROOT
+            r1=sql.Identifier(relation) if relation else sql.SQL("(SELECT NULL)"), a1=SQL_ROOT
         )
 
-    return sql.SQL(", ").join((
-        # Alias each table/relation to a re-usable name, joining the relations on their linked keys
-        # specified in the search schema.
-
-        # First, join any relation pairs which are connected together via foreign keys
-        # (e.g., nested objects stored in their own relations).
-        # If there is just 1 entry in terms, no join will occur, and it'll just be set to its alias.
-        sql.SQL(" LEFT JOIN ").join((
-            sql.SQL("{r1} AS {a1}{s1}").format(
-                r1=terms[0].relations.current,
-                a1=terms[0].aliases.current,
-                s1=terms[0].current_alias_sql_schema or SQL_NOTHING,
+    return sql.SQL(
+        ", "
+    ).join(
+        (
+            # Alias each table/relation to a re-usable name, joining the relations on their linked keys
+            # specified in the search schema.
+            # First, join any relation pairs which are connected together via foreign keys
+            # (e.g., nested objects stored in their own relations).
+            # If there is just 1 entry in terms, no join will occur, and it'll just be set to its alias.
+            sql.SQL(" LEFT JOIN ").join(
+                (
+                    sql.SQL("{r1} AS {a1}{s1}").format(
+                        r1=terms[0].relations.current,
+                        a1=terms[0].aliases.current,
+                        s1=terms[0].current_alias_sql_schema or SQL_NOTHING,
+                    ),
+                    *(
+                        sql.SQL("{r1} AS {a1}{s1} ON {a0}.{f0} = {a1}.{f1}").format(
+                            r1=term.relations.current,
+                            a0=term.aliases.parent,
+                            a1=term.aliases.current,
+                            f0=sql.Identifier(term.key_link[0]),
+                            f1=sql.Identifier(term.key_link[1]),
+                            s1=term.current_alias_sql_schema or SQL_NOTHING,
+                        )
+                        for term in terms[1:]
+                        if term.key_link is not None
+                    ),  # Exclude terms without key-links - they will be selected separately below
+                )
             ),
+            # Then, include any additional (non-terms[0]) non-joined relations.
             *(
-                sql.SQL("{r1} AS {a1}{s1} ON {a0}.{f0} = {a1}.{f1}").format(
+                sql.SQL("{r1} AS {a1}{s1}").format(
                     r1=term.relations.current,
-                    a0=term.aliases.parent,
                     a1=term.aliases.current,
-                    f0=sql.Identifier(term.key_link[0]),
-                    f1=sql.Identifier(term.key_link[1]),
                     s1=term.current_alias_sql_schema or SQL_NOTHING,
                 )
                 for term in terms[1:]
-                if term.key_link is not None
-            ),  # Exclude terms without key-links - they will be selected separately below
-        )),
-
-        # Then, include any additional (non-terms[0]) non-joined relations.
-        *(
-            sql.SQL("{r1} AS {a1}{s1}").format(
-                r1=term.relations.current,
-                a1=term.aliases.current,
-                s1=term.current_alias_sql_schema or SQL_NOTHING,
-            )
-            for term in terms[1:]
-            if term.key_link is None and term.relations.current is not None
-        ),
-    ))
+                if term.key_link is None and term.relations.current is not None
+            ),
+        )
+    )
 
 
-def search_ast_to_psycopg2_expr(ast: q.AST, params: tuple, schema: JSONSchema, internal: bool = False) \
-        -> SQLComposableWithParams:
+def search_ast_to_psycopg2_expr(
+    ast: q.AST, params: tuple, schema: JSONSchema, internal: bool = False
+) -> SQLComposableWithParams:
     if isinstance(ast, q.Literal):
         return sql.Placeholder(), (*params, ast.value)
 
@@ -374,14 +379,13 @@ def search_query_to_psycopg2_sql(query, schema: JSONSchema, internal: bool = Fal
     sql_obj, params = search_ast_to_psycopg2_expr(ast, (), schema, internal)
     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
     return sql.SQL("SELECT {root}.* FROM {relations_with_joins} WHERE {query_expr}").format(
-        root=SQL_ROOT,
-        relations_with_joins=join_fragment(ast, schema),
-        query_expr=sql_obj
+        root=SQL_ROOT, relations_with_joins=join_fragment(ast, schema), query_expr=sql_obj
     ), params
 
 
-def uncurried_binary_op(op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False) \
-        -> SQLComposableWithParams:
+def uncurried_binary_op(
+    op: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
+) -> SQLComposableWithParams:
     # TODO: Need to fix params!! Use named params
     lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
     rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema, internal)
@@ -407,8 +411,9 @@ def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
 
 
 def _like_op(op: str) -> Callable[[Tuple[q.AST, q.AST], tuple, JSONSchema, bool], SQLComposableWithParams]:
-    def inner(args: Tuple[q.AST, q.AST], params: tuple, schema: JSONSchema, internal: bool = False) \
-            -> SQLComposableWithParams:
+    def inner(
+        args: Tuple[q.AST, q.AST], params: tuple, schema: JSONSchema, internal: bool = False
+    ) -> SQLComposableWithParams:
         lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
         rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema, internal)
 
@@ -421,15 +426,18 @@ def _like_op(op: str) -> Callable[[Tuple[q.AST, q.AST], tuple, JSONSchema, bool]
 
 
 # TODO rename the function ?
-def _contains(op: str, wc_loc: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False)\
-        -> SQLComposableWithParams:
+def _contains(
+    op: str, wc_loc: str, args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
+) -> SQLComposableWithParams:
     return _like_op(op)(
-        (args[0], q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], q.Literal(wc_loc)])), params, schema, internal)
+        (args[0], q.Expression(fn=q.FUNCTION_HELPER_WC, args=[args[1], q.Literal(wc_loc)])), params, schema, internal
+    )
 
 
 def _contains_op(op: str) -> Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]:
     def _inner(*args):
         return _contains(op, "anywhere", *args)
+
     return _inner
 
 
@@ -437,8 +445,9 @@ _i_starts_with = functools.partial(_contains, "ILIKE", "start")
 _i_ends_with = functools.partial(_contains, "ILIKE", "end")
 
 
-def _wildcard(args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False) \
-        -> SQLComposableWithParams:
+def _wildcard(
+    args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False
+) -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
         raise NotImplementedError(f"Cannot currently use {q.FUNCTION_HELPER_WC} on an expression")  # TODO
 
@@ -482,8 +491,7 @@ def _resolve(args: q.Args, params: tuple, schema: JSONSchema, _internal: bool = 
     """
     f_id = get_field(args, schema)
     return sql.SQL("{relation}.{field}").format(
-        relation=get_relation(args, schema),
-        field=sql.Identifier(f_id) if f_id is not None else sql.SQL("*")
+        relation=get_relation(args, schema), field=sql.Identifier(f_id) if f_id is not None else sql.SQL("*")
     ), params
 
 
@@ -499,31 +507,28 @@ def _list(args: q.Args, params: tuple, _schema: JSONSchema, _internal: bool = Fa
     return sql.Placeholder(), (*params, values)
 
 
-POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[
-    str,
-    Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]
-] = {
+POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]] = {
     q.FUNCTION_AND: _binary_op("AND"),
     q.FUNCTION_OR: _binary_op("OR"),
     q.FUNCTION_NOT: _not,
-
+    # -------------------------------------------
     q.FUNCTION_LT: _binary_op("<"),
     q.FUNCTION_LE: _binary_op("<="),
     q.FUNCTION_EQ: _binary_op("="),
     q.FUNCTION_GT: _binary_op(">"),
     q.FUNCTION_GE: _binary_op(">="),
     q.FUNCTION_IN: _in,
-
+    # -------------------------------------------
     q.FUNCTION_CO: _contains_op("LIKE"),
     q.FUNCTION_ICO: _contains_op("ILIKE"),
-
+    # -------------------------------------------
     q.FUNCTION_ISW: _i_starts_with,
     q.FUNCTION_IEW: _i_ends_with,
     q.FUNCTION_LIKE: _like_op("LIKE"),
     q.FUNCTION_ILIKE: _like_op("ILIKE"),
-
+    # -------------------------------------------
     q.FUNCTION_RESOLVE: _resolve,
     q.FUNCTION_LIST: _list,
-
+    # -------------------------------------------
     q.FUNCTION_HELPER_WC: _wildcard,
 }

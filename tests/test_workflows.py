@@ -36,7 +36,7 @@ def test_workflow_set():
         file="test2.wdl",
         inputs=[
             workflows.models.WorkflowStringInput(id="input1", type="string"),
-        ]
+        ],
     )
 
     ws.add_workflow("test2", wd2)

@@ -48,15 +48,13 @@ def test_registration():
     assert TEST_DATA_TYPE_EVENT not in event_bus.get_service_event_types()
 
     # Invalid schema
-    r = event_bus.register_data_type_event_type("some_event", {
-        "type": "object",
-        "additionalProperties": 7
-    })
+    r = event_bus.register_data_type_event_type("some_event", {"type": "object", "additionalProperties": 7})
     assert not r
 
 
 def test_service_events():
     try:
+
         def handle_service_event(message):
             event = message["data"]
             assert event["service_artifact"] == TEST_SERVICE
@@ -97,6 +95,7 @@ def test_double_start():
 
 def test_data_type_events():
     try:
+
         def handle_data_type_event(message):
             event = message["data"]
             assert event["data_type"] == TEST_DATA_TYPE
@@ -142,6 +141,7 @@ def test_fake_event_bus():
     test_registration()
 
     try:
+
         def handle_service_event(_message):
             pass
 
@@ -153,6 +153,7 @@ def test_fake_event_bus():
 
     finally:
         event_bus.stop_event_loop()
+
 
 # TODO: Verify cross-talk
 

@@ -1,4 +1,3 @@
-import logging
 import traceback
 
 from fastapi import status
@@ -10,6 +9,7 @@ from typing import Callable
 
 from ..auth.exceptions import BentoAuthException
 from ..auth.types import MarkAuthzDoneType
+from ..logging.types import StdOrBoundLogger
 from .errors import http_error
 
 __all__ = [
@@ -19,13 +19,13 @@ __all__ = [
 ]
 
 
-def _log_if_500(logger: logging.Logger, code: int, exc: Exception) -> None:
+def _log_if_500(logger: StdOrBoundLogger, code: int, exc: Exception) -> None:
     if code == status.HTTP_500_INTERNAL_SERVER_ERROR:
         logger.error(f"Encountered error:\n{traceback.format_exception(type(exc), exc, exc.__traceback__)}")
 
 
 def http_exception_handler_factory(
-    logger: logging.Logger,
+    logger: StdOrBoundLogger,
     authz: MarkAuthzDoneType | None = None,
     **kwargs,
 ) -> Callable[[Request, HTTPException], Response]:
@@ -40,7 +40,7 @@ def http_exception_handler_factory(
 
 
 def bento_auth_exception_handler_factory(
-    logger: logging.Logger,
+    logger: StdOrBoundLogger,
     authz: MarkAuthzDoneType | None = None,
     **kwargs,
 ) -> Callable[[Request, BentoAuthException], Response]:
@@ -65,8 +65,10 @@ def validation_exception_handler_factory(
         return JSONResponse(
             http_error(
                 code,
-                *((".".join(map(str, e["loc"])) + ": " + e["msg"])
-                  if e.get("loc") else e["msg"] for e in exc.errors()),
-                **kwargs),
-            status_code=code)
+                *((".".join(map(str, e["loc"])) + ": " + e["msg"]) if e.get("loc") else e["msg"] for e in exc.errors()),
+                **kwargs,
+            ),
+            status_code=code,
+        )
+
     return validation_exception_handler

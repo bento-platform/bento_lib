@@ -36,15 +36,18 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         self.mark_authz_done(request)
         # return error response:
         return Response(
-            json.dumps(http_error(
-                e.status_code,
-                e.message,
-                drs_compat=self._drs_compat,
-                sr_compat=self._sr_compat,
-                beacon_meta_callback=self._beacon_meta_callback,
-            )),
+            json.dumps(
+                http_error(
+                    e.status_code,
+                    e.message,
+                    drs_compat=self._drs_compat,
+                    sr_compat=self._sr_compat,
+                    beacon_meta_callback=self._beacon_meta_callback,
+                )
+            ),
             status=e.status_code,
-            content_type="application/json")
+            content_type="application/json",
+        )
 
     def _make_forbidden(self) -> Response:
         return self._make_auth_error(BentoAuthException("Forbidden", status_code=403))
@@ -92,7 +95,9 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
                     except BentoAuthException as e:
                         return self._make_auth_error(e)
                 return current_app.ensure_sync(func)(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
     def deco_public_endpoint(self, func):
@@ -102,4 +107,5 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
             if self.enabled:
                 self.mark_authz_done(request)
             return res
+
         return wrapper

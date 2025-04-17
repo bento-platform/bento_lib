@@ -80,7 +80,13 @@ def test_parse_range_header_errors(range_header: str, refget_mode: bool, exc: Ty
         ("bytes=5-10, 15-20", ((5, 10), (15, 20))),
         ("bytes=5-10, 15-", ((5, 10), (15, DUMMY_CONTENT_LENGTH - 1))),
         ("bytes=-500", ((DUMMY_CONTENT_LENGTH - 500, DUMMY_CONTENT_LENGTH - 1),)),
-        ("bytes=0-100, -500", ((0, 100), (DUMMY_CONTENT_LENGTH - 500, DUMMY_CONTENT_LENGTH - 1),)),
+        (
+            "bytes=0-100, -500",
+            (
+                (0, 100),
+                (DUMMY_CONTENT_LENGTH - 500, DUMMY_CONTENT_LENGTH - 1),
+            ),
+        ),
     ],
 )
 def test_parse_range_header_valid(range_header: str | None, intervals: tuple[tuple[int, int], ...]):

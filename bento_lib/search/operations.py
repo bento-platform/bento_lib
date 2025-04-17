@@ -4,17 +4,17 @@ __all__ = [
     "SEARCH_OP_LE",
     "SEARCH_OP_GT",
     "SEARCH_OP_GE",
-
+    # -----------------------
     "SEARCH_OP_CO",
     "SEARCH_OP_ICO",
-
+    # -----------------------
     "SEARCH_OP_IN",
-
+    # -----------------------
     "SEARCH_OP_ISW",
     "SEARCH_OP_IEW",
     "SEARCH_OP_LIKE",
     "SEARCH_OP_ILIKE",
-
+    # -----------------------
     "SEARCH_OPERATIONS",
 ]
 
