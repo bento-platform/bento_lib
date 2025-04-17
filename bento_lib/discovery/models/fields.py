@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, BaseModel, ConfigDict, Discriminator, Field, RootModel, Tag, model_validator
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
 from typing import Annotated, Literal
 from ._internal import NoAdditionalProperties
 
@@ -60,10 +60,8 @@ class StringFieldConfig(BaseModel, NoAdditionalProperties):
         ),
     )
 
-    model_config = ConfigDict(extra="forbid", json_schema_extra={"additionalProperties": False})
 
-
-class StringFieldDefinition(BaseFieldDefinition):
+class StringFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     """
     Defines a string field for discovery purposes, including configuration for chart/filter values (`config.enum`).
     """
