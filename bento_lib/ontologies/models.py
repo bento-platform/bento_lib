@@ -1,7 +1,16 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 from typing import Annotated
 
 from .types import PhenoV2Resource, PhenoV2OntologyClassDict
+
+__all__ = [
+    "NC_NAME_PATTERN",
+    "CURIE_PATTERN",
+    "OntologyResource",
+    "VersionedOntologyResource",
+    "OntologyTerm",
+    "ResourceOntologyTerm",
+]
 
 NC_NAME_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9.\-_]*$"
 CURIE_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9.\-_]*:[a-zA-Z0-9.\-_]+$"
@@ -9,6 +18,7 @@ CURIE_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9.\-_]*:[a-zA-Z0-9.\-_]+$"
 
 class OntologyResource(BaseModel):
     """
+    Model for an ontology resource, including a link to a machine-readable ontology definition file.
     Inspired by the Phenopackets v2 Resource model:
     https://phenopacket-schema.readthedocs.io/en/latest/resource.html
     """
@@ -33,12 +43,24 @@ class OntologyResource(BaseModel):
     namespace_prefix: Annotated[str, Field(pattern=NC_NAME_PATTERN)]
     iri_prefix: HttpUrl
 
-    def make_term(self, id_: str, label: str) -> "OntologyTerm":
-        return OntologyTerm(ontology=self, id=id_, label=label)
+    def make_term(self, id_: str, label: str) -> "ResourceOntologyTerm":
+        return ResourceOntologyTerm(ontology=self, id=id_, label=label)
+
+    def as_versioned(self, url: str, version: str) -> "VersionedOntologyResource":
+        return VersionedOntologyResource(
+            **self.model_dump(include={"id", "name", "namespace_prefix", "iri_prefix"}),
+            url=HttpUrl(url),
+            version=version,
+        )
 
 
 class VersionedOntologyResource(OntologyResource):
-    version: str
+    """
+    A specific version of an ontology resource, and ideally a URL which points to the specific version of the
+    machine-readable ontology definition file.
+    """
+
+    version: str = Field(..., title="Version", description="Ontology resource version")
 
     def to_phenopackets_repr(self) -> PhenoV2Resource:
         return self.model_dump(mode="json", include={"id", "version", "name", "url", "namespace_prefix", "iri_prefix"})
@@ -46,13 +68,30 @@ class VersionedOntologyResource(OntologyResource):
 
 class OntologyTerm(BaseModel):
     """
-    Inspired by the Phenopackets v2 OntologyClass model:
+    Model for an ontology term, with a CURIE ID and a label. Inspired by the Phenopackets v2 OntologyClass model:
     https://phenopacket-schema.readthedocs.io/en/latest/ontologyclass.html
     """
 
-    ontology: VersionedOntologyResource
-    id: Annotated[str, Field(pattern=CURIE_PATTERN)]
-    label: str
+    id: str = Field(..., pattern=CURIE_PATTERN, title="ID", description="CURIE-formatted ontology term ID")
+    label: str = Field(..., title="Label", description="Human-readable label for the ontology term")
+
+
+class ResourceOntologyTerm(OntologyTerm):
+    """
+    Ontology term with a back-reference to a descriptor for the versioned ontology resource the term is from.
+    """
+
+    ontology: OntologyResource = Field(
+        ...,
+        title="Ontology resource",
+        description="Ontology resource where the term comes from (either versioned or unversioned).",
+    )
+
+    @model_validator(mode="after")
+    def check_curie(self) -> "ResourceOntologyTerm":
+        if not self.id.startswith(self.ontology.namespace_prefix + ":"):
+            raise ValueError("term CURIE must start with ontology resource namespace prefix")
+        return self
 
     def to_phenopackets_repr(self) -> PhenoV2OntologyClassDict:
         return self.model_dump(mode="json", include={"id", "label"})
