@@ -25,10 +25,10 @@ def test_make_term():
         label="Homo sapiens",
         ontology=cr.NCBI_TAXON,
     )
-    assert cr.NCBI_TAXON_2024_07_03.make_term("NCBITaxon:9606", "Homo sapiens") == m.ResourceOntologyTerm(
+    assert cr.NCBI_TAXON_2025_03_13.make_term("NCBITaxon:9606", "Homo sapiens") == m.ResourceOntologyTerm(
         id="NCBITaxon:9606",
         label="Homo sapiens",
-        ontology=cr.NCBI_TAXON_2024_07_03,
+        ontology=cr.NCBI_TAXON_2025_03_13,
     )
 
 
