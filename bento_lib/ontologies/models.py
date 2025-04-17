@@ -56,6 +56,10 @@ class OntologyResource(BaseModel):
         description="URL prefix used in combination with part of a CURIE to fully resolve an ontology term",
     )
 
+    repository_url: HttpUrl | None = Field(
+        default=None, title="Repository URL", description="Development repository URL, useful for tracking new versions"
+    )
+
     def make_term(self, id_: str, label: str) -> "ResourceOntologyTerm":
         return ResourceOntologyTerm(ontology=self, id=id_, label=label)
 
