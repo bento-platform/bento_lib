@@ -122,6 +122,10 @@ def test_load_discovery_config_dict():
     assert cfg.rules.count_threshold == 5
     assert len(warnings) == 0
 
+    # synonymous attribute accesses
+    assert cfg.fields["age"].mapping == "individual/age_numeric"
+    assert cfg.fields["age"].root.mapping == "individual/age_numeric"
+
 
 def test_load_discovery_config_dict_blank():
     cfg, warnings = load_discovery_config_from_dict({})

@@ -237,3 +237,6 @@ class FieldDefinition(RootModel):
     """
 
     root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition = Field(..., discriminator="datatype")
+
+    def __getattr__(self, item):
+        return getattr(self.root, item)
