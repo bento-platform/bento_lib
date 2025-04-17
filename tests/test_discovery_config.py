@@ -195,7 +195,7 @@ TEST_NUMBER_FIELD_BASE = {
     "mapping": "whatever/test",
     "title": "Test",
     "description": "test",
-    "data_type": "number",
+    "datatype": "number",
     "config": {
         "units": "m",
     },

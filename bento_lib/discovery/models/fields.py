@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, BaseModel, ConfigDict, Discriminator, Field, Tag, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Discriminator, Field, RootModel, Tag, model_validator
 from typing import Annotated, Literal
 from ._internal import NoAdditionalProperties
 
@@ -24,7 +24,6 @@ DataTypeField = Field(
     ...,
     title="Data type",
     description="Data type of the field (string, number, or date).",
-    validation_alias=AliasChoices("datatype", "data_type"),
 )
 
 
@@ -41,7 +40,7 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     title: str = Field(..., title="Title", description="Field title")
     # TODO: make optional and pull from Bento schema if not set:
     description: str = Field(..., title="Description", description="Field description")
-    data_type: Literal["string", "number", "date"] = DataTypeField
+    datatype: Literal["string", "number", "date"] = DataTypeField
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = None
     group_by: str | None = None
@@ -69,7 +68,7 @@ class StringFieldDefinition(BaseFieldDefinition):
     Defines a string field for discovery purposes, including configuration for chart/filter values (`config.enum`).
     """
 
-    data_type: Literal["string"] = DataTypeField
+    datatype: Literal["string"] = DataTypeField
     config: StringFieldConfig = Field(..., title="Config", description="Additional configuration for the string field.")
 
 
@@ -205,7 +204,7 @@ class NumberFieldDefinition(BaseFieldDefinition):
     Defines a number field for discovery purposes, including configuration for value binning to generate histograms.
     """
 
-    data_type: Literal["number"] = DataTypeField
+    datatype: Literal["number"] = DataTypeField
 
     # See https://docs.pydantic.dev/latest/concepts/unions/#discriminated-unions-with-callable-discriminator
     # We implement a Pydantic discriminated union, with a callable discriminator to determine which type the input data
@@ -230,8 +229,13 @@ class DateFieldDefinition(BaseFieldDefinition):
     Defines a number field for discovery purposes, including date binning configuration.
     """
 
-    data_type: Literal["date"] = DataTypeField
+    datatype: Literal["date"] = DataTypeField
     config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
 
-FieldDefinition = DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition
+class FieldDefinition(RootModel):
+    """
+    Field definition model - discriminated union of data/number/string fields, based on datatype property.
+    """
+
+    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition = Field(..., discriminator="datatype")
