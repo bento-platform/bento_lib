@@ -41,6 +41,7 @@ rich = ">=14.0.0,<15"  # for logger exception formatting in development
 structlog = ">=25.2.0,<26"
 uvicorn = { version = "*", optional = true }
 werkzeug = ">=3.0.6,<4"
+geojson-pydantic = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 aioresponses = "^0.7.6"
