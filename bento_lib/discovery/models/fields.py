@@ -240,3 +240,6 @@ class FieldDefinition(RootModel):
 
     def __getattr__(self, item):
         return getattr(self.root, item)
+
+    def __setattr__(self, key, value):
+        return setattr(self.root, key, value)
