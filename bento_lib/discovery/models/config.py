@@ -51,6 +51,9 @@ RULES_FULL_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
 
 
 class DiscoveryConfigMetadata(BaseModel):
+    description: str = Field(
+        default="", title="Description", description="Optional discovery configuration description."
+    )
     authors: list[str] | None = Field(
         default=None,
         title="Authors",
