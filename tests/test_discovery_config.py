@@ -125,6 +125,19 @@ def test_load_discovery_config_dict():
     # synonymous attribute accesses
     assert cfg.fields["age"].mapping == "individual/age_numeric"
     assert cfg.fields["age"].root.mapping == "individual/age_numeric"
+    assert cfg.overview[0].charts[0].chart_type == "histogram"
+
+    # synonymous attribute assignment
+
+    cfg.fields["age"].mapping = "individual/age"
+    assert cfg.fields["age"].root.mapping == "individual/age"
+    cfg.fields["age"].root.mapping = "individual/age_numeric"
+    assert cfg.fields["age"].mapping == "individual/age_numeric"
+
+    cfg.overview[0].charts[0].chart_type = "bar"
+    assert cfg.overview[0].charts[0].root.chart_type == "bar"
+    cfg.overview[0].charts[0].root.chart_type = "histogram"
+    assert cfg.overview[0].charts[0].chart_type == "histogram"
 
 
 def test_load_discovery_config_dict_blank():
