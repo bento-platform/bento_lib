@@ -122,6 +122,23 @@ def test_load_discovery_config_dict():
     assert cfg.rules.count_threshold == 5
     assert len(warnings) == 0
 
+    # synonymous attribute accesses
+    assert cfg.fields["age"].mapping == "individual/age_numeric"
+    assert cfg.fields["age"].root.mapping == "individual/age_numeric"
+    assert cfg.overview[0].charts[0].chart_type == "histogram"
+
+    # synonymous attribute assignment
+
+    cfg.fields["age"].mapping = "individual/age"
+    assert cfg.fields["age"].root.mapping == "individual/age"
+    cfg.fields["age"].root.mapping = "individual/age_numeric"
+    assert cfg.fields["age"].mapping == "individual/age_numeric"
+
+    cfg.overview[0].charts[0].chart_type = "bar"
+    assert cfg.overview[0].charts[0].root.chart_type == "bar"
+    cfg.overview[0].charts[0].root.chart_type = "histogram"
+    assert cfg.overview[0].charts[0].chart_type == "histogram"
+
 
 def test_load_discovery_config_dict_blank():
     cfg, warnings = load_discovery_config_from_dict({})
@@ -195,7 +212,7 @@ TEST_NUMBER_FIELD_BASE = {
     "mapping": "whatever/test",
     "title": "Test",
     "description": "test",
-    "data_type": "number",
+    "datatype": "number",
     "config": {
         "units": "m",
     },

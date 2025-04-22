@@ -1,5 +1,6 @@
-from pydantic import AliasChoices, BaseModel, Discriminator, Field, Tag, model_validator
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
 from typing import Annotated, Literal
+from ._internal import NoAdditionalProperties
 
 __all__ = [
     "BaseFieldDefinition",
@@ -23,11 +24,10 @@ DataTypeField = Field(
     ...,
     title="Data type",
     description="Data type of the field (string, number, or date).",
-    validation_alias=AliasChoices("datatype", "data_type"),
 )
 
 
-class BaseFieldDefinition(BaseModel):
+class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     mapping: str = Field(
         ...,
         title="Mapping",
@@ -40,7 +40,7 @@ class BaseFieldDefinition(BaseModel):
     title: str = Field(..., title="Title", description="Field title")
     # TODO: make optional and pull from Bento schema if not set:
     description: str = Field(..., title="Description", description="Field description")
-    data_type: Literal["string", "number", "date"] = DataTypeField
+    datatype: Literal["string", "number", "date"] = DataTypeField
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = None
     group_by: str | None = None
@@ -49,7 +49,7 @@ class BaseFieldDefinition(BaseModel):
     # ------------------------------------------------------------------------------------------------------------------
 
 
-class StringFieldConfig(BaseModel):
+class StringFieldConfig(BaseModel, NoAdditionalProperties):
     enum: list[str] | None = Field(
         ...,
         title="Enum",
@@ -61,16 +61,16 @@ class StringFieldConfig(BaseModel):
     )
 
 
-class StringFieldDefinition(BaseFieldDefinition):
+class StringFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     """
     Defines a string field for discovery purposes, including configuration for chart/filter values (`config.enum`).
     """
 
-    data_type: Literal["string"] = DataTypeField
+    datatype: Literal["string"] = DataTypeField
     config: StringFieldConfig = Field(..., title="Config", description="Additional configuration for the string field.")
 
 
-class BaseNumberFieldConfig(BaseModel):
+class BaseNumberFieldConfig(BaseModel, NoAdditionalProperties):
     units: str | None = Field(
         default=None,
         title="Units",
@@ -81,7 +81,7 @@ class BaseNumberFieldConfig(BaseModel):
     )
 
 
-class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
+class ManualBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     """
     Number field configuration with custom chart/search histogram bins.
     It expects a list of bin boundaries `bins`, and optionally `minimum` and `maximum`.
@@ -133,7 +133,7 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig):
         return self
 
 
-class AutoBinsNumberFieldConfig(BaseNumberFieldConfig):
+class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     """
     Configuration for a number field with automatically-generated bins.
 
@@ -197,12 +197,12 @@ def _number_field_config_discriminator(v: dict | BaseModel) -> str:
     return "manual" if (isinstance(v, dict) and "bins" in v) or hasattr(v, "bins") else "auto"
 
 
-class NumberFieldDefinition(BaseFieldDefinition):
+class NumberFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     """
     Defines a number field for discovery purposes, including configuration for value binning to generate histograms.
     """
 
-    data_type: Literal["number"] = DataTypeField
+    datatype: Literal["number"] = DataTypeField
 
     # See https://docs.pydantic.dev/latest/concepts/unions/#discriminated-unions-with-callable-discriminator
     # We implement a Pydantic discriminated union, with a callable discriminator to determine which type the input data
@@ -213,7 +213,7 @@ class NumberFieldDefinition(BaseFieldDefinition):
     ] = Field(..., title="Config", description="Additional configuration for the number field.")
 
 
-class DateFieldConfig(BaseModel):
+class DateFieldConfig(BaseModel, NoAdditionalProperties):
     # Currently only binning by month is implemented:
     bin_by: Literal["month"] = Field(
         ...,
@@ -222,13 +222,24 @@ class DateFieldConfig(BaseModel):
     )
 
 
-class DateFieldDefinition(BaseFieldDefinition):
+class DateFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     """
     Defines a number field for discovery purposes, including date binning configuration.
     """
 
-    data_type: Literal["date"] = DataTypeField
+    datatype: Literal["date"] = DataTypeField
     config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
 
-FieldDefinition = DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition
+class FieldDefinition(RootModel):
+    """
+    Field definition model - discriminated union of data/number/string fields, based on datatype property.
+    """
+
+    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition = Field(..., discriminator="datatype")
+
+    def __getattr__(self, item):
+        return getattr(self.root, item)
+
+    def __setattr__(self, key, value):
+        return setattr(self.root, key, value)
