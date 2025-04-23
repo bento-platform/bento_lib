@@ -91,3 +91,6 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
                 seen_search_fields.add(f)
 
         return self
+
+    def get_chart_field_ids(self) -> tuple[str, ...]:
+        return tuple(chart.field for section in self.overview for chart in section.charts)
