@@ -7,6 +7,9 @@ __all__ = [
     "GA4GHServiceOrganizationModel",
     "BentoExtraServiceInfo",
     "GA4GHServiceInfo",
+    "BentoServiceRecord",
+    "BentoDataTypeServiceListing",
+    "BentoDataType",
 ]
 
 
@@ -64,3 +67,27 @@ class GA4GHServiceInfo(_GA4GHServiceInfoBase, total=False):
     environment: Literal["dev", "prod"]
     # Bento-specific service info properties are contained inside a nested, "bento"-keyed dictionary
     bento: BentoExtraServiceInfo
+
+
+class BentoServiceRecord(TypedDict):
+    service_kind: str
+    url_template: str
+    repository: str
+    url: str
+
+
+class _BentoDataTypeServiceListingBase(TypedDict):
+    queryable: bool
+    item_schema: dict
+    metadata_schema: dict
+    id: str
+    count: int | None
+
+
+class BentoDataTypeServiceListing(_BentoDataTypeServiceListingBase, total=False):
+    label: str | None
+
+
+class BentoDataType(TypedDict):
+    service_base_url: str
+    data_type_listing: BentoDataTypeServiceListing

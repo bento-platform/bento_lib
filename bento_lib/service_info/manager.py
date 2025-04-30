@@ -6,8 +6,7 @@ from structlog.stdlib import BoundLogger
 from typing import AsyncIterator
 from urllib.parse import urljoin
 
-from .models import BentoDataType
-from .types import GA4GHServiceInfo
+from .types import GA4GHServiceInfo, BentoDataTypeServiceListing, BentoServiceRecord, BentoDataType
 
 __all__ = [
     "ServiceManager",
@@ -22,7 +21,7 @@ class ServiceManager:
         self._timeout: int = request_timeout
         self._verify_ssl: bool = verify_ssl
 
-        self._bento_service_dict: dict[str, TODO] = {}
+        self._bento_service_dict: dict[str, BentoServiceRecord] = {}
         self._service_list: list[GA4GHServiceInfo] = []
 
     @contextlib.asynccontextmanager
@@ -50,7 +49,7 @@ class ServiceManager:
         self,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
-    ) -> dict[str, TODO]:
+    ) -> dict[str, BentoServiceRecord]:
         if self._bento_service_dict:
             return self._bento_service_dict
 
@@ -119,12 +118,9 @@ class ServiceManager:
                         "recieved error from data-types URL", url=dt_url, status=r.status, body=await r.json()
                     )
                     return ()
-                service_dts = await r.json()
+                service_dts: list[BentoDataTypeServiceListing] = await r.json()
 
-            return tuple(
-                BentoDataType.model_validate({"service_base_url": service_base_url, "data_type_listing": sdt})
-                for sdt in service_dts
-            )
+            return tuple(BentoDataType(service_base_url=service_base_url, data_type_listing=sdt) for sdt in service_dts)
 
         session: aiohttp.ClientSession
         async with self._http_session(existing=existing_session) as session:
@@ -135,4 +131,4 @@ class ServiceManager:
                 *(_get_data_types_for_service(session, ds) for ds in data_services)
             )
 
-        return {dt.data_type_listing.id: dt for dts_item in dts_nested for dt in dts_item}
+        return {dt["data_type_listing"]["id"]: dt for dts_item in dts_nested for dt in dts_item}
