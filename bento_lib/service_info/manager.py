@@ -14,14 +14,14 @@ __all__ = [
 
 
 class ServiceManager:
-    def __init__(self, service_registry_url: str, request_timeout: int, logger: BoundLogger, verify_ssl: bool = True):
+    def __init__(self, logger: BoundLogger, request_timeout: int, service_registry_url: str, verify_ssl: bool = True):
         self._logger: BoundLogger = logger
 
         self._service_registry_url: str = service_registry_url.rstrip("/")
         self._timeout: int = request_timeout
         self._verify_ssl: bool = verify_ssl
 
-        self._bento_service_dict: dict[str, BentoServiceRecord] = {}
+        self._bento_service_dict: dict[str, BentoServiceRecord] = {}  # dict of {compose ID: service record}
         self._service_list: list[GA4GHServiceInfo] = []
 
     @contextlib.asynccontextmanager
@@ -49,7 +49,7 @@ class ServiceManager:
         self,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
-    ) -> dict[str, BentoServiceRecord]:
+    ) -> dict[str, BentoServiceRecord]:  # dict of {compose ID: service record}
         if self._bento_service_dict:
             return self._bento_service_dict
 
