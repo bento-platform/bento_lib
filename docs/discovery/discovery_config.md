@@ -12,13 +12,18 @@ document in the main Bento repository.
 ## Validating a discovery configuration JSON with `bento_lib`
 
 Here is some sample code for loading and validating a discovery configuration JSON file, yielding a Pydantic object 
-containing the configuration:
+containing the configuration and a tuple of warnings, each of which is a tuple of:
+
+* a path (tuple of strings/integers) to the part of the JSON where the error occurred
+* a message string
 
 ```python
 from bento_lib.discovery.helpers import load_discovery_config
 from bento_lib.discovery.models.config import DiscoveryConfig
 
-my_cfg: DiscoveryConfig = load_discovery_config("my_config.json")
+my_cfg: DiscoveryConfig
+my_cfg, warnings = load_discovery_config("my_config.json")
+print(f"my configuration has {len(warnings)} warnings:", warnings)
 ```
 
 The `load_discovery_config` function may raise for any number of reasons (see sections below).
