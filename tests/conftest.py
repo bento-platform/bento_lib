@@ -1,6 +1,13 @@
 import pytest
 import structlog
+from aioresponses import aioresponses
 from structlog.testing import LogCapture
+
+
+@pytest.fixture
+def aioresponse():
+    with aioresponses() as m:
+        yield m
 
 
 @pytest.fixture(name="log_output")
