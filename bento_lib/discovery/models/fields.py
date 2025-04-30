@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
 from typing import Annotated, Literal
+from typing_extensions import Self  # TODO: py3.11+ from typing
 from ._internal import NoAdditionalProperties
 
 __all__ = [
@@ -28,6 +29,7 @@ DataTypeField = Field(
 
 
 class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
+    # TODO: constrained type with regular expressions
     mapping: str = Field(
         ...,
         title="Mapping",
@@ -95,7 +97,7 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties)
         If minimum is set to a value below the lowest bin, this extra bin includes only values in [minimum, lowest bin):
             so given {"minimum": 1, "bins": [2, 4, 6, ...]}, the generated bins are:
                 <2*  [2, 4)   [4, 6)   ...
-                *but only includes values in [0, 2)
+                *but only includes values in [1, 2)
         If minimum is equal to the lowest bin, there will not be this extra bin:
             so given {"minimum": 2, "bins": [2, 4, 6, ...]}, the generated bins are:
                 [2, 4)   [4, 6)   ...
@@ -116,7 +118,7 @@ class ManualBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties)
     maximum: int | None = Field(None, title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
-    def check_bin_config(self) -> "ManualBinsNumberFieldConfig":
+    def check_bin_config(self) -> Self:
         if self.maximum is not None and self.minimum is not None and self.maximum < self.minimum:
             raise ValueError("maximum cannot be less than minimum")
 
@@ -164,7 +166,7 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     maximum: int = Field(..., title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
-    def check_bin_config(self) -> "AutoBinsNumberFieldConfig":
+    def check_bin_config(self) -> Self:
         if self.maximum < self.minimum:
             raise ValueError("maximum cannot be less than minimum")
 
