@@ -29,6 +29,7 @@ DataTypeField = Field(
 
 
 class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
+    # TODO: constrained type with regular expressions
     mapping: str = Field(
         ...,
         title="Mapping",
