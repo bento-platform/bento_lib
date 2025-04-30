@@ -39,6 +39,7 @@ redis = ">=5.2.1,<6"
 requests = ">=2.32.3,<3"
 rich = ">=14.0.0,<15"  # for logger exception formatting in development
 structlog = ">=25.2.0,<26"
+typing-extensions = "^4.13.2"
 uvicorn = { version = "*", optional = true }
 werkzeug = ">=3.0.6,<4"
 geojson-pydantic = "^1.2.0"

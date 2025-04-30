@@ -1,5 +1,6 @@
 import sys
 from pydantic import BaseModel, Field, model_validator
+from typing_extensions import Self  # TODO: py3.11+ from typing
 
 from ..exceptions import DiscoveryValidationError
 from .fields import FieldDefinition
@@ -63,7 +64,7 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
     )
 
     @model_validator(mode="after")
-    def check_field_references(self) -> "DiscoveryConfig":
+    def check_field_references(self) -> Self:
         # validate overview and check for chart duplicates:
         seen_chart_fields: set[str] = set()
         for s_idx, section in enumerate(self.overview):

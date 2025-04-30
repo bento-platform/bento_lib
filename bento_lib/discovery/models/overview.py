@@ -68,7 +68,7 @@ class ChoroplethChart(BaseOverviewChart):
         discriminator="mode",
         title="Color mode",
         description=(
-            "Color mode, i.e., method for coloring the choropleth chart. Right now, only `discrete` is supported."
+            "Color mode, i.e., method for coloring the choropleth chart. Right now, only `continuous` is supported."
         ),
     )
     center: tuple[float, float] = Field(
