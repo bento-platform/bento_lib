@@ -128,6 +128,35 @@ async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service
 
 
 @pytest.mark.asyncio
+async def test_service_manager_ga4gh_services_empty(
+    aioresponse: aioresponses, service_manager: ServiceManager, log_output
+):
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=[])
+
+    res = await service_manager.fetch_service_list()
+    assert res == []
+
+    assert log_output.entries == [
+        {
+            "event": "got empty service list response from service registry",
+            "log_level": "warning",
+            "service_list_body": [],
+            "service_list_status": 200,
+        },
+    ]
+
+
+SERVICE_LIST_LOG_OUTPUT = [
+    {
+        "event": "recieved error response from service registry while fetching service list",
+        "log_level": "error",
+        "service_list_body": None,
+        "service_list_status": 500,
+    },
+]
+
+
+@pytest.mark.asyncio
 async def test_service_manager_ga4gh_services_err(
     aioresponse: aioresponses, service_manager: ServiceManager, log_output
 ):
@@ -136,39 +165,33 @@ async def test_service_manager_ga4gh_services_err(
     res = await service_manager.fetch_service_list()
     assert res == []
 
-    assert log_output.entries == [
-        {
-            "event": "recieved error response from service registry while fetching service " + "list",
-            "log_level": "error",
-            "service_list_body": None,
-            "service_list_status": 500,
+    assert log_output.entries == SERVICE_LIST_LOG_OUTPUT
+
+
+DATA_TYPE_SERVICE_PAYLOAD = [
+    {
+        "id": "ca.c3g.chord:metadata",
+        "name": "Katsu",
+        "type": {"group": "ca.c3g.chord", "artifact": "metadata", "version": "11.0.0"},
+        "environment": "dev",
+        "description": "Clinical and phenotypic metadata service implementation based on Phenopackets schema.",
+        "organization": {"name": "C3G", "url": "https://www.computationalgenomics.ca"},
+        "contactUrl": "mailto:info@c3g.ca",
+        "version": "11.0.0",
+        "bento": {
+            "serviceKind": "metadata",
+            "dataService": True,
+            "gitTag": "v10.0.0",
+            "gitBranch": "refact/discovery-config-model",
+            "gitCommit": "6862f22c462b8366abacdf42e01a5ddaff173143",
         },
-    ]
+        "url": "https://bentov211.local/api/metadata",
+    }
+]
 
 
 @pytest.mark.asyncio
 async def test_service_manager_data_types(aioresponse: aioresponses, service_manager: ServiceManager):
-    service_payload = [
-        {
-            "id": "ca.c3g.chord:metadata",
-            "name": "Katsu",
-            "type": {"group": "ca.c3g.chord", "artifact": "metadata", "version": "11.0.0"},
-            "environment": "dev",
-            "description": "Clinical and phenotypic metadata service implementation based on Phenopackets schema.",
-            "organization": {"name": "C3G", "url": "https://www.computationalgenomics.ca"},
-            "contactUrl": "mailto:info@c3g.ca",
-            "version": "11.0.0",
-            "bento": {
-                "serviceKind": "metadata",
-                "dataService": True,
-                "gitTag": "v10.0.0",
-                "gitBranch": "refact/discovery-config-model",
-                "gitCommit": "6862f22c462b8366abacdf42e01a5ddaff173143",
-            },
-            "url": "https://bentov211.local/api/metadata",
-        }
-    ]
-
     dt_payload = [
         {
             "id": "experiment",
@@ -186,15 +209,47 @@ async def test_service_manager_data_types(aioresponse: aioresponses, service_man
     # repeat=True hack needed for running get() inside asyncio.gather for some reason:
     # https://github.com/pnuckowski/aioresponses/issues/205
     aioresponse.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=service_payload)
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
 
     res = await service_manager.fetch_data_types(existing_session=session)
     assert res == {
         "experiment": {
             "data_type_listing": dt_payload[0],
-            "service_base_url": service_payload[0]["url"],
+            "service_base_url": DATA_TYPE_SERVICE_PAYLOAD[0]["url"],
         }
     }
 
     res2 = await service_manager.fetch_data_types(existing_session=session)
     assert id(res) == id(res2)  # same list - cached
+
+
+@pytest.mark.asyncio
+async def test_service_manager_data_types_service_err(
+    aioresponse: aioresponses, service_manager: ServiceManager, log_output
+):
+    aioresponse.get(f"{SR_URL}/services", status=500)
+    res = await service_manager.fetch_data_types()
+    assert res == {}
+    assert log_output.entries == SERVICE_LIST_LOG_OUTPUT
+
+
+@pytest.mark.asyncio
+async def test_service_manager_data_types_dt_err(
+    aioresponse: aioresponses, service_manager: ServiceManager, log_output
+):
+    # repeat=True hack needed for running get() inside asyncio.gather for some reason:
+    # https://github.com/pnuckowski/aioresponses/issues/205
+    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
+
+    res = await service_manager.fetch_data_types()
+    assert res == {}
+    assert log_output.entries == [
+        {
+            "body": None,
+            "event": "recieved error from data-types URL",
+            "log_level": "error",
+            "status": 500,
+            "url": "https://bentov211.local/api/metadata/data-types",
+        },
+    ]
