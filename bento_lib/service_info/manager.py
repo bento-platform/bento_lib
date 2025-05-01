@@ -14,6 +14,12 @@ __all__ = [
 
 
 class ServiceManager:
+    """
+    A class (intended to be a singleton in most circumstances) for interacting with a Bento Service Registry instance.
+    Instances provide several methods corresponding to various endpoints of the Bento Service Registry, including for
+    accessing Bento service definitions, an aggregation of /service-info endpoints, and service data types.
+    """
+
     def __init__(self, logger: BoundLogger, request_timeout: int, service_registry_url: str, verify_ssl: bool = True):
         self._logger: BoundLogger = logger
 
