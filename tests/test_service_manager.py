@@ -57,10 +57,10 @@ async def test_service_manager_bento_services_empty(
     assert res == {}
     assert log_output.entries == [
         {
+            "log_level": "warning",
+            "event": "got empty Bento service response from service registry",
             "bento_services_body": {},
             "bento_services_status": 200,
-            "event": "got empty Bento service response from service registry",
-            "log_level": "warning",
         }
     ]
 
@@ -73,7 +73,14 @@ async def test_service_manager_bento_services_err(
 
     res = await service_manager.fetch_bento_services()
     assert res == {}
-    # TODO: assert log error capture
+    assert log_output.entries == [
+        {
+            "event": "recieved error response from service registry while fetching Bento services",
+            "log_level": "error",
+            "bento_services_body": None,
+            "bento_services_status": 500,
+        },
+    ]
     # TODO: this should be something else, otherwise we cannot distinguish with true empty response.
 
 
@@ -138,8 +145,8 @@ async def test_service_manager_ga4gh_services_empty(
 
     assert log_output.entries == [
         {
-            "event": "got empty service list response from service registry",
             "log_level": "warning",
+            "event": "got empty service list response from service registry",
             "service_list_body": [],
             "service_list_status": 200,
         },
@@ -148,8 +155,8 @@ async def test_service_manager_ga4gh_services_empty(
 
 SERVICE_LIST_LOG_OUTPUT = [
     {
-        "event": "recieved error response from service registry while fetching service list",
         "log_level": "error",
+        "event": "recieved error response from service registry while fetching service list",
         "service_list_body": None,
         "service_list_status": 500,
     },
@@ -246,10 +253,10 @@ async def test_service_manager_data_types_dt_err(
     assert res == {}
     assert log_output.entries == [
         {
-            "body": None,
-            "event": "recieved error from data-types URL",
             "log_level": "error",
-            "status": 500,
+            "event": "recieved error from data-types URL",
             "url": "https://bentov211.local/api/metadata/data-types",
+            "status": 500,
+            "body": None,
         },
     ]
