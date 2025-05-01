@@ -75,18 +75,18 @@ class ServiceManager:
                 body = await r.json()
                 logger = self._logger.bind(bento_services_status=r.status, bento_services_body=body)
 
-            if not r.ok:
-                await logger.aerror("recieved error response from service registry while fetching Bento services")
-                self._bento_service_dict = {}
-                return {}
+                if not r.ok:
+                    await logger.aerror("recieved error response from service registry while fetching Bento services")
+                    self._bento_service_dict = {}
+                    return {}
 
-            bento_services: dict = body
-            if bento_services:
-                self._bento_service_dict = bento_services
-                return bento_services
-            else:
-                await logger.awarning("got empty Bento service response from service registry")
-                return {}
+        bento_services: dict = body
+        if bento_services:
+            self._bento_service_dict = bento_services
+            return bento_services
+
+        await logger.awarning("got empty Bento service response from service registry")
+        return {}
 
     async def fetch_service_list(
         self,
@@ -110,18 +110,18 @@ class ServiceManager:
                 body = await r.json()
                 logger = self._logger.bind(service_list_status=r.status, service_list_body=body)
 
-            if not r.ok:
-                await logger.aerror("recieved error response from service registry while fetching service list")
-                self._service_list = []
-                return []
+                if not r.ok:
+                    await logger.aerror("recieved error response from service registry while fetching service list")
+                    self._service_list = []
+                    return []
 
-            service_list: list[GA4GHServiceInfo] = body
-            if service_list:
-                self._service_list = service_list
-                return service_list
-            else:
-                await logger.awarning("got empty service list response from service registry")
-                return []
+        service_list: list[GA4GHServiceInfo] = body
+        if service_list:
+            self._service_list = service_list
+            return service_list
+
+        await logger.awarning("got empty service list response from service registry")
+        return []
 
     async def fetch_data_types(
         self,
