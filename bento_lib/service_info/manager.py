@@ -57,6 +57,14 @@ class ServiceManager:
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, BentoServiceRecord]:  # dict of {compose ID: service record}
+        """
+        Fetches Bento service definitions from the Bento Service Registry (the /bento-services endpoint).
+        :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
+        :param headers: Any headers to forward to the Bento Service Registry instance.
+        :return: A dictionary with keys being service Compose IDs and values being BentoServiceRecord-typed
+                 dictionaries.
+        """
+
         if self._bento_service_dict:
             return self._bento_service_dict
 
@@ -85,6 +93,13 @@ class ServiceManager:
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
     ) -> list[GA4GHServiceInfo]:
+        """
+        Fetches a list of service-info responses from Bento services (the /services endpoint of the registry).
+        :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
+        :param headers: Any headers to forward to the Bento Service Registry instance.
+        :return: A list of GA4GHServiceInfo-typed dictionaries.
+        """
+
         if self._service_list:
             return self._service_list
 
@@ -113,6 +128,13 @@ class ServiceManager:
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, BentoDataType]:
+        """
+        Fetches an aggregation of Bento data types, collected from Bento data services' /data-types endpoints.
+        :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
+        :param headers: Any headers to forward to the Bento Service Registry instance.
+        :return: A dictionary with keys being data type IDs and values being BentoDataType-typed dictionaries.
+        """
+
         if self._data_types:
             return self._data_types
 

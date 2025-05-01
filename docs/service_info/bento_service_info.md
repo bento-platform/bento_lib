@@ -18,7 +18,7 @@ A `bento` property has been added, which contains Bento service-specific informa
         "serviceKind": "metadata",
         "dataService": true,
         "gitRepository": "https://github.com/bento-platform/katsu",
-        "gitTag: "v10.0.0",
+        "gitTag": "v10.0.0",
         "gitBranch": "refact/discovery-config-model",
         "gitCommit": "6862f22c462b8366abacdf42e01a5ddaff173143",
     }
