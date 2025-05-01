@@ -23,6 +23,7 @@ class ServiceManager:
 
         self._bento_service_dict: dict[str, BentoServiceRecord] = {}  # dict of {compose ID: service record}
         self._service_list: list[GA4GHServiceInfo] = []
+        self._data_types: dict[str, BentoDataType] = {}  # dict of {data type ID: entry}
 
     @contextlib.asynccontextmanager
     async def _http_session(
@@ -106,6 +107,9 @@ class ServiceManager:
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, BentoDataType]:
+        if self._data_types:
+            return self._data_types
+
         async def _get_data_types_for_service(
             s: aiohttp.ClientSession, ds: GA4GHServiceInfo
         ) -> tuple[BentoDataType, ...]:
@@ -131,4 +135,5 @@ class ServiceManager:
                 *(_get_data_types_for_service(session, ds) for ds in data_services)
             )
 
-        return {dt["data_type_listing"]["id"]: dt for dts_item in dts_nested for dt in dts_item}
+        self._data_types = {dt["data_type_listing"]["id"]: dt for dts_item in dts_nested for dt in dts_item}
+        return self._data_types
