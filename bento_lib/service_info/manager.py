@@ -28,7 +28,9 @@ class ServiceManager:
         self._verify_ssl: bool = verify_ssl
 
         self._bento_service_dict: dict[str, BentoServiceRecord] = {}  # dict of {compose ID: service record}
+        self._bento_services_by_kind: dict[str, BentoServiceRecord] = {}  # dict of {service kind: service record}
         self._service_list: list[GA4GHServiceInfo] = []
+        self._services_by_kind: dict[str, GA4GHServiceInfo] = {}
         self._data_types: dict[str, BentoDataType] = {}  # dict of {data type ID: entry}
 
     @contextlib.asynccontextmanager
@@ -59,6 +61,7 @@ class ServiceManager:
     ) -> dict[str, BentoServiceRecord]:  # dict of {compose ID: service record}
         """
         Fetches Bento service definitions from the Bento Service Registry (the /bento-services endpoint).
+        Side effects: populates self._bento_service_dict and self._bento_services_by_kind caches.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
         :return: A dictionary with keys being service Compose IDs and values being BentoServiceRecord-typed
@@ -83,10 +86,45 @@ class ServiceManager:
         bento_services: dict = body
         if bento_services:
             self._bento_service_dict = bento_services
+            self._bento_services_by_kind = {s["service_kind"]: s for s in bento_services.values()}
             return bento_services
 
         await logger.awarning("got empty Bento service response from service registry")
         return {}
+
+    async def get_bento_service_record_by_kind(
+        self,
+        service_kind: str,
+        existing_session: aiohttp.ClientSession | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> BentoServiceRecord | None:
+        """
+        Given a Bento service kind, return the Bento service record if one exists.
+        Side effects: populates self._bento_service_dict and self._bento_services_by_kind caches.
+        :param service_kind: Bento service kind.
+        :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
+        :param headers: Any headers to forward to the Bento Service Registry instance.
+        :return: A BentoServiceRecord-typed dictionary for the specified service kind, if one exists.
+        """
+        await self.fetch_bento_services(existing_session, headers)
+        return self._bento_services_by_kind.get(service_kind)
+
+    async def get_bento_service_url_by_kind(
+        self,
+        service_kind: str,
+        existing_session: aiohttp.ClientSession | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> str | None:
+        """
+        Given a Bento service kind, return the base service URL, extracted from a Bento service record if one exists.
+        Side effects: populates self._bento_service_dict and self._bento_services_by_kind caches.
+        :param service_kind: Bento service kind.
+        :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
+        :param headers: Any headers to forward to the Bento Service Registry instance.
+        :return: Bento service URL, or None if one could not be retrieved.
+        """
+        sr = await self.get_bento_service_record_by_kind(service_kind, existing_session, headers)
+        return sr["url"] if sr is not None else None
 
     async def fetch_service_list(
         self,
@@ -95,6 +133,7 @@ class ServiceManager:
     ) -> list[GA4GHServiceInfo]:
         """
         Fetches a list of service-info responses from Bento services (the /services endpoint of the registry).
+        Side effects: populates self._service_list and self._services_by_kind caches.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
         :return: A list of GA4GHServiceInfo-typed dictionaries.
@@ -118,10 +157,30 @@ class ServiceManager:
         service_list: list[GA4GHServiceInfo] = body
         if service_list:
             self._service_list = service_list
+            self._services_by_kind = {
+                s["bento"]["serviceKind"]: s for s in service_list if s.get("bento", {}).get("serviceKind")
+            }
             return service_list
 
         await logger.awarning("got empty service list response from service registry")
         return []
+
+    async def get_service_info_by_kind(
+        self,
+        service_kind: str,
+        existing_session: aiohttp.ClientSession | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> GA4GHServiceInfo | None:
+        """
+        Retrieves a service-info response from a Bento service, given its kind, if one could be found.
+        Side effects: populates self._service_list and self._services_by_kind caches.
+        :param service_kind: Bento service kind.
+        :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
+        :param headers: Any headers to forward to the Bento Service Registry instance.
+        :return: A GA4GHServiceInfo-typed dictionary, if one could be retrieved for the service kind; otherwise None.
+        """
+        await self.fetch_service_list(existing_session, headers)  # side effect: populate self._services_by_kind
+        return self._services_by_kind.get(service_kind)
 
     async def fetch_data_types(
         self,
@@ -130,6 +189,7 @@ class ServiceManager:
     ) -> dict[str, BentoDataType]:
         """
         Fetches an aggregation of Bento data types, collected from Bento data services' /data-types endpoints.
+        Side effects:  populates self._service_list, self._services_by_kind, and self._data_types caches.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
         :return: A dictionary with keys being data type IDs and values being BentoDataType-typed dictionaries.

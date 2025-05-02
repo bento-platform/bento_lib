@@ -20,28 +20,29 @@ def test_service_manager_basics(service_manager: ServiceManager):
     assert not service_manager._verify_ssl
 
 
+BENTO_SERVICES_PAYLOAD = {
+    "service-registry": {
+        "service_kind": "service-registry",
+        "url_template": "{BENTO_PUBLIC_URL}/api/{service_kind}",
+        "repository": "git@github.com:bento-platform/bento_service_registry",
+        "url": "https://bentov2.local/api/service-registry",
+    },
+    "drop-box": {
+        "service_kind": "drop-box",
+        "url_template": "{BENTO_PUBLIC_URL}/api/{service_kind}",
+        "repository": "git@github.com:bento-platform/bento_drop_box_service",
+        "url": "https://bentov2.local/api/drop-box",
+    },
+}
+
+
 @pytest.mark.asyncio
 async def test_service_manager_bento_services(aioresponse: aioresponses, service_manager: ServiceManager):
-    payload = {
-        "service-registry": {
-            "service_kind": "service-registry",
-            "url_template": "{BENTO_PUBLIC_URL}/api/{service_kind}",
-            "repository": "git@github.com:bento-platform/bento_service_registry",
-            "url": "https://bentov2.local/api/service-registry",
-        },
-        "drop-box": {
-            "service_kind": "drop-box",
-            "url_template": "{BENTO_PUBLIC_URL}/api/{service_kind}",
-            "repository": "git@github.com:bento-platform/bento_drop_box_service",
-            "url": "https://bentov2.local/api/drop-box",
-        },
-    }
-
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=payload)
+    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     res = await service_manager.fetch_bento_services()
     assert len(res) == 2
-    assert res == payload
+    assert res == BENTO_SERVICES_PAYLOAD
 
     res2 = await service_manager.fetch_bento_services()
     assert id(res) == id(res2)  # same dict - cached
@@ -85,60 +86,91 @@ async def test_service_manager_bento_services_err(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service_manager: ServiceManager):
-    payload = [
-        {
-            "id": "ca.c3g.bento:edge",
-            "name": "Bento Service Registry",
-            "type": {"group": "ca.c3g.bento", "artifact": "service-registry", "version": "1.0.0"},
-            "organization": {"name": "C3G", "url": "https://www.computationalgenomics.ca"},
-            "contactUrl": "mailto:info@c3g.ca",
-            "version": "1.5.0",
-            "bento": {
-                "serviceKind": "service-registry",
-                "gitTag": "v1.4.4",
-                "gitBranch": "master",
-                "gitCommit": "049740e2ebecc27d73070e702a56edf727b67c87",
-            },
-            "environment": "dev",
-            "url": "https://bentov2.local/api/service-registry",
-        },
-        {
-            "id": "ca.c3g.bento:drop-box",
-            "name": "Bento Drop Box Service",
-            "type": {"group": "ca.c3g.bento", "artifact": "drop-box", "version": "1.1.12"},
-            "description": "Drop box service for a Bento platform node.",
-            "organization": {"name": "C3G", "url": "https://www.computationalgenomics.ca"},
-            "contactUrl": "mailto:info@c3g.ca",
-            "version": "1.1.12",
-            "bento": {
-                "serviceKind": "drop-box",
-                "gitRepository": "https://github.com/bento-platform/bento_drop_box_service",
-            },
-            "environment": "dev",
-            "url": "https://bentov2.local/api/drop-box",
-        },
-    ]
+async def test_service_manager_bento_services_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
+    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
-    aioresponse.get(
-        f"{SR_URL}/services",
-        status=200,
-        payload=payload,
-    )
+    assert (await service_manager.get_bento_service_record_by_kind("service-registry")) == BENTO_SERVICES_PAYLOAD[
+        "service-registry"
+    ]
+    assert (await service_manager.get_bento_service_record_by_kind("drop-box")) == BENTO_SERVICES_PAYLOAD["drop-box"]
+    assert (await service_manager.get_bento_service_record_by_kind("does-not-exist")) is None
+
+
+@pytest.mark.asyncio
+async def test_service_manager_bento_service_urls_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
+    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+
+    assert (await service_manager.get_bento_service_url_by_kind("service-registry")) == BENTO_SERVICES_PAYLOAD[
+        "service-registry"
+    ]["url"]
+    assert (await service_manager.get_bento_service_url_by_kind("drop-box")) == BENTO_SERVICES_PAYLOAD["drop-box"][
+        "url"
+    ]
+    assert (await service_manager.get_bento_service_url_by_kind("does-not-exist")) is None
+
+
+SERVICES_PAYLOAD = [
+    {
+        "id": "ca.c3g.bento:edge",
+        "name": "Bento Service Registry",
+        "type": {"group": "ca.c3g.bento", "artifact": "service-registry", "version": "1.0.0"},
+        "organization": {"name": "C3G", "url": "https://www.computationalgenomics.ca"},
+        "contactUrl": "mailto:info@c3g.ca",
+        "version": "1.5.0",
+        "bento": {
+            "serviceKind": "service-registry",
+            "gitTag": "v1.4.4",
+            "gitBranch": "master",
+            "gitCommit": "049740e2ebecc27d73070e702a56edf727b67c87",
+        },
+        "environment": "dev",
+        "url": "https://bentov2.local/api/service-registry",
+    },
+    {
+        "id": "ca.c3g.bento:drop-box",
+        "name": "Bento Drop Box Service",
+        "type": {"group": "ca.c3g.bento", "artifact": "drop-box", "version": "1.1.12"},
+        "description": "Drop box service for a Bento platform node.",
+        "organization": {"name": "C3G", "url": "https://www.computationalgenomics.ca"},
+        "contactUrl": "mailto:info@c3g.ca",
+        "version": "1.1.12",
+        "bento": {
+            "serviceKind": "drop-box",
+            "gitRepository": "https://github.com/bento-platform/bento_drop_box_service",
+        },
+        "environment": "dev",
+        "url": "https://bentov2.local/api/drop-box",
+    },
+]
+
+
+@pytest.mark.asyncio
+async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service_manager: ServiceManager):
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
 
     res = await service_manager.fetch_service_list()
     assert len(res) == 2
-    assert res == payload
+    assert res == SERVICES_PAYLOAD
 
     res2 = await service_manager.fetch_service_list()
     assert id(res) == id(res2)  # same list - cached
 
 
 @pytest.mark.asyncio
+async def test_service_manager_ga4gh_services_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
+
+    # check we can get our services by kind, but not a service which doesn't exist
+    assert (await service_manager.get_service_info_by_kind("service-registry")) == SERVICES_PAYLOAD[0]
+    assert (await service_manager.get_service_info_by_kind("drop-box")) == SERVICES_PAYLOAD[1]
+    assert (await service_manager.get_service_info_by_kind("does-not-exist")) is None
+
+
+@pytest.mark.asyncio
 async def test_service_manager_ga4gh_services_empty(
     aioresponse: aioresponses, service_manager: ServiceManager, log_output
 ):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=[])
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=[], repeat=True)
 
     res = await service_manager.fetch_service_list()
     assert res == []
@@ -151,6 +183,8 @@ async def test_service_manager_ga4gh_services_empty(
             "service_list_status": 200,
         },
     ]
+
+    assert (await service_manager.get_service_info_by_kind("drop-box")) is None
 
 
 SERVICE_LIST_LOG_OUTPUT = [
