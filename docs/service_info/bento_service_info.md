@@ -50,4 +50,5 @@ The following properties are allowed in the `bento` object inside Bento `/servic
 
 If, in another service, you need the URL or other information about a service, the best way is to instantiate an 
 instance of the [`bento_lib.service_info.ServiceManager` class](../../bento_lib/service_info/manager.py). The docstrings
-of the class and its methods describe some possible interaction scenarios.
+of the class and its methods describe some possible interaction scenarios. If there are errors contacting the service 
+registry, a `ServiceManagerError` will be raised.

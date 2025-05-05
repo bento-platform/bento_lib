@@ -2,7 +2,7 @@ import aiohttp
 import pytest
 from aioresponses import aioresponses
 from structlog.stdlib import get_logger
-from bento_lib.service_info.manager import ServiceManager
+from bento_lib.service_info.manager import ServiceManagerError, ServiceManager
 
 logger = get_logger("bento_lib.test")
 
@@ -72,8 +72,11 @@ async def test_service_manager_bento_services_err(
 ):
     aioresponse.get(f"{SR_URL}/bento-services", status=500)
 
-    res = await service_manager.fetch_bento_services()
-    assert res == {}
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager.fetch_bento_services()
+
+    assert str(e.value) == "recieved error response from service registry while fetching Bento services"
+
     assert log_output.entries == [
         {
             "event": "recieved error response from service registry while fetching Bento services",
@@ -203,8 +206,10 @@ async def test_service_manager_ga4gh_services_err(
 ):
     aioresponse.get(f"{SR_URL}/services", status=500)
 
-    res = await service_manager.fetch_service_list()
-    assert res == []
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager.fetch_service_list()
+
+    assert str(e.value) == "recieved error response from service registry while fetching service list"
 
     assert log_output.entries == SERVICE_LIST_LOG_OUTPUT
 
@@ -269,8 +274,12 @@ async def test_service_manager_data_types_service_err(
     aioresponse: aioresponses, service_manager: ServiceManager, log_output
 ):
     aioresponse.get(f"{SR_URL}/services", status=500)
-    res = await service_manager.fetch_data_types()
-    assert res == {}
+
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager.fetch_data_types()
+
+    assert str(e.value) == "recieved error response from service registry while fetching service list"
+
     assert log_output.entries == SERVICE_LIST_LOG_OUTPUT
 
 
@@ -283,8 +292,11 @@ async def test_service_manager_data_types_dt_err(
     aioresponse.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
     aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
 
-    res = await service_manager.fetch_data_types()
-    assert res == {}
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager.fetch_data_types()
+
+    assert str(e.value) == "recieved error from data-types URL"
+
     assert log_output.entries == [
         {
             "log_level": "error",

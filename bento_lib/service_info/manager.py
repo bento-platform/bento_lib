@@ -9,8 +9,13 @@ from urllib.parse import urljoin
 from .types import GA4GHServiceInfo, BentoDataTypeServiceListing, BentoServiceRecord, BentoDataType
 
 __all__ = [
+    "ServiceManagerError",
     "ServiceManager",
 ]
+
+
+class ServiceManagerError(Exception):
+    pass
 
 
 class ServiceManager:
@@ -79,9 +84,10 @@ class ServiceManager:
                 logger = self._logger.bind(bento_services_status=r.status, bento_services_body=body)
 
                 if not r.ok:
-                    await logger.aerror("recieved error response from service registry while fetching Bento services")
+                    err = "recieved error response from service registry while fetching Bento services"
+                    await logger.aerror(err)
                     self._bento_service_dict = {}
-                    return {}
+                    raise ServiceManagerError(err)
 
         bento_services: dict = body
         if bento_services:
@@ -150,9 +156,10 @@ class ServiceManager:
                 logger = self._logger.bind(service_list_status=r.status, service_list_body=body)
 
                 if not r.ok:
-                    await logger.aerror("recieved error response from service registry while fetching service list")
+                    err = "recieved error response from service registry while fetching service list"
+                    await logger.aerror(err)
                     self._service_list = []
-                    return []
+                    raise ServiceManagerError(err)
 
         service_list: list[GA4GHServiceInfo] = body
         if service_list:
@@ -206,10 +213,9 @@ class ServiceManager:
 
             async with s.get(dt_url, headers=headers) as r:
                 if not r.ok:
-                    await self._logger.aerror(
-                        "recieved error from data-types URL", url=dt_url, status=r.status, body=await r.json()
-                    )
-                    return ()
+                    err = "recieved error from data-types URL"
+                    await self._logger.aerror(err, url=dt_url, status=r.status, body=await r.json())
+                    raise ServiceManagerError(err)
                 service_dts: list[BentoDataTypeServiceListing] = await r.json()
 
             return tuple(BentoDataType(service_base_url=service_base_url, data_type_listing=sdt) for sdt in service_dts)
