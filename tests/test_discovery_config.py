@@ -154,6 +154,7 @@ def test_load_discovery_config_dict_blank():
 def test_load_discovery_config():
     cfg, warnings = load_discovery_config(DISCOVERY_CONFIG_PATH)
     assert cfg.overview[0].section_title == "General"
+    assert cfg.metadata.description == "A valid test discovery configuration"
     assert len(warnings) == 0
 
 

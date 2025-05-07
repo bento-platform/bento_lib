@@ -1,5 +1,7 @@
 import sys
+from datetime import datetime
 from pydantic import BaseModel, Field, model_validator
+from typing import Literal
 from typing_extensions import Self  # TODO: py3.11+ from typing
 
 from ..exceptions import DiscoveryValidationError
@@ -12,6 +14,7 @@ __all__ = [
     "DiscoveryConfigRules",
     "RULES_NO_PERMISSIONS",
     "RULES_FULL_PERMISSIONS",
+    "DiscoveryConfigMetadata",
     "DiscoveryConfig",
 ]
 
@@ -48,12 +51,40 @@ RULES_FULL_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
 )
 
 
+class DiscoveryConfigMetadata(BaseModel):
+    description: str = Field(
+        default="", title="Description", description="Optional discovery configuration description."
+    )
+    authors: list[str] | None = Field(
+        default=None,
+        title="Authors",
+        description="Optional list of authors who wrote this discovery configuration file.",
+    )
+    timestamp: datetime | None = Field(
+        default=None, title="Timestamp", description="Timestamp of when this file was last changed/generated."
+    )
+
+
 # Disallow extra properties at the root level, to prevent mistaken uploads of bad discovery configurations.
 # Given that every field has a default, if we didn't do this a completely different JSON just results in an "empty"
 # configuration rather than alerting the user that they probably made a mistake.
 
 
 class DiscoveryConfig(BaseModel, NoAdditionalProperties):
+    """
+    Configuration for data discovery and visualization within a Bento instance, project, or dataset. Configurable
+    aspects include chart display, search fields, and rules for censored count data access.
+    """
+
+    # The discovery config version specifies the MAJOR version of the discovery config schema, futureproofing the
+    # parsing of discovery config files somewhat.
+    version: Literal["1"] = Field(
+        default="1", title="Specification version", description="Discovery configuration specification major version"
+    )
+    # The metadata section (new versus the original JSON schema for "V1" discovery configurations) allows some basic
+    # information about who prepared the discovery configuration and when it was generated.
+    metadata: DiscoveryConfigMetadata = DiscoveryConfigMetadata()
+
     overview: list[OverviewSection] = []
     search: list[SearchSection] = []
     fields: dict[str, FieldDefinition] = {}

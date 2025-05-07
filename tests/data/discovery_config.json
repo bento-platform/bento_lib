@@ -1,4 +1,10 @@
 {
+    "version": "1",
+    "metadata": {
+        "description": "A valid test discovery configuration",
+        "authors": ["David Lougheed <david.lougheed@mail.mcgill.ca>"],
+        "timestamp": "2025-04-17T10:56:58Z"
+    },
     "overview": [
         {
             "section_title": "General",
