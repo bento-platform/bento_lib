@@ -63,17 +63,19 @@ class ServiceManager:
         self,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
+        skip_cache: bool = False,
     ) -> dict[str, BentoServiceRecord]:  # dict of {compose ID: service record}
         """
         Fetches Bento service definitions from the Bento Service Registry (the /bento-services endpoint).
         Side effects: populates self._bento_service_dict and self._bento_services_by_kind caches.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
+        :param skip_cache: Do not use cached version, even if present. This will also re-populate the cache.
         :return: A dictionary with keys being service Compose IDs and values being BentoServiceRecord-typed
                  dictionaries.
         """
 
-        if self._bento_service_dict:
+        if self._bento_service_dict and not skip_cache:
             return self._bento_service_dict
 
         session: aiohttp.ClientSession
@@ -87,6 +89,7 @@ class ServiceManager:
                     err = "recieved error response from service registry while fetching Bento services"
                     await logger.aerror(err)
                     self._bento_service_dict = {}
+                    self._bento_services_by_kind = {}
                     raise ServiceManagerError(err)
 
         bento_services: dict = body
@@ -103,6 +106,7 @@ class ServiceManager:
         service_kind: str,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
+        skip_cache: bool = False,
     ) -> BentoServiceRecord | None:
         """
         Given a Bento service kind, return the Bento service record if one exists.
@@ -110,9 +114,10 @@ class ServiceManager:
         :param service_kind: Bento service kind.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
+        :param skip_cache: Do not use cached version, even if present. This will also re-populate the cache.
         :return: A BentoServiceRecord-typed dictionary for the specified service kind, if one exists.
         """
-        await self.fetch_bento_services(existing_session, headers)
+        await self.fetch_bento_services(existing_session, headers, skip_cache)
         return self._bento_services_by_kind.get(service_kind)
 
     async def get_bento_service_url_by_kind(
@@ -120,6 +125,7 @@ class ServiceManager:
         service_kind: str,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
+        skip_cache: bool = False,
     ) -> str | None:
         """
         Given a Bento service kind, return the base service URL, extracted from a Bento service record if one exists.
@@ -127,25 +133,28 @@ class ServiceManager:
         :param service_kind: Bento service kind.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
+        :param skip_cache: Do not use cached version, even if present. This will also re-populate the cache.
         :return: Bento service URL, or None if one could not be retrieved.
         """
-        sr = await self.get_bento_service_record_by_kind(service_kind, existing_session, headers)
+        sr = await self.get_bento_service_record_by_kind(service_kind, existing_session, headers, skip_cache)
         return sr["url"] if sr is not None else None
 
     async def fetch_service_list(
         self,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
+        skip_cache: bool = False,
     ) -> list[GA4GHServiceInfo]:
         """
         Fetches a list of service-info responses from Bento services (the /services endpoint of the registry).
         Side effects: populates self._service_list and self._services_by_kind caches.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
+        :param skip_cache: Do not use cached version, even if present. This will also re-populate the cache.
         :return: A list of GA4GHServiceInfo-typed dictionaries.
         """
 
-        if self._service_list:
+        if self._service_list and not skip_cache:
             return self._service_list
 
         session: aiohttp.ClientSession
@@ -159,6 +168,7 @@ class ServiceManager:
                     err = "recieved error response from service registry while fetching service list"
                     await logger.aerror(err)
                     self._service_list = []
+                    self._services_by_kind = {}
                     raise ServiceManagerError(err)
 
         service_list: list[GA4GHServiceInfo] = body
@@ -177,6 +187,7 @@ class ServiceManager:
         service_kind: str,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
+        skip_cache: bool = False,
     ) -> GA4GHServiceInfo | None:
         """
         Retrieves a service-info response from a Bento service, given its kind, if one could be found.
@@ -184,25 +195,29 @@ class ServiceManager:
         :param service_kind: Bento service kind.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
+        :param skip_cache: Do not use cached version, even if present. This will also re-populate the cache.
         :return: A GA4GHServiceInfo-typed dictionary, if one could be retrieved for the service kind; otherwise None.
         """
-        await self.fetch_service_list(existing_session, headers)  # side effect: populate self._services_by_kind
+        # side effect: populate self._service_list self._services_by_kind if not yet populated (or skip_cache is True):
+        await self.fetch_service_list(existing_session, headers, skip_cache)
         return self._services_by_kind.get(service_kind)
 
     async def fetch_data_types(
         self,
         existing_session: aiohttp.ClientSession | None = None,
         headers: dict[str, str] | None = None,
+        skip_cache: bool = False,
     ) -> dict[str, BentoDataType]:
         """
         Fetches an aggregation of Bento data types, collected from Bento data services' /data-types endpoints.
         Side effects:  populates self._service_list, self._services_by_kind, and self._data_types caches.
         :param existing_session: An existing aiohttp.ClientSession. If left out/None, a new session will be created.
         :param headers: Any headers to forward to the Bento Service Registry instance.
+        :param skip_cache: Do not use cached version, even if present. This will also re-populate the cache.
         :return: A dictionary with keys being data type IDs and values being BentoDataType-typed dictionaries.
         """
 
-        if self._data_types:
+        if self._data_types and not skip_cache:
             return self._data_types
 
         async def _get_data_types_for_service(
@@ -222,7 +237,7 @@ class ServiceManager:
 
         session: aiohttp.ClientSession
         async with self._http_session(existing=existing_session) as session:
-            services = await self.fetch_service_list(existing_session=session, headers=headers)
+            services = await self.fetch_service_list(existing_session=session, headers=headers, skip_cache=skip_cache)
             data_services = [s for s in services if s.get("bento", {}).get("dataService")]
 
             dts_nested: list[tuple[BentoDataType, ...]] = await asyncio.gather(

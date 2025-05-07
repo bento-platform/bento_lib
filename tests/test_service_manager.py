@@ -149,7 +149,7 @@ SERVICES_PAYLOAD = [
 
 @pytest.mark.asyncio
 async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service_manager: ServiceManager):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD, repeat=True)
 
     res = await service_manager.fetch_service_list()
     assert len(res) == 2
@@ -157,6 +157,9 @@ async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service
 
     res2 = await service_manager.fetch_service_list()
     assert id(res) == id(res2)  # same list - cached
+
+    res3 = await service_manager.fetch_service_list(skip_cache=True)  # force cache re-populate
+    assert id(res3) != id(res2)
 
 
 @pytest.mark.asyncio
@@ -255,7 +258,7 @@ async def test_service_manager_data_types(aioresponse: aioresponses, service_man
     # repeat=True hack needed for running get() inside asyncio.gather for some reason:
     # https://github.com/pnuckowski/aioresponses/issues/205
     aioresponse.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD, repeat=True)
 
     res = await service_manager.fetch_data_types(existing_session=session)
     assert res == {
@@ -267,6 +270,9 @@ async def test_service_manager_data_types(aioresponse: aioresponses, service_man
 
     res2 = await service_manager.fetch_data_types(existing_session=session)
     assert id(res) == id(res2)  # same list - cached
+
+    res3 = await service_manager.fetch_data_types(existing_session=session, skip_cache=True)  # repopulate cache
+    assert id(res3) != id(res2)
 
 
 @pytest.mark.asyncio
