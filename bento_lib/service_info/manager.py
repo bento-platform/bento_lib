@@ -50,7 +50,7 @@ class ServiceManager:
             return
 
         session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(verify_ssl=self._verify_ssl),
+            connector=aiohttp.TCPConnector(ssl=self._verify_ssl),
             timeout=aiohttp.ClientTimeout(total=self._timeout),
         )
 
