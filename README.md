@@ -174,6 +174,10 @@ methods for creating and processing ASTs.
 for common structures and operations related to GA4GH's `/service-info` 
 specification.
 
+#### Guides
+
+* [Bento's use of the GA4GH `/service-info` specification](./docs/service_info/bento_service_info.md)
+
 ### `streaming`
 
 `streaming` contains helper code for streaming bytes via HTTP from files, and 

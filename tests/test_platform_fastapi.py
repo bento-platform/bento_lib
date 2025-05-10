@@ -289,12 +289,6 @@ def auth_disabled_post_private(body: TestBody):
 # -----------------------------------------------------------------------------
 
 
-@pytest.fixture
-def aioresponse():
-    with aioresponses() as m:
-        yield m
-
-
 def _expect_error(r: HttpxResponse, code: int, msgs: tuple[str, ...]):
     assert r.status_code == code
     data = r.json()
