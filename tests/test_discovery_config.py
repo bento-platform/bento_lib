@@ -7,6 +7,7 @@ from typing import Type
 from bento_lib.discovery import (
     load_discovery_config_from_dict,
     load_discovery_config,
+    FieldDefinition,
     NumberFieldDefinition,
     OverviewChart,
 )
@@ -140,6 +141,10 @@ def test_load_discovery_config_dict():
     cfg.overview[0].charts[0].root.chart_type = "histogram"
     assert cfg.overview[0].charts[0].chart_type == "histogram"
 
+    # field definition methods
+    assert cfg.fields["age"].get_entity() == "individual"
+    assert cfg.fields["age"].root.get_entity_and_field_path() == ("individual", ("age_numeric",))
+
 
 def test_load_discovery_config_dict_blank():
     cfg, warnings = load_discovery_config_from_dict({})
@@ -167,8 +172,7 @@ def test_load_discovery_config():
             ValidationError,
             """1 validation error for DiscoveryConfig
 overview
-  Input should be a valid list [type=list_type, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.11/v/list_type""",
+  Input should be a valid list [type=list_type, input_value={}, input_type=dict]""",
         ),
         # referencing (in overview) a field which doesn't exist:
         (
@@ -211,7 +215,7 @@ def test_discovery_config_warning(log_output):
 
 
 TEST_NUMBER_FIELD_BASE = {
-    "mapping": "whatever/test",
+    "mapping": "individual/test",
     "title": "Test",
     "description": "test",
     "datatype": "number",
@@ -319,6 +323,55 @@ def test_invalid_number_configs(partial_config, err_str: str):
             {
                 **TEST_NUMBER_FIELD_BASE,
                 "config": {**TEST_NUMBER_FIELD_BASE["config"], **partial_config},
+            }
+        )
+
+    assert e.value.error_count() == 1
+    assert err_str in str(e.value)
+
+
+@pytest.mark.parametrize(
+    "mapping,err_str",
+    [
+        ("individuals/test", "type=string_pattern_mismatch"),
+        ("individual", "type=string_pattern_mismatch"),
+        ("phenopacket/5", "type=string_pattern_mismatch"),
+        ("phenopacket//test", "type=string_pattern_mismatch"),
+        ("phenopacket/test/5", "invalid path part at index 2"),
+        ("phenopacket/test/5/test2", "invalid path part at index 2"),
+        ("phenopacket/test//test2", "invalid path part at index 2"),
+    ],
+)
+def test_invalid_mappings(mapping: str, err_str: str):
+    with pytest.raises(ValidationError) as e:
+        FieldDefinition.model_validate(
+            {
+                "mapping": mapping,
+                "title": "Test",
+                "description": "test",
+                "datatype": "string",
+                "config": {
+                    "enum": None,
+                },
+            }
+        )
+
+    assert e.value.error_count() == 1
+    assert err_str in str(e.value)
+
+    # ----
+
+    with pytest.raises(ValidationError) as e:
+        FieldDefinition.model_validate(
+            {
+                "mapping": "individual/test",
+                "mapping_for_search_filter": mapping,
+                "title": "Test",
+                "description": "test",
+                "datatype": "string",
+                "config": {
+                    "enum": None,
+                },
             }
         )
 
