@@ -54,7 +54,6 @@ def _validate_mapping(value: str) -> str:
 
 
 class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
-    # TODO: constrained type with regular expressions
     mapping: str = Field(
         ...,
         title="Mapping",
