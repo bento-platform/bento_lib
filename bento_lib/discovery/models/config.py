@@ -94,6 +94,8 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
         description="Rules controlling censorship of count responses when a request does not have full data access.",
     )
 
+    # Validators -------------------------------------------------------------------------------------------------------
+
     @model_validator(mode="after")
     def check_field_references(self) -> Self:
         # validate overview and check for chart duplicates:
@@ -124,5 +126,18 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
 
         return self
 
+    # Methods ----------------------------------------------------------------------------------------------------------
+
     def get_chart_field_ids(self) -> tuple[str, ...]:
+        """
+        Gets all field IDs used by charts.
+        :return: A tuple of field IDs.
+        """
         return tuple(chart.field for section in self.overview for chart in section.charts)
+
+    def get_searchable_field_ids(self) -> tuple[str, ...]:
+        """
+        Gets all field IDs specified in search sections.
+        :return: A tuple of field IDs.
+        """
+        return tuple(f for section in self.search for f in section.fields)
