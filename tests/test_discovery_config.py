@@ -119,6 +119,7 @@ def test_load_discovery_config_dict():
 
     assert len(cfg.overview) == 1
     assert cfg.get_chart_field_ids() == ("age",)
+    assert cfg.get_searchable_field_ids() == ("age",)
     assert len(cfg.search) == 1
     assert len(cfg.fields) == 1
     assert cfg.rules.count_threshold == 5
