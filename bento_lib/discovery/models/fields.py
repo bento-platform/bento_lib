@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, model_validator
-from typing import Annotated, Literal
+import re
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
+from typing import Annotated, Literal, get_args
 from typing_extensions import Self  # TODO: py3.11+ from typing
+from ..types import DiscoveryEntity
 from ._internal import NoAdditionalProperties
 
 __all__ = [
@@ -20,6 +22,9 @@ __all__ = [
     "FieldDefinition",
 ]
 
+DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity)
+DISCOVERY_MAPPING_START_PATTERN: re.Pattern = re.compile(rf"^(({'|'.join(DISCOVERY_ENTITIES)})/)[a-zA-Z_]")
+DISCOVERY_MAPPING_FIELD_PART_PATTERN: re.Pattern = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 DataTypeField = Field(
     ...,
@@ -28,8 +33,27 @@ DataTypeField = Field(
 )
 
 
+def _validate_mapping(value: str) -> str:
+    """
+    Given a mapping string (supposed to be of the form entity/path/to/field), validate the entity name and path form.
+    This doesn't actually validate the field exists in the model yet.
+    TODO: additional field validation could be done in the future via a callback function.
+    :param value: The mapping string to validate.
+    :return: Validated mapping string.
+    """
+
+    # valid prefix is already guaranteed to be present by Pydantic pattern check
+    prefix = DISCOVERY_MAPPING_START_PATTERN.match(value)[1]
+
+    field_path = value.removeprefix(prefix).split("/")
+    for p_idx, path_part in enumerate(field_path, 1):
+        if not DISCOVERY_MAPPING_FIELD_PART_PATTERN.match(path_part):
+            raise ValueError(f"invalid path part at index {p_idx}")
+
+    return value
+
+
 class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
-    # TODO: constrained type with regular expressions
     mapping: str = Field(
         ...,
         title="Mapping",
@@ -37,6 +61,7 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
             "Slash-delimited field mapping, i.e., a path to a field in a discovery-enabled Bento clinical/phenotypic/"
             "experimental data model."
         ),
+        pattern=DISCOVERY_MAPPING_START_PATTERN,
     )
     # TODO: make optional and pull from Bento schema if not set:
     title: str = Field(..., title="Title", description="Field title")
@@ -44,11 +69,50 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     description: str = Field(..., title="Description", description="Field description")
     datatype: Literal["string", "number", "date"] = DataTypeField
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
-    mapping_for_search_filter: str | None = None
+    mapping_for_search_filter: str | None = Field(
+        default=None,
+        title="Mapping for search filter",
+        description="Mapping for search filter - overrides mapping in the context of querying",
+        pattern=DISCOVERY_MAPPING_START_PATTERN,
+    )
     group_by: str | None = None
     group_by_value: str | None = None
     value_mapping: str | None = None
-    # ------------------------------------------------------------------------------------------------------------------
+
+    # Validators -------------------------------------------------------------------------------------------------------
+
+    # noinspection PyNestedDecorators
+    @field_validator("mapping", mode="after")
+    @classmethod
+    def valid_mapping(cls, value: str) -> str:
+        return _validate_mapping(value)
+
+    # noinspection PyNestedDecorators
+    @field_validator("mapping_for_search_filter", mode="after")
+    @classmethod
+    def valid_mapping_for_search_filter(cls, value: str | None) -> str | None:
+        return _validate_mapping(value) if value is not None else None
+
+    # Methods ----------------------------------------------------------------------------------------------------------
+
+    def get_entity_and_field_path(self) -> tuple[DiscoveryEntity, tuple[str, ...]]:
+        """
+        Get the discovery entity name and field path for the field being accessed, parsed from the mapping.
+        :return: a tuple of (DiscoveryEntity [entity type name], field access path tuple)
+        """
+        # mapping_for_search_filter can override mapping, although we should be able to do this logic in Katsu
+        #  automatically for the given object. TODO: deprecate mapping_for_search_filter
+        mapping = self.mapping_for_search_filter or self.mapping
+        model_name: DiscoveryEntity
+        model_name, *field_path = mapping.split("/")
+        return model_name, tuple(field_path)
+
+    def get_entity(self) -> DiscoveryEntity:
+        """
+        Get the discovery entity name containing the field being accessed, parsed from the mapping.
+        :return: a DiscoveryEntity (entity type name)
+        """
+        return self.get_entity_and_field_path()[0]
 
 
 class StringFieldConfig(BaseModel, NoAdditionalProperties):

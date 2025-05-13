@@ -1,3 +1,7 @@
-__all__ = ["WarningsTuple"]
+from typing import Literal, TypeAlias
 
-WarningsTuple = tuple[tuple[tuple[int | str, ...], str], ...]
+__all__ = ["WarningsTuple", "DiscoveryEntity"]
+
+WarningsTuple: TypeAlias = tuple[tuple[tuple[int | str, ...], str], ...]
+
+DiscoveryEntity: TypeAlias = Literal["phenopacket", "individual", "biosample", "experiment"]
