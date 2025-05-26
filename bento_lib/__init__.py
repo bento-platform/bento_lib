@@ -9,6 +9,7 @@ from . import schemas
 from . import search
 from . import service_info
 from . import streaming
+from . import utils
 from . import workflows
 
 __version__ = metadata.version(__name__)
@@ -23,5 +24,6 @@ __all__ = [
     "search",
     "service_info",
     "streaming",
+    "utils",
     "workflows",
 ]

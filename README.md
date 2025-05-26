@@ -184,6 +184,10 @@ specification.
 proxied HTTP resources, including exception definitions and HTTP `Range` header 
 parsing. 
 
+### `utils`
+
+Small common-use utilities for Bento services and other libraries.
+
 ### `workflows`
 
 `workflows` contains common code used for handling workflow metadata processing
