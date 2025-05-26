@@ -5,9 +5,10 @@ import jsonschema
 
 from functools import partial
 from itertools import chain, product, starmap
-from operator import and_, or_, not_, lt, le, eq, gt, ge, contains, is_not
+from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
 from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
 
+from bento_lib.utils.operators import is_not_none
 from . import queries as q
 from ._types import JSONSchema
 
@@ -445,9 +446,6 @@ def _resolve_checks(resolve_value: str, schema: JSONSchema):
         raise TypeError("Cannot get property of array")
 
 
-_is_not_none = partial(is_not, None)
-
-
 def _get_child_resolve_array_lengths(
     new_resolve: Tuple[q.AST, ...],
     resolving_ds: list,
@@ -465,7 +463,7 @@ def _get_child_resolve_array_lengths(
     :return: A tuple of the current array's element-wise array length data
     """
     return filter(
-        _is_not_none,
+        is_not_none,
         (
             _resolve_array_lengths(new_resolve, array_item_ds, item_schema, new_path, resolve_checks)
             for array_item_ds in resolving_ds
