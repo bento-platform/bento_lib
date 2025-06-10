@@ -4,4 +4,4 @@ __all__ = ["WarningsTuple", "DiscoveryEntity"]
 
 WarningsTuple: TypeAlias = tuple[tuple[tuple[int | str, ...], str], ...]
 
-DiscoveryEntity: TypeAlias = Literal["phenopacket", "individual", "biosample", "experiment"]
+DiscoveryEntity: TypeAlias = Literal["phenopacket", "individual", "biosample", "experiment", "experiment_result"]
