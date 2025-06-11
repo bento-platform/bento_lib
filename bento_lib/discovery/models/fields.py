@@ -72,6 +72,12 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     # Somewhat of a display control, with the literal here listed from most to least restrictive.
     # Controls whether the field will be available for charts/search in a given scope context; useful for specific types
     # of data (e.g., geolocation data) which may be too sensitive to show publically even in a censored manner.
+    #  - e.g., if this is set to "data", this search filter/chart would only show up if the user has the Bento
+    #    query:data permission.
+    #  - if this is set to "project_level_counts", and the user has only these permissions, then in a dataset-scoped
+    #    context this search filter/chart *would not* show up.
+    #  - the default value for this is dataset_level_counts, which maintains default behaviour as Bento had it before
+    #    this configurability was added.
     minimum_permissions: Literal["project_level_counts", "dataset_level_counts", "data"] = Field(
         default="dataset_level_counts",
         title="Minimum permissions",
