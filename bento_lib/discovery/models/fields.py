@@ -68,6 +68,16 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     # TODO: make optional and pull from Bento schema if not set:
     description: str = Field(..., title="Description", description="Field description")
     datatype: Literal["string", "number", "date"] = DataTypeField
+
+    # Somewhat of a display control, with the literal here listed from most to least restrictive.
+    # Controls whether the field will be available for charts/search in a given scope context; useful for specific types
+    # of data (e.g., geolocation data) which may be too sensitive to show publically even in a censored manner.
+    minimum_permissions: Literal["project_level_counts", "dataset_level_counts", "data"] = Field(
+        default="dataset_level_counts",
+        title="Minimum permissions",
+        description="Minimum permissions needed to make the field available in charts / filtering.",
+    )
+
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = Field(
         default=None,
