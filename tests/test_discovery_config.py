@@ -103,6 +103,7 @@ def test_load_discovery_config_dict():
                     "title": "Age",
                     "description": "Age at arrival",
                     "datatype": "number",
+                    "minimum_permissions": "data",
                     "config": {
                         "bin_size": 10,
                         "taper_left": 10,
@@ -128,6 +129,7 @@ def test_load_discovery_config_dict():
     # synonymous attribute accesses
     assert cfg.fields["age"].mapping == "individual/age_numeric"
     assert cfg.fields["age"].root.mapping == "individual/age_numeric"
+    assert cfg.fields["age"].minimum_permissions == "data"
     assert cfg.overview[0].charts[0].chart_type == "histogram"
 
     # synonymous attribute assignment
