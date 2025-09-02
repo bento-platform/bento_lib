@@ -28,7 +28,7 @@ class ServiceManager:
     def __init__(self, logger: BoundLogger, request_timeout: int, service_registry_url: str, verify_ssl: bool = True):
         self._logger: BoundLogger = logger
 
-        self._service_registry_url: str = service_registry_url.rstrip("/")
+        self._service_registry_url: str = service_registry_url.rstrip("/") + "/"
         self._timeout: int = request_timeout
         self._verify_ssl: bool = verify_ssl
 
