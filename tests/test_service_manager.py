@@ -6,16 +6,16 @@ from bento_lib.service_info.manager import ServiceManagerError, ServiceManager
 
 logger = get_logger("bento_lib.test")
 
-SR_URL = "https://service-registry.local"
+SR_URL = "https://test-bento.local/api/service-registry"
 
 
 @pytest.fixture(name="service_manager")
 def fixt_service_manager():
-    return ServiceManager(logger, 60, f"{SR_URL}/", verify_ssl=False)
+    return ServiceManager(logger, 60, SR_URL, verify_ssl=False)
 
 
 def test_service_manager_basics(service_manager: ServiceManager):
-    assert service_manager._service_registry_url == SR_URL  # ensure we strip the trailing slash
+    assert service_manager._service_registry_url == SR_URL + "/"  # ensure we normalize to include the trailing slash
     assert service_manager._timeout == 60
     assert not service_manager._verify_ssl
 
