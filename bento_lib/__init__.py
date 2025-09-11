@@ -19,6 +19,8 @@ __all__ = [
     "apps",
     "auth",
     "discovery",
+    "drs",
+    "events",
     "ontologies",
     "schemas",
     "search",
