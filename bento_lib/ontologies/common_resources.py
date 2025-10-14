@@ -4,7 +4,7 @@ from .models import OntologyResource
 __all__ = [
     # EFO
     "EFO",
-    "EFO_3_77_0",
+    "EFO_3_81_0",
     # MONDO
     "MONDO",
     "MONDO_2025_04_01",
@@ -19,7 +19,6 @@ __all__ = [
     "OBI_2025_03_06",
     # SO
     "SO",
-    "SO_2024_11_18",
     # UBERON
     "UBERON",
 ]
@@ -35,7 +34,7 @@ EFO = OntologyResource(
     url=HttpUrl("http://www.ebi.ac.uk/efo/efo.owl"),
     repository_url=HttpUrl("https://github.com/EBISPOT/efo"),
 )
-EFO_3_77_0 = EFO.as_versioned("http://www.ebi.ac.uk/efo/releases/v3.77.0/efo.owl", version="3.77.0")
+EFO_3_81_0 = EFO.as_versioned("https://www.ebi.ac.uk/efo/releases/v3.81.0/efo.owl", version="3.81.0")
 
 # === MONDO ============================================================================================================
 
@@ -48,8 +47,8 @@ MONDO = OntologyResource(
     repository_url=HttpUrl("https://github.com/monarch-initiative/mondo"),
 )
 MONDO_2025_04_01 = MONDO.as_versioned(
-    url="http://purl.obolibrary.org/obo/mondo/releases/2025-04-01/mondo.owl",
-    version="2025-04-01",
+    url="https://purl.obolibrary.org/obo/mondo/releases/2025-09-02/mondo.owl",
+    version="2025-09-02",
 )
 
 # === NCBITaxon ========================================================================================================
@@ -63,7 +62,7 @@ NCBI_TAXON = OntologyResource(
     repository_url=HttpUrl("https://github.com/obophenotype/ncbitaxon"),
 )
 NCBI_TAXON_2025_03_13 = NCBI_TAXON.as_versioned(
-    url="http://purl.obolibrary.org/obo/ncbitaxon/2025-03-13/ncbitaxon.owl",
+    url="https://purl.obolibrary.org/obo/ncbitaxon/2025-03-13/ncbitaxon.owl",
     version="2025-03-13",
 )
 
@@ -78,7 +77,7 @@ NCIT = OntologyResource(
     repository_url=HttpUrl("https://github.com/NCI-Thesaurus/thesaurus-obo-edition"),
 )
 NCIT_2024_05_07 = NCIT.as_versioned(
-    url="http://purl.obolibrary.org/obo/ncit/releases/2024-05-07/ncit.owl",
+    url="https://purl.obolibrary.org/obo/ncit/releases/2024-05-07/ncit.owl",
     version="2024-05-07",
 )
 
@@ -89,10 +88,10 @@ OBI = OntologyResource(
     name="Ontology for Biomedical Investigations",
     namespace_prefix="OBI",
     iri_prefix=HttpUrl("http://purl.obolibrary.org/obo/OBI_"),
-    url=HttpUrl("http://purl.obolibrary.org/obo/obi.owl"),
+    url=HttpUrl("https://purl.obolibrary.org/obo/obi.owl"),
     repository_url=HttpUrl("https://github.com/obi-ontology/obi"),
 )
-OBI_2025_03_06 = OBI.as_versioned(url="http://purl.obolibrary.org/obo/obi/2025-03-06/obi.owl", version="2025-03-06")
+OBI_2025_03_06 = OBI.as_versioned(url="https://purl.obolibrary.org/obo/obi/2025-07-28/obi.owl", version="2025-07-28")
 
 # === SO ===============================================================================================================
 
@@ -104,7 +103,6 @@ SO = OntologyResource(
     url=HttpUrl("http://purl.obolibrary.org/obo/so.owl"),
     repository_url=HttpUrl("https://github.com/The-Sequence-Ontology/SO-Ontologies"),
 )
-SO_2024_11_18 = SO.as_versioned(url="http://purl.obolibrary.org/obo/so/2024-11-18/so.owl", version="2024-11-18")
 
 # === UBERON ===========================================================================================================
 
