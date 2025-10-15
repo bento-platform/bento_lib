@@ -1,8 +1,7 @@
 import sys
 from datetime import datetime
 from pydantic import BaseModel, Field, model_validator
-from typing import Literal
-from typing_extensions import Self  # TODO: py3.11+ from typing
+from typing import Literal, Self
 
 from ..exceptions import DiscoveryValidationError
 from .fields import FieldDefinition
