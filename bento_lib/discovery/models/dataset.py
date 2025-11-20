@@ -132,8 +132,6 @@ class SpatialCoverageFeature(GeoJSONFeature):
     properties: SpatialCoverageProperties
 
 
-
-
 class DatasetModel(BaseModel):
     title: str
     description: str
