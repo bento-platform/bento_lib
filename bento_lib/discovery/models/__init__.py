@@ -1,11 +1,13 @@
-from . import config, fields, overview, search
+from . import config, dataset, fields, overview, search
 from .config import RULES_NO_PERMISSIONS, RULES_FULL_PERMISSIONS, DiscoveryConfig, DiscoveryConfigRules
+from .dataset import DatasetModel
 from .fields import FieldDefinition, DateFieldDefinition, NumberFieldDefinition, StringFieldDefinition
 from .overview import OverviewChart, OverviewSection
 from .search import SearchSection
 
 __all__ = [
     "config",
+    "dataset",
     "fields",
     "overview",
     "search",
@@ -13,6 +15,7 @@ __all__ = [
     "RULES_FULL_PERMISSIONS",
     "DiscoveryConfig",
     "DiscoveryConfigRules",
+    "DatasetModel",
     "FieldDefinition",
     "DateFieldDefinition",
     "NumberFieldDefinition",
