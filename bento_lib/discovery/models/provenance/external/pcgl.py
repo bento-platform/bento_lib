@@ -2,7 +2,7 @@
 Pydantic models for PCGL (Precision Canadian Genomics Library) Study Schema
 """
 
-from typing import List, Optional, Literal
+from typing import Optional, Literal
 from pydantic import BaseModel, Field, HttpUrl, field_validator, ConfigDict
 
 # =============================================================================
@@ -84,8 +84,8 @@ class Study(BaseModel):
     program_name: Optional[str] = Field(
         None, alias="programName", description="The overarching program the study belongs to (if applicable)"
     )
-    keywords: Optional[List[str]] = Field(
-        None, description="List of specific terms that describe the focus and content of the study"
+    keywords: Optional[list[str]] = Field(
+        None, description="list of specific terms that describe the focus and content of the study"
     )
 
     # =========================================================================
@@ -96,8 +96,8 @@ class Study(BaseModel):
     context: StudyContext = Field(
         ..., description="Indicate if the study was conducted in a clinical setting or as part of a research project"
     )
-    domain: List[StudyDomain] = Field(
-        ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
+    domain: list[StudyDomain] = Field(
+        ..., min_length=1, description="list of specific scientific or clinical domains addressed by the study"
     )
 
     # =========================================================================
@@ -119,33 +119,33 @@ class Study(BaseModel):
     # People and organizations
     # =========================================================================
 
-    principal_investigators: List[PrincipalInvestigator] = Field(
+    principal_investigators: list[PrincipalInvestigator] = Field(
         ...,
         alias="principalInvestigators",
         min_length=1,
-        description="List of lead researchers responsible for the study",
+        description="list of lead researchers responsible for the study",
     )
-    lead_organizations: List[str] = Field(
+    lead_organizations: list[str] = Field(
         ...,
         alias="leadOrganizations",
         min_length=1,
-        description="List of institutions or organizations leading the study",
+        description="list of institutions or organizations leading the study",
     )
-    collaborators: Optional[List[Collaborator]] = Field(
-        None, description="List of researchers, institutions or companies involved in the study"
+    collaborators: Optional[list[Collaborator]] = Field(
+        None, description="list of researchers, institutions or companies involved in the study"
     )
 
     # =========================================================================
     # Funding and publications
     # =========================================================================
 
-    funding_sources: List[FundingSource] = Field(
-        ..., alias="fundingSources", min_length=1, description="List of organizations or agencies funding the study"
+    funding_sources: list[FundingSource] = Field(
+        ..., alias="fundingSources", min_length=1, description="list of organizations or agencies funding the study"
     )
-    publication_links: Optional[List[HttpUrl]] = Field(
+    publication_links: Optional[list[HttpUrl]] = Field(
         None,
         alias="publicationLinks",
-        description="List of URL links to academic papers or reports associated with the study (DOI URLs)",
+        description="list of URL links to academic papers or reports associated with the study (DOI URLs)",
     )
 
     # =========================================================================
@@ -160,7 +160,7 @@ class Study(BaseModel):
 
     @field_validator("publication_links")
     @classmethod
-    def validate_doi_links(cls, v: Optional[List[HttpUrl]]) -> Optional[List[HttpUrl]]:
+    def validate_doi_links(cls, v: Optional[list[HttpUrl]]) -> Optional[list[HttpUrl]]:
         """Ensure publication links are DOI URLs"""
         if v is None:
             return v
