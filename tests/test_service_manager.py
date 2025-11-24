@@ -128,6 +128,21 @@ async def test_service_manager_bento_services_by_kind(aioresponse: aioresponses,
 
 
 @pytest.mark.asyncio
+async def test_service_manager_bento_services_by_kind_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+
+    assert (
+        await service_manager_std_logger.get_bento_service_record_by_kind("service-registry")
+    ) == BENTO_SERVICES_PAYLOAD["service-registry"]
+    assert (await service_manager_std_logger.get_bento_service_record_by_kind("drop-box")) == BENTO_SERVICES_PAYLOAD[
+        "drop-box"
+    ]
+    assert (await service_manager_std_logger.get_bento_service_record_by_kind("does-not-exist")) is None
+
+
+@pytest.mark.asyncio
 async def test_service_manager_bento_service_urls_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
     aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
@@ -138,6 +153,21 @@ async def test_service_manager_bento_service_urls_by_kind(aioresponse: aiorespon
         "url"
     ]
     assert (await service_manager.get_bento_service_url_by_kind("does-not-exist")) is None
+
+
+@pytest.mark.asyncio
+async def test_service_manager_bento_service_urls_by_kind_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+
+    assert (
+        await service_manager_std_logger.get_bento_service_url_by_kind("service-registry")
+    ) == BENTO_SERVICES_PAYLOAD["service-registry"]["url"]
+    assert (await service_manager_std_logger.get_bento_service_url_by_kind("drop-box")) == BENTO_SERVICES_PAYLOAD[
+        "drop-box"
+    ]["url"]
+    assert (await service_manager_std_logger.get_bento_service_url_by_kind("does-not-exist")) is None
 
 
 SERVICES_PAYLOAD = [
@@ -191,6 +221,23 @@ async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service
 
 
 @pytest.mark.asyncio
+async def test_service_manager_ga4gh_services_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD, repeat=True)
+
+    res = await service_manager_std_logger.fetch_service_list()
+    assert len(res) == 2
+    assert res == SERVICES_PAYLOAD
+
+    res2 = await service_manager_std_logger.fetch_service_list()
+    assert id(res) == id(res2)  # same list - cached
+
+    res3 = await service_manager_std_logger.fetch_service_list(skip_cache=True)  # force cache re-populate
+    assert id(res3) != id(res2)
+
+
+@pytest.mark.asyncio
 async def test_service_manager_ga4gh_services_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
     aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
 
@@ -198,6 +245,18 @@ async def test_service_manager_ga4gh_services_by_kind(aioresponse: aioresponses,
     assert (await service_manager.get_service_info_by_kind("service-registry")) == SERVICES_PAYLOAD[0]
     assert (await service_manager.get_service_info_by_kind("drop-box")) == SERVICES_PAYLOAD[1]
     assert (await service_manager.get_service_info_by_kind("does-not-exist")) is None
+
+
+@pytest.mark.asyncio
+async def test_service_manager_ga4gh_services_by_kind_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
+
+    # check we can get our services by kind, but not a service which doesn't exist
+    assert (await service_manager_std_logger.get_service_info_by_kind("service-registry")) == SERVICES_PAYLOAD[0]
+    assert (await service_manager_std_logger.get_service_info_by_kind("drop-box")) == SERVICES_PAYLOAD[1]
+    assert (await service_manager_std_logger.get_service_info_by_kind("does-not-exist")) is None
 
 
 @pytest.mark.asyncio
@@ -219,6 +278,18 @@ async def test_service_manager_ga4gh_services_empty(
     ]
 
     assert (await service_manager.get_service_info_by_kind("drop-box")) is None
+
+
+@pytest.mark.asyncio
+async def test_service_manager_ga4gh_services_empty_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=[], repeat=True)
+
+    res = await service_manager_std_logger.fetch_service_list()
+    assert res == []
+
+    assert (await service_manager_std_logger.get_service_info_by_kind("drop-box")) is None
 
 
 SERVICE_LIST_LOG_OUTPUT = [
@@ -243,6 +314,18 @@ async def test_service_manager_ga4gh_services_err(
     assert str(e.value) == "recieved error response from service registry while fetching service list"
 
     assert log_output.entries == SERVICE_LIST_LOG_OUTPUT
+
+
+@pytest.mark.asyncio
+async def test_service_manager_ga4gh_services_err_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/services", status=500)
+
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager_std_logger.fetch_service_list()
+
+    assert str(e.value) == "recieved error response from service registry while fetching service list"
 
 
 DATA_TYPE_SERVICE_PAYLOAD = [
@@ -304,6 +387,46 @@ async def test_service_manager_data_types(aioresponse: aioresponses, service_man
 
 
 @pytest.mark.asyncio
+async def test_service_manager_data_types_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    dt_payload = [
+        {
+            "id": "experiment",
+            "label": "Experiments",
+            "queryable": True,
+            "schema": {},
+            "metadata_schema": {},
+            "count": 4040,
+            "last_ingested": "2024-05-22T19:01:49.355649Z",
+        }
+    ]
+
+    session = aiohttp.ClientSession()
+
+    # repeat=True hack needed for running get() inside asyncio.gather for some reason:
+    # https://github.com/pnuckowski/aioresponses/issues/205
+    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD, repeat=True)
+
+    res = await service_manager_std_logger.fetch_data_types(existing_session=session)
+    assert res == {
+        "experiment": {
+            "data_type_listing": dt_payload[0],
+            "service_base_url": DATA_TYPE_SERVICE_PAYLOAD[0]["url"],
+        }
+    }
+
+    res2 = await service_manager_std_logger.fetch_data_types(existing_session=session)
+    assert id(res) == id(res2)  # same list - cached
+
+    res3 = await service_manager_std_logger.fetch_data_types(
+        existing_session=session, skip_cache=True
+    )  # repopulate cache
+    assert id(res3) != id(res2)
+
+
+@pytest.mark.asyncio
 async def test_service_manager_data_types_service_err(
     aioresponse: aioresponses, service_manager: ServiceManager, log_output
 ):
@@ -315,6 +438,18 @@ async def test_service_manager_data_types_service_err(
     assert str(e.value) == "recieved error response from service registry while fetching service list"
 
     assert log_output.entries == SERVICE_LIST_LOG_OUTPUT
+
+
+@pytest.mark.asyncio
+async def test_service_manager_data_types_service_err_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/services", status=500)
+
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager_std_logger.fetch_data_types()
+
+    assert str(e.value) == "recieved error response from service registry while fetching service list"
 
 
 @pytest.mark.asyncio
@@ -340,3 +475,18 @@ async def test_service_manager_data_types_dt_err(
             "body": None,
         },
     ]
+
+
+@pytest.mark.asyncio
+async def test_service_manager_data_types_dt_err_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    # repeat=True hack needed for running get() inside asyncio.gather for some reason:
+    # https://github.com/pnuckowski/aioresponses/issues/205
+    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
+    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
+
+    with pytest.raises(ServiceManagerError) as e:
+        await service_manager_std_logger.fetch_data_types()
+
+    assert str(e.value) == "recieved error from data-types URL"

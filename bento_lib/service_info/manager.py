@@ -242,8 +242,11 @@ class ServiceManager:
             async with s.get(dt_url, headers=headers) as r:
                 if not r.ok:
                     err = "recieved error from data-types URL"
+                    log_data = dict(url=dt_url, status=r.status, body=await r.json())
                     # TODO: async when structlog only:
-                    self._logger.error(err, url=dt_url, status=r.status, body=await r.json())
+                    self._logger.error(err, **log_data) if self._is_structlog else self._logger.error(
+                        f"{err} %s", log_data
+                    )
                     raise ServiceManagerError(err)
                 service_dts: list[BentoDataTypeServiceListing] = await r.json()
 
