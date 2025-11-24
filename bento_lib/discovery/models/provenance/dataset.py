@@ -4,7 +4,7 @@ from pydantic import BaseModel, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
 
-Role = Literal[
+type Role = Literal[
     # Leadership / oversight
     "Principal Investigator",
     "Co-Investigator",
@@ -53,7 +53,7 @@ Role = Literal[
 ]
 
 # Derived from PCGL Study Model
-StudyDomain = Literal[
+type StudyDomain = Literal[
     "Aging",
     "Birth Defects",
     "Cancer",
