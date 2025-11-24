@@ -155,7 +155,7 @@ class SpatialCoverageFeature(GeoJSONFeature):
 
 
 class DatasetModel(BaseModel):
-    schema_version_: Literal["1.0"]
+    schema_version: Literal["1.0"]
 
     title: str
     description: str
@@ -172,7 +172,7 @@ class DatasetModel(BaseModel):
 
     publications: list[Publication]
     data_access_links: list[HttpUrl]
-    release_data: date
+    release_date: date
     last_modified: date
     participant_criteria: list[ParticipantCriteria]
 
