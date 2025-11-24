@@ -122,6 +122,24 @@ class License(BaseModel):
     url: HttpUrl
 
 
+class Publication(BaseModel):
+    """
+    Publication or related resource link with metadata.
+
+    publication_type examples: "Journal Article", "Preprint", "Conference Paper",
+    "Book Chapter", "Technical Report", "Thesis", "Dataset", "Software", etc.
+    """
+
+    title: str
+    url: HttpUrl
+    doi: str | None
+    publication_type: str
+    authors: list[str] | None
+    publication_date: date | None
+    journal: str | None
+    description: str | None
+
+
 class SpatialCoverageProperties(BaseModel):
     """Properties for spatial coverage GeoJSON with required name field."""
 
@@ -152,7 +170,7 @@ class DatasetModel(BaseModel):
     counts: list[Count]
     primary_contact: Person | Organization
 
-    publication_links: list[HttpUrl]
+    publications: list[Publication]
     data_access_links: list[HttpUrl]
     release_data: date
     last_modified: date
