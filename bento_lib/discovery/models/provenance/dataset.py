@@ -183,7 +183,7 @@ class DatasetModel(BaseModel):
     version: str | None
     privacy: str | None
     license: License | None
-    counts: list[Count]
+    counts: list[Count]  # Note: Different from counts in bento, this is provided by the metadata creator
     primary_contact: Person | Organization
 
     publications: list[Publication]
