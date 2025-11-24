@@ -1,6 +1,6 @@
 from typing import Literal
 from datetime import date
-from pydantic import BaseModel, HttpUrl, ConfigDict
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.discovery.models.ontology import OntologyTerm
@@ -30,6 +30,7 @@ type Role = Literal[
     "Institution",
     "Site",
     "Research Center",
+    "Publisher",  # DCAT
     # Ethics & compliance
     "IRB",
     "Ethics Board",
@@ -70,6 +71,22 @@ type StudyDomain = Literal[
     "Rare Diseases",
     "Other",
 ]
+
+type PublicationType = Literal[
+    "Journal Article",
+    "Preprint",
+    "Conference Paper",
+    "Book Chapter",
+    "Technical Report",
+    "Thesis",
+    "Dataset",
+]
+
+
+class Other(BaseModel):
+    """When a literal is not exhaustive"""
+
+    other: str
 
 
 class Phone(BaseModel):
@@ -127,15 +144,12 @@ class License(BaseModel):
 class Publication(BaseModel):
     """
     Publication or related resource link with metadata.
-
-    publication_type examples: "Journal Article", "Preprint", "Conference Paper",
-    "Book Chapter", "Technical Report", "Thesis", "Dataset", "Software", etc.
     """
 
     title: str
     url: HttpUrl
     doi: str | None
-    publication_type: str
+    publication_type: PublicationType | Other
     authors: list[str] | None
     publication_date: date | None
     journal: str | None
@@ -179,7 +193,9 @@ class DatasetModel(BaseModel):
     participant_criteria: list[ParticipantCriteria]
 
     # ----- PCGL Specific -----
-    domain: list[StudyDomain]
+    domain: list[StudyDomain | Other] = Field(
+        ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
+    )
     status: Literal["Ongoing", "Completed"]
     context: Literal["Clinical", "Research"]
-    program_name: str | None
+    program_name: str | None = Field(None, description="The overarching program the study belongs to (if applicable)")
