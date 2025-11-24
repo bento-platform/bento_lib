@@ -119,7 +119,7 @@ class License(BaseModel):
 
     label: str
     type: str
-    url: HttpUrl | None
+    url: HttpUrl
 
 
 class SpatialCoverageProperties(BaseModel):
