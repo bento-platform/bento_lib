@@ -1,7 +1,8 @@
 from typing import Literal
 from datetime import date
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
+
 
 Role = Literal[
     # Leadership / oversight
@@ -51,6 +52,7 @@ Role = Literal[
     "Other",
 ]
 
+# Derived from PCGL Study Model
 StudyDomain = Literal[
     "Aging",
     "Birth Defects",
@@ -124,6 +126,8 @@ class SpatialCoverageProperties(BaseModel):
     """Properties for spatial coverage GeoJSON with required name field."""
 
     name: str
+
+    model_config = ConfigDict(extra="allow")
 
 
 class SpatialCoverageFeature(GeoJSONFeature):
