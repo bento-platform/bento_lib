@@ -3,6 +3,8 @@ from datetime import date
 from pydantic import BaseModel, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
+from bento_lib.discovery.models.ontology import OntologyTerm
+
 
 type Role = Literal[
     # Leadership / oversight
@@ -160,7 +162,7 @@ class DatasetModel(BaseModel):
     title: str
     description: str
 
-    keywords: list[str]
+    keywords: list[str | OntologyTerm]
     stakeholders: list[Organization | Person]
 
     spatial_coverage: str | SpatialCoverageFeature | None
