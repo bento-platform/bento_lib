@@ -1,10 +1,12 @@
 import aiohttp
 import pytest
 from aioresponses import aioresponses
+from logging import getLogger
 from structlog.stdlib import get_logger
 from bento_lib.service_info.manager import ServiceManagerError, ServiceManager
 
 logger = get_logger("bento_lib.test")
+std_logger = getLogger("bento_lib.test_std")
 
 SR_URL = "https://test-bento.local/api/service-registry"
 
@@ -14,10 +16,22 @@ def fixt_service_manager():
     return ServiceManager(logger, 60, SR_URL, verify_ssl=False)
 
 
+@pytest.fixture(name="service_manager_std_logger")
+def fixt_service_manager_std_logger():
+    return ServiceManager(std_logger, 60, SR_URL, verify_ssl=False)
+
+
 def test_service_manager_basics(service_manager: ServiceManager):
     assert service_manager._service_registry_url == SR_URL + "/"  # ensure we normalize to include the trailing slash
     assert service_manager._timeout == 60
     assert not service_manager._verify_ssl
+
+
+def test_service_manager_basics_std_logger(service_manager_std_logger: ServiceManager):
+    # ensure we normalize to include the trailing slash
+    assert service_manager_std_logger._service_registry_url == SR_URL + "/"
+    assert service_manager_std_logger._timeout == 60
+    assert not service_manager_std_logger._verify_ssl
 
 
 BENTO_SERVICES_PAYLOAD = {
@@ -45,6 +59,20 @@ async def test_service_manager_bento_services(aioresponse: aioresponses, service
     assert res == BENTO_SERVICES_PAYLOAD
 
     res2 = await service_manager.fetch_bento_services()
+    assert id(res) == id(res2)  # same dict - cached
+
+
+@pytest.mark.asyncio
+async def test_service_manager_bento_services_std_logger(
+    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+):
+    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+
+    res = await service_manager_std_logger.fetch_bento_services()
+    assert len(res) == 2
+    assert res == BENTO_SERVICES_PAYLOAD
+
+    res2 = await service_manager_std_logger.fetch_bento_services()
     assert id(res) == id(res2)  # same dict - cached
 
 
