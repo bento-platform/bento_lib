@@ -97,6 +97,8 @@ class Phone(BaseModel):
 
 
 class Contact(BaseModel):
+    """Inspired by subset of https://schema.org/ContactPoint"""
+
     email: list[str]
     address: str | None
     phone: Phone | None
