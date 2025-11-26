@@ -2,7 +2,7 @@
 Pydantic models for PCGL (Precision Canadian Genomics Library) Study Schema
 """
 
-from typing import Optional, Literal
+from typing import Literal
 from pydantic import BaseModel, Field, HttpUrl, field_validator, ConfigDict
 
 # =============================================================================
@@ -32,7 +32,7 @@ class Collaborator(BaseModel):
     """
 
     name: str = Field(..., description="Name of individual or organization")
-    role: Optional[str] = Field(None, description="Role in the study (e.g., Industry Partner, Data Contributor)")
+    role: str | None = Field(None, description="Role in the study (e.g., Industry Partner, Data Contributor)")
 
 
 class FundingSource(BaseModel):
@@ -42,7 +42,7 @@ class FundingSource(BaseModel):
     """
 
     funder_name: str = Field(..., description="Name of the funding organization")
-    grant_number: Optional[str] = Field(None, description="Grant or award number")
+    grant_number: str | None = Field(None, description="Grant or award number")
 
 
 # =============================================================================
@@ -65,7 +65,7 @@ class Study(BaseModel):
         alias="studyDescription",
         description="A detailed description of the study's purpose, hypothesis, and design",
     )
-    program_name: Optional[str] = Field(
+    program_name: str | None = Field(
         None, alias="programName", description="The overarching program the study belongs to (if applicable)"
     )
     keywords: list[str] = Field(
@@ -93,7 +93,7 @@ class Study(BaseModel):
         alias="dacId",
         description="Unique identifier of the Data Access Committee (DAC) in PCGL to which the study is assigned",
     )
-    participant_criteria: Optional[str] = Field(
+    participant_criteria: str | None = Field(
         None,
         alias="participantCriteria",
         description="Inclusion/exclusion criteria for participants (e.g., specific cancer type, age range)",
