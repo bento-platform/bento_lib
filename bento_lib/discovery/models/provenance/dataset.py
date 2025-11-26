@@ -70,7 +70,7 @@ type StudyDomain = Literal[
     "Nutrition, Metabolism and Diabetes",
     "Population Genomics",
     "Rare Diseases",
-    "Other",
+    "Other",  # Only for ingestion of data from pcgl, use the Other Model instead
 ]
 
 type PublicationType = Literal[
