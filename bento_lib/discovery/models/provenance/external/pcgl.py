@@ -1,5 +1,5 @@
 """
-Pydantic models for PCGL (Precision Canadian Genomics Library) Study Schema
+Pydantic models for PCGL (Pan Canadian Genomics Library) Study Schema
 """
 
 from typing import Literal
