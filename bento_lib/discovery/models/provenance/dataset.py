@@ -106,21 +106,20 @@ class Organization(BaseModel):
     name: str
     description: str | None
     contact: Contact
-    role: list[Role]
+    roles: list[Role]
 
     # For funders
     grant_number: str | None
 
 
 class Person(BaseModel):
-    first_name: str
-    last_name: str
+    name: str
     honorific: str | None
     other_names: list[str]
 
     affiliations: list[Organization | str]
 
-    role: list[Role]
+    roles: list[Role]
 
 
 class ParticipantCriteria(BaseModel):

@@ -56,28 +56,26 @@ def test_organization():
         name="Test University",
         description="A research institution",
         contact=Contact(email=["contact@test.edu"], address=None, phone=None),
-        role=["Institution"],
+        roles=["Institution"],
         grant_number="12345",
     )
     assert org.name == "Test University"
-    assert "Institution" in org.role
+    assert "Institution" in org.roles
     assert org.grant_number == "12345"
 
 
 def test_person():
     """Test Person model."""
     person = Person(
-        first_name="John",
-        last_name="Doe",
+        name="John Doe",
         honorific="Dr.",
         other_names=["Johnny"],
         affiliations=["Test University"],
-        role=["Principal Investigator"],
+        roles=["Principal Investigator"],
     )
-    assert person.first_name == "John"
-    assert person.last_name == "Doe"
+    assert person.name == "John Doe"
     assert person.honorific == "Dr."
-    assert "Principal Investigator" in person.role
+    assert "Principal Investigator" in person.roles
 
 
 def test_person_with_organization_affiliation():
@@ -86,16 +84,15 @@ def test_person_with_organization_affiliation():
         name="Test University",
         description=None,
         contact=Contact(email=[], address=None, phone=None),
-        role=["Institution"],
+        roles=["Institution"],
         grant_number=None,
     )
     person = Person(
-        first_name="Jane",
-        last_name="Smith",
+        name="Jane Smith",
         honorific=None,
         other_names=[],
         affiliations=[org, "Another University"],
-        role=["Researcher"],
+        roles=["Researcher"],
     )
     assert len(person.affiliations) == 2
     assert isinstance(person.affiliations[0], Organization)

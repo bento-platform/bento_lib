@@ -13,9 +13,8 @@ from bento_lib.discovery.models.provenance.external.pcgl import (
 
 def test_principal_investigator():
     """Test PrincipalInvestigator model."""
-    pi = PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Test University")
-    assert pi.first_name == "John"
-    assert pi.last_name == "Doe"
+    pi = PrincipalInvestigator(name="John Doe", affiliation="Test University")
+    assert pi.name == "John Doe"
     assert pi.affiliation == "Test University"
 
 
@@ -52,9 +51,7 @@ def test_pcgl_study():
         domain=["Cancer", "Population Genomics"],
         dacId="DAC001",
         participantCriteria="Inclusion: Adults 18+; Exclusion: Pregnant individuals",
-        principalInvestigators=[
-            PrincipalInvestigator(first_name="Jane", last_name="Smith", affiliation="Test University")
-        ],
+        principalInvestigators=[PrincipalInvestigator(name="Jane Smith", affiliation="Test University")],
         leadOrganizations=["Test University", "Research Hospital"],
         collaborators=[Collaborator(name="Partner Lab", role="Data Contributor")],
         fundingSources=[FundingSource(funder_name="NIH", grant_number="R01-123456")],
@@ -82,7 +79,7 @@ def test_pcgl_study_minimal():
         domain=["Other"],
         dacId="DAC002",
         participantCriteria=None,
-        principalInvestigators=[PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Org")],
+        principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
         collaborators=None,
         fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
@@ -108,7 +105,7 @@ def test_pcgl_study_validation_doi_links():
             domain=["Cancer"],
             dacId="DAC003",
             participantCriteria=None,
-            principalInvestigators=[PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Org")],
+            principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
             leadOrganizations=["Org"],
             collaborators=None,
             fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],

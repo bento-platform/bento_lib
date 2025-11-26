@@ -35,7 +35,7 @@ def test_dataset_to_pcgl_study(basic_pi, basic_contact):
         name="Test University",
         description="Research institution",
         contact=basic_contact,
-        role=["Institution"],
+        roles=["Institution"],
         grant_number=None,
     )
 
@@ -43,7 +43,7 @@ def test_dataset_to_pcgl_study(basic_pi, basic_contact):
         name="NIH",
         description=None,
         contact=basic_contact,
-        role=["Funder"],
+        roles=["Funder"],
         grant_number="R01-123456",
     )
 
@@ -97,8 +97,7 @@ def test_dataset_to_pcgl_study(basic_pi, basic_contact):
     assert study.dac_id == "DAC001"
     assert study.participant_criteria == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
     assert len(study.principal_investigators) == 1
-    assert study.principal_investigators[0].first_name == "Jane"
-    assert study.principal_investigators[0].last_name == "Doe"
+    assert study.principal_investigators[0].name == "Jane Doe"
     assert len(study.lead_organizations) == 1
     assert "Test University" in study.lead_organizations
     assert len(study.funding_sources) == 1
@@ -131,12 +130,11 @@ def test_dataset_to_pcgl_study_with_other_domain(basic_pi, basic_institution, ba
 def test_dataset_to_pcgl_study_missing_pi(basic_contact):
     """Test that conversion fails if no Principal Investigator found."""
     researcher = Person(
-        first_name="John",
-        last_name="Doe",
+        name="John Doe",
         honorific=None,
         other_names=[],
         affiliations=[],
-        role=["Researcher"],
+        roles=["Researcher"],
     )
 
     dataset = DatasetModel(
@@ -147,9 +145,9 @@ def test_dataset_to_pcgl_study_missing_pi(basic_contact):
         stakeholders=[
             researcher,
             Organization(
-                name="Test Org", description=None, contact=basic_contact, role=["Institution"], grant_number=None
+                name="Test Org", description=None, contact=basic_contact, roles=["Institution"], grant_number=None
             ),
-            Organization(name="Funder", description=None, contact=basic_contact, role=["Funder"], grant_number=None),
+            Organization(name="Funder", description=None, contact=basic_contact, roles=["Funder"], grant_number=None),
         ],
         spatial_coverage=None,
         version=None,
@@ -179,7 +177,7 @@ def test_dataset_to_pcgl_study_missing_organization(basic_pi, basic_contact):
         name="Funder",
         description=None,
         contact=basic_contact,
-        role=["Funder"],
+        roles=["Funder"],
         grant_number=None,
     )
 
@@ -254,9 +252,7 @@ def test_pcgl_study_to_dataset(basic_pi):
         domain=["Cancer", "Population Genomics"],
         dacId="DAC001",
         participantCriteria="Inclusion: Adults 18+; Exclusion: Pregnant individuals",
-        principalInvestigators=[
-            PrincipalInvestigator(first_name="Jane", last_name="Smith", affiliation="Test University")
-        ],
+        principalInvestigators=[PrincipalInvestigator(name="Jane Smith", affiliation="Test University")],
         leadOrganizations=["Test University", "Research Hospital"],
         collaborators=[
             Collaborator(name="Partner Lab", role="Data Contributor"),
@@ -300,19 +296,18 @@ def test_pcgl_study_to_dataset(basic_pi):
     # Check stakeholders (1 PI, 2 institutions, 2 collaborators, 2 funders = 7 total)
     assert len(dataset.stakeholders) == 7
 
-    # Find PI
-    pis = [s for s in dataset.stakeholders if isinstance(s, Person) and "Principal Investigator" in s.role]
+    # Find PI (parsed from "Jane Smith")
+    pis = [s for s in dataset.stakeholders if isinstance(s, Person) and "Principal Investigator" in s.roles]
     assert len(pis) == 1
-    assert pis[0].first_name == "Jane"
-    assert pis[0].last_name == "Smith"
+    assert pis[0].name == "Jane Smith"
 
     # Find institutions
-    institutions = [s for s in dataset.stakeholders if isinstance(s, Organization) and "Institution" in s.role]
+    institutions = [s for s in dataset.stakeholders if isinstance(s, Organization) and "Institution" in s.roles]
     assert len(institutions) == 2
     assert {inst.name for inst in institutions} == {"Test University", "Research Hospital"}
 
     # Find funders
-    funders = [s for s in dataset.stakeholders if isinstance(s, Organization) and "Funder" in s.role]
+    funders = [s for s in dataset.stakeholders if isinstance(s, Organization) and "Funder" in s.roles]
     assert len(funders) == 2
     funder_names = {f.name for f in funders}
     assert "NIH" in funder_names
@@ -339,7 +334,7 @@ def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
         domain=["Other"],
         dacId="DAC002",
         participantCriteria=None,
-        principalInvestigators=[PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Org")],
+        principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
         collaborators=None,
         fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
@@ -371,7 +366,7 @@ def test_pcgl_study_to_dataset_no_criteria(basic_pi):
         domain=["Cancer"],
         dacId="DAC003",
         participantCriteria=None,
-        principalInvestigators=[PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Org")],
+        principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
         collaborators=None,
         fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
@@ -399,7 +394,7 @@ def test_pcgl_study_to_dataset_no_criteria(basic_pi):
                         name="Research Institute",
                         description=None,
                         contact=Contact(email=[], address=None, phone=None),
-                        role=["Institution"],
+                        roles=["Institution"],
                         grant_number=None,
                     )
                 ],
@@ -413,12 +408,11 @@ def test_pcgl_study_to_dataset_no_criteria(basic_pi):
 def test_converter_pi_affiliation_extraction(basic_contact, pi_config, expected_affiliation):
     """Test PI affiliation extraction from various sources."""
     pi = Person(
-        first_name=pi_config["name_parts"][0],
-        last_name=pi_config["name_parts"][1],
+        name=f"{pi_config['name_parts'][0]} {pi_config['name_parts'][1]}",
         honorific=None,
         other_names=[],
         affiliations=pi_config["affiliations"],
-        role=["Principal Investigator"],
+        roles=["Principal Investigator"],
     )
     dataset = DatasetModel(
         schema_version="1.0",
@@ -428,9 +422,9 @@ def test_converter_pi_affiliation_extraction(basic_contact, pi_config, expected_
         stakeholders=[
             pi,
             Organization(
-                name="Test Org", description=None, contact=basic_contact, role=["Institution"], grant_number=None
+                name="Test Org", description=None, contact=basic_contact, roles=["Institution"], grant_number=None
             ),
-            Organization(name="Funder", description=None, contact=basic_contact, role=["Funder"], grant_number=None),
+            Organization(name="Funder", description=None, contact=basic_contact, roles=["Funder"], grant_number=None),
         ],
         spatial_coverage=None,
         version=None,
@@ -457,28 +451,30 @@ def test_converter_stakeholder_roles(basic_contact, basic_pi):
     # All stakeholder types in one test to reduce duplication
     institutions = [
         Organization(
-            name="University", description=None, contact=basic_contact, role=["Institution"], grant_number=None
+            name="University", description=None, contact=basic_contact, roles=["Institution"], grant_number=None
         ),
         Organization(
-            name="Research Center", description=None, contact=basic_contact, role=["Research Center"], grant_number=None
+            name="Research Center",
+            description=None,
+            contact=basic_contact,
+            roles=["Research Center"],
+            grant_number=None,
         ),
-        Organization(name="Clinical Site", description=None, contact=basic_contact, role=["Site"], grant_number=None),
+        Organization(name="Clinical Site", description=None, contact=basic_contact, roles=["Site"], grant_number=None),
     ]
-    researcher = Person(
-        first_name="Alice", last_name="Smith", honorific=None, other_names=[], affiliations=[], role=["Researcher"]
-    )
+    researcher = Person(name="Alice Smith", honorific=None, other_names=[], affiliations=[], roles=["Researcher"])
     collab_org = Organization(
         name="Partner Lab",
         description=None,
         contact=basic_contact,
-        role=["Collaborating Organization"],
+        roles=["Collaborating Organization"],
         grant_number=None,
     )
     org_funder = Organization(
-        name="Grant Agency", description=None, contact=basic_contact, role=["Grant Agency"], grant_number="GA-123"
+        name="Grant Agency", description=None, contact=basic_contact, roles=["Grant Agency"], grant_number="GA-123"
     )
     person_funder = Person(
-        first_name="John", last_name="Philanthropist", honorific=None, other_names=[], affiliations=[], role=["Funder"]
+        name="John Philanthropist", honorific=None, other_names=[], affiliations=[], roles=["Funder"]
     )
 
     dataset = DatasetModel(
@@ -537,8 +533,10 @@ def test_converter_publications_and_optional_params(basic_pi, basic_contact):
         keywords=[],
         stakeholders=[
             basic_pi,
-            Organization(name="Univ", description=None, contact=basic_contact, role=["Institution"], grant_number=None),
-            Organization(name="Funder", description=None, contact=basic_contact, role=["Funder"], grant_number=None),
+            Organization(
+                name="Univ", description=None, contact=basic_contact, roles=["Institution"], grant_number=None
+            ),
+            Organization(name="Funder", description=None, contact=basic_contact, roles=["Funder"], grant_number=None),
         ],
         spatial_coverage=None,
         version=None,

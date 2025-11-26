@@ -30,7 +30,7 @@ def test_dataset_model(basic_pi, basic_contact):
         name="Test University",
         description="Research institution",
         contact=Contact(email=["contact@test.edu"], address=None, phone=None),
-        role=["Institution"],
+        roles=["Institution"],
         grant_number=None,
     )
 
@@ -38,7 +38,7 @@ def test_dataset_model(basic_pi, basic_contact):
         name="National Science Foundation",
         description=None,
         contact=basic_contact,
-        role=["Funder"],
+        roles=["Funder"],
         grant_number="NSF-12345",
     )
 
@@ -218,7 +218,7 @@ def test_roundtrip_conversion(basic_pi, basic_contact):
         name="Test University",
         description="Research institution",
         contact=Contact(email=["contact@test.edu"], address=None, phone=None),
-        role=["Institution"],
+        roles=["Institution"],
         grant_number=None,
     )
 
@@ -226,7 +226,7 @@ def test_roundtrip_conversion(basic_pi, basic_contact):
         name="NIH",
         description=None,
         contact=basic_contact,
-        role=["Funder"],
+        roles=["Funder"],
         grant_number="R01-123456",
     )
 
