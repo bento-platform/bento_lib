@@ -18,3 +18,7 @@ def fixture_log_output():
 @pytest.fixture(autouse=True)
 def fixture_configure_structlog(log_output):
     structlog.configure(processors=[log_output])
+
+
+# Import provenance fixtures
+pytest_plugins = ["tests.test_provenance_fixtures"]
