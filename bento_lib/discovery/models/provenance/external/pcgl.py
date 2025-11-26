@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator, ConfigDict
 # =============================================================================
 # Enums and Literal Types
 # =============================================================================
-type StudyStatus = Literal["Ongoing", "Completed"]
-type StudyContext = Literal["Clinical", "Research"]
+type StudyStatus = Literal["ONGOING", "COMPLETED"]
+type StudyContext = Literal["CLINICAL", "RESEARCH"]
 
 
 # =============================================================================

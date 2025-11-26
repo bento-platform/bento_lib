@@ -181,6 +181,6 @@ class DatasetModel(BaseModel):
     domain: list[str] = Field(
         ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
     )
-    status: Literal["Ongoing", "Completed"]
-    context: Literal["Clinical", "Research"]
+    status: Literal["ONGOING", "COMPLETED"]
+    context: Literal["CLINICAL", "RESEARCH"]
     program_name: str | None = Field(None, description="The overarching program the study belongs to (if applicable)")
