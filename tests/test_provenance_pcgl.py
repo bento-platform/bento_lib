@@ -73,7 +73,7 @@ def test_pcgl_study_minimal():
         studyName="Minimal Study",
         studyDescription="Description",
         programName=None,
-        keywords=None,
+        keywords=[],
         status="Completed",
         context="Clinical",
         domain=["Other"],
@@ -81,14 +81,14 @@ def test_pcgl_study_minimal():
         participantCriteria=None,
         principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
-        collaborators=None,
+        collaborators=[],
         fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
-        publicationLinks=None,
+        publicationLinks=[],
     )
 
-    assert study.keywords is None
-    assert study.collaborators is None
-    assert study.publication_links is None
+    assert study.keywords == []
+    assert study.collaborators == []
+    assert study.publication_links == []
 
 
 def test_pcgl_study_validation_doi_links():
@@ -99,7 +99,7 @@ def test_pcgl_study_validation_doi_links():
             studyName="Test Study",
             studyDescription="Description",
             programName=None,
-            keywords=None,
+            keywords=[],
             status="Ongoing",
             context="Research",
             domain=["Cancer"],
@@ -107,7 +107,7 @@ def test_pcgl_study_validation_doi_links():
             participantCriteria=None,
             principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
             leadOrganizations=["Org"],
-            collaborators=None,
+            collaborators=[],
             fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
             publicationLinks=[HttpUrl("https://example.com/paper")],  # Not a DOI URL
         )
@@ -123,7 +123,7 @@ def test_pcgl_study_validation_empty_lists():
             studyName="Test Study",
             studyDescription="Description",
             programName=None,
-            keywords=None,
+            keywords=[],
             status="Ongoing",
             context="Research",
             domain=["Cancer"],
@@ -131,8 +131,8 @@ def test_pcgl_study_validation_empty_lists():
             participalCriteria=None,
             principalInvestigators=[],  # Empty list
             leadOrganizations=["Org"],
-            collaborators=None,
+            collaborators=[],
             fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
-            publicationLinks=None,
+            publicationLinks=[],
         )
     assert "at least 1 item" in str(exc.value).lower()

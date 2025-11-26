@@ -83,8 +83,8 @@ class Study(BaseModel):
     program_name: Optional[str] = Field(
         None, alias="programName", description="The overarching program the study belongs to (if applicable)"
     )
-    keywords: Optional[list[str]] = Field(
-        None, description="list of specific terms that describe the focus and content of the study"
+    keywords: list[str] = Field(
+        default_factory=list, description="list of specific terms that describe the focus and content of the study"
     )
 
     # =========================================================================
@@ -130,8 +130,8 @@ class Study(BaseModel):
         min_length=1,
         description="list of institutions or organizations leading the study",
     )
-    collaborators: Optional[list[Collaborator]] = Field(
-        None, description="list of researchers, institutions or companies involved in the study"
+    collaborators: list[Collaborator] = Field(
+        default_factory=list, description="list of researchers, institutions or companies involved in the study"
     )
 
     # =========================================================================
@@ -141,8 +141,8 @@ class Study(BaseModel):
     funding_sources: list[FundingSource] = Field(
         ..., alias="fundingSources", min_length=1, description="list of organizations or agencies funding the study"
     )
-    publication_links: Optional[list[HttpUrl]] = Field(
-        None,
+    publication_links: list[HttpUrl] = Field(
+        default_factory=list,
         alias="publicationLinks",
         description="list of URL links to academic papers or reports associated with the study (DOI URLs)",
     )
@@ -159,10 +159,8 @@ class Study(BaseModel):
 
     @field_validator("publication_links")
     @classmethod
-    def validate_doi_links(cls, v: Optional[list[HttpUrl]]) -> Optional[list[HttpUrl]]:
+    def validate_doi_links(cls, v: list[HttpUrl]) -> list[HttpUrl]:
         """Ensure publication links are DOI URLs"""
-        if v is None:
-            return v
         for url in v:
             url_str = str(url)
             if not url_str.startswith("https://doi.org/"):

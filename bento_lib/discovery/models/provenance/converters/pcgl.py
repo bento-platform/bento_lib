@@ -41,7 +41,7 @@ def dataset_to_pcgl_study(dataset: DatasetModel, study_id: str, dac_id: str) -> 
         studyName=dataset.title,
         studyDescription=dataset.description,
         programName=dataset.program_name,
-        keywords=keywords or None,
+        keywords=keywords,
         status=dataset.status,
         context=dataset.context,
         domain=domains,
@@ -49,9 +49,9 @@ def dataset_to_pcgl_study(dataset: DatasetModel, study_id: str, dac_id: str) -> 
         participantCriteria=_convert_participant_criteria(dataset.participant_criteria),
         principalInvestigators=principal_investigators,
         leadOrganizations=lead_organizations,
-        collaborators=_extract_collaborators(dataset.stakeholders) or None,
+        collaborators=_extract_collaborators(dataset.stakeholders),
         fundingSources=funding_sources,
-        publicationLinks=_extract_doi_publication_links(dataset.publications) or None,
+        publicationLinks=_extract_doi_publication_links(dataset.publications),
     )
 
 
@@ -68,7 +68,7 @@ def pcgl_study_to_dataset(
     counts: list | None = None,
 ) -> DatasetModel:
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
-    keywords: list[str | OntologyTerm] = list(study.keywords or [])
+    keywords: list[str | OntologyTerm] = list(study.keywords)
     domains: list[StudyDomain | Other] = [
         cast(StudyDomain, d) if d != "Other" else Other(other=d) for d in study.domain
     ]
@@ -96,17 +96,16 @@ def pcgl_study_to_dataset(
         for org_name in study.lead_organizations
     )
 
-    if study.collaborators:
-        stakeholders.extend(
-            Organization(
-                name=c.name,
-                description=None,
-                contact=Contact(email=[], address=None, phone=None),
-                roles=[cast(Role, c.role)] if c.role else [cast(Role, "Collaborating Organization")],
-                grant_number=None,
-            )
-            for c in study.collaborators
+    stakeholders.extend(
+        Organization(
+            name=c.name,
+            description=None,
+            contact=Contact(email=[], address=None, phone=None),
+            roles=[cast(Role, c.role)] if c.role else [cast(Role, "Collaborating Organization")],
+            grant_number=None,
         )
+        for c in study.collaborators
+    )
 
     stakeholders.extend(
         Organization(
@@ -130,7 +129,7 @@ def pcgl_study_to_dataset(
             journal=None,
             description=None,
         )
-        for url in (study.publication_links or [])
+        for url in study.publication_links
     ]
 
     return DatasetModel(

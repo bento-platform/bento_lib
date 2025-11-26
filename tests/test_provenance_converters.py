@@ -328,7 +328,7 @@ def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
         studyName="Other Study",
         studyDescription="Description",
         programName=None,
-        keywords=None,
+        keywords=[],
         status="Completed",
         context="Clinical",
         domain=["Other"],
@@ -336,9 +336,9 @@ def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
         participantCriteria=None,
         principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
-        collaborators=None,
+        collaborators=[],
         fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
-        publicationLinks=None,
+        publicationLinks=[],
     )
 
     dataset = pcgl_study_to_dataset(
@@ -360,7 +360,7 @@ def test_pcgl_study_to_dataset_no_criteria(basic_pi):
         studyName="Study",
         studyDescription="Description",
         programName=None,
-        keywords=None,
+        keywords=[],
         status="Ongoing",
         context="Research",
         domain=["Cancer"],
@@ -368,9 +368,9 @@ def test_pcgl_study_to_dataset_no_criteria(basic_pi):
         participantCriteria=None,
         principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
-        collaborators=None,
+        collaborators=[],
         fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
-        publicationLinks=None,
+        publicationLinks=[],
     )
 
     dataset = pcgl_study_to_dataset(
