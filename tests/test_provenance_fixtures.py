@@ -69,7 +69,7 @@ def minimal_dataset(basic_pi, basic_institution, basic_funder):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )

@@ -78,8 +78,8 @@ def test_dataset_to_pcgl_study(basic_pi, basic_contact):
             ParticipantCriteria(type="Exclusion", description="Pregnant individuals"),
         ],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name="Cancer Genomics Program",
     )
 
@@ -90,8 +90,8 @@ def test_dataset_to_pcgl_study(basic_pi, basic_contact):
     assert study.study_description == "A cancer genomics study"
     assert study.program_name == "Cancer Genomics Program"
     assert study.keywords == ["cancer", "genomics"]
-    assert study.status == "Ongoing"
-    assert study.context == "Research"
+    assert study.status == "ONGOING"
+    assert study.context == "RESEARCH"
     assert study.domain == ["Cancer"]
     assert study.dac_id == "DAC001"
     assert study.participant_criteria == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
@@ -119,8 +119,8 @@ def test_dataset_to_pcgl_study_with_ontology_keywords(basic_pi, basic_institutio
 def test_dataset_to_pcgl_study_with_other_domain(basic_pi, basic_institution, basic_funder, minimal_dataset):
     """Test conversion with custom domain string."""
     minimal_dataset.domain = ["Custom Domain"]
-    minimal_dataset.status = "Completed"
-    minimal_dataset.context = "Clinical"
+    minimal_dataset.status = "COMPLETED"
+    minimal_dataset.context = "CLINICAL"
 
     study = dataset_to_pcgl_study(minimal_dataset, study_id="S001", dac_id="D001")
     assert study.domain == ["Custom Domain"]
@@ -160,8 +160,8 @@ def test_dataset_to_pcgl_study_missing_pi(basic_contact):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 
@@ -198,8 +198,8 @@ def test_dataset_to_pcgl_study_missing_organization(basic_pi, basic_contact):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 
@@ -228,8 +228,8 @@ def test_dataset_to_pcgl_study_missing_funder(basic_pi, basic_institution):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 
@@ -246,8 +246,8 @@ def test_pcgl_study_to_dataset(basic_pi):
         studyDescription="A cancer genomics study",
         programName="Cancer Program",
         keywords=["cancer", "genomics"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         domain=["Cancer", "Population Genomics"],
         dacId="DAC001",
         participantCriteria="Inclusion: Adults 18+; Exclusion: Pregnant individuals",
@@ -278,8 +278,8 @@ def test_pcgl_study_to_dataset(basic_pi):
     assert dataset.description == "A cancer genomics study"
     assert dataset.program_name == "Cancer Program"
     assert dataset.keywords == ["cancer", "genomics"]
-    assert dataset.status == "Ongoing"
-    assert dataset.context == "Research"
+    assert dataset.status == "ONGOING"
+    assert dataset.context == "RESEARCH"
     assert dataset.domain[0] == "Cancer"
     assert dataset.domain[1] == "Population Genomics"
     assert dataset.release_date == date(2023, 1, 1)
@@ -328,8 +328,8 @@ def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
         studyDescription="Description",
         programName=None,
         keywords=[],
-        status="Completed",
-        context="Clinical",
+        status="COMPLETED",
+        context="CLINICAL",
         domain=["Custom Domain"],
         dacId="DAC002",
         participantCriteria=None,
@@ -359,8 +359,8 @@ def test_pcgl_study_to_dataset_no_criteria(basic_pi):
         studyDescription="Description",
         programName=None,
         keywords=[],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         domain=["Cancer"],
         dacId="DAC003",
         participantCriteria=None,
@@ -436,8 +436,8 @@ def test_converter_pi_affiliation_extraction(basic_contact, pi_config, expected_
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
     study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
@@ -493,8 +493,8 @@ def test_converter_stakeholder_roles(basic_contact, basic_pi):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 
@@ -569,8 +569,8 @@ def test_converter_publications_and_optional_params(basic_pi, basic_contact):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 

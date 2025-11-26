@@ -72,15 +72,15 @@ def test_dataset_model(basic_pi, basic_contact):
         last_modified=date(2023, 6, 1),
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name="Cancer Genomics Program",
     )
 
     assert dataset.title == "Test Study"
     assert len(dataset.stakeholders) == 3
-    assert dataset.status == "Ongoing"
-    assert dataset.context == "Research"
+    assert dataset.status == "ONGOING"
+    assert dataset.context == "RESEARCH"
     assert dataset.domain[0] == "Cancer"
 
 
@@ -104,8 +104,8 @@ def test_dataset_model_with_custom_domain(basic_pi):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Custom Domain"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 
@@ -136,8 +136,8 @@ def test_dataset_model_with_ontology_keywords(basic_pi):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Completed",
-        context="Clinical",
+        status="COMPLETED",
+        context="CLINICAL",
         program_name=None,
     )
 
@@ -168,8 +168,8 @@ def test_dataset_model_validation_domain_required(basic_pi):
             last_modified=date(2023, 1, 1),
             participant_criteria=[],
             domain=[],  # Empty domain should fail
-            status="Ongoing",
-            context="Research",
+            status="ONGOING",
+            context="RESEARCH",
             program_name=None,
         )
     assert "at least 1 item" in str(exc.value).lower()
@@ -201,8 +201,8 @@ def test_dataset_model_with_spatial_coverage_feature(basic_pi):
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name=None,
     )
 
@@ -259,8 +259,8 @@ def test_roundtrip_conversion(basic_pi, basic_contact):
             ParticipantCriteria(type="Inclusion", description="Adults 18+"),
         ],
         domain=["Cancer"],
-        status="Ongoing",
-        context="Research",
+        status="ONGOING",
+        context="RESEARCH",
         program_name="Cancer Program",
     )
 
