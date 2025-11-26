@@ -126,12 +126,27 @@ def test_license():
 
 def test_publication():
     """Test Publication model."""
+    author1 = Person(
+        name="Jane Smith",
+        honorific="Dr.",
+        other_names=[],
+        affiliations=["Test University"],
+        roles=["Researcher"],
+    )
+    author2 = Organization(
+        name="Research Institute",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        roles=["Institution"],
+        grant_number=None,
+    )
+
     pub = Publication(
         title="Test Study Results",
         url=HttpUrl("https://doi.org/10.1234/test"),
         doi="10.1234/test",
         publication_type="Journal Article",
-        authors=["Smith J", "Doe J"],
+        authors=[author1, author2],
         publication_date=date(2023, 1, 15),
         journal="Nature",
         description="Study description",
@@ -139,6 +154,10 @@ def test_publication():
     assert pub.title == "Test Study Results"
     assert pub.doi == "10.1234/test"
     assert len(pub.authors) == 2
+    assert isinstance(pub.authors[0], Person)
+    assert isinstance(pub.authors[1], Organization)
+    assert pub.authors[0].name == "Jane Smith"
+    assert pub.authors[1].name == "Research Institute"
 
 
 def test_publication_with_other_type():
@@ -155,6 +174,39 @@ def test_publication_with_other_type():
     )
     assert isinstance(pub.publication_type, Other)
     assert pub.publication_type.other == "Poster Presentation"
+
+
+def test_publication_with_mixed_authors(basic_contact):
+    """Test Publication with both Person and Organization authors."""
+    person_author = Person(
+        name="John Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        roles=["Researcher"],
+    )
+    org_author = Organization(
+        name="Collaborative Group",
+        description="A research consortium",
+        contact=basic_contact,
+        roles=["Collaborating Organization"],
+        grant_number=None,
+    )
+
+    pub = Publication(
+        title="Collaborative Study",
+        url=HttpUrl("https://doi.org/10.5678/collab"),
+        doi="10.5678/collab",
+        publication_type="Journal Article",
+        authors=[person_author, org_author],
+        publication_date=date(2024, 3, 15),
+        journal="Science",
+        description="A collaborative research paper",
+    )
+
+    assert len(pub.authors) == 2
+    assert isinstance(pub.authors[0], Person)
+    assert isinstance(pub.authors[1], Organization)
 
 
 def test_spatial_coverage_properties():
