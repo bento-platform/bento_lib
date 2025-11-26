@@ -13,7 +13,6 @@ from bento_lib.discovery.models.provenance import (
     License,
     Organization,
     ParticipantCriteria,
-    Person,
     Publication,
     Other,
     SpatialCoverageFeature,
