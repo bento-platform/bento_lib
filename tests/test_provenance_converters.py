@@ -14,7 +14,6 @@ from bento_lib.discovery.models.provenance import (
     ParticipantCriteria,
     Person,
     Publication,
-    Other,
 )
 from bento_lib.discovery.models.provenance.external.pcgl import (
     Study,
@@ -118,13 +117,13 @@ def test_dataset_to_pcgl_study_with_ontology_keywords(basic_pi, basic_institutio
 
 
 def test_dataset_to_pcgl_study_with_other_domain(basic_pi, basic_institution, basic_funder, minimal_dataset):
-    """Test conversion with Other domain (should become 'Other' string)."""
-    minimal_dataset.domain = [Other(other="Custom Domain")]
+    """Test conversion with custom domain string."""
+    minimal_dataset.domain = ["Custom Domain"]
     minimal_dataset.status = "Completed"
     minimal_dataset.context = "Clinical"
 
     study = dataset_to_pcgl_study(minimal_dataset, study_id="S001", dac_id="D001")
-    assert study.domain == ["Other"]
+    assert study.domain == ["Custom Domain"]
 
 
 def test_dataset_to_pcgl_study_missing_pi(basic_contact):
@@ -322,7 +321,7 @@ def test_pcgl_study_to_dataset(basic_pi):
 
 
 def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
-    """Test conversion with 'Other' domain (should become Other type)."""
+    """Test conversion with custom domain string."""
     study = Study(
         studyId="STUDY002",
         studyName="Other Study",
@@ -331,7 +330,7 @@ def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
         keywords=[],
         status="Completed",
         context="Clinical",
-        domain=["Other"],
+        domain=["Custom Domain"],
         dacId="DAC002",
         participantCriteria=None,
         principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
@@ -349,8 +348,7 @@ def test_pcgl_study_to_dataset_with_other_domain(basic_pi):
     )
 
     assert len(dataset.domain) == 1
-    assert isinstance(dataset.domain[0], Other)
-    assert dataset.domain[0].other == "Other"
+    assert dataset.domain[0] == "Custom Domain"
 
 
 def test_pcgl_study_to_dataset_no_criteria(basic_pi):

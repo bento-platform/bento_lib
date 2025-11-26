@@ -56,23 +56,6 @@ type Role = Literal[
     "Other",
 ]
 
-# Derived from PCGL Study Model
-type StudyDomain = Literal[
-    "Aging",
-    "Birth Defects",
-    "Cancer",
-    "Circulatory and Respiratory Health",
-    "General Health",
-    "Infection and Immunity",
-    "Musculoskeletal Health and Arthritis",
-    "Neurodevelopmental Conditions",
-    "Neurosciences, Mental Health and Addiction",
-    "Nutrition, Metabolism and Diabetes",
-    "Population Genomics",
-    "Rare Diseases",
-    "Other",  # Only for ingestion of data from pcgl, use the Other Model instead
-]
-
 type PublicationType = Literal[
     "Journal Article",
     "Preprint",
@@ -195,7 +178,7 @@ class DatasetModel(BaseModel):
     participant_criteria: list[ParticipantCriteria]
 
     # ----- PCGL Specific -----
-    domain: list[StudyDomain | Other] = Field(
+    domain: list[str] = Field(
         ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
     )
     status: Literal["Ongoing", "Completed"]

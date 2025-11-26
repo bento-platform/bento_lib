@@ -5,7 +5,6 @@ from .pcgl import (
     FundingSource,
     StudyStatus,
     StudyContext,
-    StudyDomain,
 )
 
 __all__ = [
@@ -15,5 +14,4 @@ __all__ = [
     "FundingSource",
     "StudyStatus",
     "StudyContext",
-    "StudyDomain",
 ]

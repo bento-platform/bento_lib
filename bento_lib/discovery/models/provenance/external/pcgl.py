@@ -10,21 +10,6 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator, ConfigDict
 # =============================================================================
 type StudyStatus = Literal["Ongoing", "Completed"]
 type StudyContext = Literal["Clinical", "Research"]
-type StudyDomain = Literal[
-    "Aging",
-    "Birth Defects",
-    "Cancer",
-    "Circulatory and Respiratory Health",
-    "General Health",
-    "Infection and Immunity",
-    "Musculoskeletal Health and Arthritis",
-    "Neurodevelopmental Conditions",
-    "Neurosciences, Mental Health and Addiction",
-    "Nutrition, Metabolism and Diabetes",
-    "Population Genomics",
-    "Rare Diseases",
-    "Other",
-]
 
 
 # =============================================================================
@@ -95,7 +80,7 @@ class Study(BaseModel):
     context: StudyContext = Field(
         ..., description="Indicate if the study was conducted in a clinical setting or as part of a research project"
     )
-    domain: list[StudyDomain] = Field(
+    domain: list[str] = Field(
         ..., min_length=1, description="list of specific scientific or clinical domains addressed by the study"
     )
 
