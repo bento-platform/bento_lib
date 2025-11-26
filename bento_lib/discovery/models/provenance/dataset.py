@@ -48,6 +48,7 @@ type Role = Literal[
     "Data Provider",
     "Data Controller",
     "Data Processor",
+    "Data Contributor",
     # External stakeholders
     "Partner",
     "Stakeholder",
