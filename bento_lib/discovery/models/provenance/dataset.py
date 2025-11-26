@@ -152,7 +152,7 @@ class Publication(BaseModel):
     url: HttpUrl
     doi: str | None
     publication_type: PublicationType | Other
-    authors: list[str] | None
+    authors: list["Person | Organization"] | None
     publication_date: date | None
     journal: str | None
     description: str | None
