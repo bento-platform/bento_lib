@@ -1614,6 +1614,63 @@ def test_converter_person_funder():
     assert "Grant Agency" in funder_names
 
 
+def test_converter_person_funder_only():
+    """Test converter with only Person funder (no Organization funder)."""
+    pi = Person(
+        first_name="Jane",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    person_funder = Person(
+        first_name="John",
+        last_name="Philanthropist",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Funder"],
+    )
+
+    institution = Organization(
+        name="University",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, person_funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert len(study.funding_sources) == 1
+    assert study.funding_sources[0].funder_name == "John Philanthropist"
+    assert study.funding_sources[0].grant_number is None
+
+
 def test_converter_non_doi_publications_filtered():
     """Test that non-DOI publications are filtered out in conversion."""
     pi = Person(
