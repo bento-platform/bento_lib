@@ -1,13 +1,11 @@
 """Tests for basic provenance models (DatasetModel, Contact, Person, Organization, etc.)."""
 
-import pytest
 from datetime import date
-from pydantic import HttpUrl, ValidationError
+from pydantic import HttpUrl
 from geojson_pydantic import Point
 
 from bento_lib.discovery.models.ontology import OntologyTerm
 from bento_lib.discovery.models.provenance import (
-    DatasetModel,
     Contact,
     Count,
     License,
