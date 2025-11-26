@@ -14,7 +14,6 @@ from bento_lib.discovery.models.provenance import (
     Organization,
     ParticipantCriteria,
     Publication,
-    Other,
     SpatialCoverageFeature,
     SpatialCoverageProperties,
 )
@@ -85,8 +84,8 @@ def test_dataset_model(basic_pi, basic_contact):
     assert dataset.domain[0] == "Cancer"
 
 
-def test_dataset_model_with_other_domain(basic_pi):
-    """Test DatasetModel with Other domain."""
+def test_dataset_model_with_custom_domain(basic_pi):
+    """Test DatasetModel with custom domain string."""
     dataset = DatasetModel(
         schema_version="1.0",
         title="Test Study",
@@ -104,14 +103,13 @@ def test_dataset_model_with_other_domain(basic_pi):
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
-        domain=[Other(other="Custom Domain")],
+        domain=["Custom Domain"],
         status="Ongoing",
         context="Research",
         program_name=None,
     )
 
-    assert isinstance(dataset.domain[0], Other)
-    assert dataset.domain[0].other == "Custom Domain"
+    assert dataset.domain[0] == "Custom Domain"
 
 
 def test_dataset_model_with_ontology_keywords(basic_pi):

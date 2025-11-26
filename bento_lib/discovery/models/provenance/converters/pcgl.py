@@ -13,16 +13,14 @@ from ..dataset import (
     ParticipantCriteria,
     Publication,
     Role,
-    StudyDomain,
 )
-from ..external.pcgl import Study, PrincipalInvestigator, Collaborator, FundingSource, StudyDomain as PCGLStudyDomain
+from ..external.pcgl import Study, PrincipalInvestigator, Collaborator, FundingSource
 from bento_lib.discovery.models.ontology import OntologyTerm
 
 
 def dataset_to_pcgl_study(dataset: DatasetModel, study_id: str, dac_id: str) -> Study:
     """Convert DatasetModel to PCGL Study. Requires study_id and dac_id (not in DatasetModel)."""
     keywords = [kw.label if isinstance(kw, OntologyTerm) else kw for kw in dataset.keywords]
-    domains: list[PCGLStudyDomain] = ["Other" if isinstance(d, Other) else d for d in dataset.domain]
 
     principal_investigators = _extract_principal_investigators(dataset.stakeholders)
     if not principal_investigators:
@@ -44,7 +42,7 @@ def dataset_to_pcgl_study(dataset: DatasetModel, study_id: str, dac_id: str) -> 
         keywords=keywords,
         status=dataset.status,
         context=dataset.context,
-        domain=domains,
+        domain=dataset.domain,
         dacId=dac_id,
         participantCriteria=_convert_participant_criteria(dataset.participant_criteria),
         principalInvestigators=principal_investigators,
@@ -69,9 +67,6 @@ def pcgl_study_to_dataset(
 ) -> DatasetModel:
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
     keywords: list[str | OntologyTerm] = list(study.keywords)
-    domains: list[StudyDomain | Other] = [
-        cast(StudyDomain, d) if d != "Other" else Other(other=d) for d in study.domain
-    ]
 
     stakeholders: list[Person | Organization] = []
     stakeholders.extend(
@@ -149,7 +144,7 @@ def pcgl_study_to_dataset(
         release_date=release_date,
         last_modified=last_modified,
         participant_criteria=_parse_participant_criteria(study.participant_criteria),
-        domain=domains,
+        domain=study.domain,
         status=study.status,
         context=study.context,
         program_name=study.program_name,

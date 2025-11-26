@@ -12,7 +12,6 @@ from .dataset import (
     Role,
     SpatialCoverageFeature,
     SpatialCoverageProperties,
-    StudyDomain,
 )
 
 __all__ = [
@@ -29,5 +28,4 @@ __all__ = [
     "Role",
     "SpatialCoverageFeature",
     "SpatialCoverageProperties",
-    "StudyDomain",
 ]
