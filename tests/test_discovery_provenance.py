@@ -14,6 +14,8 @@ from bento_lib.discovery.models.provenance import (
     Phone,
     Publication,
     Other,
+    SpatialCoverageFeature,
+    SpatialCoverageProperties,
 )
 from bento_lib.discovery.models.provenance.external.pcgl import (
     Study,
@@ -391,6 +393,87 @@ def test_dataset_model_validation_domain_required():
             program_name=None,
         )
     assert "at least 1 item" in str(exc.value).lower()
+
+
+def test_spatial_coverage_properties():
+    """Test SpatialCoverageProperties with name field."""
+    props = SpatialCoverageProperties(name="Canada")
+    assert props.name == "Canada"
+
+    # Test with extra fields (should be allowed)
+    props_with_extra = SpatialCoverageProperties(name="Ontario", region="North America", population=14000000)
+    assert props_with_extra.name == "Ontario"
+    assert props_with_extra.model_extra["region"] == "North America"  # type: ignore
+
+
+def test_spatial_coverage_feature():
+    """Test SpatialCoverageFeature with GeoJSON."""
+    from geojson_pydantic import Point
+
+    feature = SpatialCoverageFeature(
+        type="Feature",
+        geometry=Point(type="Point", coordinates=[-79.3832, 43.6532]),
+        properties=SpatialCoverageProperties(name="Toronto"),
+    )
+    assert feature.properties.name == "Toronto"
+    assert feature.geometry.type == "Point"
+    assert feature.geometry.coordinates.longitude == -79.3832
+    assert feature.geometry.coordinates.latitude == 43.6532
+
+
+def test_dataset_model_with_spatial_coverage_feature():
+    """Test DatasetModel with SpatialCoverageFeature."""
+    from geojson_pydantic import Point
+
+    primary_contact = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    pi = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    spatial_feature = SpatialCoverageFeature(
+        type="Feature",
+        geometry=Point(type="Point", coordinates=[-79.3832, 43.6532]),
+        properties=SpatialCoverageProperties(name="Toronto, Canada"),
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Toronto Study",
+        description="A study conducted in Toronto",
+        keywords=[],
+        stakeholders=[pi],
+        spatial_coverage=spatial_feature,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=primary_contact,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    assert isinstance(dataset.spatial_coverage, SpatialCoverageFeature)
+    assert dataset.spatial_coverage.properties.name == "Toronto, Canada"
 
 
 # =============================================================================
@@ -1141,3 +1224,579 @@ def test_roundtrip_conversion():
     assert roundtrip_dataset.program_name == original_dataset.program_name
     assert len(roundtrip_dataset.participant_criteria) == len(original_dataset.participant_criteria)
     assert len(roundtrip_dataset.publications) == len(original_dataset.publications)
+
+
+# =============================================================================
+# Test Converter Helper Functions and Edge Cases
+# =============================================================================
+
+
+def test_converter_person_with_organization_affiliation():
+    """Test converter extracts affiliation from Organization object."""
+    org = Organization(
+        name="Research Institute",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    pi = Person(
+        first_name="Alice",
+        last_name="Johnson",
+        honorific=None,
+        other_names=[],
+        affiliations=[org],  # Organization object as affiliation
+        role=["Principal Investigator"],
+    )
+
+    institution = Organization(
+        name="Test Org",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    funder = Organization(
+        name="Funder",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Funder"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert study.principal_investigators[0].affiliation == "Research Institute"
+
+
+def test_converter_pi_with_no_affiliation():
+    """Test converter handles PI with empty affiliations list."""
+    pi = Person(
+        first_name="Bob",
+        last_name="Smith",
+        honorific=None,
+        other_names=[],
+        affiliations=[],  # Empty affiliations
+        role=["Principal Investigator"],
+    )
+
+    institution = Organization(
+        name="Test Org",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    funder = Organization(
+        name="Funder",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Funder"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert study.principal_investigators[0].affiliation == ""
+
+
+def test_converter_multiple_lead_organizations():
+    """Test converter extracts multiple lead organizations with different leadership roles."""
+    pi = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    institution = Organization(
+        name="University",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    research_center = Organization(
+        name="Research Center",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Research Center"],
+        grant_number=None,
+    )
+
+    site = Organization(
+        name="Clinical Site",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Site"],
+        grant_number=None,
+    )
+
+    funder = Organization(
+        name="Funder",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Funder"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, research_center, site, funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert len(study.lead_organizations) == 3
+    assert set(study.lead_organizations) == {"University", "Research Center", "Clinical Site"}
+
+
+def test_converter_collaborators_person():
+    """Test converter extracts Person collaborators."""
+    pi = Person(
+        first_name="Jane",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    researcher = Person(
+        first_name="Alice",
+        last_name="Smith",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Researcher"],
+    )
+
+    institution = Organization(
+        name="University",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    funder = Organization(
+        name="Funder",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Funder"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, researcher, institution, funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert study.collaborators is not None
+    assert len(study.collaborators) == 1
+    assert study.collaborators[0].name == "Alice Smith"
+    assert study.collaborators[0].role == "Researcher"
+
+
+def test_converter_collaborating_organization():
+    """Test converter extracts collaborating organizations."""
+    pi = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    institution = Organization(
+        name="University",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    collaborator_org = Organization(
+        name="Partner Lab",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Collaborating Organization"],
+        grant_number=None,
+    )
+
+    funder = Organization(
+        name="Funder",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Funder"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, collaborator_org, funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert study.collaborators is not None
+    assert len(study.collaborators) == 1
+    assert study.collaborators[0].name == "Partner Lab"
+
+
+def test_converter_person_funder():
+    """Test converter extracts Person as funding source."""
+    pi = Person(
+        first_name="Jane",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    person_funder = Person(
+        first_name="Philanthropist",
+        last_name="Donor",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Sponsor"],
+    )
+
+    institution = Organization(
+        name="University",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    org_funder = Organization(
+        name="Grant Agency",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Grant Agency"],
+        grant_number="GA-123",
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, person_funder, org_funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert len(study.funding_sources) == 2
+    funder_names = {f.funder_name for f in study.funding_sources}
+    assert "Philanthropist Donor" in funder_names
+    assert "Grant Agency" in funder_names
+
+
+def test_converter_non_doi_publications_filtered():
+    """Test that non-DOI publications are filtered out in conversion."""
+    pi = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    institution = Organization(
+        name="University",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Institution"],
+        grant_number=None,
+    )
+
+    funder = Organization(
+        name="Funder",
+        description=None,
+        contact=Contact(email=[], address=None, phone=None),
+        role=["Funder"],
+        grant_number=None,
+    )
+
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Study",
+        description="Description",
+        keywords=[],
+        stakeholders=[pi, institution, funder],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=pi,
+        publications=[
+            Publication(
+                title="DOI Paper",
+                url=HttpUrl("https://doi.org/10.1234/doi"),
+                doi="10.1234/doi",
+                publication_type="Journal Article",
+                authors=None,
+                publication_date=None,
+                journal=None,
+                description=None,
+            ),
+            Publication(
+                title="Non-DOI Paper",
+                url=HttpUrl("https://example.com/paper"),
+                doi=None,
+                publication_type="Preprint",
+                authors=None,
+                publication_date=None,
+                journal=None,
+                description=None,
+            ),
+        ],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        domain=["Cancer"],
+        status="Ongoing",
+        context="Research",
+        program_name=None,
+    )
+
+    study = dataset_to_pcgl_study(dataset, study_id="S001", dac_id="D001")
+    assert len(study.publication_links) == 1
+    assert str(study.publication_links[0]) == "https://doi.org/10.1234/doi"
+
+
+def test_pcgl_to_dataset_with_empty_keywords():
+    """Test conversion with None keywords returns empty list."""
+    study = Study(
+        studyId="STUDY001",
+        studyName="Study",
+        studyDescription="Description",
+        programName=None,
+        keywords=None,  # None keywords
+        status="Ongoing",
+        context="Research",
+        domain=["Cancer"],
+        dacId="DAC001",
+        participantCriteria=None,
+        principalInvestigators=[PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Org")],
+        leadOrganizations=["Organization"],
+        collaborators=None,
+        fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
+        publicationLinks=None,
+    )
+
+    primary_contact = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    dataset = pcgl_study_to_dataset(
+        study=study,
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        primary_contact=primary_contact,
+    )
+
+    assert dataset.keywords == []
+
+
+def test_pcgl_to_dataset_with_optional_params():
+    """Test conversion with all optional parameters provided."""
+    study = Study(
+        studyId="STUDY001",
+        studyName="Study",
+        studyDescription="Description",
+        programName=None,
+        keywords=None,
+        status="Ongoing",
+        context="Research",
+        domain=["Cancer"],
+        dacId="DAC001",
+        participantCriteria=None,
+        principalInvestigators=[PrincipalInvestigator(first_name="John", last_name="Doe", affiliation="Org")],
+        leadOrganizations=["Organization"],
+        collaborators=None,
+        fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
+        publicationLinks=None,
+    )
+
+    primary_contact = Person(
+        first_name="John",
+        last_name="Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        role=["Principal Investigator"],
+    )
+
+    license_obj = License(
+        label="CC BY 4.0", type="Creative Commons", url=HttpUrl("https://creativecommons.org/licenses/by/4.0/")
+    )
+
+    dataset = pcgl_study_to_dataset(
+        study=study,
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        primary_contact=primary_contact,
+        data_access_links=[HttpUrl("https://example.com/data")],
+        spatial_coverage="Canada",
+        version="2.0",
+        privacy="Controlled",
+        license=license_obj,
+        counts=[Count(count_entity="samples", value=500, description="Total samples")],
+    )
+
+    assert dataset.spatial_coverage == "Canada"
+    assert dataset.version == "2.0"
+    assert dataset.privacy == "Controlled"
+    assert dataset.license == license_obj
+    assert len(dataset.counts) == 1
+    assert len(dataset.data_access_links) == 1
+
+
+def test_parse_participant_criteria_malformed():
+    """Test parsing participant criteria with malformed strings."""
+    from bento_lib.discovery.models.provenance.converters.pcgl import _parse_participant_criteria
+
+    # Missing colon
+    result = _parse_participant_criteria("Inclusion Adults 18+")
+    assert result == []
+
+    # Invalid type
+    result = _parse_participant_criteria("InvalidType: Some description")
+    assert result == []
+
+    # Mixed valid and invalid
+    result = _parse_participant_criteria("Inclusion: Valid; InvalidType: Invalid; Exclusion: Also valid")
+    assert len(result) == 2
+    assert result[0].type == "Inclusion"
+    assert result[1].type == "Exclusion"
