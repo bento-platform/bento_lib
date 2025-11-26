@@ -76,12 +76,11 @@ def pcgl_study_to_dataset(
     stakeholders: list[Person | Organization] = []
     stakeholders.extend(
         Person(
-            first_name=pi.first_name,
-            last_name=pi.last_name,
+            name=pi.name,
             honorific=None,
             other_names=[],
             affiliations=[pi.affiliation] if pi.affiliation else [],
-            role=["Principal Investigator"],
+            roles=["Principal Investigator"],
         )
         for pi in study.principal_investigators
     )
@@ -91,7 +90,7 @@ def pcgl_study_to_dataset(
             name=org_name,
             description=None,
             contact=Contact(email=[], address=None, phone=None),
-            role=["Institution"],
+            roles=["Institution"],
             grant_number=None,
         )
         for org_name in study.lead_organizations
@@ -103,7 +102,7 @@ def pcgl_study_to_dataset(
                 name=c.name,
                 description=None,
                 contact=Contact(email=[], address=None, phone=None),
-                role=[cast(Role, c.role)] if c.role else [cast(Role, "Collaborating Organization")],
+                roles=[cast(Role, c.role)] if c.role else [cast(Role, "Collaborating Organization")],
                 grant_number=None,
             )
             for c in study.collaborators
@@ -114,7 +113,7 @@ def pcgl_study_to_dataset(
             name=f.funder_name,
             description=None,
             contact=Contact(email=[], address=None, phone=None),
-            role=["Funder"],
+            roles=["Funder"],
             grant_number=f.grant_number,
         )
         for f in study.funding_sources
@@ -161,18 +160,18 @@ def pcgl_study_to_dataset(
 def _extract_principal_investigators(stakeholders: list[Organization | Person]) -> list[PrincipalInvestigator]:
     pis = []
     for s in stakeholders:
-        if isinstance(s, Person) and "Principal Investigator" in s.role:
+        if isinstance(s, Person) and "Principal Investigator" in s.roles:
             affiliation = ""
             if s.affiliations:
                 aff = s.affiliations[0]
                 affiliation = aff.name if isinstance(aff, Organization) else aff
-            pis.append(PrincipalInvestigator(first_name=s.first_name, last_name=s.last_name, affiliation=affiliation))
+            pis.append(PrincipalInvestigator(name=s.name, affiliation=affiliation))
     return pis
 
 
 def _extract_lead_organizations(stakeholders: list[Organization | Person]) -> list[str]:
     leadership_roles = {"Principal Investigator", "Sponsoring Organization", "Institution", "Research Center", "Site"}
-    return [s.name for s in stakeholders if isinstance(s, Organization) and any(r in leadership_roles for r in s.role)]
+    return [s.name for s in stakeholders if isinstance(s, Organization) and any(r in leadership_roles for r in s.roles)]
 
 
 def _extract_collaborators(stakeholders: list[Organization | Person]) -> list[Collaborator]:
@@ -181,13 +180,13 @@ def _extract_collaborators(stakeholders: list[Organization | Person]) -> list[Co
     collaborators = []
 
     for s in stakeholders:
-        relevant = [r for r in s.role if r not in excluded]
+        relevant = [r for r in s.roles if r not in excluded]
         if not relevant:
             continue
 
         if isinstance(s, Person):
-            collaborators.append(Collaborator(name=f"{s.first_name} {s.last_name}", role=relevant[0]))
-        elif isinstance(s, Organization) and not any(r in leadership for r in s.role):
+            collaborators.append(Collaborator(name=s.name, role=relevant[0]))
+        elif isinstance(s, Organization) and not any(r in leadership for r in s.roles):
             collaborators.append(Collaborator(name=s.name, role=relevant[0]))
 
     return collaborators
@@ -198,11 +197,11 @@ def _extract_funding_sources(stakeholders: list[Organization | Person]) -> list[
     funding = []
 
     for s in stakeholders:
-        if any(r in funding_roles for r in s.role):
+        if any(r in funding_roles for r in s.roles):
             if isinstance(s, Organization):
                 funding.append(FundingSource(funder_name=s.name, grant_number=s.grant_number))
             elif isinstance(s, Person):
-                funding.append(FundingSource(funder_name=f"{s.first_name} {s.last_name}", grant_number=None))
+                funding.append(FundingSource(funder_name=s.name, grant_number=None))
 
     return funding
 

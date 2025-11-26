@@ -16,12 +16,11 @@ def basic_contact():
 def basic_pi():
     """Reusable principal investigator."""
     return Person(
-        first_name="Jane",
-        last_name="Doe",
+        name="Jane Doe",
         honorific=None,
         other_names=[],
         affiliations=[],
-        role=["Principal Investigator"],
+        roles=["Principal Investigator"],
     )
 
 
@@ -32,7 +31,7 @@ def basic_institution(basic_contact):
         name="Test University",
         description=None,
         contact=basic_contact,
-        role=["Institution"],
+        roles=["Institution"],
         grant_number=None,
     )
 
@@ -44,7 +43,7 @@ def basic_funder(basic_contact):
         name="National Funder",
         description=None,
         contact=basic_contact,
-        role=["Funder"],
+        roles=["Funder"],
         grant_number="GRANT-123",
     )
 

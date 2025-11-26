@@ -33,11 +33,10 @@ type StudyDomain = Literal[
 class PrincipalInvestigator(BaseModel):
     """
     A lead researcher responsible for the study.
-    Format: FirstName LastName, Affiliation
+    Format: Name, Affiliation
     """
 
-    first_name: str = Field(..., description="First name of the investigator")
-    last_name: str = Field(..., description="Last name of the investigator")
+    name: str = Field(..., description="Full name of the investigator")
     affiliation: str = Field(..., description="Institution or organization affiliation")
 
 
