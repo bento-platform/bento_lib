@@ -128,7 +128,7 @@ def test_pcgl_study_validation_empty_lists():
             context="RESEARCH",
             domain=["Cancer"],
             dacId="DAC004",
-            participalCriteria=None,
+            participantCriteria=None,
             principalInvestigators=[],  # Empty list
             leadOrganizations=["Org"],
             collaborators=[],
@@ -136,3 +136,26 @@ def test_pcgl_study_validation_empty_lists():
             publicationLinks=[],
         )
     assert "at least 1 item" in str(exc.value).lower()
+
+
+def test_pcgl_study_validation_invalid_domain():
+    """Test that domain values must be from the allowed list."""
+    with pytest.raises(ValidationError) as exc:
+        Study(
+            studyId="STUDY005",
+            studyName="Test Study",
+            studyDescription="Description",
+            programName=None,
+            keywords=[],
+            status="ONGOING",
+            context="RESEARCH",
+            domain=["InvalidDomain"],  # Not in the StudyDomain literal
+            dacId="DAC005",
+            participantCriteria=None,
+            principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
+            leadOrganizations=["Org"],
+            collaborators=[],
+            fundingSources=[FundingSource(funder_name="Funder", grant_number=None)],
+            publicationLinks=[],
+        )
+    assert "domain" in str(exc.value).lower()
