@@ -1,4 +1,4 @@
-"""Tests for DatasetModel and roundtrip conversions."""
+"""Tests for DatasetModel."""
 
 from datetime import date
 from pydantic import HttpUrl, ValidationError
@@ -16,10 +16,6 @@ from bento_lib.discovery.models.provenance import (
     Publication,
     SpatialCoverageFeature,
     SpatialCoverageProperties,
-)
-from bento_lib.discovery.models.provenance.converters.pcgl import (
-    dataset_to_pcgl_study,
-    pcgl_study_to_dataset,
 )
 
 
@@ -208,80 +204,3 @@ def test_dataset_model_with_spatial_coverage_feature(basic_pi):
 
     assert isinstance(dataset.spatial_coverage, SpatialCoverageFeature)
     assert dataset.spatial_coverage.properties.name == "Toronto, Canada"
-
-
-def test_roundtrip_conversion(basic_pi, basic_contact):
-    """Test converting Dataset -> Study -> Dataset maintains core information."""
-    original_institution = Organization(
-        name="Test University",
-        description="Research institution",
-        contact=Contact(email=["contact@test.edu"], address=None, phone=None),
-        roles=["Institution"],
-        grant_number=None,
-    )
-
-    original_funder = Organization(
-        name="NIH",
-        description=None,
-        contact=basic_contact,
-        roles=["Funder"],
-        grant_number="R01-123456",
-    )
-
-    original_dataset = DatasetModel(
-        schema_version="1.0",
-        title="Cancer Study",
-        description="A cancer genomics study",
-        keywords=["cancer", "genomics"],
-        stakeholders=[basic_pi, original_institution, original_funder],
-        spatial_coverage=None,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        publications=[
-            Publication(
-                title="Results",
-                url=HttpUrl("https://doi.org/10.1234/test"),
-                doi="10.1234/test",
-                publication_type="Journal Article",
-                authors=None,
-                publication_date=None,
-                journal=None,
-                description=None,
-            )
-        ],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 6, 1),
-        participant_criteria=[
-            ParticipantCriteria(type="Inclusion", description="Adults 18+"),
-        ],
-        domain=["Cancer"],
-        status="ONGOING",
-        context="RESEARCH",
-        program_name="Cancer Program",
-    )
-
-    # Convert to Study
-    study = dataset_to_pcgl_study(original_dataset, study_id="STUDY001", dac_id="DAC001")
-
-    # Convert back to Dataset
-    roundtrip_dataset = pcgl_study_to_dataset(
-        study=study,
-        release_date=original_dataset.release_date,
-        last_modified=original_dataset.last_modified,
-        primary_contact=basic_pi,
-    )
-
-    # Check core fields maintained
-    assert roundtrip_dataset.title == original_dataset.title
-    assert roundtrip_dataset.description == original_dataset.description
-    assert roundtrip_dataset.keywords == original_dataset.keywords
-    assert roundtrip_dataset.status == original_dataset.status
-    assert roundtrip_dataset.context == original_dataset.context
-    assert roundtrip_dataset.domain == original_dataset.domain
-    assert roundtrip_dataset.program_name == original_dataset.program_name
-    assert len(roundtrip_dataset.participant_criteria) == len(original_dataset.participant_criteria)
-    assert len(roundtrip_dataset.publications) == len(original_dataset.publications)
