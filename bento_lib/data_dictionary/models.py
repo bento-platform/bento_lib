@@ -1,3 +1,4 @@
+from jsonschema import Draft202012Validator
 from pydantic import BaseModel, Field, computed_field
 from typing import Literal
 
@@ -94,3 +95,11 @@ class DataDictionary(BaseModel):
             "required": required,
             "additionalProperties": self.additional_properties,
         }
+
+    def as_json_schema_validator(self, lang: str) -> Draft202012Validator:
+        """
+        TODO
+        :param lang: TODO
+        :return: TODO
+        """
+        return Draft202012Validator(schema=self.as_json_schema(lang=lang))
