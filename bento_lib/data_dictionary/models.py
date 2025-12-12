@@ -20,9 +20,23 @@ class DataDictionaryField(BaseModel):
     description: PossiblyI18nText = ""
     unit: object | str | None = None
     # TODO: defaults to False unless enum is set, but can be overridden to True even with no specified enum:
-    categorical: bool
-    # TODO: one of the following
-    enum: list | None = None  # TODO: validate against data type
+    # categorical:
+    #  - in a Bento discovery configuration context, this is equivalent to "config": { "enum": null } on a string field,
+    #    meaning (in a Bento discovery context) that the data is categorical but we need to extract already-ingested
+    #    categorical values from the database if we wanted to render a bar or pie chart.
+    categorical: bool = Field(
+        ...,
+        title="Categorical",
+        description=(
+            "Whether the field represents categorical data, even if a predefined list of values (enum) is not "
+            "specified."
+        ),
+    )
+    # TODO: one of the following: enum or pattern
+    # TODO: validate against data type
+    enum: list | None = Field(
+        default=None, title="Enum", description="List of possible (allowed) values for the field."
+    )
     enum_labels: dict[str | int, PossiblyI18nText]  # TODO: only for string | int | float | ontology_class.id
     pattern: str | None  # TODO: pattern meta-pattern?
     # ---
@@ -52,16 +66,34 @@ class DataDictionaryField(BaseModel):
             case _:
                 return None
 
+    def as_json_schema(self, lang: str) -> dict:
+        """
+        TODO
+        :param lang: TODO
+        :return: TODO
+        """
+
+        f_desc = i18n_value(self.description, lang)
+
+        return {
+            "type": self.json_schema_type,
+            **({"description": f_desc} if f_desc else {}),
+            **({"enum": self.enum} if self.enum else {}),
+            **({"pattern": self.pattern} if self.pattern else {}),
+            **({"format": self.json_schema_format} if self.json_schema_format else {}),
+        }
+
 
 class DataDictionary(BaseModel):
-    title: PossiblyI18nText = ""
-    description: PossiblyI18nText = ""
-    fields: list[DataDictionaryField]
+    title: PossiblyI18nText = ""  # Equivalent to Semantic Engine "Schema title"
+    description: PossiblyI18nText = ""  # Equivalent to Semantic Engine "Schema description"
+    fields: list[DataDictionaryField]  # Equivalent to Semantic Engine attributes
     additional_properties: bool = False
 
     def as_json_schema(self, lang: str) -> dict:
         """
-        TODO
+        Generate a JSON schema representation of the data dictionary, for validating whether JSON object records match
+        the data dictionary's described fields.
         :param lang: TODO
         :return: TODO
         """
@@ -75,16 +107,7 @@ class DataDictionary(BaseModel):
         for f in self.fields:
             if f.required:
                 required.append(f.key)
-
-            f_desc = i18n_value(f.description, lang)
-
-            properties[f.key] = {
-                "type": f.json_schema_type,
-                **({"description": f_desc} if f_desc else {}),
-                **({"enum": f.enum} if f.enum else {}),
-                **({"pattern": f.pattern} if f.pattern else {}),
-                **({"format": f.json_schema_format} if f.json_schema_format else {}),
-            }
+            properties[f.key] = f.as_json_schema(lang)
 
         return {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
