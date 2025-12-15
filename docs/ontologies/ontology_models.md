@@ -2,7 +2,7 @@
 
 ## Defining ontology classes and resources
 
-Models and Python typed dictionary definitions for ontology classes (modeled after the Phenopackets V2 
+Models and Python typed dictionary definitions for ontology classes (modeled aftert the Phenopackets V2 
 [`OntologyClass`](https://phenopacket-schema.readthedocs.io/en/latest/ontologyclass.html) element) and ontology resources
 (modeled after the Phenopackets V2 [`Resource`](https://phenopacket-schema.readthedocs.io/en/latest/resource.html)) 
 element.
@@ -41,7 +41,21 @@ NCBI_TAXON.make_class("NCBITaxon:9606", "Homo sapiens")
 # The above is generated as a models.ResourceOntologyClass, as it is linked to a specific resource.
 ```
 
-We can optionally version an ontology resource
+We can optionally version an ontology resource using the `<resource>.as_versioned(<url>, <version>)` method to attach
+a specific version to a resource, which is useful for generating Katsu-compatible resource records and in general for
+keeping datasets properly "frozen" and avoiding references becoming broken:
+
+```python
+NCBI_TAXON_2025_12_03 = NCBI_TAXON.as_versioned(
+    url="https://purl.obolibrary.org/obo/ncbitaxon/2025-12-03/ncbitaxon.owl",
+    version="2025-12-03",
+)
+
+NCBI_TAXON_2025_12_03.make_class("NCBITaxon:9606", "Homo sapiens")
+```
+
+Note that none of these `make_class` methods **validate what is inside the .owl file**; this is left to the person 
+producing the file these classes are used in.
 
 
 ##  Common ontology resources and classes
