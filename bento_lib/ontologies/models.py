@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 from .types import PhenoV2Resource, PhenoV2OntologyClassDict
@@ -7,8 +9,8 @@ __all__ = [
     "CURIE_PATTERN",
     "OntologyResource",
     "VersionedOntologyResource",
-    "OntologyTerm",
-    "ResourceOntologyTerm",
+    "OntologyClass",
+    "ResourceOntologyClass",
 ]
 
 NC_NAME_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9.\-_]*$"
@@ -39,7 +41,7 @@ class OntologyResource(BaseModel):
     #   purely for information purposes and software should not encode any assumptions."
     name: str = Field(..., title="Name", description="Ontology name, e.g., The Human Phenotype Ontology", min_length=1)
     url: HttpUrl = Field(..., title="URL", description="URL to the machine-readable ontology definition file")
-    # From Phenopackets v2: "The prefix used in the CURIE of an OntologyClass e.g. HP, MP, ECO for example an HPO term
+    # From Phenopackets v2: "The prefix used in the CURIE of an OntologyClass e.g. HP, MP, ECO for example an HPO class
     #   will have a CURIE like this - HP:0012828 which should be used in combination with the iri_prefix to form a
     #   fully-resolvable IRI."
     # Since we use it in a CURIE prefix context, it must match a valid NCName:
@@ -47,23 +49,23 @@ class OntologyResource(BaseModel):
     namespace_prefix: str = Field(
         ...,
         title="Namespace prefix",
-        description="Prefix used in the CURIE of an ontology term",
+        description="Prefix used in the CURIE of an ontology class",
         pattern=NC_NAME_PATTERN,
     )
     iri_prefix: HttpUrl = Field(
         ...,
         title="IRI prefix",
-        description="URL prefix used in combination with part of a CURIE to fully resolve an ontology term",
+        description="URL prefix used in combination with part of a CURIE to fully resolve an ontology class",
     )
 
     repository_url: HttpUrl | None = Field(
         default=None, title="Repository URL", description="Development repository URL, useful for tracking new versions"
     )
 
-    def make_term(self, id_: str, label: str) -> "ResourceOntologyTerm":
-        return ResourceOntologyTerm(ontology=self, id=id_, label=label)
+    def make_class(self, id_: str, label: str) -> ResourceOntologyClass:
+        return ResourceOntologyClass(ontology=self, id=id_, label=label)
 
-    def as_versioned(self, url: str, version: str) -> "VersionedOntologyResource":
+    def as_versioned(self, url: str, version: str) -> VersionedOntologyResource:
         return VersionedOntologyResource(
             **self.model_dump(include={"id", "name", "namespace_prefix", "iri_prefix"}),
             url=HttpUrl(url),
@@ -83,32 +85,32 @@ class VersionedOntologyResource(OntologyResource):
         return self.model_dump(mode="json", include={"id", "version", "name", "url", "namespace_prefix", "iri_prefix"})
 
 
-class OntologyTerm(BaseModel):
+class OntologyClass(BaseModel):
     """
-    Model for an ontology term, with a CURIE ID and a label. Inspired by the Phenopackets v2 OntologyClass model:
+    Model for an ontology class, with a CURIE ID and a label. Inspired by the Phenopackets v2 OntologyClass model:
     https://phenopacket-schema.readthedocs.io/en/latest/ontologyclass.html
     """
 
-    id: str = Field(..., pattern=CURIE_PATTERN, title="ID", description="CURIE-formatted ontology term ID")
-    label: str = Field(..., title="Label", description="Human-readable label for the ontology term")
+    id: str = Field(..., pattern=CURIE_PATTERN, title="ID", description="CURIE-formatted ontology class ID")
+    label: str = Field(..., title="Label", description="Human-readable label for the ontology class")
+
+    def to_phenopackets_repr(self) -> PhenoV2OntologyClassDict:
+        return self.model_dump(mode="json", include={"id", "label"})
 
 
-class ResourceOntologyTerm(OntologyTerm):
+class ResourceOntologyClass(OntologyClass):
     """
-    Ontology term with a back-reference to a descriptor for the versioned ontology resource the term is from.
+    Ontology class with a back-reference to a descriptor for the versioned ontology resource the class is from.
     """
 
     ontology: OntologyResource = Field(
         ...,
         title="Ontology resource",
-        description="Ontology resource where the term comes from (either versioned or unversioned).",
+        description="Ontology resource where the class comes from (either versioned or unversioned).",
     )
 
     @model_validator(mode="after")
-    def check_curie(self) -> "ResourceOntologyTerm":
+    def check_curie(self) -> "ResourceOntologyClass":
         if not self.id.startswith(self.ontology.namespace_prefix + ":"):
-            raise ValueError("term CURIE must start with ontology resource namespace prefix")
+            raise ValueError("class CURIE must start with ontology resource namespace prefix")
         return self
-
-    def to_phenopackets_repr(self) -> PhenoV2OntologyClassDict:
-        return self.model_dump(mode="json", include={"id", "label"})
