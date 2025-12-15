@@ -134,8 +134,8 @@ configuration and formatting, including structured logging using
 
 ### `ontologies`
 
-`ontologies` contains models, types, and helpers for working with ontology terms,
-especially in the context of terms which must be eventually ingested into 
+`ontologies` contains models, types, and helpers for working with ontology classes,
+especially in the context of classes which must be eventually ingested into 
 [Katsu](https://github.com/bento-platform/katsu).
 
 ### `responses`
