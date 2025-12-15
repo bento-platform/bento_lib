@@ -138,6 +138,10 @@ configuration and formatting, including structured logging using
 especially in the context of classes which must be eventually ingested into 
 [Katsu](https://github.com/bento-platform/katsu).
 
+#### Guides
+
+* [Ontology resource and ontology class models](./docs/ontologies/ontology_models.md)
+
 ### `responses`
 
 `responses` contains standardized error message-generating functions 
