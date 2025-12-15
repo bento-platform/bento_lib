@@ -11,6 +11,7 @@ from bento_lib.discovery.models.provenance import (
     Contact,
     Count,
     License,
+    Logo,
     Organization,
     ParticipantCriteria,
     Publication,
@@ -67,17 +68,17 @@ def test_dataset_model(basic_pi, basic_contact):
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 6, 1),
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
-        domain=["Cancer"],
-        status="ONGOING",
-        context="RESEARCH",
-        program_name="Cancer Genomics Program",
+        pcgl_domain=["Cancer"],
+        pcgl_status="ONGOING",
+        pcgl_context="RESEARCH",
+        pcgl_program_name="Cancer Genomics Program",
     )
 
     assert dataset.title == "Test Study"
     assert len(dataset.stakeholders) == 3
-    assert dataset.status == "ONGOING"
-    assert dataset.context == "RESEARCH"
-    assert dataset.domain[0] == "Cancer"
+    assert dataset.pcgl_status == "ONGOING"
+    assert dataset.pcgl_context == "RESEARCH"
+    assert dataset.pcgl_domain[0] == "Cancer"
 
 
 def test_dataset_model_with_custom_domain(basic_pi):
@@ -99,13 +100,13 @@ def test_dataset_model_with_custom_domain(basic_pi):
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
-        domain=["Custom Domain"],
-        status="ONGOING",
-        context="RESEARCH",
-        program_name=None,
+        pcgl_domain=["Custom Domain"],
+        pcgl_status="ONGOING",
+        pcgl_context="RESEARCH",
+        pcgl_program_name=None,
     )
 
-    assert dataset.domain[0] == "Custom Domain"
+    assert dataset.pcgl_domain[0] == "Custom Domain"
 
 
 def test_dataset_model_with_ontology_keywords(basic_pi):
@@ -131,10 +132,10 @@ def test_dataset_model_with_ontology_keywords(basic_pi):
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
-        domain=["Cancer"],
-        status="COMPLETED",
-        context="CLINICAL",
-        program_name=None,
+        pcgl_domain=["Cancer"],
+        pcgl_status="COMPLETED",
+        pcgl_context="CLINICAL",
+        pcgl_program_name=None,
     )
 
     assert len(dataset.keywords) == 3
@@ -163,10 +164,10 @@ def test_dataset_model_validation_domain_required(basic_pi):
             release_date=date(2023, 1, 1),
             last_modified=date(2023, 1, 1),
             participant_criteria=[],
-            domain=[],  # Empty domain should fail
-            status="ONGOING",
-            context="RESEARCH",
-            program_name=None,
+            pcgl_domain=[],  # Empty domain should fail
+            pcgl_status="ONGOING",
+            pcgl_context="RESEARCH",
+            pcgl_program_name=None,
         )
     assert "at least 1 item" in str(exc.value).lower()
 
@@ -196,11 +197,56 @@ def test_dataset_model_with_spatial_coverage_feature(basic_pi):
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 1, 1),
         participant_criteria=[],
-        domain=["Cancer"],
-        status="ONGOING",
-        context="RESEARCH",
-        program_name=None,
+        pcgl_domain=["Cancer"],
+        pcgl_status="ONGOING",
+        pcgl_context="RESEARCH",
+        pcgl_program_name=None,
     )
 
     assert isinstance(dataset.spatial_coverage, SpatialCoverageFeature)
     assert dataset.spatial_coverage.properties.name == "Toronto, Canada"
+
+
+def test_dataset_model_with_logos(basic_pi):
+    """Test DatasetModel with Logo support."""
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Test Study",
+        description="Test",
+        keywords=[],
+        stakeholders=[basic_pi],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=basic_pi,
+        publications=[],
+        logos=[
+            Logo(
+                url=HttpUrl("https://example.com/logo-light.png"),
+                theme="light",
+                description="Light theme logo",
+            ),
+            Logo(
+                url=HttpUrl("https://example.com/logo-dark.png"),
+                theme="dark",
+                description="Dark theme logo",
+            ),
+        ],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        pcgl_domain=["Cancer"],
+        pcgl_status="ONGOING",
+        pcgl_context="RESEARCH",
+        pcgl_program_name=None,
+    )
+
+    assert dataset.logos is not None
+    assert len(dataset.logos) == 2
+    assert dataset.logos[0].theme == "light"
+    assert dataset.logos[1].theme == "dark"
+    assert dataset.logos[0].url == HttpUrl("https://example.com/logo-light.png")
+    assert dataset.logos[1].url == HttpUrl("https://example.com/logo-dark.png")
