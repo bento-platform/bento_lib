@@ -1,7 +1,6 @@
 import re
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
-from typing import Annotated, Literal, get_args
-from typing_extensions import Self  # TODO: py3.11+ from typing
+from typing import Annotated, Literal, Self, get_args
 from ..types import DiscoveryEntity
 from ._internal import NoAdditionalProperties
 

@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 import contextlib
 
+from logging import Logger
 from structlog.stdlib import BoundLogger
 from typing import AsyncIterator
 from urllib.parse import urljoin
@@ -25,8 +26,12 @@ class ServiceManager:
     accessing Bento service definitions, an aggregation of /service-info endpoints, and service data types.
     """
 
-    def __init__(self, logger: BoundLogger, request_timeout: int, service_registry_url: str, verify_ssl: bool = True):
-        self._logger: BoundLogger = logger
+    def __init__(
+        self, logger: Logger | BoundLogger, request_timeout: int, service_registry_url: str, verify_ssl: bool = True
+    ):
+        # TODO: convert back to structlog only when all services are migrated
+        self._logger: Logger | BoundLogger = logger
+        self._is_structlog: bool = not isinstance(self._logger, Logger)
 
         self._service_registry_url: str = service_registry_url.rstrip("/") + "/"
         self._timeout: int = request_timeout
@@ -83,11 +88,15 @@ class ServiceManager:
             url = urljoin(self._service_registry_url, "bento-services")
             async with session.get(url, headers=headers) as r:
                 body = await r.json()
-                logger = self._logger.bind(bento_services_status=r.status, bento_services_body=body)
+                logger = (
+                    self._logger.bind(bento_services_status=r.status, bento_services_body=body)
+                    if self._is_structlog
+                    else self._logger
+                )
 
                 if not r.ok:
                     err = "recieved error response from service registry while fetching Bento services"
-                    await logger.aerror(err)
+                    logger.error(err)  # TODO: async when structlog only
                     self._bento_service_dict = {}
                     self._bento_service_by_kind = {}
                     raise ServiceManagerError(err)
@@ -98,7 +107,7 @@ class ServiceManager:
             self._bento_service_by_kind = {s["service_kind"]: s for s in bento_services.values()}
             return bento_services
 
-        await logger.awarning("got empty Bento service response from service registry")
+        logger.warning("got empty Bento service response from service registry")  # TODO: async when structlog only
         return {}
 
     async def get_bento_service_record_by_kind(
@@ -162,11 +171,15 @@ class ServiceManager:
             url = urljoin(self._service_registry_url, "services")
             async with session.get(url, headers=headers) as r:
                 body = await r.json()
-                logger = self._logger.bind(service_list_status=r.status, service_list_body=body)
+                logger = (
+                    self._logger.bind(service_list_status=r.status, service_list_body=body)
+                    if self._is_structlog
+                    else self._logger
+                )
 
                 if not r.ok:
                     err = "recieved error response from service registry while fetching service list"
-                    await logger.aerror(err)
+                    logger.error(err)  # TODO: async when structlog only
                     self._service_list = []
                     self._service_by_kind = {}
                     raise ServiceManagerError(err)
@@ -179,7 +192,7 @@ class ServiceManager:
             }
             return service_list
 
-        await logger.awarning("got empty service list response from service registry")
+        logger.warning("got empty service list response from service registry")  # TODO: async when structlog only
         return []
 
     async def get_service_info_by_kind(
@@ -229,7 +242,11 @@ class ServiceManager:
             async with s.get(dt_url, headers=headers) as r:
                 if not r.ok:
                     err = "recieved error from data-types URL"
-                    await self._logger.aerror(err, url=dt_url, status=r.status, body=await r.json())
+                    log_data = dict(url=dt_url, status=r.status, body=await r.json())
+                    # TODO: async when structlog only:
+                    self._logger.error(err, **log_data) if self._is_structlog else self._logger.error(
+                        f"{err} %s", log_data
+                    )
                     raise ServiceManagerError(err)
                 service_dts: list[BentoDataTypeServiceListing] = await r.json()
 
