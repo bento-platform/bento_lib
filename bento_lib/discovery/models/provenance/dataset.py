@@ -141,6 +141,18 @@ class Publication(BaseModel):
     description: str | None
 
 
+class Logo(BaseModel):
+    """
+    Logo resource with optional theme-specific variants.
+
+    Supports light/dark theme variants for optimal display across different UI themes.
+    """
+
+    url: HttpUrl
+    theme: Literal["light", "dark", "default"] | None = None
+    description: str | None = None
+
+
 class SpatialCoverageProperties(BaseModel):
     """Properties for spatial coverage GeoJSON with required name field."""
 
@@ -172,15 +184,18 @@ class DatasetModel(BaseModel):
     primary_contact: Person | Organization
 
     publications: list[Publication]
+    logos: list[Logo] | None = None
     data_access_links: list[HttpUrl]
     release_date: date
     last_modified: date
     participant_criteria: list[ParticipantCriteria]
 
     # ----- PCGL Specific -----
-    domain: list[str] = Field(
+    pcgl_domain: list[str] = Field(
         ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
     )
-    status: Literal["ONGOING", "COMPLETED"]
-    context: Literal["CLINICAL", "RESEARCH"]
-    program_name: str | None = Field(None, description="The overarching program the study belongs to (if applicable)")
+    pcgl_status: Literal["ONGOING", "COMPLETED"]
+    pcgl_context: Literal["CLINICAL", "RESEARCH"]
+    pcgl_program_name: str | None = Field(
+        None, description="The overarching program the study belongs to (if applicable)"
+    )

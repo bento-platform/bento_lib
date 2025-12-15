@@ -109,10 +109,10 @@ def pcgl_study_to_dataset(
         release_date=release_date,
         last_modified=last_modified,
         participant_criteria=_parse_participant_criteria(study.participant_criteria),
-        domain=study.domain,
-        status=study.status,
-        context=study.context,
-        program_name=study.program_name,
+        pcgl_domain=list(study.domain),  # Convert list[StudyDomain] to list[str]
+        pcgl_status=study.status,
+        pcgl_context=study.context,
+        pcgl_program_name=study.program_name,
     )
 
 
