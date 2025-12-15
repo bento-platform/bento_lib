@@ -250,3 +250,41 @@ def test_dataset_model_with_logos(basic_pi):
     assert dataset.logos[1].theme == "dark"
     assert dataset.logos[0].url == HttpUrl("https://example.com/logo-light.png")
     assert dataset.logos[1].url == HttpUrl("https://example.com/logo-dark.png")
+
+
+def test_dataset_model_with_extra_properties(basic_pi):
+    """Test DatasetModel with extra_properties for custom metadata."""
+    dataset = DatasetModel(
+        schema_version="1.0",
+        title="Test Study",
+        description="Test",
+        keywords=[],
+        stakeholders=[basic_pi],
+        spatial_coverage=None,
+        version=None,
+        privacy=None,
+        license=None,
+        counts=[],
+        primary_contact=basic_pi,
+        publications=[],
+        data_access_links=[],
+        release_date=date(2023, 1, 1),
+        last_modified=date(2023, 1, 1),
+        participant_criteria=[],
+        pcgl_domain=["Cancer"],
+        pcgl_status="ONGOING",
+        pcgl_context="RESEARCH",
+        pcgl_program_name=None,
+        extra_properties={
+            "custom_field": "custom_value",
+            "sample_size": 1000,
+            "is_multi_site": True,
+            "completion_rate": 87.5,
+        },
+    )
+
+    assert dataset.extra_properties is not None
+    assert dataset.extra_properties["custom_field"] == "custom_value"
+    assert dataset.extra_properties["sample_size"] == 1000
+    assert dataset.extra_properties["is_multi_site"] is True
+    assert dataset.extra_properties["completion_rate"] == 87.5

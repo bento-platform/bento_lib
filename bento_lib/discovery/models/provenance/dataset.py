@@ -199,3 +199,8 @@ class DatasetModel(BaseModel):
     pcgl_program_name: str | None = Field(
         None, description="The overarching program the study belongs to (if applicable)"
     )
+
+    # ----- Additional Properties -----
+    extra_properties: dict[str, str | int | float | bool | None] | None = Field(
+        None, description="Additional custom metadata properties not covered by the standard schema"
+    )
