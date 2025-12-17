@@ -17,6 +17,8 @@ __all__ = [
     # OBI
     "OBI",
     "OBI_2025_10_14",
+    # SNOMED
+    "SNOMED",
     # SO
     "SO",
     # UBERON
@@ -103,6 +105,16 @@ SO = OntologyResource(
     iri_prefix=HttpUrl("http://purl.obolibrary.org/obo/SO_"),
     url=HttpUrl("https://purl.obolibrary.org/obo/so.owl"),
     repository_url=HttpUrl("https://github.com/The-Sequence-Ontology/SO-Ontologies"),
+)
+
+# === SNOMED ===========================================================================================================
+
+SNOMED = OntologyResource(
+    id="snomed",
+    name="SNOMED Clinical Terms",
+    namespace_prefix="SNOMED",
+    iri_prefix=HttpUrl("http://purl.bioontology.org/ontology/SNOMEDCT/"),
+    url=HttpUrl("http://purl.bioontology.org/ontology/SNOMEDCT"),
 )
 
 # === UBERON ===========================================================================================================
