@@ -96,6 +96,7 @@ def pcgl_study_to_dataset(
         schema_version="1.0",
         title=study.study_name,
         description=study.study_description,
+        dataset_id=study.study_id,
         keywords=keywords,
         stakeholders=stakeholders,
         spatial_coverage=spatial_coverage,
