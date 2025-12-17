@@ -223,6 +223,7 @@ class DatasetModel(BaseModel):
 
     title: str
     description: str
+    dataset_id: str  # if from pcgl, directly inheritied, otherwise created in katsu
 
     keywords: list[str | OntologyTerm]
     stakeholders: list[Organization | Person]
