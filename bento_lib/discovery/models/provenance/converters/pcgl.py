@@ -86,7 +86,7 @@ def pcgl_study_to_dataset(
             publication_type=Other(other="Journal Article"),
             authors=None,
             publication_date=None,
-            journal=None,
+            publication_venue=None,
             description=None,
         )
         for url in study.publication_links
@@ -104,6 +104,7 @@ def pcgl_study_to_dataset(
         license=license,
         counts=counts or [],
         primary_contact=primary_contact,
+        links=[],
         publications=publications,
         data_access_links=data_access_links or [],
         release_date=release_date,

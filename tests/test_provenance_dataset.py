@@ -52,6 +52,7 @@ def test_dataset_model(basic_pi, basic_contact):
         ),
         counts=[Count(count_entity="participants", value=100, description="Total participants")],
         primary_contact=basic_pi,
+        links=[],
         publications=[
             Publication(
                 title="Study Results",
@@ -60,7 +61,7 @@ def test_dataset_model(basic_pi, basic_contact):
                 publication_type="Journal Article",
                 authors=None,
                 publication_date=None,
-                journal=None,
+                publication_venue=None,
                 description=None,
             )
         ],
@@ -95,6 +96,7 @@ def test_dataset_model_with_custom_domain(basic_pi):
         license=None,
         counts=[],
         primary_contact=basic_pi,
+        links=[],
         publications=[],
         data_access_links=[],
         release_date=date(2023, 1, 1),
@@ -127,6 +129,7 @@ def test_dataset_model_with_ontology_keywords(basic_pi):
         license=None,
         counts=[],
         primary_contact=basic_pi,
+        links=[],
         publications=[],
         data_access_links=[],
         release_date=date(2023, 1, 1),
@@ -159,6 +162,7 @@ def test_dataset_model_validation_domain_required(basic_pi):
             license=None,
             counts=[],
             primary_contact=basic_pi,
+            links=[],
             publications=[],
             data_access_links=[],
             release_date=date(2023, 1, 1),
@@ -192,6 +196,7 @@ def test_dataset_model_with_spatial_coverage_feature(basic_pi):
         license=None,
         counts=[],
         primary_contact=basic_pi,
+        links=[],
         publications=[],
         data_access_links=[],
         release_date=date(2023, 1, 1),
@@ -221,6 +226,7 @@ def test_dataset_model_with_logos(basic_pi):
         license=None,
         counts=[],
         primary_contact=basic_pi,
+        links=[],
         publications=[],
         logos=[
             Logo(
@@ -266,6 +272,7 @@ def test_dataset_model_with_extra_properties(basic_pi):
         license=None,
         counts=[],
         primary_contact=basic_pi,
+        links=[],
         publications=[],
         data_access_links=[],
         release_date=date(2023, 1, 1),

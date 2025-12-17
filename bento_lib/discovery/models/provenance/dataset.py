@@ -1,6 +1,6 @@
 from typing import Literal
 from datetime import date
-from pydantic import BaseModel, Field, HttpUrl, ConfigDict
+from pydantic import AnyUrl, BaseModel, Field, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.discovery.models.ontology import OntologyTerm
@@ -57,13 +57,45 @@ type Role = Literal[
 ]
 
 type PublicationType = Literal[
+    # Articles and papers
     "Journal Article",
-    "Preprint",
     "Conference Paper",
+    "Workshop Paper",
+    "Short Paper",
+    "Poster Paper",
+    "Preprint",
+    # Books and long form
+    "Book",
     "Book Chapter",
+    "Monograph",
+    # Reports and gray literature
     "Technical Report",
+    "White Paper",
+    "Working Paper",
+    # Academic qualifications
     "Thesis",
+    "Master's Thesis",
+    "Doctoral Dissertation",
+    # Data and software
     "Dataset",
+    "Software",
+    "Software Paper",
+    # Reviews and other
+    "Survey",
+    "Review Article",
+    "Editorial",
+    "Commentary",
+    "Patent",
+]
+
+type PublicationVenueType = Literal[
+    "Journal",
+    "Conference",
+    "Workshop",
+    "Repository",
+    "Publisher",
+    "University",
+    "Data Repository",
 ]
 
 
@@ -126,6 +158,15 @@ class License(BaseModel):
     url: HttpUrl
 
 
+class PublicationVenue(BaseModel):
+    """Where the publication was released or hosted (journal, conference, repository, or publisher)."""
+
+    name: str
+    venue_type: PublicationVenueType | Other
+    publisher: str | None
+    location: str | None
+
+
 class Publication(BaseModel):
     """
     Publication or related resource link with metadata.
@@ -137,7 +178,7 @@ class Publication(BaseModel):
     publication_type: PublicationType | Other
     authors: list["Person | Organization"] | None
     publication_date: date | None
-    journal: str | None
+    publication_venue: PublicationVenue | None
     description: str | None
 
 
@@ -148,7 +189,7 @@ class Logo(BaseModel):
     Supports light/dark theme variants for optimal display across different UI themes.
     """
 
-    url: HttpUrl
+    url: AnyUrl
     theme: Literal["light", "dark", "default"] | None = None
     description: str | None = None
 
@@ -167,6 +208,16 @@ class SpatialCoverageFeature(GeoJSONFeature):
     properties: SpatialCoverageProperties
 
 
+class Link(BaseModel):
+    """
+    Related links to the dataset that are useful to reference in metadata.
+    """
+
+    label: str
+    uri: AnyUrl
+    type: Literal["Downloadable Artifact", "Data Management Plan", "Schema", "External Reference"] | Other
+
+
 class DatasetModel(BaseModel):
     schema_version: Literal["1.0"]
 
@@ -182,7 +233,7 @@ class DatasetModel(BaseModel):
     license: License | None
     counts: list[Count]  # Note: Different from counts in bento, this is provided by the metadata creator
     primary_contact: Person | Organization
-
+    links: list[Link]
     publications: list[Publication]
     logos: list[Logo] | None = None
     data_access_links: list[HttpUrl]
