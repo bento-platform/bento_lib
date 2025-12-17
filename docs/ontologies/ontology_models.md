@@ -63,7 +63,10 @@ NCBI_TAXON_2025_12_03 = NCBI_TAXON.as_versioned(
     version="2025-12-03",
 )
 
-NCBI_TAXON_2025_12_03.make_class("NCBITaxon:9606", "Homo sapiens")
+human = NCBI_TAXON_2025_12_03.make_class("NCBITaxon:9606", "Homo sapiens")
+
+# Represent as Phenopackets JSON:
+human.to_phenopackets_repr()
 ```
 
 Note that none of these `make_class` methods **validate what is inside the .owl file**; this is left to the person 
