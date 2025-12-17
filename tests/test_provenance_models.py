@@ -14,6 +14,7 @@ from bento_lib.discovery.models.provenance import (
     Person,
     Phone,
     Publication,
+    PublicationVenue,
     Other,
     SpatialCoverageFeature,
     SpatialCoverageProperties,
@@ -141,6 +142,13 @@ def test_publication():
         grant_number=None,
     )
 
+    venue = PublicationVenue(
+        name="Nature",
+        venue_type="Journal",
+        publisher="Nature Publishing Group",
+        location=None,
+    )
+
     pub = Publication(
         title="Test Study Results",
         url=HttpUrl("https://doi.org/10.1234/test"),
@@ -148,7 +156,7 @@ def test_publication():
         publication_type="Journal Article",
         authors=[author1, author2],
         publication_date=date(2023, 1, 15),
-        journal="Nature",
+        publication_venue=venue,
         description="Study description",
     )
     assert pub.title == "Test Study Results"
@@ -157,6 +165,7 @@ def test_publication():
     assert isinstance(pub.authors[0], Person)
     assert isinstance(pub.authors[1], Organization)
     assert pub.authors[0].name == "Jane Smith"
+    assert pub.publication_venue.name == "Nature"
     assert pub.authors[1].name == "Research Institute"
 
 
@@ -169,7 +178,7 @@ def test_publication_with_other_type():
         publication_type=Other(other="Poster Presentation"),
         authors=None,
         publication_date=None,
-        journal=None,
+        publication_venue=None,
         description=None,
     )
     assert isinstance(pub.publication_type, Other)
@@ -193,6 +202,13 @@ def test_publication_with_mixed_authors(basic_contact):
         grant_number=None,
     )
 
+    venue = PublicationVenue(
+        name="Science",
+        venue_type="Journal",
+        publisher=None,
+        location=None,
+    )
+
     pub = Publication(
         title="Collaborative Study",
         url=HttpUrl("https://doi.org/10.5678/collab"),
@@ -200,7 +216,7 @@ def test_publication_with_mixed_authors(basic_contact):
         publication_type="Journal Article",
         authors=[person_author, org_author],
         publication_date=date(2024, 3, 15),
-        journal="Science",
+        publication_venue=venue,
         description="A collaborative research paper",
     )
 
