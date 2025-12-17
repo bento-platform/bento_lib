@@ -1,5 +1,17 @@
 # `bento_lib` ontology resource and ontology class models
 
+The `bento_lib.ontologies` module contains several Pydantic models for defining Phenopackets-style ontology "resources"
+and ontology classes (i.e., terms)
+
+Its purposes are to:
+
+* Have a validator for ontology resource and class structures to allow earlier error detection while constructing 
+  datasets to ingest into Bento (e.g., force valid CURIEs, allow programmatic construction of valid ontology classes, 
+  and encourage the re-use of common classes with consistent labeling);
+* Provide Pydantic models for representing ontology classes and resources in other Bento models and services, e.g., 
+  provenance data (with ontology classes as keywords) and reference genome data (ontology classes for species 
+  taxonomies).
+
 ## Defining ontology classes and resources
 
 Models and Python typed dictionary definitions for ontology classes (modeled aftert the Phenopackets V2 
