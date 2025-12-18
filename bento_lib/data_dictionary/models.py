@@ -2,6 +2,8 @@ from jsonschema import Draft202012Validator
 from pydantic import BaseModel, Field, computed_field, model_validator
 from typing import Literal
 
+from ..ontologies.models import OntologyClass
+from ..ontologies.patterns import CURIE_PATTERN
 from .types import PossiblyI18nText
 from .utils import i18n_value
 
@@ -10,11 +12,7 @@ __all__ = [
     "DataDictionary",
 ]
 
-
-# very roughly:
-#  - https://www.w3.org/TR/2010/NOTE-curie-20101216/#s_syntax
-#  - https://www.w3.org/TR/1999/REC-xml-names-19990114/#NT-NCName
-CURIE_PATTERN = r"^\[?[a-zA-Z_][a-zA-Z_-.]*:.+\]?$"
+ONTOLOGY_CLASS_JSON_SCHEMA = OntologyClass.model_json_schema()
 
 
 class DataDictionaryField(BaseModel):
@@ -43,12 +41,11 @@ class DataDictionaryField(BaseModel):
     )
     is_required: bool = Field(default_factory=lambda d: d.get("is_primary_key", False), title="Is Required")
 
-    property_class: object | None  # TODO: ontology term
+    property_class: OntologyClass | None
     label: PossiblyI18nText | None  # If None, fall back to key
     description: PossiblyI18nText = ""
 
-    # TODO: object -> ontology class
-    unit: object | str | None = None
+    unit: OntologyClass | str | None = None
 
     @model_validator(mode="after")
     def check_unit(self):
@@ -155,12 +152,9 @@ class DataDictionaryField(BaseModel):
         required: list[str] | None = None
         additional_properties: bool | None = None
 
-        if self.type == "ontology-class":  # TODO: from ontology class pydantic def.
-            properties = {
-                "id": {"type": "string", "pattern": CURIE_PATTERN},
-                "label": {"type": "string", "minLength": 1},
-            }
-            required = ["id", "label"]
+        if self.type == "ontology-class":
+            properties = ONTOLOGY_CLASS_JSON_SCHEMA["properties"]
+            required = ONTOLOGY_CLASS_JSON_SCHEMA["required"]
             additional_properties = False
 
         if self.type == "curie":
