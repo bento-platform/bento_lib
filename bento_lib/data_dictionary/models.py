@@ -141,9 +141,10 @@ class DataDictionaryField(BaseModel):
 
     def as_json_schema(self, lang: str) -> dict:
         """
-        TODO
-        :param lang: TODO
-        :return: TODO
+        Generate a JSON schema representation of the data dictionary field, for validating whether record fields match
+        the data dictionary field definition.
+        :param lang: A language for resolving I18n text objects to specific strings in the field definition.
+        :return: A JSON schema for validating JSON/dictionary records matching the field.
         """
 
         f_desc = i18n_value(self.description, lang)
