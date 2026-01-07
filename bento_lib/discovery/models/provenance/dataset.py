@@ -1,3 +1,24 @@
+__all__ = [
+    "Role",
+    "PublicationType",
+    "PublicationVenueType",
+    "Other",
+    "Phone",
+    "Contact",
+    "Organization",
+    "Person",
+    "ParticipantCriteria",
+    "Count",
+    "License",
+    "PublicationVenue",
+    "Publication",
+    "Logo",
+    "SpatialCoverageProperties",
+    "SpatialCoverageFeature",
+    "Link",
+    "DatasetModel",
+]
+
 from typing import Literal
 from datetime import date
 from pydantic import AnyUrl, BaseModel, Field, HttpUrl, ConfigDict
