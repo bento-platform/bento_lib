@@ -49,27 +49,48 @@ def basic_funder(basic_contact):
 
 
 @pytest.fixture
-def minimal_dataset(basic_pi, basic_institution, basic_funder):
+def base_dataset_kwargs(basic_pi):
+    """Base kwargs dict for DatasetModel with sensible defaults.
+
+    Use with dictionary expansion to override specific fields:
+        dataset = DatasetModel(**{**base_dataset_kwargs, "title": "Custom Title"})
+    """
+    return {
+        "schema_version": "1.0",
+        "title": "Test Study",
+        "description": "Test",
+        "dataset_id": "test-study-001",
+        "keywords": [],
+        "stakeholders": [basic_pi],
+        "spatial_coverage": None,
+        "version": None,
+        "privacy": None,
+        "license": None,
+        "counts": [],
+        "primary_contact": basic_pi,
+        "links": [],
+        "publications": [],
+        "data_access_links": [],
+        "release_date": date(2023, 1, 1),
+        "last_modified": date(2023, 1, 1),
+        "participant_criteria": [],
+        "pcgl_domain": ["Cancer"],
+        "pcgl_status": "ONGOING",
+        "pcgl_context": "RESEARCH",
+        "pcgl_program_name": None,
+    }
+
+
+@pytest.fixture
+def minimal_dataset(base_dataset_kwargs, basic_institution, basic_funder):
     """Minimal valid dataset for testing conversions."""
     return DatasetModel(
-        schema_version="1.0",
-        title="Test Study",
-        description="Test Description",
-        keywords=[],
-        stakeholders=[basic_pi, basic_institution, basic_funder],
-        spatial_coverage=None,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        publications=[],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 1, 1),
-        participant_criteria=[],
-        domain=["Cancer"],
-        status="ONGOING",
-        context="RESEARCH",
-        program_name=None,
+        **{
+            **base_dataset_kwargs,
+            "stakeholders": [
+                base_dataset_kwargs["primary_contact"],
+                basic_institution,
+                basic_funder,
+            ],
+        }
     )

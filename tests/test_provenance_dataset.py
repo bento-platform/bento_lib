@@ -20,8 +20,8 @@ from bento_lib.discovery.models.provenance import (
 )
 
 
-def test_dataset_model(basic_pi, basic_contact):
-    """Test complete DatasetModel."""
+def test_dataset_model(base_dataset_kwargs, basic_pi, basic_contact):
+    """Test complete DatasetModel with all fields populated."""
     institution = Organization(
         name="Test University",
         description="Research institution",
@@ -39,41 +39,37 @@ def test_dataset_model(basic_pi, basic_contact):
     )
 
     dataset = DatasetModel(
-        schema_version="1.0",
-        title="Test Study",
-        description="A comprehensive test study",
-        dataset_id="test-study-001",
-        keywords=["genomics", "cancer"],
-        stakeholders=[basic_pi, institution, funder],
-        spatial_coverage="Canada",
-        version="1.0",
-        privacy="Controlled Access",
-        license=License(
-            label="CC BY 4.0", type="Creative Commons", url=HttpUrl("https://creativecommons.org/licenses/by/4.0/")
-        ),
-        counts=[Count(count_entity="participants", value=100, description="Total participants")],
-        primary_contact=basic_pi,
-        links=[],
-        publications=[
-            Publication(
-                title="Study Results",
-                url=HttpUrl("https://doi.org/10.1234/test"),
-                doi="10.1234/test",
-                publication_type="Journal Article",
-                authors=None,
-                publication_date=None,
-                publication_venue=None,
-                description=None,
-            )
-        ],
-        data_access_links=[HttpUrl("https://example.com/data")],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 6, 1),
-        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
-        pcgl_domain=["Cancer"],
-        pcgl_status="ONGOING",
-        pcgl_context="RESEARCH",
-        pcgl_program_name="Cancer Genomics Program",
+        **{
+            **base_dataset_kwargs,
+            "description": "A comprehensive test study",
+            "keywords": ["genomics", "cancer"],
+            "stakeholders": [basic_pi, institution, funder],
+            "spatial_coverage": "Canada",
+            "version": "1.0",
+            "privacy": "Controlled Access",
+            "license": License(
+                label="CC BY 4.0",
+                type="Creative Commons",
+                url=HttpUrl("https://creativecommons.org/licenses/by/4.0/"),
+            ),
+            "counts": [Count(count_entity="participants", value=100, description="Total participants")],
+            "publications": [
+                Publication(
+                    title="Study Results",
+                    url=HttpUrl("https://doi.org/10.1234/test"),
+                    doi="10.1234/test",
+                    publication_type="Journal Article",
+                    authors=None,
+                    publication_date=None,
+                    publication_venue=None,
+                    description=None,
+                )
+            ],
+            "data_access_links": [HttpUrl("https://example.com/data")],
+            "last_modified": date(2023, 6, 1),
+            "participant_criteria": [ParticipantCriteria(type="Inclusion", description="Adults 18+")],
+            "pcgl_program_name": "Cancer Genomics Program",
+        }
     )
 
     assert dataset.title == "Test Study"
@@ -83,65 +79,33 @@ def test_dataset_model(basic_pi, basic_contact):
     assert dataset.pcgl_domain[0] == "Cancer"
 
 
-def test_dataset_model_with_custom_domain(basic_pi):
+def test_dataset_model_with_custom_domain(base_dataset_kwargs):
     """Test DatasetModel with custom domain string."""
     dataset = DatasetModel(
-        schema_version="1.0",
-        title="Test Study",
-        description="Test",
-        dataset_id="test-study-002",
-        keywords=[],
-        stakeholders=[basic_pi],
-        spatial_coverage=None,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        links=[],
-        publications=[],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 1, 1),
-        participant_criteria=[],
-        pcgl_domain=["Custom Domain"],
-        pcgl_status="ONGOING",
-        pcgl_context="RESEARCH",
-        pcgl_program_name=None,
+        **{
+            **base_dataset_kwargs,
+            "dataset_id": "test-study-002",
+            "pcgl_domain": ["Custom Domain"],
+        }
     )
 
     assert dataset.pcgl_domain[0] == "Custom Domain"
 
 
-def test_dataset_model_with_ontology_keywords(basic_pi):
+def test_dataset_model_with_ontology_keywords(base_dataset_kwargs):
     """Test DatasetModel with OntologyClass keywords."""
     dataset = DatasetModel(
-        schema_version="1.0",
-        title="Test Study",
-        description="Test",
-        dataset_id="test-study-003",
-        keywords=[
-            "plain keyword",
-            OntologyClass(id="HP:0001250", label="Seizure"),
-            OntologyClass(id="MONDO:0005015", label="Diabetes mellitus"),
-        ],
-        stakeholders=[basic_pi],
-        spatial_coverage=None,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        links=[],
-        publications=[],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 1, 1),
-        participant_criteria=[],
-        pcgl_domain=["Cancer"],
-        pcgl_status="COMPLETED",
-        pcgl_context="CLINICAL",
-        pcgl_program_name=None,
+        **{
+            **base_dataset_kwargs,
+            "dataset_id": "test-study-003",
+            "keywords": [
+                "plain keyword",
+                OntologyClass(id="HP:0001250", label="Seizure"),
+                OntologyClass(id="MONDO:0005015", label="Diabetes mellitus"),
+            ],
+            "pcgl_status": "COMPLETED",
+            "pcgl_context": "CLINICAL",
+        }
     )
 
     assert len(dataset.keywords) == 3
@@ -150,36 +114,14 @@ def test_dataset_model_with_ontology_keywords(basic_pi):
     assert dataset.keywords[1].id == "HP:0001250"
 
 
-def test_dataset_model_validation_domain_required(basic_pi):
+def test_dataset_model_validation_domain_required(base_dataset_kwargs):
     """Test that domain is required and must have at least one item."""
     with pytest.raises(ValidationError) as exc:
-        DatasetModel(
-            schema_version="1.0",
-            title="Test Study",
-            description="Test",
-            keywords=[],
-            stakeholders=[basic_pi],
-            spatial_coverage=None,
-            version=None,
-            privacy=None,
-            license=None,
-            counts=[],
-            primary_contact=basic_pi,
-            links=[],
-            publications=[],
-            data_access_links=[],
-            release_date=date(2023, 1, 1),
-            last_modified=date(2023, 1, 1),
-            participant_criteria=[],
-            pcgl_domain=[],  # Empty domain should fail
-            pcgl_status="ONGOING",
-            pcgl_context="RESEARCH",
-            pcgl_program_name=None,
-        )
+        DatasetModel(**{**base_dataset_kwargs, "pcgl_domain": []})
     assert "at least 1 item" in str(exc.value).lower()
 
 
-def test_dataset_model_with_spatial_coverage_feature(basic_pi):
+def test_dataset_model_with_spatial_coverage_feature(base_dataset_kwargs):
     """Test DatasetModel with SpatialCoverageFeature."""
     spatial_feature = SpatialCoverageFeature(
         type="Feature",
@@ -188,72 +130,27 @@ def test_dataset_model_with_spatial_coverage_feature(basic_pi):
     )
 
     dataset = DatasetModel(
-        schema_version="1.0",
-        title="Toronto Study",
-        description="A study conducted in Toronto",
-        dataset_id="test-study-004",
-        keywords=[],
-        stakeholders=[basic_pi],
-        spatial_coverage=spatial_feature,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        links=[],
-        publications=[],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 1, 1),
-        participant_criteria=[],
-        pcgl_domain=["Cancer"],
-        pcgl_status="ONGOING",
-        pcgl_context="RESEARCH",
-        pcgl_program_name=None,
+        **{
+            **base_dataset_kwargs,
+            "title": "Toronto Study",
+            "description": "A study conducted in Toronto",
+            "dataset_id": "test-study-004",
+            "spatial_coverage": spatial_feature,
+        }
     )
 
     assert isinstance(dataset.spatial_coverage, SpatialCoverageFeature)
     assert dataset.spatial_coverage.properties.name == "Toronto, Canada"
 
 
-def test_dataset_model_with_logos(basic_pi):
+def test_dataset_model_with_logos(base_dataset_kwargs):
     """Test DatasetModel with Logo support."""
-    dataset = DatasetModel(
-        schema_version="1.0",
-        title="Test Study",
-        description="Test",
-        dataset_id="test-study-005",
-        keywords=[],
-        stakeholders=[basic_pi],
-        spatial_coverage=None,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        links=[],
-        publications=[],
-        logos=[
-            Logo(
-                url=HttpUrl("https://example.com/logo-light.png"),
-                theme="light",
-                description="Light theme logo",
-            ),
-            Logo(
-                url=HttpUrl("https://example.com/logo-dark.png"),
-                theme="dark",
-                description="Dark theme logo",
-            ),
-        ],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 1, 1),
-        participant_criteria=[],
-        pcgl_domain=["Cancer"],
-        pcgl_status="ONGOING",
-        pcgl_context="RESEARCH",
-        pcgl_program_name=None,
-    )
+    logos = [
+        Logo(url=HttpUrl("https://example.com/logo-light.png"), theme="light", description="Light theme logo"),
+        Logo(url=HttpUrl("https://example.com/logo-dark.png"), theme="dark", description="Dark theme logo"),
+    ]
+
+    dataset = DatasetModel(**{**base_dataset_kwargs, "dataset_id": "test-study-005", "logos": logos})
 
     assert dataset.logos is not None
     assert len(dataset.logos) == 2
@@ -263,38 +160,16 @@ def test_dataset_model_with_logos(basic_pi):
     assert dataset.logos[1].url == HttpUrl("https://example.com/logo-dark.png")
 
 
-def test_dataset_model_with_extra_properties(basic_pi):
+def test_dataset_model_with_extra_properties(base_dataset_kwargs):
     """Test DatasetModel with extra_properties for custom metadata."""
-    dataset = DatasetModel(
-        schema_version="1.0",
-        title="Test Study",
-        description="Test",
-        dataset_id="test-study-006",
-        keywords=[],
-        stakeholders=[basic_pi],
-        spatial_coverage=None,
-        version=None,
-        privacy=None,
-        license=None,
-        counts=[],
-        primary_contact=basic_pi,
-        links=[],
-        publications=[],
-        data_access_links=[],
-        release_date=date(2023, 1, 1),
-        last_modified=date(2023, 1, 1),
-        participant_criteria=[],
-        pcgl_domain=["Cancer"],
-        pcgl_status="ONGOING",
-        pcgl_context="RESEARCH",
-        pcgl_program_name=None,
-        extra_properties={
-            "custom_field": "custom_value",
-            "sample_size": 1000,
-            "is_multi_site": True,
-            "completion_rate": 87.5,
-        },
-    )
+    extra_props = {
+        "custom_field": "custom_value",
+        "sample_size": 1000,
+        "is_multi_site": True,
+        "completion_rate": 87.5,
+    }
+
+    dataset = DatasetModel(**{**base_dataset_kwargs, "dataset_id": "test-study-006", "extra_properties": extra_props})
 
     assert dataset.extra_properties is not None
     assert dataset.extra_properties["custom_field"] == "custom_value"
