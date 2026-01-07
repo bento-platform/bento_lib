@@ -1,0 +1,28 @@
+{
+  "studyId": "STUDY001",
+  "studyName": "Cancer Study",
+  "studyDescription": "A cancer genomics study",
+  "programName": "Cancer Program",
+  "keywords": ["cancer", "genomics"],
+  "status": "ONGOING",
+  "context": "RESEARCH",
+  "domain": ["Cancer", "Population Genomics"],
+  "dacId": "DAC001",
+  "participantCriteria": "Inclusion: Adults 18+; Exclusion: Pregnant individuals",
+  "principalInvestigators": [
+    {"name": "Jane Smith", "affiliation": "Test University"}
+  ],
+  "leadOrganizations": ["Test University", "Research Hospital"],
+  "collaborators": [
+    {"name": "Partner Lab", "role": "Data Contributor"},
+    {"name": "Another Partner", "role": null}
+  ],
+  "fundingSources": [
+    {"funder_name": "NIH", "grant_number": "R01-123456"},
+    {"funder_name": "NSF", "grant_number": null}
+  ],
+  "publicationLinks": [
+    "https://doi.org/10.1234/example",
+    "https://doi.org/10.5678/another"
+  ]
+}

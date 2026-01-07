@@ -1,9 +1,16 @@
 """Shared fixtures for provenance tests."""
 
+import json
+from pathlib import Path
+
 import pytest
 from datetime import date
 
 from bento_lib.discovery.models.provenance import Contact, Organization, Person, DatasetModel
+from bento_lib.discovery.models.provenance.external.pcgl import Study
+
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
@@ -94,3 +101,17 @@ def minimal_dataset(base_dataset_kwargs, basic_institution, basic_funder):
             ],
         }
     )
+
+
+@pytest.fixture
+def pcgl_study_full():
+    """Full PCGL Study loaded from JSON fixture."""
+    with open(FIXTURES_DIR / "pcgl_study_full.json") as f:
+        return Study.model_validate(json.load(f))
+
+
+@pytest.fixture
+def pcgl_study_minimal():
+    """Minimal PCGL Study loaded from JSON fixture."""
+    with open(FIXTURES_DIR / "pcgl_study_minimal.json") as f:
+        return Study.model_validate(json.load(f))
