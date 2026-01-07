@@ -5,7 +5,7 @@ from pydantic import HttpUrl, ValidationError
 import pytest
 from geojson_pydantic import Point
 
-from bento_lib.discovery.models.ontology import OntologyTerm
+from bento_lib.ontologies.models import OntologyClass
 from bento_lib.discovery.models.provenance import (
     DatasetModel,
     Contact,
@@ -114,7 +114,7 @@ def test_dataset_model_with_custom_domain(basic_pi):
 
 
 def test_dataset_model_with_ontology_keywords(basic_pi):
-    """Test DatasetModel with OntologyTerm keywords."""
+    """Test DatasetModel with OntologyClass keywords."""
     dataset = DatasetModel(
         schema_version="1.0",
         title="Test Study",
@@ -122,8 +122,8 @@ def test_dataset_model_with_ontology_keywords(basic_pi):
         dataset_id="test-study-003",
         keywords=[
             "plain keyword",
-            OntologyTerm(id="HP:0001250", label="Seizure"),
-            OntologyTerm(id="MONDO:0005015", label="Diabetes mellitus"),
+            OntologyClass(id="HP:0001250", label="Seizure"),
+            OntologyClass(id="MONDO:0005015", label="Diabetes mellitus"),
         ],
         stakeholders=[basic_pi],
         spatial_coverage=None,
@@ -146,7 +146,7 @@ def test_dataset_model_with_ontology_keywords(basic_pi):
 
     assert len(dataset.keywords) == 3
     assert dataset.keywords[0] == "plain keyword"
-    assert isinstance(dataset.keywords[1], OntologyTerm)
+    assert isinstance(dataset.keywords[1], OntologyClass)
     assert dataset.keywords[1].id == "HP:0001250"
 
 

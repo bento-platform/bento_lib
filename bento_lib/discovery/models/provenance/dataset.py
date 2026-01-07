@@ -24,7 +24,7 @@ from datetime import date
 from pydantic import AnyUrl, BaseModel, Field, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
-from bento_lib.discovery.models.ontology import OntologyTerm
+from bento_lib.ontologies.models import OntologyClass
 
 
 type Role = Literal[
@@ -246,7 +246,7 @@ class DatasetModel(BaseModel):
     description: str
     dataset_id: str  # if from pcgl, directly inheritied, otherwise created in katsu
 
-    keywords: list[str | OntologyTerm]
+    keywords: list[str | OntologyClass]
     stakeholders: list[Organization | Person]
 
     spatial_coverage: str | SpatialCoverageFeature | None

@@ -4,7 +4,7 @@ from datetime import date
 from pydantic import HttpUrl
 from geojson_pydantic import Point
 
-from bento_lib.discovery.models.ontology import OntologyTerm
+from bento_lib.ontologies.models import OntologyClass
 from bento_lib.discovery.models.provenance import (
     Contact,
     Count,
@@ -21,9 +21,9 @@ from bento_lib.discovery.models.provenance import (
 )
 
 
-def test_ontology_term():
-    """Test OntologyTerm model creation."""
-    term = OntologyTerm(id="HP:0001250", label="Seizure")
+def test_ontology_class():
+    """Test OntologyClass model creation."""
+    term = OntologyClass(id="HP:0001250", label="Seizure")
     assert term.id == "HP:0001250"
     assert term.label == "Seizure"
 

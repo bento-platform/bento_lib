@@ -17,7 +17,7 @@ from ..dataset import (
     Role,
 )
 from ..external.pcgl import Study
-from bento_lib.discovery.models.ontology import OntologyTerm
+from bento_lib.ontologies.models import OntologyClass
 
 
 def pcgl_study_to_dataset(
@@ -33,7 +33,7 @@ def pcgl_study_to_dataset(
     counts: list | None = None,
 ) -> DatasetModel:
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
-    keywords: list[str | OntologyTerm] = list(study.keywords)
+    keywords: list[str | OntologyClass] = list(study.keywords)
 
     stakeholders: list[Person | Organization] = []
     stakeholders.extend(
