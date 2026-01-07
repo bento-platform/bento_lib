@@ -1,4 +1,4 @@
-from . import config, fields, ontology, overview, search
+from . import config, fields, overview, search
 from .config import RULES_NO_PERMISSIONS, RULES_FULL_PERMISSIONS, DiscoveryConfig, DiscoveryConfigRules
 from .fields import FieldDefinition, DateFieldDefinition, NumberFieldDefinition, StringFieldDefinition
 from bento_lib.ontologies.models import OntologyClass
@@ -8,7 +8,6 @@ from .search import SearchSection
 __all__ = [
     "config",
     "fields",
-    "ontology",
     "overview",
     "search",
     "RULES_NO_PERMISSIONS",
