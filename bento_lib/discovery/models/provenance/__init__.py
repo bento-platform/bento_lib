@@ -1,5 +1,6 @@
 from .dataset import (
     DatasetModel,
+    DatasetModelBase,
     Contact,
     Count,
     License,
@@ -19,6 +20,7 @@ from .dataset import (
 
 __all__ = [
     "DatasetModel",
+    "DatasetModelBase",
     "Contact",
     "Count",
     "License",

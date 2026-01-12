@@ -239,12 +239,13 @@ class Link(BaseModel):
     type: Literal["Downloadable Artifact", "Data Management Plan", "Schema", "External Reference"] | Other
 
 
-class DatasetModel(BaseModel):
+class DatasetModelBase(BaseModel):
+    """Base dataset model without id field."""
+
     schema_version: Literal["1.0"]
 
     title: str
     description: str
-    id: str  # if from pcgl, directly inherited, otherwise created in katsu
 
     keywords: list[str | OntologyClass]
     stakeholders: list[Organization | Person]
@@ -277,3 +278,9 @@ class DatasetModel(BaseModel):
     extra_properties: dict[str, str | int | float | bool | None] | None = Field(
         None, description="Additional custom metadata properties not covered by the standard schema"
     )
+
+
+class DatasetModel(DatasetModelBase):
+    """Dataset model with required id field."""
+
+    id: str  # if from pcgl, directly inherited, otherwise created in katsu

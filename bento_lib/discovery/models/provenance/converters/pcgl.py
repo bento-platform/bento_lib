@@ -86,7 +86,7 @@ def pcgl_study_to_dataset(
             url=url,
             doi=str(url).replace("https://doi.org/", "") if str(url).startswith("https://doi.org/") else None,
             publication_type=Other(other="Journal Article"),
-            authors=None,
+            authors=[],
             publication_date=None,
             publication_venue=None,
             description=None,
