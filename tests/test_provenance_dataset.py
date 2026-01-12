@@ -8,6 +8,7 @@ from geojson_pydantic import Point
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.provenance import (
     DatasetModel,
+    DatasetModelBase,
     Contact,
     Count,
     License,
@@ -176,3 +177,18 @@ def test_dataset_model_with_extra_properties(base_dataset_kwargs):
     assert dataset.extra_properties["sample_size"] == 1000
     assert dataset.extra_properties["is_multi_site"] is True
     assert dataset.extra_properties["completion_rate"] == 87.5
+
+
+def test_dataset_model_from_base(base_dataset_kwargs):
+    """Test creating DatasetModel from DatasetModelBase using from_base."""
+    # Remove id from kwargs since DatasetModelBase doesn't have it
+    base_kwargs = {k: v for k, v in base_dataset_kwargs.items() if k != "id"}
+    base = DatasetModelBase(**base_kwargs)
+
+    dataset = DatasetModel.from_base(base, id="new-dataset-id")
+
+    assert dataset.id == "new-dataset-id"
+    assert dataset.title == base.title
+    assert dataset.description == base.description
+    assert dataset.schema_version == base.schema_version
+    assert dataset.pcgl_domain == base.pcgl_domain

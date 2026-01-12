@@ -284,3 +284,8 @@ class DatasetModel(DatasetModelBase):
     """Dataset model with required id field."""
 
     id: str  # if from pcgl, directly inherited, otherwise created in katsu
+
+    @classmethod
+    def from_base(cls, base: DatasetModelBase, id: str) -> "DatasetModel":
+        """Create a DatasetModel from a DatasetModelBase with the given id."""
+        return cls(id=id, **base.model_dump())
