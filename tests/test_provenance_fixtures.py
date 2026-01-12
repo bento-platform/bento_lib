@@ -66,7 +66,7 @@ def base_dataset_kwargs(basic_pi):
         "schema_version": "1.0",
         "title": "Test Study",
         "description": "Test",
-        "dataset_id": "test-study-001",
+        "id": "test-study-001",
         "keywords": [],
         "stakeholders": [basic_pi],
         "spatial_coverage": None,

@@ -83,7 +83,7 @@ type PublicationType = Literal[
     "Conference Paper",
     "Workshop Paper",
     "Short Paper",
-    "Poster Paper",
+    "Poster",
     "Preprint",
     # Books and long form
     "Book",
@@ -197,7 +197,7 @@ class Publication(BaseModel):
     url: HttpUrl
     doi: str | None
     publication_type: PublicationType | Other
-    authors: list["Person | Organization"] | None
+    authors: list[Person | Organization]
     publication_date: date | None
     publication_venue: PublicationVenue | None
     description: str | None
@@ -244,7 +244,7 @@ class DatasetModel(BaseModel):
 
     title: str
     description: str
-    dataset_id: str  # if from pcgl, directly inheritied, otherwise created in katsu
+    id: str  # if from pcgl, directly inherited, otherwise created in katsu
 
     keywords: list[str | OntologyClass]
     stakeholders: list[Organization | Person]

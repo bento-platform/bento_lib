@@ -59,7 +59,7 @@ def test_dataset_model(base_dataset_kwargs, basic_pi, basic_contact):
                     url=HttpUrl("https://doi.org/10.1234/test"),
                     doi="10.1234/test",
                     publication_type="Journal Article",
-                    authors=None,
+                    authors=[],
                     publication_date=None,
                     publication_venue=None,
                     description=None,
@@ -84,7 +84,7 @@ def test_dataset_model_with_custom_domain(base_dataset_kwargs):
     dataset = DatasetModel(
         **{
             **base_dataset_kwargs,
-            "dataset_id": "test-study-002",
+            "id": "test-study-002",
             "pcgl_domain": ["Custom Domain"],
         }
     )
@@ -97,7 +97,7 @@ def test_dataset_model_with_ontology_keywords(base_dataset_kwargs):
     dataset = DatasetModel(
         **{
             **base_dataset_kwargs,
-            "dataset_id": "test-study-003",
+            "id": "test-study-003",
             "keywords": [
                 "plain keyword",
                 OntologyClass(id="HP:0001250", label="Seizure"),
@@ -134,7 +134,7 @@ def test_dataset_model_with_spatial_coverage_feature(base_dataset_kwargs):
             **base_dataset_kwargs,
             "title": "Toronto Study",
             "description": "A study conducted in Toronto",
-            "dataset_id": "test-study-004",
+            "id": "test-study-004",
             "spatial_coverage": spatial_feature,
         }
     )
@@ -150,7 +150,7 @@ def test_dataset_model_with_logos(base_dataset_kwargs):
         Logo(url=HttpUrl("https://example.com/logo-dark.png"), theme="dark", description="Dark theme logo"),
     ]
 
-    dataset = DatasetModel(**{**base_dataset_kwargs, "dataset_id": "test-study-005", "logos": logos})
+    dataset = DatasetModel(**{**base_dataset_kwargs, "id": "test-study-005", "logos": logos})
 
     assert dataset.logos is not None
     assert len(dataset.logos) == 2
@@ -169,7 +169,7 @@ def test_dataset_model_with_extra_properties(base_dataset_kwargs):
         "completion_rate": 87.5,
     }
 
-    dataset = DatasetModel(**{**base_dataset_kwargs, "dataset_id": "test-study-006", "extra_properties": extra_props})
+    dataset = DatasetModel(**{**base_dataset_kwargs, "id": "test-study-006", "extra_properties": extra_props})
 
     assert dataset.extra_properties is not None
     assert dataset.extra_properties["custom_field"] == "custom_value"

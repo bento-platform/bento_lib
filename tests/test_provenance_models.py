@@ -168,7 +168,7 @@ def test_publication_with_other_type():
         url=HttpUrl("https://example.com/presentation"),
         doi=None,
         publication_type=Other(other="Poster Presentation"),
-        authors=None,
+        authors=[],
         publication_date=None,
         publication_venue=None,
         description=None,
