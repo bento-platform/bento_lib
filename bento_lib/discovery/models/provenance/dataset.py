@@ -257,7 +257,7 @@ class DatasetModel(BaseModel):
     primary_contact: Person | Organization
     links: list[Link]
     publications: list[Publication]
-    logos: list[Logo] | None = None
+    logos: list[Logo] = Field(default_factory=list)
     data_access_links: list[HttpUrl]
     release_date: date
     last_modified: date
