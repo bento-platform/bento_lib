@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from datetime import date
 
-from bento_lib.discovery.models.provenance import Contact, Organization, Person, DatasetModel
-from bento_lib.discovery.models.provenance.external.pcgl import Study
+from bento_lib.provenance import Contact, Organization, Person, DatasetModel
+from bento_lib.provenance.external.pcgl import Study
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"

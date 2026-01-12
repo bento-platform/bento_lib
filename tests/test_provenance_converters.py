@@ -2,8 +2,8 @@
 
 from datetime import date
 
-from bento_lib.discovery.models.provenance import Organization, Person
-from bento_lib.discovery.models.provenance.converters.pcgl import (
+from bento_lib.provenance import Organization, Person
+from bento_lib.provenance.converters.pcgl import (
     pcgl_study_to_dataset,
     _parse_participant_criteria,
 )

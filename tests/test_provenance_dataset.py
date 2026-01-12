@@ -6,7 +6,7 @@ import pytest
 from geojson_pydantic import Point
 
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.discovery.models.provenance import (
+from bento_lib.provenance import (
     DatasetModel,
     Contact,
     Count,

@@ -4,7 +4,7 @@ from datetime import date
 from pydantic import HttpUrl
 from geojson_pydantic import Point
 
-from bento_lib.discovery.models.provenance import (
+from bento_lib.provenance import (
     Contact,
     Count,
     License,
