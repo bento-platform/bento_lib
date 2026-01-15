@@ -172,7 +172,6 @@ class Study(BaseModel):
     def validate_doi_links(cls, v: list[HttpUrl]) -> list[HttpUrl]:
         """Ensure publication links are DOI URLs"""
         for url in v:
-            url_str = str(url)
-            if not url_str.startswith("https://doi.org/"):
+            if not (url_str := str(url)).startswith("https://doi.org/"):
                 raise ValueError(f"Publication link must be a DOI URL (https://doi.org/...): {url_str}")
         return v
