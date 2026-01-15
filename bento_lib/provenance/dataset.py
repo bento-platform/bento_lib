@@ -264,12 +264,14 @@ class DatasetModelBase(BaseModel):
     last_modified: date
     participant_criteria: list[ParticipantCriteria]
 
+    # ----- Study Metadata -----
+    study_status: Literal["ONGOING", "COMPLETED"] | None = None
+    study_context: Literal["CLINICAL", "RESEARCH"] | None = None
+
     # ----- PCGL Specific -----
     pcgl_domain: list[str] = Field(
         ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
     )
-    pcgl_status: Literal["ONGOING", "COMPLETED"]
-    pcgl_context: Literal["CLINICAL", "RESEARCH"]
     pcgl_program_name: str | None = Field(
         None, description="The overarching program the study belongs to (if applicable)"
     )

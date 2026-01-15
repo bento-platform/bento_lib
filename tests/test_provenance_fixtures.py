@@ -81,9 +81,9 @@ def base_dataset_kwargs(basic_pi):
         "release_date": date(2023, 1, 1),
         "last_modified": date(2023, 1, 1),
         "participant_criteria": [],
+        "study_status": "ONGOING",
+        "study_context": "RESEARCH",
         "pcgl_domain": ["Cancer"],
-        "pcgl_status": "ONGOING",
-        "pcgl_context": "RESEARCH",
         "pcgl_program_name": None,
     }
 

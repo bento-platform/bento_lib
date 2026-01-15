@@ -75,8 +75,8 @@ def test_dataset_model(base_dataset_kwargs, basic_pi, basic_contact):
 
     assert dataset.title == "Test Study"
     assert len(dataset.stakeholders) == 3
-    assert dataset.pcgl_status == "ONGOING"
-    assert dataset.pcgl_context == "RESEARCH"
+    assert dataset.study_status == "ONGOING"
+    assert dataset.study_context == "RESEARCH"
     assert dataset.pcgl_domain[0] == "Cancer"
 
 
@@ -104,8 +104,8 @@ def test_dataset_model_with_ontology_keywords(base_dataset_kwargs):
                 OntologyClass(id="HP:0001250", label="Seizure"),
                 OntologyClass(id="MONDO:0005015", label="Diabetes mellitus"),
             ],
-            "pcgl_status": "COMPLETED",
-            "pcgl_context": "CLINICAL",
+            "study_status": "COMPLETED",
+            "study_context": "CLINICAL",
         }
     )
 

@@ -282,8 +282,8 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
 
     # Check PCGL-specific fields
     assert dataset.pcgl_domain == ["Cancer", "Population Genomics"]
-    assert dataset.pcgl_status == "ONGOING"
-    assert dataset.pcgl_context == "RESEARCH"
+    assert dataset.study_status == "ONGOING"
+    assert dataset.study_context == "RESEARCH"
     assert dataset.pcgl_program_name == "National Cancer Program"
 
     # Check optional fields passed through
