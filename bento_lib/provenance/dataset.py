@@ -19,9 +19,9 @@ __all__ = [
     "DatasetModel",
 ]
 
-from typing import Literal
+from typing import Annotated, Literal
 from datetime import date
-from pydantic import AnyUrl, BaseModel, Field, HttpUrl, ConfigDict
+from pydantic import AnyUrl, BaseModel, BeforeValidator, Field, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.ontologies.models import OntologyClass
@@ -167,7 +167,7 @@ class ParticipantCriteria(BaseModel):
 
 class Count(BaseModel):
     count_entity: str
-    value: int | float
+    value: Annotated[float, BeforeValidator(float)]
     description: str
 
 

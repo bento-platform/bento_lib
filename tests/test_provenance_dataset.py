@@ -192,3 +192,10 @@ def test_dataset_model_from_base(base_dataset_kwargs):
     assert dataset.description == base.description
     assert dataset.schema_version == base.schema_version
     assert dataset.pcgl_domain == base.pcgl_domain
+
+
+def test_count_value_converts_int_to_float():
+    """Test that Count.value converts int to float."""
+    count = Count(count_entity="participants", value=100, description="Total participants")
+    assert count.value == 100.0
+    assert isinstance(count.value, float)
