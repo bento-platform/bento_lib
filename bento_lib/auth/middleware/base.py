@@ -15,13 +15,13 @@ from .mark_authz_done_mixin import MarkAuthzDoneMixin
 __all__ = ["BaseAuthMiddleware"]
 
 
-NonNormalizedPattern = re.Pattern | str
+type NonNormalizedPattern = re.Pattern | str
 
 # Order: method pattern, path pattern
-NonNormalizedRequestPattern = tuple[NonNormalizedPattern, NonNormalizedPattern]
-NonNormalizedRequestPatterns = tuple[NonNormalizedRequestPattern, ...]
-RequestPattern = tuple[re.Pattern, re.Pattern]
-RequestPatterns = frozenset[RequestPattern]
+type NonNormalizedRequestPattern = tuple[NonNormalizedPattern, NonNormalizedPattern]
+type NonNormalizedRequestPatterns = tuple[NonNormalizedRequestPattern, ...]
+type RequestPattern = tuple[re.Pattern, re.Pattern]
+type RequestPatterns = frozenset[RequestPattern]
 
 
 def _compile_to_regex_if_needed(pattern: NonNormalizedPattern) -> re.Pattern:

@@ -95,34 +95,44 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
 
     # Validators -------------------------------------------------------------------------------------------------------
 
-    @model_validator(mode="after")
-    def check_field_references(self) -> Self:
-        # validate overview and check for chart duplicates:
+    def _check_overview_field_references(self):
+        """
+        Validate overview and check for chart duplicates.
+        Raises a DiscoveryValidationError if an error is found; otherwise, does nothing.
+        """
         seen_chart_fields: set[str] = set()
         for s_idx, section in enumerate(self.overview):
+            section_title = section.section_title
             for c_idx, chart in enumerate(section.charts):
-                exc_path = (
-                    f"overview > section {section.section_title} [{s_idx}] > {chart.field} {chart.chart_type} [{c_idx}]"
-                )
-                log_data = dict(section=section.section_title, field=chart.field, chart_idx=c_idx)
+                exc_path = f"overview > section {section_title} [{s_idx}] > {chart.field} {chart.chart_type} [{c_idx}]"
+                log_data = dict(section=section_title, field=chart.field, chart_idx=c_idx)
                 if chart.field not in self.fields:
                     raise DiscoveryValidationError(FIELD_DEF_NOT_FOUND, exc_path, log_data)
                 if chart.field in seen_chart_fields:
                     raise DiscoveryValidationError(FIELD_ALREADY_SEEN, exc_path, log_data)
                 seen_chart_fields.add(chart.field)
 
-        # validate search:
+    def _check_search_field_references(self):
+        """
+        Validate search field references and check for search field duplicates.
+        Raises a DiscoveryValidationError if an error is found; otherwise, does nothing.
+        """
         seen_search_fields: set[str] = set()
         for s_idx, section in enumerate(self.search):
+            section_title = section.section_title
             for f_idx, f in enumerate(section.fields):
-                exc_path = f"search > section {section.section_title} [{s_idx}] > {f} [{f_idx}]"
-                log_data = dict(section=section.section_title, field=f)
+                exc_path = f"search > section {section_title} [{s_idx}] > {f} [{f_idx}]"
+                log_data = dict(section=section_title, field=f)
                 if f not in self.fields:
                     raise DiscoveryValidationError(FIELD_DEF_NOT_FOUND, exc_path, log_data)
                 if f in seen_search_fields:
                     raise DiscoveryValidationError(FIELD_ALREADY_SEEN, exc_path, log_data)
                 seen_search_fields.add(f)
 
+    @model_validator(mode="after")
+    def check_field_references(self) -> Self:
+        self._check_overview_field_references()
+        self._check_search_field_references()
         return self
 
     # Methods ----------------------------------------------------------------------------------------------------------

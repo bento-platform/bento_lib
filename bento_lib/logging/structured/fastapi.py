@@ -35,6 +35,7 @@ def build_structlog_fastapi_middleware(service_kind: str):
         finally:
             # When the response has finished or errored out, write the access log message:
             # noinspection PyTypeChecker
+            client = request.client
             await log_access(
                 access_logger,
                 start_time,
@@ -45,7 +46,9 @@ def build_structlog_fastapi_middleware(service_kind: str):
                     version=request.scope["http_version"],
                 ),
                 network_info=LogNetworkInfo(
-                    client=LogNetworkClientInfo(host=request.client.host, port=request.client.port)
+                    client=LogNetworkClientInfo(
+                        host=client.host if client else None, port=client.port if client else None
+                    )
                 ),
             )
 

@@ -81,3 +81,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+check_untyped_defs = true

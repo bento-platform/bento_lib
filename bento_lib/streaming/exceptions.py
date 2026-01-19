@@ -34,7 +34,7 @@ class StreamingRangeNotSatisfiable(StreamingException):
         return self._reason
 
     @property
-    def n_bytes(self) -> int:
+    def n_bytes(self) -> int | None:
         return self._n_bytes
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field, HttpUrl, model_validator
+from typing import cast
 
 from .types import PhenoV2Resource, PhenoV2OntologyClassDict
 
@@ -82,7 +83,10 @@ class VersionedOntologyResource(OntologyResource):
     version: str = Field(..., title="Version", description="Ontology resource version")
 
     def to_phenopackets_repr(self) -> PhenoV2Resource:
-        return self.model_dump(mode="json", include={"id", "version", "name", "url", "namespace_prefix", "iri_prefix"})
+        return cast(
+            PhenoV2Resource,
+            self.model_dump(mode="json", include={"id", "version", "name", "url", "namespace_prefix", "iri_prefix"}),
+        )
 
 
 class OntologyClass(BaseModel):
@@ -95,7 +99,7 @@ class OntologyClass(BaseModel):
     label: str = Field(..., title="Label", description="Human-readable label for the ontology class")
 
     def to_phenopackets_repr(self) -> PhenoV2OntologyClassDict:
-        return self.model_dump(mode="json", include={"id", "label"})
+        return cast(PhenoV2OntologyClassDict, self.model_dump(mode="json", include={"id", "label"}))
 
 
 class ResourceOntologyClass(OntologyClass):
@@ -110,7 +114,7 @@ class ResourceOntologyClass(OntologyClass):
     )
 
     @model_validator(mode="after")
-    def check_curie(self) -> "ResourceOntologyClass":
+    def check_curie(self) -> ResourceOntologyClass:
         if not self.id.startswith(self.ontology.namespace_prefix + ":"):
             raise ValueError("class CURIE must start with ontology resource namespace prefix")
         return self

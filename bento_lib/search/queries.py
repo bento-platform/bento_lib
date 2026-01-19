@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Sequence
 
 from ._types import JSONSchema
 from .operations import (
@@ -154,12 +154,12 @@ FUNCTION_SEARCH_OP_MAP = {
 # given field for example 20, in a query for age greater than 20.
 # In the AST they are distinct from Expressions
 literal_types = str, int, float, bool  # TODO: How to handle dict in practical cases?
-LiteralValue = Union[str, int, float, bool]
+type LiteralValue = str | int | float | bool
 
-FunctionName = str
+type FunctionName = str
 
 
-Query = Union[list, LiteralValue]
+type Query = list | LiteralValue
 
 
 # TODO: Prevent nested resolves
@@ -167,7 +167,7 @@ Query = Union[list, LiteralValue]
 
 
 # AST = Union["Expression", "Literal"]
-Args = Tuple["AST", ...]
+type Args = tuple[AST, ...]
 
 
 class AST(ABC):
@@ -287,7 +287,7 @@ def convert_query_to_ast_and_preprocess(query: Query) -> AST:
     return simplify_nots(ast)
 
 
-def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
+def ast_to_and_asts(ast: AST) -> tuple[AST, ...]:
     # (and e1 e2) => <e1, e2>
     # (and (and e1 e2) e3) => <e1, e2, e3>
     # (and e1 (and e2 e3)) => <e1, e2, e3>
@@ -300,14 +300,14 @@ def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
     return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
 
 
-def _and_asts_to_ast_rec(asts: Tuple[AST, ...]) -> AST:
+def _and_asts_to_ast_rec(asts: tuple[AST, ...]) -> AST:
     if len(asts) == 1:  # Base case
         return asts[0]
 
     return Expression(FUNCTION_AND, [asts[0], _and_asts_to_ast_rec(asts[1:])])
 
 
-def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
+def and_asts_to_ast(asts: tuple[AST, ...]) -> AST | None:
     # ()               => None
     # (e1, e2, e3, e4) => (and e1 (and e2 (and e3 e4)))
 
@@ -320,7 +320,7 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
 def check_operation_permissions(
     ast: AST,
     schema: JSONSchema,
-    search_getter: Callable[[Tuple[Literal, ...], dict], dict],
+    search_getter: Callable[[tuple[Literal, ...], dict], dict],
     internal: bool = False,
 ):
     if ast.type == "l":
