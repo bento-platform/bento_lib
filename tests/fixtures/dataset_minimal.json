@@ -1,0 +1,39 @@
+{
+  "id": "dataset-json-001",
+  "schema_version": "1.0",
+  "title": "Test Dataset from JSON",
+  "description": "A dataset loaded from JSON fixture",
+  "keywords": ["test", {"id": "HP:0001250", "label": "Seizure"}],
+  "resources": [],
+  "stakeholders": [
+    {
+      "name": "Jane Doe",
+      "honorific": "Dr.",
+      "other_names": [],
+      "affiliations": ["Test University"],
+      "roles": ["Principal Investigator"]
+    }
+  ],
+  "spatial_coverage": null,
+  "version": "1.0",
+  "privacy": null,
+  "license": null,
+  "counts": [],
+  "primary_contact": {
+    "name": "Jane Doe",
+    "honorific": "Dr.",
+    "other_names": [],
+    "affiliations": ["Test University"],
+    "roles": ["Principal Investigator"]
+  },
+  "links": [],
+  "publications": [],
+  "logos": [],
+  "data_access_links": [],
+  "release_date": "2024-01-15",
+  "last_modified": "2024-06-01",
+  "participant_criteria": [],
+  "study_status": "ONGOING",
+  "study_context": "RESEARCH",
+  "pcgl_domain": ["Genomics"]
+}

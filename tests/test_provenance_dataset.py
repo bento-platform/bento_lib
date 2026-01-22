@@ -1,6 +1,9 @@
 """Tests for DatasetModel."""
 
+import json
 from datetime import date
+from pathlib import Path
+
 from pydantic import HttpUrl, ValidationError
 import pytest
 from geojson_pydantic import Point
@@ -19,6 +22,8 @@ from bento_lib.provenance import (
     SpatialCoverageFeature,
     SpatialCoverageProperties,
 )
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 def test_dataset_model(base_dataset_kwargs, basic_pi, basic_contact):
@@ -223,3 +228,18 @@ def test_dataset_model_with_resources(base_dataset_kwargs):
     assert len(dataset.resources) == 1
     assert dataset.resources[0].id == "hp"
     assert dataset.resources[0].version == "2024-04-26"
+
+
+def test_dataset_model_from_json():
+    """Test loading DatasetModel from JSON file."""
+    with open(FIXTURES_DIR / "dataset_minimal.json") as f:
+        data = json.load(f)
+
+    dataset = DatasetModel.model_validate(data)
+
+    assert dataset.id == "dataset-json-001"
+    assert dataset.title == "Test Dataset from JSON"
+    assert len(dataset.keywords) == 2
+    assert dataset.keywords[0] == "test"
+    assert isinstance(dataset.keywords[1], OntologyClass)
+    assert dataset.keywords[1].id == "HP:0001250"
