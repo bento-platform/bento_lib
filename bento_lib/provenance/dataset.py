@@ -24,7 +24,7 @@ from datetime import date
 from pydantic import AnyUrl, BaseModel, BeforeValidator, Field, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
-from bento_lib.ontologies.models import OntologyClass
+from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 
 
 type Role = Literal[
@@ -248,6 +248,10 @@ class DatasetModelBase(BaseModel):
     description: str
 
     keywords: list[str | OntologyClass]
+    resources: list[VersionedOntologyResource] = Field(
+        default_factory=list,
+        description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
+    )
     stakeholders: list[Organization | Person]
 
     spatial_coverage: str | SpatialCoverageFeature | None

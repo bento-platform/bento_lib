@@ -68,6 +68,7 @@ def base_dataset_kwargs(basic_pi):
         "description": "Test",
         "id": "test-study-001",
         "keywords": [],
+        "resources": [],
         "stakeholders": [basic_pi],
         "spatial_coverage": None,
         "version": None,

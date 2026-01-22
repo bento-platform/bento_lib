@@ -5,7 +5,7 @@ from pydantic import HttpUrl, ValidationError
 import pytest
 from geojson_pydantic import Point
 
-from bento_lib.ontologies.models import OntologyClass
+from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 from bento_lib.provenance import (
     DatasetModel,
     DatasetModelBase,
@@ -199,3 +199,27 @@ def test_count_value_converts_int_to_float():
     count = Count(count_entity="participants", value=100, description="Total participants")
     assert count.value == 100.0
     assert isinstance(count.value, float)
+
+
+def test_dataset_model_resources_default_empty(base_dataset_kwargs):
+    """Test that resources defaults to empty list."""
+    dataset = DatasetModel(**base_dataset_kwargs)
+    assert dataset.resources == []
+
+
+def test_dataset_model_with_resources(base_dataset_kwargs):
+    """Test DatasetModel with VersionedOntologyResource for CURIE resolution."""
+    resource = VersionedOntologyResource(
+        id="hp",
+        name="Human Phenotype Ontology",
+        url=HttpUrl("https://example.org/hp.owl"),
+        namespace_prefix="HP",
+        iri_prefix=HttpUrl("http://purl.obolibrary.org/obo/HP_"),
+        version="2024-04-26",
+    )
+
+    dataset = DatasetModel(**{**base_dataset_kwargs, "resources": [resource]})
+
+    assert len(dataset.resources) == 1
+    assert dataset.resources[0].id == "hp"
+    assert dataset.resources[0].version == "2024-04-26"
