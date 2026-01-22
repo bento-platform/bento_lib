@@ -21,7 +21,7 @@ __all__ = [
 
 from typing import Annotated, Literal
 from datetime import date
-from pydantic import AnyUrl, BaseModel, BeforeValidator, Field, HttpUrl, ConfigDict
+from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
@@ -135,7 +135,7 @@ class Phone(BaseModel):
 class Contact(BaseModel):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
-    email: list[str]
+    email: list[EmailStr]
     address: str | None
     phone: Phone | None
 
