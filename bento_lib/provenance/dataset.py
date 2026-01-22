@@ -211,7 +211,7 @@ class Logo(BaseModel):
     """
 
     url: AnyUrl
-    theme: Literal["light", "dark", "default"] | None = None
+    theme: Literal["light", "dark", "default"] = "default"
     description: str | None = None
 
 
