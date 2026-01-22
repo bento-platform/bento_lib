@@ -153,7 +153,10 @@ class Organization(BaseModel):
 class Person(BaseModel):
     name: str
     honorific: str | None
-    other_names: list[str]
+    other_names: list[str] = Field(
+        default_factory=list,
+        description="Alternative names such as maiden names, nicknames, or transliterations",
+    )
 
     affiliations: list[Organization | str]
 
