@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, Required, TypedDict
 
 __all__ = [
     "GA4GHServiceType",
@@ -31,11 +31,8 @@ class GA4GHServiceOrganizationModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
-# TODO: py3.11: Required[] instead of base class
-
-
 class BentoExtraServiceInfo(TypedDict, total=False):
-    serviceKind: str  # One service_kind per Bento service/instance
+    serviceKind: Required[str]  # One service_kind per Bento service/instance
     dataService: bool  # Whether the service provides data types/search/workflows
     # Whether the service provides workflows:
     #   - not necessarily data types; split from dataService to allow services to provide workflows
@@ -51,22 +48,20 @@ class BentoExtraServiceInfo(TypedDict, total=False):
     gitCommit: str
 
 
-class _GA4GHServiceInfoBase(TypedDict):
+class GA4GHServiceInfo(TypedDict):
     id: str
     name: str
     type: GA4GHServiceType
     organization: GA4GHServiceOrganization
     version: str
-
-
-class GA4GHServiceInfo(_GA4GHServiceInfoBase, total=False):
-    description: str
-    contactUrl: str
-    documentationUrl: str
-    url: str  # Technically not part of spec; comes from service-registry
-    environment: Literal["dev", "prod"]
+    # -- Optional fields: --------------------------
+    description: NotRequired[str]
+    contactUrl: NotRequired[str]
+    documentationUrl: NotRequired[str]
+    url: NotRequired[str]  # Technically not part of spec; comes from service-registry
+    environment: NotRequired[Literal["dev", "prod"]]
     # Bento-specific service info properties are contained inside a nested, "bento"-keyed dictionary
-    bento: BentoExtraServiceInfo
+    bento: NotRequired[BentoExtraServiceInfo]
 
 
 class BentoServiceRecord(TypedDict):
@@ -76,16 +71,13 @@ class BentoServiceRecord(TypedDict):
     url: str
 
 
-class _BentoDataTypeServiceListingBase(TypedDict):
+class BentoDataTypeServiceListing(TypedDict):
     queryable: bool
     item_schema: dict
     metadata_schema: dict
     id: str
     count: int | None
-
-
-class BentoDataTypeServiceListing(_BentoDataTypeServiceListingBase, total=False):
-    label: str | None
+    label: NotRequired[str | None]
 
 
 class BentoDataType(TypedDict):

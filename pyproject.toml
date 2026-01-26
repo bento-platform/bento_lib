@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bento-lib"
-version = "13.5.0"
+version = "14.1.2"
 description = "A set of common utilities and helpers for Bento platform services."
 authors = [
     "David Lougheed <david.lougheed@mail.mcgill.ca>",
@@ -23,23 +23,22 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-aiofiles = ">=24.1.0,<25"
+python = "^3.12"
+aiofiles = ">=24.1.0,<26"
 aiohttp = ">=3.10.10,<4"
-asyncpg = { version = ">=0.29.0,<0.31.0", optional = true }
+asyncpg = { version = ">=0.29.0,<0.32.0", optional = true }
 django = { version = ">=5.1.8,<5.3", optional = true }
 djangorestframework = { version = ">=3.16.0,<3.17", optional = true }
-fastapi = { version = ">=0.115.12,<0.116", optional = true }
+fastapi = { version = ">=0.115.12,<0.129", optional = true }
 flask = { version = ">=3.0.3,<4", optional = true }
 jsonschema = ">=4.23.0,<5"
 psycopg2-binary = ">=2.9.9,<3.0"
 pydantic = ">=2.11.3,<3"
 pydantic-settings = ">=2.8.1"
-redis = ">=6.1.0,<7"
+redis = ">=5.2.1,<8"
 requests = ">=2.32.3,<3"
 rich = ">=14.0.0,<15"  # for logger exception formatting in development
 structlog = ">=25.2.0,<26"
-typing-extensions = "^4.13.2"
 uvicorn = { version = "*", optional = true }
 werkzeug = ">=3.0.6,<4"
 geojson-pydantic = "^2.0.0"
@@ -48,16 +47,16 @@ geojson-pydantic = "^2.0.0"
 aioresponses = "^0.7.6"
 coverage = "^7.4.1"
 httpx = "^0.28.1"
-mypy = "~1.16.1"
-pytest = "^8.3.2"
+mypy = "~1.19.1"
+pytest = "^9.0.1"
 pytest-asyncio = "^1.0.0"
-pytest-cov = "^6.0.0"
+pytest-cov = "^7.0.0"
 pytest-django = "^4.11.1"
 python-dateutil = "^2.8.2"
 responses = "^0.25.0"
-ruff = "^0.12.0"
+ruff = "^0.14.0"
 tox = "^4.13.0"
-types-aiofiles = "^24.1.0.20240626"
+types-aiofiles = "^25.1.0.20251011"
 types-colorama = "^0.4.15.20240205"
 types-cryptography = "^3.3.23.2"
 types-jsonschema = "^4.21.0.20240118"
@@ -81,4 +80,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py312"
