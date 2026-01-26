@@ -7,6 +7,7 @@ from geojson_pydantic import Point
 from bento_lib.provenance import (
     Contact,
     Count,
+    FundingSource,
     License,
     Organization,
     ParticipantCriteria,
@@ -50,11 +51,16 @@ def test_organization():
         description="A research institution",
         contact=Contact(email=["contact@test.edu"], address=None, phone=None),
         roles=["Institution"],
-        grant_number="12345",
     )
     assert org.name == "Test University"
     assert "Institution" in org.roles
-    assert org.grant_number == "12345"
+
+
+def test_funding_source():
+    """Test FundingSource model."""
+    funding = FundingSource(funder="NIH", grant_numbers=["R01-123", "R21-456"])
+    assert funding.funder == "NIH"
+    assert len(funding.grant_numbers) == 2
 
 
 def test_person():

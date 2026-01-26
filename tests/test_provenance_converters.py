@@ -36,8 +36,8 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert dataset.participant_criteria[1].type == "Exclusion"
     assert dataset.participant_criteria[1].description == "Pregnant individuals"
 
-    # Check stakeholders (1 PI, 2 institutions, 2 collaborators, 2 funders = 7 total)
-    assert len(dataset.stakeholders) == 7
+    # Check stakeholders (1 PI, 2 institutions, 2 collaborators = 5 total)
+    assert len(dataset.stakeholders) == 5
 
     # Find PI (parsed from "Jane Smith")
     pis = [s for s in dataset.stakeholders if isinstance(s, Person) and "Principal Investigator" in s.roles]
@@ -49,14 +49,13 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert len(institutions) == 2
     assert {inst.name for inst in institutions} == {"Test University", "Research Hospital"}
 
-    # Find funders
-    funders = [s for s in dataset.stakeholders if isinstance(s, Organization) and "Funder" in s.roles]
-    assert len(funders) == 2
-    funder_names = {f.name for f in funders}
-    assert "NIH" in funder_names
-    assert "NSF" in funder_names
-    nih_funder = next(f for f in funders if f.name == "NIH")
-    assert nih_funder.grant_number == "R01-123456"
+    # Check funding sources
+    assert len(dataset.funding_sources) == 2
+    funders = {f.funder for f in dataset.funding_sources}
+    assert "NIH" in funders
+    assert "NSF" in funders
+    nih_funder = next(f for f in dataset.funding_sources if f.funder == "NIH")
+    assert nih_funder.grant_numbers == ["R01-123456"]
 
     # Check publications
     assert len(dataset.publications) == 2

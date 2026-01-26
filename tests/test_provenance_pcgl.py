@@ -255,8 +255,8 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert len(dataset.keywords) == 2
     assert "cancer" in dataset.keywords
 
-    # Check stakeholders (2 PIs + 2 lead orgs + 2 collaborators + 1 funder = 7)
-    assert len(dataset.stakeholders) == 7
+    # Check stakeholders (2 PIs + 2 lead orgs + 2 collaborators = 6)
+    assert len(dataset.stakeholders) == 6
 
     # Check PI conversion
     pi_stakeholders = [s for s in dataset.stakeholders if isinstance(s, Person)]
@@ -267,7 +267,12 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
 
     # Check organization conversion
     org_stakeholders = [s for s in dataset.stakeholders if isinstance(s, Organization)]
-    assert len(org_stakeholders) == 5
+    assert len(org_stakeholders) == 4
+
+    # Check funding sources
+    assert len(dataset.funding_sources) == 1
+    assert dataset.funding_sources[0].funder == "NIH"
+    assert dataset.funding_sources[0].grant_numbers == ["R01-123456"]
 
     # Check publications with DOI extraction
     assert len(dataset.publications) == 2

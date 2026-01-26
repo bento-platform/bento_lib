@@ -8,6 +8,7 @@ from pydantic import HttpUrl
 
 from ..dataset import (
     DatasetModel,
+    FundingSource,
     Organization,
     Person,
     Other,
@@ -53,7 +54,6 @@ def pcgl_study_to_dataset(
             description=None,
             contact=Contact(email=[], address=None, phone=None),
             roles=["Institution"],
-            grant_number=None,
         )
         for org_name in study.lead_organizations
     )
@@ -64,21 +64,17 @@ def pcgl_study_to_dataset(
             description=None,
             contact=Contact(email=[], address=None, phone=None),
             roles=[cast(Role, c.role)] if c.role else [cast(Role, "Collaborating Organization")],
-            grant_number=None,
         )
         for c in study.collaborators
     )
 
-    stakeholders.extend(
-        Organization(
-            name=f.funder_name,
-            description=None,
-            contact=Contact(email=[], address=None, phone=None),
-            roles=["Funder"],
-            grant_number=f.grant_number,
+    funding_sources = [
+        FundingSource(
+            funder=f.funder_name,
+            grant_numbers=[f.grant_number] if f.grant_number else [],
         )
         for f in study.funding_sources
-    )
+    ]
 
     publications = [
         Publication(
@@ -101,6 +97,7 @@ def pcgl_study_to_dataset(
         id=study.study_id,
         keywords=keywords,
         stakeholders=stakeholders,
+        funding_sources=funding_sources,
         spatial_coverage=spatial_coverage,
         version=version,
         privacy=privacy,

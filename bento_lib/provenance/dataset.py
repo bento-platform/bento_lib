@@ -16,6 +16,7 @@ __all__ = [
     "SpatialCoverageProperties",
     "SpatialCoverageFeature",
     "Link",
+    "FundingSource",
     "DatasetModel",
 ]
 
@@ -146,9 +147,6 @@ class Organization(BaseModel):
     contact: Contact
     roles: list[Role]
 
-    # For funders
-    grant_number: str | None
-
 
 class Person(BaseModel):
     name: str
@@ -242,6 +240,13 @@ class Link(BaseModel):
     type: Literal["Downloadable Artifact", "Data Management Plan", "Schema", "External Reference"] | Other
 
 
+class FundingSource(BaseModel):
+    """Funding source for the dataset/study."""
+
+    funder: str | Organization | Person | None = None
+    grant_numbers: list[str] = Field(default_factory=list)
+
+
 class DatasetModelBase(BaseModel):
     """Base dataset model without id field."""
 
@@ -256,6 +261,7 @@ class DatasetModelBase(BaseModel):
         description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
     )
     stakeholders: list[Organization | Person]
+    funding_sources: list[FundingSource] = Field(default_factory=list)
 
     spatial_coverage: str | SpatialCoverageFeature | None
     version: str | None

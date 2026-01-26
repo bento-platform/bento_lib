@@ -39,7 +39,6 @@ def basic_institution(basic_contact):
         description=None,
         contact=basic_contact,
         roles=["Institution"],
-        grant_number=None,
     )
 
 
@@ -51,7 +50,6 @@ def basic_funder(basic_contact):
         description=None,
         contact=basic_contact,
         roles=["Funder"],
-        grant_number="GRANT-123",
     )
 
 
