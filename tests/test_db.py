@@ -64,6 +64,28 @@ async def test_pg_async_db_close_auto_open(pg_async_db: PgAsyncDatabase, db_clea
             assert conn == conn2  # Re-using existing connection should be possible
 
 
+# noinspection PyUnusedLocal
+@pytest.mark.asyncio
+async def test_pg_async_db_close_auto_open_error(pg_async_db: PgAsyncDatabase, db_cleanup):
+    await pg_async_db.close()
+
+    old = pg_async_db.initialize
+
+    # this is the actual important part of this test: override initialize function to do nothing
+    async def nada():
+        await asyncio.sleep(0.1)
+
+    pg_async_db.initialize = nada
+
+    try:
+        with pytest.raises(PgAsyncDatabaseException) as e:
+            async with pg_async_db.connect():
+                await asyncio.sleep(0.1)
+        assert str(e.value) == "could not initialize pool"
+    finally:
+        pg_async_db.initialize = old
+
+
 @pytest.mark.asyncio
 async def test_pg_async_db_open(pg_async_db_no_init: PgAsyncDatabase, db_cleanup_no_init):
     # try opening

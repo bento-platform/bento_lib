@@ -1,10 +1,12 @@
 import json
-import jsonschema
 import logging
-import redis
 import uuid
 
 from datetime import datetime, timezone
+from jsonschema.exceptions import SchemaError
+from jsonschema.validators import Draft7Validator
+from redis.client import Redis, PubSub, PubSubWorkerThread
+from redis.exceptions import ConnectionError as RedisConnectionError
 from typing import Callable
 
 from bento_lib.logging.types import StdOrBoundLogger
@@ -28,10 +30,10 @@ class EventBus:
     """
 
     @staticmethod
-    def _get_redis(**kwargs) -> redis.Redis:
+    def _get_redis(**kwargs) -> Redis:
         if "url" in kwargs:
-            return redis.Redis.from_url(kwargs["url"])
-        return redis.Redis(**kwargs)
+            return Redis.from_url(kwargs["url"])
+        return Redis(**kwargs)
 
     def __init__(self, allow_fake: bool = False, **kwargs):
         """
@@ -41,7 +43,7 @@ class EventBus:
         :param allow_fake: Whether to allow for "fake" connections, i.e. no true connection to Redis.
         """
 
-        self._rc: redis.Redis | None = None
+        self._rc: Redis | None = None
 
         logger = kwargs.pop("logger", None) or logging.getLogger(__name__)
         self._logger: StdOrBoundLogger = logger
@@ -51,16 +53,16 @@ class EventBus:
         try:
             self._rc = self._get_redis(**connection_data)
             self._rc.get("")  # Dummy request to check connection
-        except redis.exceptions.ConnectionError as e:
+        except RedisConnectionError as e:
             self._rc = None
             if not allow_fake:
                 raise e
             logger.warning(f"Starting event bus in 'fake' mode (tried connection data: {connection_data})")
 
-        self._ps: redis.client.PubSub | None = None
+        self._ps: PubSub | None = None
 
         self._ps_handlers: dict[str, Callable[[dict], None]] = {}
-        self._event_thread: redis.client.PubSubWorkerThread | None = None
+        self._event_thread: PubSubWorkerThread | None = None
 
         self._service_event_types: dict[str, dict] = {}
         self._data_type_event_types: dict[str, dict] = {}
@@ -151,8 +153,8 @@ class EventBus:
             return False
 
         try:
-            jsonschema.validators.Draft7Validator.check_schema(event_schema)
-        except jsonschema.exceptions.SchemaError:
+            Draft7Validator.check_schema(event_schema)
+        except SchemaError:
             return False
 
         event_types[event_type] = event_schema
@@ -201,7 +203,7 @@ class EventBus:
         if event_type not in event_types:
             return False
 
-        if not jsonschema.validators.Draft7Validator(event_types[event_type]).is_valid(event_data):
+        if not Draft7Validator(event_types[event_type]).is_valid(event_data):
             return False
 
         if self._rc is None:

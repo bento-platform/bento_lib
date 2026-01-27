@@ -21,7 +21,7 @@ __all__ = [
     "FieldDefinition",
 ]
 
-DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity)
+DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity.__value__)  # __value__ accesses inner Literal[...] type
 DISCOVERY_MAPPING_START_PATTERN: re.Pattern = re.compile(rf"^(({'|'.join(DISCOVERY_ENTITIES)})/)[a-zA-Z_]")
 DISCOVERY_MAPPING_FIELD_PART_PATTERN: re.Pattern = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 

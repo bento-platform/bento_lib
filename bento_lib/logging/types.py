@@ -8,5 +8,5 @@ __all__ = [
 ]
 
 
-LogLevelLiteral = Literal["debug", "info", "warning", "error"]
-StdOrBoundLogger = Logger | BoundLogger
+type LogLevelLiteral = Literal["debug", "info", "warning", "error"]
+type StdOrBoundLogger = Logger | BoundLogger
