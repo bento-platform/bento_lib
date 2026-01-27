@@ -9,6 +9,7 @@ from pydantic import HttpUrl
 from ..dataset import (
     DatasetModel,
     FundingSource,
+    License,
     Organization,
     Person,
     Other,
@@ -30,7 +31,7 @@ def pcgl_study_to_dataset(
     spatial_coverage: str | None = None,
     version: str | None = None,
     privacy: str | None = None,
-    license=None,
+    license: License | None = None,
     counts: list | None = None,
 ) -> DatasetModel:
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
