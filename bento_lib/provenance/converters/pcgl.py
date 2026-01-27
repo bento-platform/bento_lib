@@ -69,12 +69,17 @@ def pcgl_study_to_dataset(
         for c in study.collaborators
     )
 
+    # Group funding sources by funder name to consolidate grant numbers
+    funder_grants: dict[str, list[str]] = {}
+    for f in study.funding_sources:
+        if f.funder_name not in funder_grants:
+            funder_grants[f.funder_name] = []
+        if f.grant_number:
+            funder_grants[f.funder_name].append(f.grant_number)
+
     funding_sources = [
-        FundingSource(
-            funder=f.funder_name,
-            grant_numbers=[f.grant_number] if f.grant_number else [],
-        )
-        for f in study.funding_sources
+        FundingSource(funder=funder_name, grant_numbers=grant_numbers)
+        for funder_name, grant_numbers in funder_grants.items()
     ]
 
     publications = [

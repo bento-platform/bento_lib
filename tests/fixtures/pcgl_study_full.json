@@ -19,7 +19,8 @@
   ],
   "fundingSources": [
     {"funder_name": "NIH", "grant_number": "R01-123456"},
-    {"funder_name": "NSF", "grant_number": null}
+    {"funder_name": "NSF", "grant_number": null},
+    {"funder_name": "NIH", "grant_number": "R01-789012"}
   ],
   "publicationLinks": [
     "https://doi.org/10.1234/example",

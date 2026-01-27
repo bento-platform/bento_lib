@@ -49,13 +49,15 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert len(institutions) == 2
     assert {inst.name for inst in institutions} == {"Test University", "Research Hospital"}
 
-    # Check funding sources
-    assert len(dataset.funding_sources) == 2
+    # Check funding sources - should be grouped by funder name
+    assert len(dataset.funding_sources) == 2  # NIH and NSF grouped
     funders = {f.funder for f in dataset.funding_sources}
     assert "NIH" in funders
     assert "NSF" in funders
     nih_funder = next(f for f in dataset.funding_sources if f.funder == "NIH")
-    assert nih_funder.grant_numbers == ["R01-123456"]
+    assert nih_funder.grant_numbers == ["R01-123456", "R01-789012"]  # Both NIH grants consolidated
+    nsf_funder = next(f for f in dataset.funding_sources if f.funder == "NSF")
+    assert nsf_funder.grant_numbers == []  # NSF had null grant_number
 
     # Check publications
     assert len(dataset.publications) == 2
