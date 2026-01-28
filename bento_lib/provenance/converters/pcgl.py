@@ -2,6 +2,7 @@
 
 __all__ = ["pcgl_study_to_dataset"]
 
+from collections import defaultdict
 from datetime import date
 from typing import cast
 from pydantic import HttpUrl
@@ -70,12 +71,11 @@ def pcgl_study_to_dataset(
     )
 
     # Group funding sources by funder name to consolidate grant numbers
-    funder_grants: dict[str, list[str]] = {}
+    funder_grants: defaultdict[str, list[str]] = defaultdict(list)
     for f in study.funding_sources:
-        if f.funder_name not in funder_grants:
-            funder_grants[f.funder_name] = []
+        grants = funder_grants[f.funder_name]
         if f.grant_number:
-            funder_grants[f.funder_name].append(f.grant_number)
+            grants.append(f.grant_number)
 
     funding_sources = [
         FundingSource(funder=funder_name, grant_numbers=grant_numbers)
