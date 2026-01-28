@@ -1,0 +1,21 @@
+{
+  "studyId": "STUDY002",
+  "studyName": "Minimal Study",
+  "studyDescription": "Description",
+  "programName": null,
+  "keywords": [],
+  "status": "COMPLETED",
+  "context": "CLINICAL",
+  "domain": ["Other"],
+  "dacId": "DAC002",
+  "participantCriteria": null,
+  "principalInvestigators": [
+    {"name": "John Doe", "affiliation": "Organization"}
+  ],
+  "leadOrganizations": ["Organization"],
+  "collaborators": [],
+  "fundingSources": [
+    {"funder_name": "Funder", "grant_number": null}
+  ],
+  "publicationLinks": []
+}
