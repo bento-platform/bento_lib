@@ -7,10 +7,13 @@ from .models import (
     RULES_NO_PERMISSIONS,
     DiscoveryConfig,
     DiscoveryConfigRules,
+    # -- Field definitions: ------
     FieldDefinition,
     DateFieldDefinition,
     NumberFieldDefinition,
     StringFieldDefinition,
+    OntologyClassFieldDefinition,
+    # ----------------------------
     OverviewChart,
     OverviewSection,
     SearchSection,
@@ -31,10 +34,13 @@ __all__ = [
     "RULES_NO_PERMISSIONS",
     "DiscoveryConfig",
     "DiscoveryConfigRules",
+    #  - field definitions
     "FieldDefinition",
     "DateFieldDefinition",
     "NumberFieldDefinition",
     "StringFieldDefinition",
+    "OntologyClassFieldDefinition",
+    #  - other
     "OverviewChart",
     "OverviewSection",
     "SearchSection",

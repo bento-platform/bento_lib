@@ -1,4 +1,5 @@
 import re
+from bento_lib.ontologies.models import OntologyClass
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
 from typing import Annotated, Literal, Self, get_args
 from ..types import DiscoveryEntity
@@ -17,6 +18,9 @@ __all__ = [
     # date
     "DateFieldConfig",
     "DateFieldDefinition",
+    # ontology-class
+    "OntologyClassConfig",
+    "OntologyClassFieldDefinition",
     # sum type:
     "FieldDefinition",
 ]
@@ -66,7 +70,7 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     title: str = Field(..., title="Title", description="Field title")
     # TODO: make optional and pull from Bento schema if not set:
     description: str = Field(..., title="Description", description="Field description")
-    datatype: Literal["string", "number", "date"] = DataTypeField
+    datatype: Literal["string", "number", "date", "ontology-class"] = DataTypeField
 
     # Somewhat of a display control; doesn't provide any "bool" level because we don't generally have boolean charts.
     # Controls whether the field will be available for charts/search in a given scope context; useful for specific types
@@ -312,12 +316,39 @@ class DateFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
 
+class OntologyClassConfig(BaseModel, NoAdditionalProperties):
+    enum: list[str | OntologyClass] | None = Field(
+        ...,
+        title="Enum",
+        description=(
+            "Possible IDs or ontology class objects for this ontology class field which can be used for filtering. "
+            "If null, these will be auto-populated from data service(s), excluding values which have counts below or "
+            "at the threshold set in the discovery rules."
+        ),
+    )
+
+
+class OntologyClassFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
+    """
+    Defines an ontology class field (Phenopackets-style; see bento_lib.ontologies.models.OntologyClass). Roughly similar
+    to a string, but for this specific object format. Search queries should be done via ontology class ID; the label is
+    to be used for user interface rendering.
+    """
+
+    datatype: Literal["ontology-class"] = DataTypeField
+    config: OntologyClassConfig = Field(
+        ..., title="Config", description="Additional configuration for the ontology class field."
+    )
+
+
 class FieldDefinition(RootModel):
     """
     Field definition model - discriminated union of data/number/string fields, based on datatype property.
     """
 
-    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition = Field(..., discriminator="datatype")
+    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition | OntologyClassFieldDefinition = Field(
+        ..., discriminator="datatype"
+    )
 
     def __getattr__(self, item):
         return getattr(self.root, item)
