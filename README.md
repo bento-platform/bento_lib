@@ -142,6 +142,17 @@ especially in the context of classes which must be eventually ingested into
 
 * [Ontology resource and ontology class models](./docs/ontologies/ontology_models.md)
 
+### `provenance`
+
+`provenance` contains Pydantic models for dataset provenance metadata, used
+for describing datasets with rich contextual information including stakeholders,
+funding sources, publications, licenses, and spatial coverage. The main model,
+`DatasetModel`, provides a standardized schema for dataset metadata used in
+[Katsu](https://github.com/bento-platform/katsu).
+
+The module also includes converters for transforming external dataset formats
+(e.g., PCGL) into the Bento dataset model.
+
 ### `responses`
 
 `responses` contains standardized error message-generating functions 
