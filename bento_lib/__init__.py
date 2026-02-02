@@ -6,6 +6,7 @@ from . import discovery
 from . import drs
 from . import events
 from . import ontologies
+from . import provenance
 from . import schemas
 from . import search
 from . import service_info
@@ -22,6 +23,7 @@ __all__ = [
     "drs",
     "events",
     "ontologies",
+    "provenance",
     "schemas",
     "search",
     "service_info",
