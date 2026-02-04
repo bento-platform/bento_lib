@@ -17,6 +17,7 @@ __all__ = [
     "SpatialCoverageFeature",
     "Link",
     "FundingSource",
+    "LongDescription",
     "DatasetModel",
 ]
 
@@ -247,6 +248,13 @@ class FundingSource(BaseModel):
     grant_numbers: list[str] = Field(default_factory=list)
 
 
+class LongDescription(BaseModel):
+    """Extended description with content type specification."""
+
+    content: str
+    content_type: str
+
+
 class DatasetModelBase(BaseModel):
     """Base dataset model without id field."""
 
@@ -254,6 +262,7 @@ class DatasetModelBase(BaseModel):
 
     title: str
     description: str
+    long_description: LongDescription | None = None
 
     keywords: list[str | OntologyClass]
     resources: list[VersionedOntologyResource] = Field(

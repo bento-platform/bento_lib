@@ -16,6 +16,7 @@ from bento_lib.provenance import (
     Count,
     License,
     Logo,
+    LongDescription,
     Organization,
     ParticipantCriteria,
     Publication,
@@ -243,3 +244,23 @@ def test_dataset_model_from_json():
     assert dataset.keywords[0] == "test"
     assert isinstance(dataset.keywords[1], OntologyClass)
     assert dataset.keywords[1].id == "HP:0001250"
+
+
+def test_long_description_model():
+    """Test LongDescription model."""
+    long_desc = LongDescription(
+        content="# Markdown content\n\nThis is a **long** description.", content_type="text/markdown"
+    )
+    assert long_desc.content == "# Markdown content\n\nThis is a **long** description."
+    assert long_desc.content_type == "text/markdown"
+
+
+def test_dataset_model_with_long_description(base_dataset_kwargs):
+    """Test DatasetModel with long_description field."""
+    long_desc = LongDescription(content="<p>HTML content</p>", content_type="text/html")
+
+    dataset = DatasetModel(**{**base_dataset_kwargs, "id": "test-study-007", "long_description": long_desc})
+
+    assert dataset.long_description is not None
+    assert dataset.long_description.content == "<p>HTML content</p>"
+    assert dataset.long_description.content_type == "text/html"
