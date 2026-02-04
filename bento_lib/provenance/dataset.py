@@ -252,7 +252,7 @@ class LongDescription(BaseModel):
     """Extended description with content type specification."""
 
     content: str
-    content_type: str
+    content_type: Literal["text/html", "text/markdown", "text/plain"]
 
 
 class DatasetModelBase(BaseModel):
