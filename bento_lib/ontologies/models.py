@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, HttpUrl, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 from typing import cast
 
 from .types import PhenoV2Resource, PhenoV2OntologyClassDict
@@ -24,6 +24,10 @@ class OntologyResource(BaseModel):
     Inspired by the Phenopackets v2 Resource model:
     https://phenopacket-schema.readthedocs.io/en/latest/resource.html
     """
+
+    # main benefit here: ontology classes with resource links become hashable
+    # also, immutability is always nice
+    model_config = ConfigDict(frozen=True)
 
     # From Phenopackets v2: "For OBO ontologies, the value of this string MUST always be the official OBO ID, which is
     #   always equivalent to the ID prefix in lower case. Examples: hp, go, mp, mondo Consult http://obofoundry.org for
@@ -94,6 +98,9 @@ class OntologyClass(BaseModel):
     Model for an ontology class, with a CURIE ID and a label. Inspired by the Phenopackets v2 OntologyClass model:
     https://phenopacket-schema.readthedocs.io/en/latest/ontologyclass.html
     """
+
+    # main benefit here: ontology classes become hashable
+    model_config = ConfigDict(frozen=True)
 
     id: str = Field(..., pattern=CURIE_PATTERN, title="ID", description="CURIE-formatted ontology class ID")
     label: str = Field(..., title="Label", description="Human-readable label for the ontology class")
