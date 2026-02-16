@@ -20,5 +20,4 @@ def fixture_configure_structlog(log_output):
     structlog.configure(processors=[log_output])
 
 
-# Import provenance fixtures
-pytest_plugins = ["tests.provenance.test_provenance_fixtures"]
+pytest_plugins = ["tests.provenance.test_provenance_fixtures", "tests.i18n.conftest"]
