@@ -27,100 +27,116 @@ from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUr
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
+from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
 
-
-type Role = Literal[
+Role = TranslatedLiteral(EN, FR)(
     # Leadership / oversight
-    "Principal Investigator",
-    "Co-Investigator",
-    "Sub-Investigator",
-    "Study Director",
-    "Project Lead",
+    ("Principal Investigator",    "Chercheur principal"),
+    ("Co-Investigator",           "Co-chercheur"),
+    ("Sub-Investigator",          "Sous-chercheur"),
+    ("Study Director",            "Directeur d'étude"),
+    ("Project Lead",              "Chef de projet"),
     # Research team
-    "Researcher",
-    "Research Assistant",
-    "Data Scientist",
-    "Statistician",
-    "Study Coordinator",
-    "Lab Technician",
+    ("Researcher",                "Chercheur"),
+    ("Research Assistant",        "Assistant de recherche"),
+    ("Data Scientist",            "Scientifique des données"),
+    ("Statistician",              "Statisticien"),
+    ("Study Coordinator",         "Coordonnateur d'étude"),
+    ("Lab Technician",            "Technicien de laboratoire"),
     # Participants / human subjects
-    "Participant",
-    "Subject",
-    "Volunteer",
+    ("Participant",               "Participant"),
+    ("Subject",                   "Sujet"),
+    ("Volunteer",                 "Volontaire"),
     # Organizational / institutional roles
-    "Sponsoring Organization",
-    "Collaborating Organization",
-    "Institution",
-    "Site",
-    "Research Center",
-    "Publisher",  # DCAT
+    ("Sponsoring Organization",   "Organisation commanditaire"),
+    ("Collaborating Organization","Organisation collaboratrice"),
+    ("Institution",               "Institution"),
+    ("Site",                      "Site"),
+    ("Research Center",           "Centre de recherche"),
+    ("Publisher",                 "Éditeur"),
     # Ethics & compliance
-    "IRB",
-    "Ethics Board",
-    "Data Monitoring Committee",
-    "Compliance Officer",
+    ("IRB",                       "CÉR"),
+    ("Ethics Board",              "Comité d'éthique"),
+    ("Data Monitoring Committee", "Comité de surveillance des données"),
+    ("Compliance Officer",        "Responsable de la conformité"),
     # Funding & support
-    "Sponsor",
-    "Funder",
-    "Grant Agency",
+    ("Sponsor",                   "Commanditaire"),
+    ("Funder",                    "Bailleur de fonds"),
+    ("Grant Agency",              "Organisme subventionnaire"),
     # Contributors (non-research)
-    "Consultant",
-    "Advisor",
-    "Reviewer",
+    ("Consultant",                "Consultant"),
+    ("Advisor",                   "Conseiller"),
+    ("Reviewer",                  "Évaluateur"),
     # Data & technical roles
-    "Data Provider",
-    "Data Controller",
-    "Data Processor",
-    "Data Contributor",
+    ("Data Provider",             "Fournisseur de données"),
+    ("Data Controller",           "Responsable du traitement des données"),
+    ("Data Processor",            "Sous-traitant des données"),
+    ("Data Contributor",          "Contributeur de données"),
     # External stakeholders
-    "Partner",
-    "Stakeholder",
-    "Community Representative",
-    "Other",
-]
+    ("Partner",                   "Partenaire"),
+    ("Stakeholder",               "Partie prenante"),
+    ("Community Representative",  "Représentant communautaire"),
+    ("Other",                     "Autre"),
+)
+RoleAnnotated = Annotated[str, Role]
 
-type PublicationType = Literal[
+PublicationType = TranslatedLiteral(EN, FR)(
     # Articles and papers
-    "Journal Article",
-    "Conference Paper",
-    "Workshop Paper",
-    "Short Paper",
-    "Poster",
-    "Preprint",
+    ("Journal Article",        "Article de revue"),
+    ("Conference Paper",       "Article de conférence"),
+    ("Workshop Paper",         "Article d'atelier"),
+    ("Short Paper",            "Article court"),
+    ("Poster",                 "Affiche"),
+    ("Preprint",               "Prépublication"),
     # Books and long form
-    "Book",
-    "Book Chapter",
-    "Monograph",
+    ("Book",                   "Livre"),
+    ("Book Chapter",           "Chapitre de livre"),
+    ("Monograph",              "Monographie"),
     # Reports and gray literature
-    "Technical Report",
-    "White Paper",
-    "Working Paper",
+    ("Technical Report",       "Rapport technique"),
+    ("White Paper",            "Livre blanc"),
+    ("Working Paper",          "Document de travail"),
     # Academic qualifications
-    "Thesis",
-    "Master's Thesis",
-    "Doctoral Dissertation",
+    ("Thesis",                 "Thèse"),
+    ("Master's Thesis",        "Mémoire de maîtrise"),
+    ("Doctoral Dissertation",  "Thèse de doctorat"),
     # Data and software
-    "Dataset",
-    "Software",
-    "Software Paper",
+    ("Dataset",                "Jeu de données"),
+    ("Software",               "Logiciel"),
+    ("Software Paper",         "Article sur un logiciel"),
     # Reviews and other
-    "Survey",
-    "Review Article",
-    "Editorial",
-    "Commentary",
-    "Patent",
-]
+    ("Survey",                 "Enquête"),
+    ("Review Article",         "Article de synthèse"),
+    ("Editorial",              "Éditorial"),
+    ("Commentary",             "Commentaire"),
+    ("Patent",                 "Brevet"),
+)
+PublicationTypeAnnotated = Annotated[str, PublicationType]
 
-type PublicationVenueType = Literal[
-    "Journal",
-    "Conference",
-    "Workshop",
-    "Repository",
-    "Publisher",
-    "University",
-    "Data Repository",
-]
+PublicationVenueType = TranslatedLiteral(EN, FR)(
+    ("Journal",          "Revue"),
+    ("Conference",       "Conférence"),
+    ("Workshop",         "Atelier"),
+    ("Repository",       "Dépôt"),
+    ("Publisher",        "Éditeur"),
+    ("University",       "Université"),
+    ("Data Repository",  "Dépôt de données"),
+)
+PublicationVenueTypeAnnotated = Annotated[str, PublicationVenueType]
 
+ParticipantCriterionType = TranslatedLiteral(EN, FR)(
+    ("Inclusion", "Inclusion"),
+    ("Exclusion", "Exclusion"),
+)
+ParticipantCriterionTypeAnnotated = Annotated[str, ParticipantCriterionType]
+
+LinkType = TranslatedLiteral(EN, FR)(
+    ("Downloadable Artifact",  "Artéfact téléchargeable"),
+    ("Data Management Plan",   "Plan de gestion des données"),
+    ("Schema",                 "Schéma"),
+    ("External Reference",     "Référence externe"),
+)
+LinkTypeAnnotated = Annotated[str, LinkType]
 
 class Other(BaseModel):
     """When a literal is not exhaustive"""
@@ -146,7 +162,7 @@ class Organization(BaseModel):
     name: str
     description: str | None
     contact: Contact
-    roles: list[Role]
+    roles: list[RoleAnnotated]
 
 
 class Person(BaseModel):
@@ -159,11 +175,11 @@ class Person(BaseModel):
 
     affiliations: list[Organization | str]
 
-    roles: list[Role]
+    roles: list[RoleAnnotated]
 
 
 class ParticipantCriteria(BaseModel):
-    type: Literal["Inclusion", "Exclusion"]
+    type: ParticipantCriterionTypeAnnotated
     description: str
 
 
@@ -185,7 +201,7 @@ class PublicationVenue(BaseModel):
     """Where the publication was released or hosted (journal, conference, repository, or publisher)."""
 
     name: str
-    venue_type: PublicationVenueType | Other
+    venue_type: PublicationVenueTypeAnnotated | Other
     publisher: str | None
     location: str | None
 
@@ -198,7 +214,7 @@ class Publication(BaseModel):
     title: str
     url: HttpUrl
     doi: str | None
-    publication_type: PublicationType | Other
+    publication_type: PublicationTypeAnnotated | Other
     authors: list[Person | Organization]
     publication_date: date | None
     publication_venue: PublicationVenue | None
@@ -238,7 +254,7 @@ class Link(BaseModel):
 
     label: str
     uri: AnyUrl
-    type: Literal["Downloadable Artifact", "Data Management Plan", "Schema", "External Reference"] | Other
+    type: LinkTypeAnnotated | Other
 
 
 class FundingSource(BaseModel):
@@ -255,7 +271,7 @@ class LongDescription(BaseModel):
     content_type: Literal["text/html", "text/markdown", "text/plain"]
 
 
-class DatasetModelBase(BaseModel):
+class DatasetModelBase(TranslatableModel):
     """Base dataset model without id field."""
 
     schema_version: Literal["1.0"]
