@@ -29,6 +29,7 @@ from geojson_pydantic import Feature as GeoJSONFeature
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
 
+# Turning formating off to preserve columnar structure
 # fmt: off
 Role = TranslatedLiteral(EN, FR)(
     # Leadership / oversight
