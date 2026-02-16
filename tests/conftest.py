@@ -21,4 +21,4 @@ def fixture_configure_structlog(log_output):
 
 
 # Import provenance fixtures
-pytest_plugins = ["tests.test_provenance_fixtures"]
+pytest_plugins = ["tests.provenance.test_provenance_fixtures"]
