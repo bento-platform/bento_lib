@@ -153,7 +153,7 @@ def test_pcgl_study_validation_invalid_domain():
             keywords=[],
             status="ONGOING",
             context="RESEARCH",
-            domain=["InvalidDomain"],  # Not in the StudyDomain literal
+            domain=["InvalidDomain"],  # Not in the StudyDomain literal # type: ignore
             dacId="DAC005",
             participantCriteria=None,
             principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
@@ -384,7 +384,6 @@ def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
         description=None,
         contact=Contact(email=["contact@org.com"], address=None, phone=None),
         roles=["Institution"],
-        grant_number=None,
     )
 
     dataset = pcgl_study_to_dataset(

@@ -17,10 +17,11 @@ from ..dataset import (
     Contact,
     ParticipantCriteria,
     Publication,
-    Role,
+    RoleAnnotated,
 )
 from ..external.pcgl import Study
 from bento_lib.ontologies.models import OntologyClass
+from bento_lib.i18n import EN
 
 
 def pcgl_study_to_dataset(
@@ -65,7 +66,7 @@ def pcgl_study_to_dataset(
             name=c.name,
             description=None,
             contact=Contact(email=[], address=None, phone=None),
-            roles=[cast(Role, c.role)] if c.role else [cast(Role, "Collaborating Organization")],
+            roles=[cast(RoleAnnotated, c.role)] if c.role else [cast(RoleAnnotated, "Collaborating Organization")],
         )
         for c in study.collaborators
     )
@@ -120,6 +121,7 @@ def pcgl_study_to_dataset(
         study_context=study.context,
         pcgl_domain=list(study.domain),  # Convert list[StudyDomain] to list[str]
         pcgl_program_name=study.program_name,
+        extra_properties=None
     )
 
 

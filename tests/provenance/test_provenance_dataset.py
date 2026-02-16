@@ -1,5 +1,7 @@
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.provenance.dataset import (
+    DatasetModelBase,
+    DatasetModel,
     Person,
     Organization,
     SpatialCoverageFeature,
@@ -65,3 +67,23 @@ def test_dataset_model_translation(dataset_full):
     assert ds_fr["stakeholders"][1]["roles"][0] == "Co-chercheur"
     assert ds_fr["publications"][0]["publication_type"] == "Article de revue"
     assert ds_fr["publications"][0]["publication_venue"]["venue_type"] == "Revue"
+
+
+def test_dataset_model_from_base(dataset_full):
+    ds_dict = dataset_full.model_dump()
+    del ds_dict["id"]
+    dmb = DatasetModelBase.model_validate(ds_dict)
+    ds = DatasetModel.from_base(dmb, "Dataset-001")
+
+    assert ds.id == "Dataset-001"
+
+    assert isinstance(ds, DatasetModel)
+
+    assert isinstance(ds.long_description, LongDescription)
+    assert isinstance(ds.keywords[2], OntologyClass)
+    assert isinstance(ds.stakeholders[0], Person)
+    assert isinstance(ds.stakeholders[0].affiliations[1], Organization)
+    assert isinstance(ds.stakeholders[0].affiliations[1].contact.phone, Phone)
+    assert isinstance(ds.spatial_coverage, SpatialCoverageFeature)
+    assert isinstance(ds.license, License)
+    assert isinstance(ds.publications[0].publication_venue, PublicationVenue)

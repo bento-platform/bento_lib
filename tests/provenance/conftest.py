@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from bento_lib.provenance import DatasetModel
+from bento_lib.provenance import DatasetModel, Person
 from bento_lib.provenance.external.pcgl import Study
 
 
@@ -34,3 +34,14 @@ def dataset_full():
 def dataset_minimal():
     with open(FIXTURES_DIR / "dataset_minimal.json") as f:
         return DatasetModel.model_validate(json.load(f))
+
+@pytest.fixture
+def basic_pi():
+    """Reusable principal investigator."""
+    return Person(
+        name="Jane Doe",
+        honorific=None,
+        other_names=[],
+        affiliations=[],
+        roles=["Principal Investigator"],
+    )
