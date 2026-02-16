@@ -6,6 +6,7 @@ from pydantic_extra_types.language_code import LanguageAlpha2
 
 
 EN = LanguageAlpha2("en")
+ES = LanguageAlpha2("es")
 FR = LanguageAlpha2("fr")
 
 class TranslatedLiteral:
