@@ -1,5 +1,13 @@
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.provenance.dataset import Person, Organization, SpatialCoverageFeature, License, PublicationVenue, Phone, LongDescription
+from bento_lib.provenance.dataset import (
+    Person,
+    Organization,
+    SpatialCoverageFeature,
+    License,
+    PublicationVenue,
+    Phone,
+    LongDescription,
+)
 from bento_lib.i18n import FR
 
 
@@ -53,8 +61,7 @@ def test_dataset_model_translation(dataset_full):
     # when serialized, serialized based on language
     ds_fr = ds.model_dump()
 
-    assert ds_fr['id'] == "dataset-json-full-001"
-    assert ds_fr['stakeholders'][1]['roles'][0] == "Co-chercheur"
-    assert ds_fr['publications'][0]['publication_type'] == "Article de revue"
-    assert ds_fr['publications'][0]['publication_venue']['venue_type'] == "Revue"
-
+    assert ds_fr["id"] == "dataset-json-full-001"
+    assert ds_fr["stakeholders"][1]["roles"][0] == "Co-chercheur"
+    assert ds_fr["publications"][0]["publication_type"] == "Article de revue"
+    assert ds_fr["publications"][0]["publication_venue"]["venue_type"] == "Revue"

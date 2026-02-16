@@ -9,6 +9,7 @@ from bento_lib.i18n import (
     TranslatableModel,
 )
 
+
 class TestTranslatableModel:
     def test_default_language_is_en(self):
         class M(TranslatableModel):

@@ -9,6 +9,7 @@ EN = LanguageAlpha2("en")
 ES = LanguageAlpha2("es")
 FR = LanguageAlpha2("fr")
 
+
 class TranslatedLiteral:
     """
     Usage:
@@ -28,10 +29,7 @@ class TranslatedLiteral:
         """Bind term tuples to the language sequence. Returns self for chaining."""
         for t in terms:
             if len(t) != len(self.langs):
-                raise ValueError(
-                    f"Term {t} has {len(t)} values, expected {len(self.langs)} "
-                    f"for languages {self.langs}"
-                )
+                raise ValueError(f"Term {t} has {len(t)} values, expected {len(self.langs)} for languages {self.langs}")
 
         self.en_values = {t[0] for t in terms}
 
@@ -39,9 +37,7 @@ class TranslatedLiteral:
         self.translations: dict[str, dict[str, str]] = {}
         for t in terms:
             en_key = t[0]
-            self.translations[en_key] = {
-                lang: t[i] for i, lang in enumerate(self.langs) if i > 0
-            }
+            self.translations[en_key] = {lang: t[i] for i, lang in enumerate(self.langs) if i > 0}
 
         # Reverse lookup: any translated value -> English key
         self.to_en: dict[str, str] = {}
@@ -66,18 +62,13 @@ class TranslatedLiteral:
             return value
         if value in self.to_en:
             return self.to_en[value]
-        raise ValueError(
-            f"Invalid value '{value}'. "
-            f"Accepted values: {sorted(self.to_en.keys())}"
-        )
-    
+        raise ValueError(f"Invalid value '{value}'. Accepted values: {sorted(self.to_en.keys())}")
+
     def _serialize(self, v: str, info: SerializationInfo) -> Any:
         lang = info.context.get("lang") if info.context else EN
-        return self.translate(v, lang) 
+        return self.translate(v, lang)
 
-    def __get_pydantic_core_schema__(
-        self, source_type: Any, handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
+    def __get_pydantic_core_schema__(self, source_type: Any, handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
         return core_schema.no_info_plain_validator_function(
             self._validate,
             serialization=core_schema.plain_serializer_function_ser_schema(
@@ -90,7 +81,7 @@ class TranslatedLiteral:
 # --- Translatable base model ---
 class TranslatableModel(BaseModel):
     language: LanguageAlpha2 = EN
-    
+
     def _inject_lang_context(self, kwargs: dict) -> dict:
         ctx = kwargs.get("context") or {}
         ctx["lang"] = self.language
@@ -104,5 +95,3 @@ class TranslatableModel(BaseModel):
     @override
     def model_dump_json(self, **kwargs) -> str:
         return super().model_dump_json(**self._inject_lang_context(kwargs))
-
-

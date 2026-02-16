@@ -29,6 +29,7 @@ from geojson_pydantic import Feature as GeoJSONFeature
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
 
+# fmt: off
 Role = TranslatedLiteral(EN, FR)(
     # Leadership / oversight
     ("Principal Investigator",    "Chercheur principal"),
@@ -137,6 +138,8 @@ LinkType = TranslatedLiteral(EN, FR)(
     ("External Reference",     "Référence externe"),
 )
 LinkTypeAnnotated = Annotated[str, LinkType]
+# fmt: on
+
 
 class Other(BaseModel):
     """When a literal is not exhaustive"""

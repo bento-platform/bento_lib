@@ -13,8 +13,8 @@ from bento_lib.i18n import (
 )
 
 
-
 # ── TranslatedLiteral.__init__ ───────────────────────────────────────────
+
 
 class TestTranslatedLiteralInit:
     def test_first_lang_must_be_en(self):
@@ -31,6 +31,7 @@ class TestTranslatedLiteralInit:
 
 
 # ── TranslatedLiteral.__call__ ───────────────────────────────────────────
+
 
 class TestTranslatedLiteralCall:
     def test_mismatched_term_length_raises(self):
@@ -58,6 +59,7 @@ class TestTranslatedLiteralCall:
 
 # ── translate ─────────────────────────────────────────────────────────────
 
+
 class TestTranslate:
     def test_translate_to_fr(self, access_level):
         assert access_level.translate("Open", FR) == "Ouvert"
@@ -78,6 +80,7 @@ class TestTranslate:
 
 # ── available_languages ───────────────────────────────────────────────────
 
+
 class TestAvailableLanguages:
     def test_returns_all_langs(self, access_level):
         assert access_level.available_languages() == (EN, FR, ES)
@@ -87,6 +90,7 @@ class TestAvailableLanguages:
 
 
 # ── _validate ─────────────────────────────────────────────────────────────
+
 
 class TestValidate:
     def test_accept_english_value(self, access_level):
@@ -106,6 +110,7 @@ class TestValidate:
 
 
 # ── Pydantic integration ─────────────────────────────────────────────────
+
 
 class TestPydanticValidation:
     def test_model_accepts_en_value(self, access_level):
@@ -164,14 +169,19 @@ class TestPydanticValidation:
 
 # ── Edge cases ────────────────────────────────────────────────────────────
 
+
 class TestEdgeCases:
     def test_single_term(self):
-        tl = TranslatedLiteral(EN, FR)(("Solo", "Seul"),)
+        tl = TranslatedLiteral(EN, FR)(
+            ("Solo", "Seul"),
+        )
         assert tl.en_values == {"Solo"}
         assert tl.translate("Solo", FR) == "Seul"
 
     def test_same_word_across_languages(self):
-        tl = TranslatedLiteral(EN, FR)(("Piano", "Piano"),)
+        tl = TranslatedLiteral(EN, FR)(
+            ("Piano", "Piano"),
+        )
         assert tl._validate("Piano") == "Piano"
         assert tl.translate("Piano", FR) == "Piano"
 

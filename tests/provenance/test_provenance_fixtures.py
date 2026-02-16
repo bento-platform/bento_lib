@@ -12,8 +12,6 @@ from bento_lib.provenance.external.pcgl import Study
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
-
-
 @pytest.fixture
 def pcgl_study_full():
     with open(FIXTURES_DIR / "pcgl_study_full.json") as f:
@@ -32,7 +30,7 @@ def dataset_full():
         return DatasetModel.model_validate(json.load(f))
 
 
-@pytest.fixture 
+@pytest.fixture
 def dataset_minimal():
     with open(FIXTURES_DIR / "dataset_minimal.json") as f:
         return DatasetModel.model_validate(json.load(f))
