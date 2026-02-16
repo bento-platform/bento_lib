@@ -1,10 +1,6 @@
-"""Tests for DatasetModel."""
-
 from bento_lib.ontologies.models import OntologyClass
-# from bento_lib.provenance import DatasetModel
 from bento_lib.provenance.dataset import Person, Organization, SpatialCoverageFeature, License, PublicationVenue, Phone, LongDescription
 from bento_lib.i18n import FR
-from pprint import pprint
 
 
 def test_dataset_model_full(dataset_full):
