@@ -121,7 +121,7 @@ def pcgl_study_to_dataset(
         study_context=study.context,
         pcgl_domain=list(study.domain),  # Convert list[StudyDomain] to list[str]
         pcgl_program_name=study.program_name,
-        extra_properties=None
+        extra_properties=None,
     )
 
 

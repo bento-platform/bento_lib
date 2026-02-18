@@ -35,6 +35,7 @@ def dataset_minimal():
     with open(FIXTURES_DIR / "dataset_minimal.json") as f:
         return DatasetModel.model_validate(json.load(f))
 
+
 @pytest.fixture
 def basic_pi():
     """Reusable principal investigator."""
