@@ -151,34 +151,36 @@ class Other(BaseModel):
 class Phone(BaseModel):
     country_code: int
     number: int
-    extension: int | None
+    extension: int | None = None
 
 
 class Contact(BaseModel):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
     email: list[EmailStr]
-    address: str | None
-    phone: Phone | None
+    address: str | None = None
+    phone: Phone | None = None
 
 
 class Organization(BaseModel):
     name: str
-    description: str | None
-    contact: Contact
+    description: str | None = None
+    contact: Contact | None = None
+    location: str | None = None
     roles: list[RoleAnnotated]
 
 
 class Person(BaseModel):
     name: str
-    honorific: str | None
+    honorific: str | None = None
     other_names: list[str] = Field(
         default_factory=list,
         description="Alternative names such as maiden names, nicknames, or transliterations",
     )
 
     affiliations: list[Organization | str]
-
+    contact: Contact | None = None
+    location: str | None = None
     roles: list[RoleAnnotated]
 
 
@@ -206,8 +208,8 @@ class PublicationVenue(BaseModel):
 
     name: str
     venue_type: PublicationVenueTypeAnnotated | Other
-    publisher: str | None
-    location: str | None
+    publisher: str | None = None
+    location: str | None = None
 
 
 class Publication(BaseModel):
@@ -217,12 +219,12 @@ class Publication(BaseModel):
 
     title: str
     url: HttpUrl
-    doi: str | None
+    doi: str | None = None
     publication_type: PublicationTypeAnnotated | Other
     authors: list[Person | Organization]
-    publication_date: date | None
-    publication_venue: PublicationVenue | None
-    description: str | None
+    publication_date: date | None = None
+    publication_venue: PublicationVenue | None = None
+    description: str | None = None
 
 
 class Logo(BaseModel):
@@ -292,7 +294,7 @@ class DatasetModelBase(TranslatableModel):
     stakeholders: list[Organization | Person]
     funding_sources: list[FundingSource] = Field(default_factory=list)
 
-    spatial_coverage: str | SpatialCoverageFeature | None
+    spatial_coverage: str | SpatialCoverageFeature | None = None
     version: str | None
     privacy: str | None
     license: License | None

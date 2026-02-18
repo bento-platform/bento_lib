@@ -29,6 +29,7 @@
       "name": "Jane Doe",
       "honorific": "Dr.",
       "other_names": ["J. Doe", "Jane D."],
+      "location":"City, Country",
       "affiliations": [
         "Test University",
         {
@@ -43,6 +44,7 @@
               "extension": null
             }
           },
+          "location": "City, Country",
           "roles": ["Research Center"]
         }
       ],
@@ -52,6 +54,15 @@
       "name": "John Smith",
       "honorific": "Prof.",
       "other_names": [],
+      "contact": {
+        "email": ["contact@research.org"],
+        "address": "123 Research Ave, City, Country",
+        "phone": {
+          "country_code": 1,
+          "number": 5551234567,
+          "extension": null
+          }
+        },
       "affiliations": ["Test University"],
       "roles": ["Co-Investigator"]
     }
