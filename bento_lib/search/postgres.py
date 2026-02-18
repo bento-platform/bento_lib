@@ -2,7 +2,7 @@ import functools
 import re
 
 from psycopg2 import sql
-from typing import Callable, Dict, Literal, Optional, Tuple
+from typing import Callable, Literal
 
 from . import queries as q
 from ._types import JSONSchema
@@ -16,7 +16,7 @@ from ._types import JSONSchema
 __all__ = ["search_query_to_psycopg2_sql"]
 
 
-SQLComposableWithParams = Tuple[sql.Composable, tuple]
+type SQLComposableWithParams = tuple[sql.Composable, tuple]
 
 QUERY_ROOT = q.Literal("$root")
 SQL_ROOT = sql.Identifier("_root")
@@ -25,11 +25,11 @@ SQL_NOTHING = sql.SQL("")
 
 # TODO: Python 3.7: Data Class
 class OptionalComposablePair:
-    def __init__(self, parent: Optional[sql.Composable], current: Optional[sql.Composable]):
+    def __init__(self, parent: sql.Composable | None, current: sql.Composable | None):
         # A 'Composable' here is an abstract base class from PsycoPG2's Postgres IR which can represent anything
         # in the PostgreSQL language which can be composed together to create a query.
-        self.parent: Optional[sql.Composable] = parent
-        self.current: Optional[sql.Composable] = current
+        self.parent: sql.Composable | None = parent
+        self.current: sql.Composable | None = current
 
     def __repr__(self):  # pragma: no cover
         return f"<OptionalComposablePair parent={self.parent} current={self.current}>"
@@ -41,21 +41,21 @@ class JoinAndSelectData:
         self,
         relations: OptionalComposablePair,
         aliases: OptionalComposablePair,
-        current_alias_str: Optional[str],
-        current_alias_sql_schema: Optional[sql.SQL],
-        key_link: Optional[Tuple[str, str]],
-        field_alias: Optional[str],
+        current_alias_str: str | None,
+        current_alias_sql_schema: sql.SQL | None,
+        key_link: tuple[str, str] | None,
+        field_alias: str | None,
         search_properties: dict,
-        unresolved: Tuple[q.Literal, ...],
+        unresolved: tuple[q.Literal, ...],
     ):
         self.relations: OptionalComposablePair = relations
         self.aliases: OptionalComposablePair = aliases
-        self.current_alias_str: Optional[str] = current_alias_str
-        self.current_alias_sql_schema: Optional[sql.SQL] = current_alias_sql_schema
-        self.key_link: Optional[Tuple[str, str]] = key_link
-        self.field_alias: Optional[str] = field_alias
+        self.current_alias_str: str | None = current_alias_str
+        self.current_alias_sql_schema: sql.SQL | None = current_alias_sql_schema
+        self.key_link: tuple[str, str] | None = key_link
+        self.field_alias: str | None = field_alias
         self.search_properties: dict = search_properties
-        self.unresolved: Tuple[q.Literal, ...] = unresolved
+        self.unresolved: tuple[q.Literal, ...] = unresolved
 
     def __repr__(self):  # pragma: no cover
         return f"<JoinAndSelectData relations={self.relations} aliases={self.aliases}>"
@@ -88,7 +88,7 @@ def json_schema_to_postgres_schema(
     name: str,
     schema: JSONSchema,
     structure_type: Literal["json", "jsonb"],
-) -> Tuple[Optional[sql.Composable], Optional[str], Optional[sql.Composable]]:
+) -> tuple[sql.Composable | None, str | None, sql.Composable | None]:
     """
     Maps a JSON object schema to a Postgres schema for on-the-fly mapping.
     :param name: the name to give the fake table.
@@ -114,17 +114,17 @@ def json_schema_to_postgres_schema(
     )
 
 
-def _get_search_and_database_properties(schema: JSONSchema) -> Tuple[dict, dict]:
+def _get_search_and_database_properties(schema: JSONSchema) -> tuple[dict, dict]:
     search_properties = schema.get("search", {})
     return search_properties, search_properties.get("database", {})
 
 
 def collect_resolve_join_tables(
-    resolve: Tuple[q.Literal, ...],
+    resolve: tuple[q.Literal, ...],
     schema: JSONSchema,
-    parent_relation: Optional[Tuple[Optional[sql.Composable], Optional[sql.Composable]]] = None,
-    aliased_resolve_path: Optional[str] = None,
-) -> Tuple[JoinAndSelectData, ...]:
+    parent_relation: tuple[sql.Composable | None, sql.Composable | None] | None = None,
+    aliased_resolve_path: str | None = None,
+) -> tuple[JoinAndSelectData, ...]:
     """
     Recursively collects tables to join for compiling the query.
     :param resolve: The current resolve list, minus the command. Starts with $root to keep schema proper.
@@ -273,7 +273,7 @@ def collect_resolve_join_tables(
     )
 
 
-def collect_join_tables(ast: q.AST, terms: tuple, schema: JSONSchema) -> Tuple[JoinAndSelectData, ...]:
+def collect_join_tables(ast: q.AST, terms: tuple, schema: JSONSchema) -> tuple[JoinAndSelectData, ...]:
     if isinstance(ast, q.Literal):
         return terms
 
@@ -410,9 +410,9 @@ def _not(args: q.Args, params: tuple, schema: JSONSchema, internal: bool = False
     return sql.SQL("NOT ({child})").format(child=child_sql), params + child_params
 
 
-def _like_op(op: str) -> Callable[[Tuple[q.AST, q.AST], tuple, JSONSchema, bool], SQLComposableWithParams]:
+def _like_op(op: str) -> Callable[[tuple[q.AST, q.AST], tuple, JSONSchema, bool], SQLComposableWithParams]:
     def inner(
-        args: Tuple[q.AST, q.AST], params: tuple, schema: JSONSchema, internal: bool = False
+        args: tuple[q.AST, q.AST], params: tuple, schema: JSONSchema, internal: bool = False
     ) -> SQLComposableWithParams:
         lhs_sql, lhs_params = search_ast_to_psycopg2_expr(args[0], params, schema, internal)
         rhs_sql, rhs_params = search_ast_to_psycopg2_expr(args[1], params, schema, internal)
@@ -446,7 +446,7 @@ _i_ends_with = functools.partial(_contains, "ILIKE", "end")
 
 
 def _wildcard(
-    args: Tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False
+    args: tuple[q.AST, q.AST], params: tuple, _schema: JSONSchema, _internal: bool = False
 ) -> SQLComposableWithParams:
     if isinstance(args[0], q.Expression):
         raise NotImplementedError(f"Cannot currently use {q.FUNCTION_HELPER_WC} on an expression")  # TODO
@@ -466,16 +466,16 @@ def _wildcard(
         raise TypeError(f"Type-invalid use of function {q.FUNCTION_HELPER_WC}")
 
 
-def get_relation(resolve: Tuple[q.Literal, ...], schema: JSONSchema):
+def get_relation(resolve: tuple[q.Literal, ...], schema: JSONSchema):
     aliases = collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].aliases
     return aliases.current if aliases.current is not None else aliases.parent
 
 
-def get_field(resolve: Tuple[q.Literal, ...], schema: JSONSchema) -> Optional[str]:
+def get_field(resolve: tuple[q.Literal, ...], schema: JSONSchema) -> str | None:
     return collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].field_alias
 
 
-def get_search_properties(resolve: Tuple[q.Literal, ...], schema: JSONSchema) -> dict:
+def get_search_properties(resolve: tuple[q.Literal, ...], schema: JSONSchema) -> dict:
     return collect_resolve_join_tables((QUERY_ROOT, *resolve), schema)[-1].search_properties
 
 
@@ -507,7 +507,7 @@ def _list(args: q.Args, params: tuple, _schema: JSONSchema, _internal: bool = Fa
     return sql.Placeholder(), (*params, values)
 
 
-POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: Dict[str, Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]] = {
+POSTGRES_SEARCH_LANGUAGE_FUNCTIONS: dict[str, Callable[[q.Args, tuple, JSONSchema, bool], SQLComposableWithParams]] = {
     q.FUNCTION_AND: _binary_op("AND"),
     q.FUNCTION_OR: _binary_op("OR"),
     q.FUNCTION_NOT: _not,

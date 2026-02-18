@@ -246,19 +246,19 @@
             }
         },
         "phenotypic_features": {
-            "mapping": "individual/phenopackets/phenotypic_features/pftype/label",
+            "mapping": "individual/phenopackets/phenotypic_features/pftype",
             "title": "Phenotypic Features",
             "description": "Individual phenotypic features, observed as either present or absent",
-            "datatype": "string",
+            "datatype": "ontology-class",
             "config": {
                 "enum": null
             }
         },
         "diseases": {
-            "mapping": "individual/phenopackets/diseases/term/label",
+            "mapping": "individual/phenopackets/diseases/term",
             "title": "Diseases",
             "description": "Diseases observed as either present or absent",
-            "datatype": "string",
+            "datatype": "ontology-class",
             "config": {
                 "enum": null
             }
@@ -292,10 +292,10 @@
         },
         "medical_treatments": {
             "mapping": "individual/phenopackets/medical_actions",
-            "group_by": "treatment/agent/label",
+            "group_by": "treatment/agent",
             "title": "Medical Treatments",
             "description": "Treatment with an agent such as a drug",
-            "datatype": "string",
+            "datatype": "ontology-class",
             "config": {
                 "enum": null
             }
@@ -319,18 +319,16 @@
             }
         },
         "tissues": {
-            "mapping": "biosample/sampled_tissue/label",
-            "mapping_for_search_filter": "individual/biosamples/sampled_tissue/label",
+            "mapping": "biosample/sampled_tissue",
             "title": "Sampled Tissues",
             "description": "Tissue from which the biosample was extracted",
-            "datatype": "string",
+            "datatype": "ontology-class",
             "config": {
                 "enum": null
             }
         },
         "experiment_type": {
             "mapping": "experiment/experiment_type",
-            "mapping_for_search_filter": "individual/biosamples/experiment/experiment_type",
             "title": "Experiment Types",
             "description": "Types of experiments performed on a sample",
             "datatype": "string",

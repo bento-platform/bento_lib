@@ -90,6 +90,9 @@ class PgAsyncDatabase:
             # initialize if this is the first time we're using the pool, or wait for existing initialization to finish:
             await self.initialize()
 
+        if self._pool is None:
+            raise PgAsyncDatabaseException("could not initialize pool")  # type-narrowing exception, mostly
+
         if existing_conn is not None:
             yield existing_conn
             return

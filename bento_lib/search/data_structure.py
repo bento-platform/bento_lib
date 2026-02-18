@@ -6,7 +6,7 @@ import jsonschema
 from functools import partial
 from itertools import chain, product, starmap
 from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
-from typing import Callable, Dict, List, Iterable, Optional, Tuple, Union
+from typing import Callable, Iterable
 
 from bento_lib.utils.operators import is_not_none
 from . import queries as q
@@ -16,11 +16,11 @@ from ._types import JSONSchema
 __all__ = ["check_ast_against_data_structure"]
 
 
-QueryableStructure = Union[dict, list, set, str, int, float, bool]
-BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
+type QueryableStructure = dict | list | set | str | int | float | bool
+type BBOperator = Callable[[QueryableStructure, QueryableStructure], bool]
 
-IndexCombination = Dict[str, int]
-ArrayLengthData = Tuple[str, int, Tuple["ArrayLengthData", ...]]
+type IndexCombination = dict[str, int]
+type ArrayLengthData = tuple[str, int, tuple["ArrayLengthData", ...]]
 
 
 def _icontains(lhs: str, rhs: str) -> bool:
@@ -34,7 +34,7 @@ def _icontains(lhs: str, rhs: str) -> bool:
     return contains(lhs.casefold(), rhs.casefold())
 
 
-def _in(lhs: Union[str, int, float], rhs: QueryableStructure) -> bool:
+def _in(lhs: str | int | float, rhs: QueryableStructure) -> bool:
     """
     Same as `contains`, except order of arguments is inverted and second
     argument is a set.
@@ -85,7 +85,7 @@ def regex_from_like_pattern(pattern: str, case_insensitive: bool) -> re.Pattern:
     # - Wrap with ^$ to replicate whole-string behaviour
     # - Escape any special Regex characters
 
-    regex_form: List[str] = ["^"]
+    regex_form: list[str] = ["^"]
     escape_mode: bool = False
     for char in pattern:
         # Put us into escape mode, so that the next character is escaped if needed
@@ -173,7 +173,7 @@ def evaluate_no_validate(
     ast: q.AST,
     data_structure: QueryableStructure,
     schema: JSONSchema,
-    index_combination: Optional[IndexCombination],
+    index_combination: IndexCombination | None,
     internal: bool = False,
     resolve_checks: bool = True,
     check_permissions: bool = True,
@@ -218,7 +218,7 @@ def evaluate(
     ast: q.AST,
     data_structure: QueryableStructure,
     schema: JSONSchema,
-    index_combination: Optional[IndexCombination],
+    index_combination: IndexCombination | None,
     internal: bool = False,
     resolve_checks: bool = True,
     check_permissions: bool = True,
@@ -341,7 +341,7 @@ def check_ast_against_data_structure(
     return_all_index_combinations: bool = False,
     secure_errors: bool = True,
     skip_schema_validation: bool = False,
-) -> Union[bool, Iterable[IndexCombination]]:
+) -> bool | Iterable[IndexCombination]:
     """
     Checks a query against a data structure, returning True if the
     :param ast: A query to evaluate against the data object.
@@ -381,7 +381,7 @@ def check_ast_against_data_structure(
 
 def _binary_op(
     op: BBOperator,
-) -> Callable[[q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], bool]:
+) -> Callable[[q.Args, QueryableStructure, JSONSchema, IndexCombination | None, bool, bool, bool], bool]:
     """
     Returns a boolean-returning binary operator on a pair of arguments against a data structure/object of some type and
     return a Boolean result.
@@ -397,7 +397,7 @@ def _binary_op(
         args: q.Args,
         ds: QueryableStructure,
         schema: JSONSchema,
-        ic: Optional[IndexCombination],
+        ic: IndexCombination | None,
         internal: bool,
         resolve_checks: bool,
         check_permissions: bool,
@@ -447,7 +447,7 @@ def _resolve_checks(resolve_value: str, schema: JSONSchema):
 
 
 def _get_child_resolve_array_lengths(
-    new_resolve: Tuple[q.AST, ...],
+    new_resolve: tuple[q.AST, ...],
     resolving_ds: list,
     item_schema: JSONSchema,
     new_path: str,
@@ -472,12 +472,12 @@ def _get_child_resolve_array_lengths(
 
 
 def _resolve_array_lengths(
-    resolve: Tuple[q.AST, ...],
+    resolve: tuple[q.AST, ...],
     resolving_ds: QueryableStructure,
     schema: JSONSchema,
     path: str = "_root",
     resolve_checks: bool = True,
-) -> Optional[ArrayLengthData]:
+) -> ArrayLengthData | None:
     """
     Given a resolve path and a data structure, find lengths of any arrays in the current data structure and any
     descendents it may have.
@@ -521,9 +521,9 @@ def _resolve_array_lengths(
 
 
 def _resolve_properties_and_check(
-    resolve: Tuple[q.Literal, ...],
+    resolve: tuple[q.Literal, ...],
     schema: JSONSchema,
-    index_combination: Optional[IndexCombination],
+    index_combination: IndexCombination | None,
 ) -> dict:
     """
     Resolves / evaluates a path (either object or array) into a value and its search properties. Assumes the
@@ -553,10 +553,10 @@ def _resolve_properties_and_check(
 
 
 def _resolve(
-    resolve: Tuple[q.Literal, ...],
+    resolve: tuple[q.Literal, ...],
     resolving_ds: QueryableStructure,
     _schema: JSONSchema,
-    index_combination: Optional[IndexCombination],
+    index_combination: IndexCombination | None,
     _internal: bool,
     _resolve_checks: bool,
     _check_permissions: bool,
@@ -585,10 +585,10 @@ def _resolve(
 
 
 def _list(
-    literals: Tuple[q.Literal, ...],
+    literals: tuple[q.Literal, ...],
     _resolving_ds: QueryableStructure,
     _schema: JSONSchema,
-    _index_combination: Optional[IndexCombination],
+    _index_combination: IndexCombination | None,
     _internal: bool,
     _resolve_checks: bool,
     _check_permissions: bool,
@@ -602,11 +602,9 @@ def _list(
     return set(literal.value for literal in literals)
 
 
-QUERY_CHECK_SWITCH: Dict[
+QUERY_CHECK_SWITCH: dict[
     q.FunctionName,
-    Callable[
-        [q.Args, QueryableStructure, JSONSchema, Optional[IndexCombination], bool, bool, bool], QueryableStructure
-    ],
+    Callable[[q.Args, QueryableStructure, JSONSchema, IndexCombination | None, bool, bool, bool], QueryableStructure],
 ] = {
     q.FUNCTION_AND: _binary_op(and_),
     q.FUNCTION_OR: _binary_op(or_),

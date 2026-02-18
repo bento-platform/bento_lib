@@ -1,4 +1,5 @@
 import re
+from bento_lib.ontologies.models import OntologyClass
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
 from typing import Annotated, Literal, Self, get_args
 from ..types import DiscoveryEntity
@@ -17,11 +18,14 @@ __all__ = [
     # date
     "DateFieldConfig",
     "DateFieldDefinition",
+    # ontology-class
+    "OntologyClassConfig",
+    "OntologyClassFieldDefinition",
     # sum type:
     "FieldDefinition",
 ]
 
-DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity)
+DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity.__value__)  # __value__ accesses inner Literal[...] type
 DISCOVERY_MAPPING_START_PATTERN: re.Pattern = re.compile(rf"^(({'|'.join(DISCOVERY_ENTITIES)})/)[a-zA-Z_]")
 DISCOVERY_MAPPING_FIELD_PART_PATTERN: re.Pattern = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
@@ -66,7 +70,23 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     title: str = Field(..., title="Title", description="Field title")
     # TODO: make optional and pull from Bento schema if not set:
     description: str = Field(..., title="Description", description="Field description")
-    datatype: Literal["string", "number", "date"] = DataTypeField
+    datatype: Literal["string", "number", "date", "ontology-class"] = DataTypeField
+
+    # Somewhat of a display control; doesn't provide any "bool" level because we don't generally have boolean charts.
+    # Controls whether the field will be available for charts/search in a given scope context; useful for specific types
+    # of data (e.g., geolocation data) which may be too sensitive to show publically even in a censored manner.
+    #  - e.g., if this is set to "data", this search filter/chart would only show up if the user has the Bento
+    #    query:data permission.
+    #  - if this is set to "counts" (the default value), and the user has only these permissions, then:
+    #     - in a project-scoped context, this chart would always show up.
+    #     - with only project-level counts permissions in a dataset-scoped context, this search filter/chart *would not*
+    #       show up.
+    minimum_permissions: Literal["counts", "data"] = Field(
+        default="counts",
+        title="Minimum permissions",
+        description="Minimum permissions needed to make the field available in charts / filtering.",
+    )
+
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = Field(
         default=None,
@@ -296,12 +316,39 @@ class DateFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
 
+class OntologyClassConfig(BaseModel, NoAdditionalProperties):
+    enum: list[str | OntologyClass] | None = Field(
+        ...,
+        title="Enum",
+        description=(
+            "Possible IDs or ontology class objects for this ontology class field which can be used for filtering. "
+            "If null, these will be auto-populated from data service(s), excluding values which have counts below or "
+            "at the threshold set in the discovery rules."
+        ),
+    )
+
+
+class OntologyClassFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
+    """
+    Defines an ontology class field (Phenopackets-style; see bento_lib.ontologies.models.OntologyClass). Roughly similar
+    to a string, but for this specific object format. Search queries should be done via ontology class ID; the label is
+    to be used for user interface rendering.
+    """
+
+    datatype: Literal["ontology-class"] = DataTypeField
+    config: OntologyClassConfig = Field(
+        ..., title="Config", description="Additional configuration for the ontology class field."
+    )
+
+
 class FieldDefinition(RootModel):
     """
     Field definition model - discriminated union of data/number/string fields, based on datatype property.
     """
 
-    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition = Field(..., discriminator="datatype")
+    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition | OntologyClassFieldDefinition = Field(
+        ..., discriminator="datatype"
+    )
 
     def __getattr__(self, item):
         return getattr(self.root, item)
