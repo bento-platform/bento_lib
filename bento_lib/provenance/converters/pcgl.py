@@ -21,7 +21,6 @@ from ..dataset import (
 )
 from ..external.pcgl import Study
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.i18n import EN
 
 
 def pcgl_study_to_dataset(
