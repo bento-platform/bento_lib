@@ -122,6 +122,10 @@ adequately describes the associated data.
 
 All Bento channels are prefixed with `bento.`.
 
+### `i18n`
+
+`i18n` Provides language literals and mixin model for handling pydantic models which are language specific.
+
 ### `logging`
 
 `logging` contains helper functions and types for standardized Bento logging 
