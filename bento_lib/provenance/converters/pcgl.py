@@ -5,12 +5,11 @@ __all__ = ["pcgl_study_to_dataset"]
 from collections import defaultdict
 from datetime import date
 from typing import cast
-from pydantic import HttpUrl
-
 from ..dataset import (
     DatasetModel,
     FundingSource,
     License,
+    Link,
     Organization,
     Person,
     Other,
@@ -28,7 +27,7 @@ def pcgl_study_to_dataset(
     release_date: date,
     last_modified: date,
     primary_contact: Person | Organization,
-    data_access_links: list[HttpUrl] | None = None,
+    data_access_links: list[Link] | None = None,
     spatial_coverage: str | None = None,
     version: str | None = None,
     privacy: str | None = None,

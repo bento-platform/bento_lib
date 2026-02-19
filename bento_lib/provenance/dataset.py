@@ -137,6 +137,8 @@ LinkType = TranslatedLiteral(EN, FR)(
     ("Data Management Plan",   "Plan de gestion des données"),
     ("Schema",                 "Schéma"),
     ("External Reference",     "Référence externe"),
+    ("Data Access",            "Accès aux données"),
+    ("Data Request Form",      "Formulaire de demande de données"),
 )
 LinkTypeAnnotated = Annotated[str, LinkType]
 # fmt: on
@@ -303,7 +305,7 @@ class DatasetModelBase(TranslatableModel):
     links: list[Link]
     publications: list[Publication]
     logos: list[Logo] = Field(default_factory=list)
-    data_access_links: list[HttpUrl]
+    data_access_links: list[Link]
     release_date: date
     last_modified: date
     participant_criteria: list[ParticipantCriteria]

@@ -176,8 +176,16 @@
     }
   ],
   "data_access_links": [
-    "https://data.example.org/access",
-    "https://portal.example.org/download"
+    {
+      "label": "Data Access",
+      "uri": "https://data.example.org/access",
+      "type": "Data Access"
+    },
+    {
+      "label": "Download Portal",
+      "uri": "https://portal.example.org/download",
+      "type": "Data Access"
+    }
   ],
   "release_date": "2023-01-15",
   "last_modified": "2024-06-01",

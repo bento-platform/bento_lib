@@ -5,6 +5,8 @@ from datetime import date
 import pytest
 from pydantic import HttpUrl, ValidationError
 
+from bento_lib.provenance.dataset import Link
+
 from bento_lib.provenance.external.pcgl import (
     Study,
     PrincipalInvestigator,
@@ -240,7 +242,7 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
         release_date=date(2024, 1, 1),
         last_modified=date(2024, 6, 1),
         primary_contact=basic_primary_contact,
-        data_access_links=[HttpUrl("https://example.com/data")],
+        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
         spatial_coverage="Canada",
         version="1.0",
         privacy="Controlled Access",
