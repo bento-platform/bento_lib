@@ -40,6 +40,10 @@ def test_ontology_classes():
     }
 
 
+def test_ontology_classes_hashable():
+    assert hash(ct.NCBI_TAXON_HOMO_SAPIENS)  # should be hashable via pydantic frozen config
+
+
 def test_ontology_class_validation():
     with pytest.raises(ValidationError) as e:
         cr.NCIT_2024_05_07.make_class("NCBITaxon:9606", "Homo sapiens")

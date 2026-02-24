@@ -5,6 +5,9 @@ __all__ = [
     # EFO
     "EFO",
     "EFO_3_84_0",
+    # HP
+    "HP",
+    "HP_2026_01_08",
     # MONDO
     "MONDO",
     "MONDO_2025_12_02",
@@ -38,6 +41,21 @@ EFO = OntologyResource(
     repository_url=HttpUrl("https://github.com/EBISPOT/efo"),
 )
 EFO_3_84_0 = EFO.as_versioned("https://www.ebi.ac.uk/efo/releases/v3.84.0/efo.owl", version="3.84.0")
+
+# === HP (Human Phenotype ontology) ====================================================================================
+
+HP = OntologyResource(
+    id="hp",
+    name="Human Phenotype Ontology",
+    namespace_prefix="HP",
+    iri_prefix=HttpUrl("http://purl.obolibrary.org/obo/HP_"),
+    url=HttpUrl("https://purl.obolibrary.org/obo/hp.owl"),
+    repository_url=HttpUrl("https://github.com/obophenotype/human-phenotype-ontology"),
+)
+HP_2026_01_08 = HP.as_versioned(
+    url="https://purl.obolibrary.org/obo/hp/releases/2026-01-08/hp.owl",
+    version="2026-01-08",
+)
 
 # === MONDO ============================================================================================================
 
