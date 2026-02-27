@@ -6,6 +6,7 @@ from collections import defaultdict
 from datetime import date
 from typing import cast
 from ..dataset import (
+    Count,
     DatasetModel,
     FundingSource,
     License,
@@ -13,7 +14,6 @@ from ..dataset import (
     Organization,
     Person,
     Other,
-    Contact,
     ParticipantCriteria,
     Publication,
     RoleAnnotated,
@@ -27,12 +27,13 @@ def pcgl_study_to_dataset(
     release_date: date,
     last_modified: date,
     primary_contact: Person | Organization,
-    data_access_links: list[Link] | None = None,
+    data_access_links: list[Link],
+    links: list[Link],
+    counts: list[Count],
     spatial_coverage: str | None = None,
     version: str | None = None,
     privacy: str | None = None,
     license: License | None = None,
-    counts: list | None = None,
 ) -> DatasetModel:
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
     keywords: list[str | OntologyClass] = list(study.keywords)
@@ -42,8 +43,8 @@ def pcgl_study_to_dataset(
         Person(
             name=pi.name,
             honorific=None,
-            other_names=[],
-            affiliations=[pi.affiliation] if pi.affiliation else [],
+            other_names=None,
+            affiliations=[pi.affiliation] if pi.affiliation else None,
             roles=["Principal Investigator"],
         )
         for pi in study.principal_investigators
@@ -53,7 +54,7 @@ def pcgl_study_to_dataset(
         Organization(
             name=org_name,
             description=None,
-            contact=Contact(email=[], address=None, phone=None),
+            contact=None,
             roles=["Institution"],
         )
         for org_name in study.lead_organizations
@@ -63,7 +64,7 @@ def pcgl_study_to_dataset(
         Organization(
             name=c.name,
             description=None,
-            contact=Contact(email=[], address=None, phone=None),
+            contact=None,
             roles=[cast(RoleAnnotated, c.role)] if c.role else [cast(RoleAnnotated, "Collaborating Organization")],
         )
         for c in study.collaborators
@@ -77,23 +78,23 @@ def pcgl_study_to_dataset(
             grants.append(f.grant_number)
 
     funding_sources = [
-        FundingSource(funder=funder_name, grant_numbers=grant_numbers)
+        FundingSource(funder=funder_name, grant_numbers=grant_numbers or None)
         for funder_name, grant_numbers in funder_grants.items()
-    ]
+    ] or None
 
     publications = [
         Publication(
-            title="",
+            title=str(url),
             url=url,
             doi=str(url).replace("https://doi.org/", "") if str(url).startswith("https://doi.org/") else None,
             publication_type=Other(other="Journal Article"),
-            authors=[],
+            authors=[primary_contact],
             publication_date=None,
             publication_venue=None,
             description=None,
         )
         for url in study.publication_links
-    ]
+    ] or None
 
     return DatasetModel(
         schema_version="1.0",
@@ -107,11 +108,11 @@ def pcgl_study_to_dataset(
         version=version,
         privacy=privacy,
         license=license,
-        counts=counts or [],
+        counts=counts,
         primary_contact=primary_contact,
-        links=[],
+        links=links,
         publications=publications,
-        data_access_links=data_access_links or [],
+        data_access_links=data_access_links,
         release_date=release_date,
         last_modified=last_modified,
         participant_criteria=_parse_participant_criteria(study.participant_criteria),

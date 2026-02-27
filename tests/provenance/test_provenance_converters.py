@@ -3,6 +3,7 @@
 from datetime import date
 
 from bento_lib.provenance import Organization, Person
+from bento_lib.provenance.dataset import Count, Link
 from bento_lib.provenance.converters.pcgl import (
     pcgl_study_to_dataset,
     _parse_participant_criteria,
@@ -16,6 +17,9 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 6, 1),
         primary_contact=basic_pi,
+        counts=[Count(count_entity="participants", value=100, description="Number of participants")],
+        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
+        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
     )
 
     assert dataset.title == "Cancer Study"
@@ -57,7 +61,7 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     nih_funder = next(f for f in dataset.funding_sources if f.funder == "NIH")
     assert nih_funder.grant_numbers == ["R01-123456", "R01-789012"]  # Both NIH grants consolidated
     nsf_funder = next(f for f in dataset.funding_sources if f.funder == "NSF")
-    assert nsf_funder.grant_numbers == []  # NSF had null grant_number
+    assert nsf_funder.grant_numbers is None  # NSF had null grant_number
 
     # Check publications
     assert len(dataset.publications) == 2
@@ -66,17 +70,19 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
 
 
 def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
-    """Test conversion with minimal study (Other domain, no criteria)."""
+    """Test conversion with minimal study (Other domain, minimal criteria)."""
     dataset = pcgl_study_to_dataset(
         study=pcgl_study_minimal,
         release_date=date(2023, 1, 1),
         last_modified=date(2023, 1, 1),
         primary_contact=basic_pi,
+        counts=[Count(count_entity="participants", value=0, description="Number of participants")],
+        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
+        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
     )
 
     assert len(dataset.pcgl_domain) == 1
     assert dataset.pcgl_domain[0] == "Other"
-    assert dataset.participant_criteria == []
     assert dataset.study_status == "COMPLETED"
     assert dataset.study_context == "CLINICAL"
 

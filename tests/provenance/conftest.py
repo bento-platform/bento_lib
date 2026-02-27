@@ -42,7 +42,7 @@ def basic_pi():
     return Person(
         name="Jane Doe",
         honorific=None,
-        other_names=[],
-        affiliations=[],
+        other_names=None,
+        affiliations=None,
         roles=["Principal Investigator"],
     )

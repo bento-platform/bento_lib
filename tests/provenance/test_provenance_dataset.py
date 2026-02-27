@@ -4,7 +4,6 @@ from bento_lib.provenance.dataset import (
     DatasetModel,
     Person,
     Organization,
-    SpatialCoverageFeature,
     License,
     PublicationVenue,
     Phone,
@@ -26,7 +25,7 @@ def test_dataset_model_full(dataset_full):
     assert isinstance(ds.stakeholders[0], Person)
     assert isinstance(ds.stakeholders[0].affiliations[1], Organization)
     assert isinstance(ds.stakeholders[0].affiliations[1].contact.phone, Phone)
-    assert isinstance(ds.spatial_coverage, SpatialCoverageFeature)
+    assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)
 
@@ -84,6 +83,6 @@ def test_dataset_model_from_base(dataset_full):
     assert isinstance(ds.stakeholders[0], Person)
     assert isinstance(ds.stakeholders[0].affiliations[1], Organization)
     assert isinstance(ds.stakeholders[0].affiliations[1].contact.phone, Phone)
-    assert isinstance(ds.spatial_coverage, SpatialCoverageFeature)
+    assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)

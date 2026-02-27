@@ -29,7 +29,7 @@
       "name": "Jane Doe",
       "honorific": "Dr.",
       "other_names": ["J. Doe", "Jane D."],
-      "location":"City, Country",
+      "location": "City, Country",
       "affiliations": [
         "Test University",
         {
@@ -40,8 +40,7 @@
             "address": "123 Research Ave, City, Country",
             "phone": {
               "country_code": 1,
-              "number": 5551234567,
-              "extension": null
+              "number": 5551234567
             }
           },
           "location": "City, Country",
@@ -53,16 +52,14 @@
     {
       "name": "John Smith",
       "honorific": "Prof.",
-      "other_names": [],
       "contact": {
         "email": ["contact@research.org"],
         "address": "123 Research Ave, City, Country",
         "phone": {
           "country_code": 1,
-          "number": 5551234567,
-          "extension": null
-          }
-        },
+          "number": 5551234567
+        }
+      },
       "affiliations": ["Test University"],
       "roles": ["Co-Investigator"]
     }
@@ -73,26 +70,10 @@
       "grant_numbers": ["NSF-2024-001", "NSF-2024-002"]
     },
     {
-      "funder": {
-        "name": "Jane Doe",
-        "honorific": "Dr.",
-        "other_names": [],
-        "affiliations": ["Test University"],
-        "roles": ["Funder"]
-      },
-      "grant_numbers": []
+      "funder": "Jane Doe"
     }
   ],
-  "spatial_coverage": {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [-73.935242, 40.730610]
-    },
-    "properties": {
-      "name": "New York City"
-    }
-  },
+  "spatial_coverage": "New York City, USA",
   "version": "2.1.0",
   "privacy": "De-identified according to HIPAA Safe Harbor method",
   "license": {
@@ -115,7 +96,6 @@
   "primary_contact": {
     "name": "Jane Doe",
     "honorific": "Dr.",
-    "other_names": [],
     "affiliations": ["Test University"],
     "roles": ["Principal Investigator"]
   },
@@ -141,14 +121,12 @@
         {
           "name": "Jane Doe",
           "honorific": "Dr.",
-          "other_names": [],
           "affiliations": ["Test University"],
           "roles": ["Principal Investigator"]
         },
         {
           "name": "John Smith",
           "honorific": "Prof.",
-          "other_names": [],
           "affiliations": ["Test University"],
           "roles": ["Co-Investigator"]
         }

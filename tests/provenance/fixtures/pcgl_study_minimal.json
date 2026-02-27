@@ -3,12 +3,12 @@
   "studyName": "Minimal Study",
   "studyDescription": "Description",
   "programName": null,
-  "keywords": [],
+  "keywords": ["minimal"],
   "status": "COMPLETED",
   "context": "CLINICAL",
   "domain": ["Other"],
   "dacId": "DAC002",
-  "participantCriteria": null,
+  "participantCriteria": "Inclusion: Adults 18+",
   "principalInvestigators": [
     {"name": "John Doe", "affiliation": "Organization"}
   ],

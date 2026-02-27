@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 from pydantic import HttpUrl, ValidationError
 
-from bento_lib.provenance.dataset import Link
+from bento_lib.provenance.dataset import Count, Link
 
 from bento_lib.provenance.external.pcgl import (
     Study,
@@ -176,8 +176,8 @@ def basic_primary_contact():
     return Person(
         name="Contact Person",
         honorific=None,
-        other_names=[],
-        affiliations=[],
+        other_names=None,
+        affiliations=None,
         roles=["Study Coordinator"],
     )
 
@@ -221,12 +221,12 @@ def minimal_pcgl_study():
         studyName="Minimal Study",
         studyDescription="Description",
         programName=None,
-        keywords=[],
+        keywords=["minimal"],
         status="COMPLETED",
         context="CLINICAL",
         domain=["Other"],
         dacId="DAC002",
-        participantCriteria=None,
+        participantCriteria="Inclusion: Adults 18+",
         principalInvestigators=[PrincipalInvestigator(name="John Doe", affiliation="Org")],
         leadOrganizations=["Organization"],
         collaborators=[],
@@ -243,6 +243,8 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
         last_modified=date(2024, 6, 1),
         primary_contact=basic_primary_contact,
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        links=[Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema")],
+        counts=[Count(count_entity="participants", value=100, description="Number of participants")],
         spatial_coverage="Canada",
         version="1.0",
         privacy="Controlled Access",
@@ -265,7 +267,7 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert len(pi_stakeholders) == 2
     assert pi_stakeholders[0].name == "Jane Smith"
     assert pi_stakeholders[0].affiliations == ["Test University"]
-    assert pi_stakeholders[1].affiliations == []  # No affiliation
+    assert pi_stakeholders[1].affiliations is None  # No affiliation
 
     # Check organization conversion
     org_stakeholders = [s for s in dataset.stakeholders if isinstance(s, Organization)]
@@ -301,19 +303,22 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
 
 def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact):
     """Test converter with minimal PCGL study."""
+    count = Count(count_entity="participants", value=0, description="Number of participants")
+    link = Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema")
+    data_access_link = Link(label="Data Access", uri="https://example.com/access", type="Data Access")
+
     dataset = pcgl_study_to_dataset(
         study=minimal_pcgl_study,
         release_date=date(2024, 1, 1),
         last_modified=date(2024, 6, 1),
         primary_contact=basic_primary_contact,
+        counts=[count],
+        links=[link],
+        data_access_links=[data_access_link],
     )
 
     assert dataset.id == "STUDY002"
-    assert dataset.keywords == []
-    assert dataset.publications == []
-    assert dataset.participant_criteria == []
-    assert dataset.data_access_links == []
-    assert dataset.counts == []
+    assert dataset.publications is None
     assert dataset.pcgl_program_name is None
 
 
@@ -324,12 +329,12 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
         studyName="Test",
         studyDescription="Test",
         programName=None,
-        keywords=[],
+        keywords=["test"],
         status="ONGOING",
         context="RESEARCH",
         domain=["Other"],
         dacId="DAC003",
-        participantCriteria=None,
+        participantCriteria="Inclusion: Adults 18+",
         principalInvestigators=[PrincipalInvestigator(name="PI", affiliation="Org")],
         leadOrganizations=["Org"],
         collaborators=[Collaborator(name="Partner", role=None)],
@@ -342,6 +347,9 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
         release_date=date(2024, 1, 1),
         last_modified=date(2024, 1, 1),
         primary_contact=basic_primary_contact,
+        counts=[Count(count_entity="participants", value=0, description="Count")],
+        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
+        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
     )
 
     # Find the collaborator organization
@@ -356,12 +364,12 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
         studyName="Test",
         studyDescription="Test",
         programName=None,
-        keywords=[],
+        keywords=["test"],
         status="ONGOING",
         context="RESEARCH",
         domain=["Other"],
         dacId="DAC004",
-        participantCriteria=None,
+        participantCriteria="Inclusion: Adults 18+",
         principalInvestigators=[PrincipalInvestigator(name="PI", affiliation="Org")],
         leadOrganizations=["Org"],
         collaborators=[],
@@ -374,6 +382,9 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
         release_date=date(2024, 1, 1),
         last_modified=date(2024, 1, 1),
         primary_contact=basic_primary_contact,
+        counts=[Count(count_entity="participants", value=0, description="Count")],
+        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
+        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
     )
 
     assert dataset.publications[0].doi == "10.1234/test"
@@ -393,6 +404,9 @@ def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
         release_date=date(2024, 1, 1),
         last_modified=date(2024, 1, 1),
         primary_contact=org_contact,
+        counts=[Count(count_entity="participants", value=0, description="Count")],
+        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
+        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
     )
 
     assert isinstance(dataset.primary_contact, Organization)
