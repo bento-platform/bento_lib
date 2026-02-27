@@ -235,6 +235,7 @@ class Logo(BaseModel):
 
     Supports light/dark theme variants for optimal display across different UI themes.
     """
+
     url: AnyUrl
     theme: Literal["light", "dark", "default"] = "default"
     description: str | None = Field(default=None, min_length=1)
@@ -326,7 +327,8 @@ class DatasetModelBase(TranslatableModel):
 
 class DatasetModel(DatasetModelBase):
     """Dataset model with required id field."""
-    id: str = Field(min_length=1) # if from pcgl, directly inherited, otherwise created in katsu
+
+    id: str = Field(min_length=1)  # if from pcgl, directly inherited, otherwise created in katsu
 
     @classmethod
     def from_base(cls, base: DatasetModelBase, id: str) -> "DatasetModel":
