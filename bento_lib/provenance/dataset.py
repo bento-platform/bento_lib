@@ -147,7 +147,7 @@ LinkTypeAnnotated = Annotated[str, LinkType]
 class Other(BaseModel):
     """When a literal is not exhaustive"""
 
-    other: str
+    other: str = Field(min_length=1)
 
 
 class Phone(BaseModel):
@@ -159,59 +159,59 @@ class Phone(BaseModel):
 class Contact(BaseModel):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
-    email: list[EmailStr]
-    address: str | None = None
+    email: list[EmailStr] = Field(min_length=1)
+    address: str | None = Field(default=None, min_length=1)
     phone: Phone | None = None
 
 
 class Organization(BaseModel):
-    name: str
-    description: str | None = None
+    name: str = Field(min_length=1)
+    description: str | None = Field(default=None, min_length=1)
     contact: Contact | None = None
-    location: str | None = None
-    roles: list[RoleAnnotated]
+    location: str | None = Field(default=None, min_length=1)
+    roles: list[RoleAnnotated] = Field(min_length=1)
 
 
 class Person(BaseModel):
-    name: str
-    honorific: str | None = None
-    other_names: list[str] = Field(
-        default_factory=list,
+    name: str = Field(min_length=1)
+    honorific: str | None = Field(default=None, min_length=1)
+    other_names: list[str] | None = Field(
+        default=None,
+        min_length=1,
         description="Alternative names such as maiden names, nicknames, or transliterations",
     )
-
-    affiliations: list[Organization | str]
+    affiliations: list[Organization | str] | None = Field(default=None, min_length=1)
     contact: Contact | None = None
-    location: str | None = None
-    roles: list[RoleAnnotated]
+    location: str | None = Field(default=None, min_length=1)
+    roles: list[RoleAnnotated] = Field(min_length=1)
 
 
 class ParticipantCriteria(BaseModel):
     type: ParticipantCriterionTypeAnnotated
-    description: str
+    description: str = Field(min_length=1)
 
 
 class Count(BaseModel):
-    count_entity: str
+    count_entity: str = Field(min_length=1)
     value: Annotated[float, BeforeValidator(float)]
-    description: str
+    description: str = Field(min_length=1)
 
 
 class License(BaseModel):
     """Derived from DCAT"""
 
-    label: str
-    type: str
+    label: str = Field(min_length=1)
+    type: str = Field(min_length=1)
     url: HttpUrl
 
 
 class PublicationVenue(BaseModel):
     """Where the publication was released or hosted (journal, conference, repository, or publisher)."""
 
-    name: str
+    name: str = Field(min_length=1)
     venue_type: PublicationVenueTypeAnnotated | Other
-    publisher: str | None = None
-    location: str | None = None
+    publisher: str | None = Field(default=None, min_length=1)
+    location: str | None = Field(default=None, min_length=1)
 
 
 class Publication(BaseModel):
@@ -219,14 +219,14 @@ class Publication(BaseModel):
     Publication or related resource link with metadata.
     """
 
-    title: str
+    title: str = Field(min_length=1)
     url: HttpUrl
-    doi: str | None = None
+    doi: str | None = Field(default=None, min_length=1)
     publication_type: PublicationTypeAnnotated | Other
-    authors: list[Person | Organization]
+    authors: list[Person | Organization] = Field(min_length=1)
     publication_date: date | None = None
     publication_venue: PublicationVenue | None = None
-    description: str | None = None
+    description: str | None = Field(default=None, min_length=1)
 
 
 class Logo(BaseModel):
@@ -235,17 +235,15 @@ class Logo(BaseModel):
 
     Supports light/dark theme variants for optimal display across different UI themes.
     """
-
     url: AnyUrl
     theme: Literal["light", "dark", "default"] = "default"
-    description: str | None = None
+    description: str | None = Field(default=None, min_length=1)
 
 
 class SpatialCoverageProperties(BaseModel):
     """Properties for spatial coverage GeoJSON with required name field."""
 
-    name: str
-
+    name: str = Field(min_length=1)
     model_config = ConfigDict(extra="allow")
 
 
@@ -260,7 +258,7 @@ class Link(BaseModel):
     Related links to the dataset that are useful to reference in metadata.
     """
 
-    label: str
+    label: str = Field(min_length=1)
     uri: AnyUrl
     type: LinkTypeAnnotated | Other
 
@@ -268,14 +266,14 @@ class Link(BaseModel):
 class FundingSource(BaseModel):
     """Funding source for the dataset/study."""
 
-    funder: str | Organization | Person | None = None
-    grant_numbers: list[str] = Field(default_factory=list)
+    funder: str | Organization | Person | None = Field(default=None, min_length=1)
+    grant_numbers: list[str] | None = Field(default=None, min_length=1)
 
 
 class LongDescription(BaseModel):
     """Extended description with content type specification."""
 
-    content: str
+    content: str = Field(min_length=1)
     content_type: Literal["text/html", "text/markdown", "text/plain"]
 
 
@@ -284,45 +282,43 @@ class DatasetModelBase(TranslatableModel):
 
     schema_version: Literal["1.0"]
 
-    title: str
-    description: str
+    title: str = Field(min_length=1)
+    description: str = Field(min_length=1)
     long_description: LongDescription | None = None
 
-    keywords: list[str | OntologyClass]
-    resources: list[VersionedOntologyResource] = Field(
-        default_factory=list,
+    keywords: list[str | OntologyClass] = Field(min_length=1)
+    resources: list[VersionedOntologyResource] | None = Field(
+        default=None,
+        min_length=1,
         description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
     )
-    stakeholders: list[Organization | Person]
-    funding_sources: list[FundingSource] = Field(default_factory=list)
+    stakeholders: list[Organization | Person] = Field(min_length=1)
+    funding_sources: list[FundingSource] | None = Field(default=None, min_length=1)
 
-    spatial_coverage: str | SpatialCoverageFeature | None = None
-    version: str | None
-    privacy: str | None
-    license: License | None
-    counts: list[Count]  # Note: Different from counts in bento, this is provided by the metadata creator
+    spatial_coverage: str | SpatialCoverageFeature | None = Field(default=None, min_length=1)
+    version: str | None = Field(default=None, min_length=1)
+    privacy: str | None = Field(default=None, min_length=1)
+    license: License | None = None
+    counts: list[Count] = Field(min_length=1)
     primary_contact: Person | Organization
-    links: list[Link]
-    publications: list[Publication]
-    logos: list[Logo] = Field(default_factory=list)
-    data_access_links: list[Link]
+    links: list[Link] = Field(min_length=1)
+    publications: list[Publication] | None = Field(default=None, min_length=1)
+    logos: list[Logo] | None = Field(default=None, min_length=1)
+    data_access_links: list[Link] = Field(min_length=1)
     release_date: date
     last_modified: date
-    participant_criteria: list[ParticipantCriteria]
+    participant_criteria: list[ParticipantCriteria] = Field(min_length=1)
 
-    # ----- Study Metadata -----
     study_status: Literal["ONGOING", "COMPLETED"] | None = None
     study_context: Literal["CLINICAL", "RESEARCH"] | None = None
 
-    # ----- PCGL Specific -----
     pcgl_domain: list[str] = Field(
         ..., min_length=1, description="List of specific scientific or clinical domains addressed by the study"
     )
     pcgl_program_name: str | None = Field(
-        None, description="The overarching program the study belongs to (if applicable)"
+        None, min_length=1, description="The overarching program the study belongs to (if applicable)"
     )
 
-    # ----- Additional Properties -----
     extra_properties: dict[str, str | int | float | bool | None] | None = Field(
         None, description="Additional custom metadata properties not covered by the standard schema"
     )
@@ -330,8 +326,7 @@ class DatasetModelBase(TranslatableModel):
 
 class DatasetModel(DatasetModelBase):
     """Dataset model with required id field."""
-
-    id: str  # if from pcgl, directly inherited, otherwise created in katsu
+    id: str = Field(min_length=1) # if from pcgl, directly inherited, otherwise created in katsu
 
     @classmethod
     def from_base(cls, base: DatasetModelBase, id: str) -> "DatasetModel":
