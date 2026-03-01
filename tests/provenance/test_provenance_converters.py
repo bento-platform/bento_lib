@@ -3,11 +3,8 @@
 from datetime import date
 
 from bento_lib.provenance import Organization, Person
-from bento_lib.provenance.dataset import Count, Link
-from bento_lib.provenance.converters.pcgl import (
-    pcgl_study_to_dataset,
-    _parse_participant_criteria,
-)
+from bento_lib.provenance.dataset import Count, Link, ParticipantCriteria
+from bento_lib.provenance.converters.pcgl import pcgl_study_to_dataset
 
 
 def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
@@ -20,6 +17,10 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
         links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        participant_criteria=[
+            ParticipantCriteria(type="Inclusion", description="Adults 18+"),
+            ParticipantCriteria(type="Exclusion", description="Pregnant individuals"),
+        ],
     )
 
     assert dataset.title == "Cancer Study"
@@ -79,6 +80,7 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
         counts=[Count(count_entity="participants", value=0, description="Number of participants")],
         links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert len(dataset.pcgl_domain) == 1
@@ -86,14 +88,3 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
     assert dataset.study_status == "COMPLETED"
     assert dataset.study_context == "CLINICAL"
 
-
-def test_parse_participant_criteria_malformed():
-    """Test parsing participant criteria with malformed strings."""
-    assert _parse_participant_criteria("Inclusion Adults 18+") == []  # Missing colon
-    assert _parse_participant_criteria("InvalidType: Some description") == []  # Invalid type
-
-    # Mixed valid and invalid
-    result = _parse_participant_criteria("Inclusion: Valid; InvalidType: Invalid; Exclusion: Also valid")
-    assert len(result) == 2
-    assert result[0].type == "Inclusion"
-    assert result[1].type == "Exclusion"

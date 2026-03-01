@@ -30,6 +30,7 @@ def pcgl_study_to_dataset(
     data_access_links: list[Link],
     links: list[Link],
     counts: list[Count],
+    participant_criteria: list[ParticipantCriteria],
     spatial_coverage: str | None = None,
     version: str | None = None,
     privacy: str | None = None,
@@ -115,26 +116,10 @@ def pcgl_study_to_dataset(
         data_access_links=data_access_links,
         release_date=release_date,
         last_modified=last_modified,
-        participant_criteria=_parse_participant_criteria(study.participant_criteria),
+        participant_criteria=participant_criteria,
         study_status=study.status,
         study_context=study.context,
         pcgl_domain=list(study.domain),  # Convert list[StudyDomain] to list[str]
         pcgl_program_name=study.program_name,
         extra_properties=None,
     )
-
-
-def _parse_participant_criteria(criteria_str: str | None) -> list[ParticipantCriteria]:
-    if not criteria_str:
-        return []
-
-    criteria_list = []
-    for part in criteria_str.split("; "):
-        if ": " in part:
-            type_str, description = part.split(": ", 1)
-            if type_str == "Inclusion":
-                criteria_list.append(ParticipantCriteria(type="Inclusion", description=description))
-            elif type_str == "Exclusion":
-                criteria_list.append(ParticipantCriteria(type="Exclusion", description=description))
-
-    return criteria_list

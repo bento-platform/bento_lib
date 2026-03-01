@@ -15,6 +15,7 @@ from bento_lib.provenance.external.pcgl import (
 )
 from bento_lib.provenance.converters import pcgl_study_to_dataset
 from bento_lib.provenance import Person, Organization, Contact
+from bento_lib.provenance.dataset import ParticipantCriteria
 
 
 def test_principal_investigator():
@@ -245,6 +246,10 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
         links=[Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema")],
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
+        participant_criteria=[
+            ParticipantCriteria(type="Inclusion", description="Adults 18+"),
+            ParticipantCriteria(type="Exclusion", description="Pregnant individuals"),
+        ],
         spatial_coverage="Canada",
         version="1.0",
         privacy="Controlled Access",
@@ -315,6 +320,7 @@ def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact
         counts=[count],
         links=[link],
         data_access_links=[data_access_link],
+        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert dataset.id == "STUDY002"
@@ -350,6 +356,7 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
         counts=[Count(count_entity="participants", value=0, description="Count")],
         links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     # Find the collaborator organization
@@ -385,6 +392,7 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
         counts=[Count(count_entity="participants", value=0, description="Count")],
         links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert dataset.publications[0].doi == "10.1234/test"
@@ -407,6 +415,7 @@ def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
         counts=[Count(count_entity="participants", value=0, description="Count")],
         links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
         data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert isinstance(dataset.primary_contact, Organization)

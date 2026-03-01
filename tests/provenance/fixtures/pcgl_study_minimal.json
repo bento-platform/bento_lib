@@ -8,7 +8,6 @@
   "context": "CLINICAL",
   "domain": ["Other"],
   "dacId": "DAC002",
-  "participantCriteria": "Inclusion: Adults 18+",
   "principalInvestigators": [
     {"name": "John Doe", "affiliation": "Organization"}
   ],
