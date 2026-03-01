@@ -87,4 +87,3 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
     assert dataset.pcgl_domain[0] == "Other"
     assert dataset.study_status == "COMPLETED"
     assert dataset.study_context == "CLINICAL"
-
