@@ -3,21 +3,12 @@
   "schema_version": "1.0",
   "title": "Test Dataset from JSON",
   "description": "A dataset loaded from JSON fixture",
-  "keywords": ["test", {"id": "HP:0001250", "label": "Seizure"}],
   "stakeholders": [
     {
       "name": "Jane Doe",
       "honorific": "Dr.",
       "affiliations": ["Test University"],
       "roles": ["Principal Investigator"]
-    }
-  ],
-  "version": "1.0",
-  "counts": [
-    {
-      "count_entity": "participants",
-      "value": 100,
-      "description": "Number of participants"
     }
   ],
   "primary_contact": {
@@ -33,15 +24,6 @@
       "type": "Schema"
     }
   ],
-  "data_access_links": [
-    {
-      "label": "Data Access",
-      "uri": "https://data.example.org/access",
-      "type": "Data Access"
-    }
-  ],
-  "release_date": "2024-01-15",
-  "last_modified": "2024-06-01",
   "participant_criteria": [
     {
       "type": "Inclusion",
@@ -49,6 +31,5 @@
     }
   ],
   "study_status": "ONGOING",
-  "study_context": "RESEARCH",
-  "pcgl_domain": ["Genomics"]
+  "study_context": "RESEARCH"
 }
