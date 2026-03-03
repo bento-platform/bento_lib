@@ -124,7 +124,7 @@ All Bento channels are prefixed with `bento.`.
 
 ### `i18n`
 
-`i18n` Provides language literals and mixin model for handling pydantic models which are language specific.
+`i18n` provides language literals and mixin model for handling pydantic models which are language specific.
 
 ### `logging`
 
