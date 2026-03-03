@@ -5,6 +5,7 @@ from . import auth
 from . import discovery
 from . import drs
 from . import events
+from . import i18n
 from . import ontologies
 from . import provenance
 from . import schemas
@@ -22,6 +23,7 @@ __all__ = [
     "discovery",
     "drs",
     "events",
+    "i18n",
     "ontologies",
     "provenance",
     "schemas",
