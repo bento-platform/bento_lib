@@ -23,7 +23,7 @@ __all__ = [
 
 from typing import Annotated, Literal
 from datetime import date
-from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict
+from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict, model_validator
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
@@ -323,6 +323,18 @@ class DatasetModelBase(TranslatableModel):
     extra_properties: dict[str, str | int | float | bool | None] | None = Field(
         None, description="Additional custom metadata properties not covered by the standard schema"
     )
+
+    @model_validator(mode="after")
+    def check_keyword_resources(self) -> "DatasetModelBase":
+        if not self.keywords:
+            return self
+        resource_prefixes = {r.namespace_prefix for r in self.resources} if self.resources else set()
+        missing = sorted(
+            {kw.id.split(":")[0] for kw in self.keywords if isinstance(kw, OntologyClass)} - resource_prefixes
+        )
+        if missing:
+            raise ValueError(f"keywords contain OntologyClass CURIEs with no matching resource: {missing}")
+        return self
 
 
 class DatasetModel(DatasetModelBase):

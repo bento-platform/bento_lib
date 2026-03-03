@@ -1,3 +1,4 @@
+import pytest
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.provenance.dataset import (
     DatasetModelBase,
@@ -91,3 +92,18 @@ def test_dataset_model_from_base(dataset_full):
     assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)
+
+
+def test_dataset_model_keyword_resource_validation(dataset_full):
+    """OntologyClass keywords must have a matching resource by namespace_prefix."""
+    ds_dict = dataset_full.model_dump()
+    del ds_dict["id"]
+
+    # Remove the HP resource — HP: CURIEs in keywords should now fail
+    ds_dict["resources"] = None
+    with pytest.raises(Exception, match="no matching resource"):
+        DatasetModelBase.model_validate(ds_dict)
+
+    # keywords=None should always pass regardless of resources
+    ds_dict["keywords"] = None
+    DatasetModelBase.model_validate(ds_dict)  # no error
