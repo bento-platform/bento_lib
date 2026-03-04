@@ -15,8 +15,10 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
         last_modified=date(2023, 6, 1),
         primary_contact=basic_pi,
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
-        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
-        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        links=[
+            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
+            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+        ],
         participant_criteria=[
             ParticipantCriteria(type="Inclusion", description="Adults 18+"),
             ParticipantCriteria(type="Exclusion", description="Pregnant individuals"),
@@ -78,8 +80,10 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
         last_modified=date(2023, 1, 1),
         primary_contact=basic_pi,
         counts=[Count(count_entity="participants", value=0, description="Number of participants")],
-        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
-        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        links=[
+            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
+            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+        ],
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 

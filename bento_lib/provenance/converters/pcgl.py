@@ -13,8 +13,7 @@ from ..dataset import (
     Link,
     Organization,
     Person,
-    Other,
-    ParticipantCriteria,
+    PersonOrOrganization,
     Publication,
     RoleAnnotated,
 )
@@ -26,11 +25,10 @@ def pcgl_study_to_dataset(
     study: Study,
     release_date: date,
     last_modified: date,
-    primary_contact: Person | Organization,
-    data_access_links: list[Link],
+    primary_contact: PersonOrOrganization,
     links: list[Link],
     counts: list[Count],
-    participant_criteria: list[ParticipantCriteria],
+    participant_criteria: list | None = None,
     spatial_coverage: str | None = None,
     version: str | None = None,
     privacy: str | None = None,
@@ -39,9 +37,10 @@ def pcgl_study_to_dataset(
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
     keywords: list[str | OntologyClass] = list(study.keywords)
 
-    stakeholders: list[Person | Organization] = []
+    stakeholders: list[PersonOrOrganization] = []
     stakeholders.extend(
         Person(
+            type="person",
             name=pi.name,
             honorific=None,
             other_names=None,
@@ -53,6 +52,7 @@ def pcgl_study_to_dataset(
 
     stakeholders.extend(
         Organization(
+            type="organization",
             name=org_name,
             description=None,
             contact=None,
@@ -63,6 +63,7 @@ def pcgl_study_to_dataset(
 
     stakeholders.extend(
         Organization(
+            type="organization",
             name=c.name,
             description=None,
             contact=None,
@@ -88,7 +89,7 @@ def pcgl_study_to_dataset(
             title=str(url),
             url=url,
             doi=str(url).replace("https://doi.org/", "") if str(url).startswith("https://doi.org/") else None,
-            publication_type=Other(other="Journal Article"),
+            publication_type="Journal Article",
             authors=[primary_contact],
             publication_date=None,
             publication_venue=None,
@@ -113,7 +114,6 @@ def pcgl_study_to_dataset(
         primary_contact=primary_contact,
         links=links,
         publications=publications,
-        data_access_links=data_access_links,
         release_date=release_date,
         last_modified=last_modified,
         participant_criteria=participant_criteria,

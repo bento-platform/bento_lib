@@ -18,6 +18,7 @@ __all__ = [
     "Link",
     "FundingSource",
     "LongDescription",
+    "PersonOrOrganization",
     "DatasetModel",
 ]
 

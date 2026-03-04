@@ -175,6 +175,7 @@ def test_pcgl_study_validation_invalid_domain():
 def basic_primary_contact():
     """Basic primary contact for converter tests."""
     return Person(
+        type="person",
         name="Contact Person",
         honorific=None,
         other_names=None,
@@ -243,8 +244,10 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
         release_date=date(2024, 1, 1),
         last_modified=date(2024, 6, 1),
         primary_contact=basic_primary_contact,
-        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
-        links=[Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema")],
+        links=[
+            Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema"),
+            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+        ],
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
         participant_criteria=[
             ParticipantCriteria(type="Inclusion", description="Adults 18+"),
@@ -318,8 +321,7 @@ def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact
         last_modified=date(2024, 6, 1),
         primary_contact=basic_primary_contact,
         counts=[count],
-        links=[link],
-        data_access_links=[data_access_link],
+        links=[link, data_access_link],
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
@@ -354,8 +356,10 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
         last_modified=date(2024, 1, 1),
         primary_contact=basic_primary_contact,
         counts=[Count(count_entity="participants", value=0, description="Count")],
-        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
-        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        links=[
+            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
+            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+        ],
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
@@ -390,8 +394,10 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
         last_modified=date(2024, 1, 1),
         primary_contact=basic_primary_contact,
         counts=[Count(count_entity="participants", value=0, description="Count")],
-        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
-        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        links=[
+            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
+            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+        ],
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
@@ -401,6 +407,7 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
 def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
     """Test converter with Organization as primary contact."""
     org_contact = Organization(
+        type="organization",
         name="Contact Org",
         description=None,
         contact=Contact(email=["contact@org.com"], address=None, phone=None),
@@ -413,8 +420,10 @@ def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
         last_modified=date(2024, 1, 1),
         primary_contact=org_contact,
         counts=[Count(count_entity="participants", value=0, description="Count")],
-        links=[Link(label="Study Link", uri="https://example.com/study", type="Schema")],
-        data_access_links=[Link(label="Data Access", uri="https://example.com/data", type="Data Access")],
+        links=[
+            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
+            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+        ],
         participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
