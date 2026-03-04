@@ -159,12 +159,14 @@ class Phone(BaseModel):
 class Contact(BaseModel):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
+    website: HttpUrl | None = None
     email: list[EmailStr] = Field(min_length=1)
     address: str | None = Field(default=None, min_length=1)
     phone: Phone | None = None
 
 
 class Organization(BaseModel):
+    type: Literal["organization"]
     name: str = Field(min_length=1)
     description: str | None = Field(default=None, min_length=1)
     contact: Contact | None = None
@@ -173,6 +175,7 @@ class Organization(BaseModel):
 
 
 class Person(BaseModel):
+    type: Literal["person"]
     name: str = Field(min_length=1)
     honorific: str | None = Field(default=None, min_length=1)
     other_names: list[str] | None = Field(
@@ -184,6 +187,9 @@ class Person(BaseModel):
     contact: Contact | None = None
     location: str | None = Field(default=None, min_length=1)
     roles: list[RoleAnnotated] = Field(min_length=1)
+
+
+PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="type")]
 
 
 class ParticipantCriteria(BaseModel):
@@ -223,7 +229,7 @@ class Publication(BaseModel):
     url: HttpUrl
     doi: str | None = Field(default=None, min_length=1)
     publication_type: PublicationTypeAnnotated | Other
-    authors: list[Person | Organization] = Field(min_length=1)
+    authors: list[PersonOrOrganization] = Field(min_length=1)
     publication_date: date | None = None
     publication_venue: PublicationVenue | None = None
     description: str | None = Field(default=None, min_length=1)
@@ -267,7 +273,7 @@ class Link(BaseModel):
 class FundingSource(BaseModel):
     """Funding source for the dataset/study."""
 
-    funder: str | Organization | Person | None = Field(default=None, min_length=1)
+    funder: str | PersonOrOrganization | None = Field(default=None, min_length=1)
     grant_numbers: list[str] | None = Field(default=None, min_length=1)
 
 
@@ -293,7 +299,7 @@ class DatasetModelBase(TranslatableModel):
         min_length=1,
         description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
     )
-    stakeholders: list[Organization | Person] = Field(min_length=1)
+    stakeholders: list[PersonOrOrganization] = Field(min_length=1)
     funding_sources: list[FundingSource] | None = Field(default=None, min_length=1)
 
     spatial_coverage: str | SpatialCoverageFeature | None = Field(default=None, min_length=1)
@@ -301,7 +307,7 @@ class DatasetModelBase(TranslatableModel):
     privacy: str | None = Field(default=None, min_length=1)
     license: License | None = None
     counts: list[Count] | None = Field(default=None, min_length=1)
-    primary_contact: Person | Organization
+    primary_contact: PersonOrOrganization
     links: list[Link] = Field(min_length=1)
     publications: list[Publication] | None = Field(default=None, min_length=1)
     logos: list[Logo] | None = Field(default=None, min_length=1)

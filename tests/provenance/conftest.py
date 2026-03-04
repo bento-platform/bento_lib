@@ -40,6 +40,7 @@ def dataset_minimal():
 def basic_pi():
     """Reusable principal investigator."""
     return Person(
+        type="person",
         name="Jane Doe",
         honorific=None,
         other_names=None,

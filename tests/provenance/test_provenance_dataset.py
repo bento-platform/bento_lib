@@ -26,6 +26,7 @@ def test_dataset_model_full(dataset_full):
     assert isinstance(ds.stakeholders[0], Person)
     assert isinstance(ds.stakeholders[0].affiliations[1], Organization)
     assert isinstance(ds.stakeholders[0].affiliations[1].contact.phone, Phone)
+    assert str(ds.stakeholders[0].affiliations[1].contact.website) == "https://research.org/"
     assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)

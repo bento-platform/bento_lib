@@ -26,6 +26,7 @@
   ],
   "stakeholders": [
     {
+      "type": "person",
       "name": "Jane Doe",
       "honorific": "Dr.",
       "other_names": ["J. Doe", "Jane D."],
@@ -33,9 +34,11 @@
       "affiliations": [
         "Test University",
         {
+          "type": "organization",
           "name": "Research Institute",
           "description": "A leading research institution",
           "contact": {
+            "website": "https://research.org",
             "email": ["contact@research.org"],
             "address": "123 Research Ave, City, Country",
             "phone": {
@@ -50,6 +53,7 @@
       "roles": ["Principal Investigator", "Researcher"]
     },
     {
+      "type": "person",
       "name": "John Smith",
       "honorific": "Prof.",
       "contact": {
@@ -94,6 +98,7 @@
     }
   ],
   "primary_contact": {
+    "type": "person",
     "name": "Jane Doe",
     "honorific": "Dr.",
     "affiliations": ["Test University"],
@@ -119,12 +124,14 @@
       "publication_type": "Journal Article",
       "authors": [
         {
+          "type": "person",
           "name": "Jane Doe",
           "honorific": "Dr.",
           "affiliations": ["Test University"],
           "roles": ["Principal Investigator"]
         },
         {
+          "type": "person",
           "name": "John Smith",
           "honorific": "Prof.",
           "affiliations": ["Test University"],

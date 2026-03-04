@@ -5,6 +5,7 @@
   "description": "A dataset loaded from JSON fixture",
   "stakeholders": [
     {
+      "type": "person",
       "name": "Jane Doe",
       "honorific": "Dr.",
       "affiliations": ["Test University"],
@@ -12,6 +13,7 @@
     }
   ],
   "primary_contact": {
+    "type": "person",
     "name": "Jane Doe",
     "honorific": "Dr.",
     "affiliations": ["Test University"],
