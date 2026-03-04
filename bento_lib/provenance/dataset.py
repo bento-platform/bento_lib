@@ -163,9 +163,15 @@ class Contact(BaseModel):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
     website: HttpUrl | None = None
-    email: list[EmailStr] = Field(min_length=1)
+    email: list[EmailStr] | None = Field(default=None, min_length=1)
     address: str | None = Field(default=None, min_length=1)
     phone: Phone | None = None
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> "Contact":
+        if self.website is None and self.email is None and self.address is None and self.phone is None:
+            raise ValueError("Contact must have at least one field (website, email, address, or phone)")
+        return self
 
 
 class Organization(BaseModel):

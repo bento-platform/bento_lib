@@ -1,6 +1,8 @@
 import pytest
+from pydantic import ValidationError
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.provenance.dataset import (
+    Contact,
     DatasetModelBase,
     DatasetModel,
     Person,
@@ -93,6 +95,22 @@ def test_dataset_model_from_base(dataset_full):
     assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)
+
+
+def test_contact_at_least_one_field():
+    """Contact requires at least one field; email is now optional."""
+    # valid: each field alone is sufficient
+    assert Contact(website="https://example.com").website is not None
+    assert Contact(email=["user@example.com"]).email == ["user@example.com"]
+    assert Contact(address="123 Main St").address == "123 Main St"
+    assert Contact(phone=Phone(country_code=1, number=5550000)).phone is not None
+
+    # valid: email omitted entirely
+    assert Contact(website="https://example.com", address="123 Main St").email is None
+
+    # invalid: all fields omitted
+    with pytest.raises(ValidationError, match="at least one field"):
+        Contact()
 
 
 def test_dataset_model_keyword_resource_validation(dataset_full):
