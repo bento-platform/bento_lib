@@ -107,22 +107,22 @@
   "links": [
     {
       "label": "Study Protocol",
-      "uri": "https://example.org/protocol.pdf",
+      "url": "https://example.org/protocol.pdf",
       "type": "Downloadable Artifact"
     },
     {
       "label": "Data Dictionary",
-      "uri": "https://example.org/data-dictionary",
+      "url": "https://example.org/data-dictionary",
       "type": "Schema"
     },
     {
       "label": "Data Access",
-      "uri": "https://data.example.org/access",
+      "url": "https://data.example.org/access",
       "type": "Data Access"
     },
     {
       "label": "Download Portal",
-      "uri": "https://portal.example.org/download",
+      "url": "https://portal.example.org/download",
       "type": "Data Access"
     }
   ],

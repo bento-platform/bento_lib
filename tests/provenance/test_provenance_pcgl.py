@@ -244,8 +244,8 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
         last_modified=date(2024, 6, 1),
         primary_contact=basic_primary_contact,
         links=[
-            Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema"),
-            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+            Link(label="Study Protocol", url="https://example.com/protocol", type="Schema"),
+            Link(label="Data Access", url="https://example.com/data", type="Data Access"),
         ],
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
         spatial_coverage="Canada",
@@ -305,8 +305,8 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
 def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact):
     """Test converter with minimal PCGL study."""
     count = Count(count_entity="participants", value=0, description="Number of participants")
-    link = Link(label="Study Protocol", uri="https://example.com/protocol", type="Schema")
-    data_access_link = Link(label="Data Access", uri="https://example.com/access", type="Data Access")
+    link = Link(label="Study Protocol", url="https://example.com/protocol", type="Schema")
+    data_access_link = Link(label="Data Access", url="https://example.com/access", type="Data Access")
 
     dataset = pcgl_study_to_dataset(
         study=minimal_pcgl_study,
@@ -351,8 +351,8 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
         primary_contact=basic_primary_contact,
         counts=[Count(count_entity="participants", value=0, description="Count")],
         links=[
-            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
-            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+            Link(label="Study Link", url="https://example.com/study", type="Schema"),
+            Link(label="Data Access", url="https://example.com/data", type="Data Access"),
         ],
     )
 
@@ -388,8 +388,8 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
         primary_contact=basic_primary_contact,
         counts=[Count(count_entity="participants", value=0, description="Count")],
         links=[
-            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
-            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+            Link(label="Study Link", url="https://example.com/study", type="Schema"),
+            Link(label="Data Access", url="https://example.com/data", type="Data Access"),
         ],
     )
 
@@ -413,8 +413,8 @@ def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
         primary_contact=org_contact,
         counts=[Count(count_entity="participants", value=0, description="Count")],
         links=[
-            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
-            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+            Link(label="Study Link", url="https://example.com/study", type="Schema"),
+            Link(label="Data Access", url="https://example.com/data", type="Data Access"),
         ],
     )
 

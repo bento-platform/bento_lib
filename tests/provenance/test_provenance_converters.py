@@ -27,8 +27,8 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
         primary_contact=basic_pi,
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
         links=[
-            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
-            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+            Link(label="Study Link", url="https://example.com/study", type="Schema"),
+            Link(label="Data Access", url="https://example.com/data", type="Data Access"),
         ],
     )
 
@@ -85,8 +85,8 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
         primary_contact=basic_pi,
         counts=[Count(count_entity="participants", value=0, description="Number of participants")],
         links=[
-            Link(label="Study Link", uri="https://example.com/study", type="Schema"),
-            Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
+            Link(label="Study Link", url="https://example.com/study", type="Schema"),
+            Link(label="Data Access", url="https://example.com/data", type="Data Access"),
         ],
     )
 

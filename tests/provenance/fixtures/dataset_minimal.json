@@ -22,7 +22,7 @@
   "links": [
     {
       "label": "Study Protocol",
-      "uri": "https://example.org/protocol.pdf",
+      "url": "https://example.org/protocol.pdf",
       "type": "Schema"
     }
   ],

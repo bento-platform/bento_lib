@@ -276,7 +276,7 @@ class Link(BaseModel):
     """
 
     label: str = Field(min_length=1)
-    uri: AnyUrl
+    url: AnyUrl
     type: LinkTypeAnnotated | Other
 
 
