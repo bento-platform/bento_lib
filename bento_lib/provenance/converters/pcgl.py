@@ -12,6 +12,7 @@ from ..dataset import (
     License,
     Link,
     Organization,
+    Other,
     ParticipantCriteria,
     Person,
     PersonOrOrganization,
@@ -23,21 +24,10 @@ from bento_lib.ontologies.models import OntologyClass
 
 
 def _parse_participant_criteria(criteria_str: str | None) -> list[ParticipantCriteria] | None:
-    """Parse PCGL participant criteria string into a list of ParticipantCriteria.
-
-    Expected format: "Inclusion: description; Exclusion: description"
-    """
+    """Wrap a PCGL participant criteria string as a single ParticipantCriteria."""
     if not criteria_str:
         return None
-    result = []
-    for chunk in criteria_str.split(";"):
-        chunk = chunk.strip()
-        if not chunk:
-            continue
-        if ": " in chunk:
-            criterion_type, description = chunk.split(": ", 1)
-            result.append(ParticipantCriteria(type=criterion_type.strip(), description=description.strip()))
-    return result or None
+    return [ParticipantCriteria(type=Other(other="Other"), description=criteria_str)]
 
 
 def pcgl_study_to_dataset(

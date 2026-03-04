@@ -8,19 +8,16 @@ from bento_lib.provenance.converters.pcgl import _parse_participant_criteria, pc
 
 
 def test_parse_participant_criteria():
+    from bento_lib.provenance.dataset import Other
+
     assert _parse_participant_criteria(None) is None
     assert _parse_participant_criteria("") is None
 
-    result = _parse_participant_criteria("Inclusion: Adults 18+; Exclusion: Pregnant individuals")
-    assert len(result) == 2
-    assert result[0].type == "Inclusion"
-    assert result[0].description == "Adults 18+"
-    assert result[1].type == "Exclusion"
-    assert result[1].description == "Pregnant individuals"
-
-    single = _parse_participant_criteria("Inclusion: Adults 18+")
-    assert len(single) == 1
-    assert single[0].type == "Inclusion"
+    criteria_str = "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
+    result = _parse_participant_criteria(criteria_str)
+    assert len(result) == 1
+    assert isinstance(result[0].type, Other)
+    assert result[0].description == criteria_str
 
 
 def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
@@ -48,12 +45,9 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert dataset.release_date == date(2023, 1, 1)
     assert dataset.last_modified == date(2023, 6, 1)
 
-    # Check participant criteria parsing
-    assert len(dataset.participant_criteria) == 2
-    assert dataset.participant_criteria[0].type == "Inclusion"
-    assert dataset.participant_criteria[0].description == "Adults 18+"
-    assert dataset.participant_criteria[1].type == "Exclusion"
-    assert dataset.participant_criteria[1].description == "Pregnant individuals"
+    # Check participant criteria (PCGL string wrapped as a single Other-typed entry)
+    assert len(dataset.participant_criteria) == 1
+    assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
 
     # Check stakeholders (1 PI, 2 institutions, 2 collaborators = 5 total)
     assert len(dataset.stakeholders) == 5

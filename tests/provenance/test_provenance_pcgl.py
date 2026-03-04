@@ -286,12 +286,9 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert dataset.publications[0].doi == "10.1234/example"
     assert dataset.publications[1].doi == "10.5678/another"
 
-    # Check participant criteria parsed from study.participant_criteria string
-    assert len(dataset.participant_criteria) == 2
-    assert dataset.participant_criteria[0].type == "Inclusion"
-    assert dataset.participant_criteria[0].description == "Adults 18+"
-    assert dataset.participant_criteria[1].type == "Exclusion"
-    assert dataset.participant_criteria[1].description == "Pregnant individuals"
+    # Check participant criteria (PCGL string wrapped as a single Other-typed entry)
+    assert len(dataset.participant_criteria) == 1
+    assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
 
     # Check PCGL-specific fields
     assert dataset.pcgl_domain == ["Cancer", "Population Genomics"]
@@ -324,7 +321,7 @@ def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact
     assert dataset.publications is None
     assert dataset.pcgl_program_name is None
     assert len(dataset.participant_criteria) == 1
-    assert dataset.participant_criteria[0].type == "Inclusion"
+    assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+"
 
 
 def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):

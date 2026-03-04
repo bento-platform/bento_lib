@@ -131,6 +131,7 @@ PublicationVenueTypeAnnotated = Annotated[str, PublicationVenueType]
 ParticipantCriterionType = TranslatedLiteral(EN, FR)(
     ("Inclusion", "Inclusion"),
     ("Exclusion", "Exclusion"),
+    ("Other", "Autre"),
 )
 ParticipantCriterionTypeAnnotated = Annotated[str, ParticipantCriterionType]
 
@@ -195,7 +196,8 @@ PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="typ
 
 
 class ParticipantCriteria(BaseModel):
-    type: ParticipantCriterionTypeAnnotated
+    link: HttpUrl | None = None
+    type: ParticipantCriterionTypeAnnotated | Other
     description: str = Field(min_length=1)
 
 
