@@ -12,6 +12,7 @@ from ..dataset import (
     License,
     Link,
     Organization,
+    ParticipantCriteria,
     Person,
     PersonOrOrganization,
     Publication,
@@ -21,6 +22,24 @@ from ..external.pcgl import Study
 from bento_lib.ontologies.models import OntologyClass
 
 
+def _parse_participant_criteria(criteria_str: str | None) -> list[ParticipantCriteria] | None:
+    """Parse PCGL participant criteria string into a list of ParticipantCriteria.
+
+    Expected format: "Inclusion: description; Exclusion: description"
+    """
+    if not criteria_str:
+        return None
+    result = []
+    for chunk in criteria_str.split(";"):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if ": " in chunk:
+            criterion_type, description = chunk.split(": ", 1)
+            result.append(ParticipantCriteria(type=criterion_type.strip(), description=description.strip()))
+    return result or None
+
+
 def pcgl_study_to_dataset(
     study: Study,
     release_date: date,
@@ -28,7 +47,6 @@ def pcgl_study_to_dataset(
     primary_contact: PersonOrOrganization,
     links: list[Link],
     counts: list[Count],
-    participant_criteria: list | None = None,
     spatial_coverage: str | None = None,
     version: str | None = None,
     privacy: str | None = None,
@@ -116,7 +134,7 @@ def pcgl_study_to_dataset(
         publications=publications,
         release_date=release_date,
         last_modified=last_modified,
-        participant_criteria=participant_criteria,
+        participant_criteria=_parse_participant_criteria(study.participant_criteria),
         study_status=study.status,
         study_context=study.context,
         pcgl_domain=list(study.domain),  # Convert list[StudyDomain] to list[str]

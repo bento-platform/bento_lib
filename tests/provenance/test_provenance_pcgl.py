@@ -15,7 +15,6 @@ from bento_lib.provenance.external.pcgl import (
 )
 from bento_lib.provenance.converters import pcgl_study_to_dataset
 from bento_lib.provenance import Person, Organization, Contact
-from bento_lib.provenance.dataset import ParticipantCriteria
 
 
 def test_principal_investigator():
@@ -249,10 +248,6 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
             Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
         ],
         counts=[Count(count_entity="participants", value=100, description="Number of participants")],
-        participant_criteria=[
-            ParticipantCriteria(type="Inclusion", description="Adults 18+"),
-            ParticipantCriteria(type="Exclusion", description="Pregnant individuals"),
-        ],
         spatial_coverage="Canada",
         version="1.0",
         privacy="Controlled Access",
@@ -291,11 +286,12 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert dataset.publications[0].doi == "10.1234/example"
     assert dataset.publications[1].doi == "10.5678/another"
 
-    # Check participant criteria parsing
+    # Check participant criteria parsed from study.participant_criteria string
     assert len(dataset.participant_criteria) == 2
     assert dataset.participant_criteria[0].type == "Inclusion"
     assert dataset.participant_criteria[0].description == "Adults 18+"
     assert dataset.participant_criteria[1].type == "Exclusion"
+    assert dataset.participant_criteria[1].description == "Pregnant individuals"
 
     # Check PCGL-specific fields
     assert dataset.pcgl_domain == ["Cancer", "Population Genomics"]
@@ -322,12 +318,13 @@ def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact
         primary_contact=basic_primary_contact,
         counts=[count],
         links=[link, data_access_link],
-        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert dataset.id == "STUDY002"
     assert dataset.publications is None
     assert dataset.pcgl_program_name is None
+    assert len(dataset.participant_criteria) == 1
+    assert dataset.participant_criteria[0].type == "Inclusion"
 
 
 def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
@@ -360,7 +357,6 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
             Link(label="Study Link", uri="https://example.com/study", type="Schema"),
             Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
         ],
-        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     # Find the collaborator organization
@@ -398,7 +394,6 @@ def test_pcgl_study_to_dataset_non_doi_publication(basic_primary_contact):
             Link(label="Study Link", uri="https://example.com/study", type="Schema"),
             Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
         ],
-        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert dataset.publications[0].doi == "10.1234/test"
@@ -424,7 +419,6 @@ def test_pcgl_study_to_dataset_with_organization_contact(full_pcgl_study):
             Link(label="Study Link", uri="https://example.com/study", type="Schema"),
             Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
         ],
-        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert isinstance(dataset.primary_contact, Organization)

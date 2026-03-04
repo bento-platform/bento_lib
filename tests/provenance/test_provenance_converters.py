@@ -3,8 +3,24 @@
 from datetime import date
 
 from bento_lib.provenance import Organization, Person
-from bento_lib.provenance.dataset import Count, Link, ParticipantCriteria
-from bento_lib.provenance.converters.pcgl import pcgl_study_to_dataset
+from bento_lib.provenance.dataset import Count, Link
+from bento_lib.provenance.converters.pcgl import _parse_participant_criteria, pcgl_study_to_dataset
+
+
+def test_parse_participant_criteria():
+    assert _parse_participant_criteria(None) is None
+    assert _parse_participant_criteria("") is None
+
+    result = _parse_participant_criteria("Inclusion: Adults 18+; Exclusion: Pregnant individuals")
+    assert len(result) == 2
+    assert result[0].type == "Inclusion"
+    assert result[0].description == "Adults 18+"
+    assert result[1].type == "Exclusion"
+    assert result[1].description == "Pregnant individuals"
+
+    single = _parse_participant_criteria("Inclusion: Adults 18+")
+    assert len(single) == 1
+    assert single[0].type == "Inclusion"
 
 
 def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
@@ -18,10 +34,6 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
         links=[
             Link(label="Study Link", uri="https://example.com/study", type="Schema"),
             Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
-        ],
-        participant_criteria=[
-            ParticipantCriteria(type="Inclusion", description="Adults 18+"),
-            ParticipantCriteria(type="Exclusion", description="Pregnant individuals"),
         ],
     )
 
@@ -84,7 +96,6 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
             Link(label="Study Link", uri="https://example.com/study", type="Schema"),
             Link(label="Data Access", uri="https://example.com/data", type="Data Access"),
         ],
-        participant_criteria=[ParticipantCriteria(type="Inclusion", description="Adults 18+")],
     )
 
     assert len(dataset.pcgl_domain) == 1
