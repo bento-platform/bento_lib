@@ -49,6 +49,7 @@ def test_dataset_model_minimal(dataset_minimal):
     assert ds.title == "Test Dataset from JSON"
     assert ds.keywords is None
     assert ds.counts is None
+    assert ds.participant_criteria is None
     assert ds.release_date is None
     assert ds.last_modified is None
     assert ds.pcgl_domain is None

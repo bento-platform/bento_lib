@@ -313,7 +313,7 @@ class DatasetModelBase(TranslatableModel):
     logos: list[Logo] | None = Field(default=None, min_length=1)
     release_date: date | None = None
     last_modified: date | None = None
-    participant_criteria: list[ParticipantCriteria] = Field(min_length=1)
+    participant_criteria: list[ParticipantCriteria] | None = Field(default=None, min_length=1)
 
     study_status: Literal["ONGOING", "COMPLETED"] | None = None
     study_context: Literal["CLINICAL", "RESEARCH"] | None = None

@@ -26,12 +26,6 @@
       "type": "Schema"
     }
   ],
-  "participant_criteria": [
-    {
-      "type": "Inclusion",
-      "description": "Adults aged 18 and over"
-    }
-  ],
   "study_status": "ONGOING",
   "study_context": "RESEARCH"
 }
