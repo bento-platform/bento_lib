@@ -36,7 +36,7 @@ def test_dataset_model_full(dataset_full):
     assert len(ds.stakeholders) == 2
     assert len(ds.funding_sources) == 2
     assert len(ds.counts) == 2
-    assert len(ds.links) == 2
+    assert len(ds.links) == 4
     assert len(ds.logos) == 2
     assert len(ds.participant_criteria) == 2
 
@@ -49,7 +49,6 @@ def test_dataset_model_minimal(dataset_minimal):
     assert ds.title == "Test Dataset from JSON"
     assert ds.keywords is None
     assert ds.counts is None
-    assert ds.data_access_links is None
     assert ds.release_date is None
     assert ds.last_modified is None
     assert ds.pcgl_domain is None

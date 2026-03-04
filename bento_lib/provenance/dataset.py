@@ -311,7 +311,6 @@ class DatasetModelBase(TranslatableModel):
     links: list[Link] = Field(min_length=1)
     publications: list[Publication] | None = Field(default=None, min_length=1)
     logos: list[Logo] | None = Field(default=None, min_length=1)
-    data_access_links: list[Link] | None = Field(default=None, min_length=1)
     release_date: date | None = None
     last_modified: date | None = None
     participant_criteria: list[ParticipantCriteria] = Field(min_length=1)

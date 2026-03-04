@@ -114,6 +114,16 @@
       "label": "Data Dictionary",
       "uri": "https://example.org/data-dictionary",
       "type": "Schema"
+    },
+    {
+      "label": "Data Access",
+      "uri": "https://data.example.org/access",
+      "type": "Data Access"
+    },
+    {
+      "label": "Download Portal",
+      "uri": "https://portal.example.org/download",
+      "type": "Data Access"
     }
   ],
   "publications": [
@@ -158,18 +168,6 @@
       "url": "https://example.org/logo-dark.png",
       "theme": "dark",
       "description": "Study logo for dark backgrounds"
-    }
-  ],
-  "data_access_links": [
-    {
-      "label": "Data Access",
-      "uri": "https://data.example.org/access",
-      "type": "Data Access"
-    },
-    {
-      "label": "Download Portal",
-      "uri": "https://portal.example.org/download",
-      "type": "Data Access"
     }
   ],
   "release_date": "2023-01-15",
