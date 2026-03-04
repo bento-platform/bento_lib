@@ -52,6 +52,7 @@ Role = TranslatedLiteral(EN, FR)(
     # Organizational / institutional roles
     ("Sponsoring Organization",   "Organisation commanditaire"),
     ("Collaborating Organization","Organisation collaboratrice"),
+    ("Consortium",                "Consortium"),
     ("Institution",               "Institution"),
     ("Site",                      "Site"),
     ("Research Center",           "Centre de recherche"),
