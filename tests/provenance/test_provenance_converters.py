@@ -8,15 +8,13 @@ from bento_lib.provenance.converters.pcgl import _parse_participant_criteria, pc
 
 
 def test_parse_participant_criteria():
-    from bento_lib.provenance.dataset import Other
-
     assert _parse_participant_criteria(None) is None
     assert _parse_participant_criteria("") is None
 
     criteria_str = "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
     result = _parse_participant_criteria(criteria_str)
     assert len(result) == 1
-    assert isinstance(result[0].type, Other)
+    assert result[0].type == "Other"
     assert result[0].description == criteria_str
 
 

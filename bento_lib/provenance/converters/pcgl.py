@@ -12,7 +12,6 @@ from ..dataset import (
     License,
     Link,
     Organization,
-    Other,
     ParticipantCriteria,
     Person,
     PersonOrOrganization,
@@ -27,7 +26,7 @@ def _parse_participant_criteria(criteria_str: str | None) -> list[ParticipantCri
     """Wrap a PCGL participant criteria string as a single ParticipantCriteria."""
     if not criteria_str:
         return None
-    return [ParticipantCriteria(type=Other(other="Other"), description=criteria_str)]
+    return [ParticipantCriteria(type="Other", description=criteria_str)]
 
 
 def pcgl_study_to_dataset(

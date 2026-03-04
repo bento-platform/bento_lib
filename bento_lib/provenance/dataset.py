@@ -197,7 +197,7 @@ PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="typ
 
 class ParticipantCriteria(BaseModel):
     link: HttpUrl | None = None
-    type: ParticipantCriterionTypeAnnotated | Other
+    type: ParticipantCriterionTypeAnnotated
     description: str = Field(min_length=1)
 
 
