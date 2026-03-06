@@ -239,7 +239,7 @@ class Publication(BaseModel):
     url: HttpUrl
     doi: str | None = Field(default=None, min_length=1)
     publication_type: PublicationTypeAnnotated | Other
-    authors: list[PersonOrOrganization] = Field(min_length=1)
+    authors: list[PersonOrOrganization] | None = Field(default=None, min_length=1)
     publication_date: date | None = None
     publication_venue: PublicationVenue | None = None
     description: str | None = Field(default=None, min_length=1)
