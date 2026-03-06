@@ -226,6 +226,7 @@ class PublicationVenue(BaseModel):
 
     name: str = Field(min_length=1)
     venue_type: PublicationVenueTypeAnnotated | Other
+    url: HttpUrl | None = None
     publisher: str | None = Field(default=None, min_length=1)
     location: str | None = Field(default=None, min_length=1)
 
