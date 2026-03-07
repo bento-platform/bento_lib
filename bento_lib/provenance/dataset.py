@@ -16,6 +16,7 @@ __all__ = [
     "SpatialCoverageProperties",
     "SpatialCoverageFeature",
     "Link",
+    "TypedLink",
     "FundingSource",
     "LongDescription",
     "PersonOrOrganization",
@@ -272,12 +273,17 @@ class SpatialCoverageFeature(GeoJSONFeature):
 
 
 class Link(BaseModel):
+    """A labeled URL link."""
+
+    label: str = Field(min_length=1)
+    url: AnyUrl
+
+
+class TypedLink(Link):
     """
     Related links to the dataset that are useful to reference in metadata.
     """
 
-    label: str = Field(min_length=1)
-    url: AnyUrl
     type: LinkTypeAnnotated | Other
 
 
@@ -311,7 +317,9 @@ class DatasetModelBase(TranslatableModel):
         description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
     )
     stakeholders: list[PersonOrOrganization] = Field(min_length=1)
-    funding_sources: list[FundingSource] | None = Field(default=None, min_length=1)
+    funding_sources: list[FundingSource | Link | Annotated[str, Field(min_length=1)]] | None = Field(
+        default=None, min_length=1
+    )
 
     spatial_coverage: str | SpatialCoverageFeature | None = Field(default=None, min_length=1)
     version: str | None = Field(default=None, min_length=1)
