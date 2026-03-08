@@ -363,7 +363,7 @@ class DatasetModelBase(TranslatableModel):
 class DatasetModel(DatasetModelBase):
     """Dataset model with required identifier field."""
 
-    identifier: str = Field(min_length=1)  # if from pcgl, directly inherited, otherwise created in katsu
+    identifier: str = Field(min_length=1, max_length=128)  # if from pcgl, directly inherited, otherwise created in katsu
 
     @classmethod
     def from_base(cls, base: DatasetModelBase, identifier: str) -> "DatasetModel":
