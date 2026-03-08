@@ -1,5 +1,5 @@
 {
-  "id": "dataset-json-001",
+  "identifier": "dataset-json-001",
   "schema_version": "1.0",
   "title": "Test Dataset from JSON",
   "description": "A dataset loaded from JSON fixture",

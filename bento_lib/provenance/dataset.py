@@ -361,14 +361,14 @@ class DatasetModelBase(TranslatableModel):
 
 
 class DatasetModel(DatasetModelBase):
-    """Dataset model with required id field."""
+    """Dataset model with required identifier field."""
 
-    id: str = Field(min_length=1)  # if from pcgl, directly inherited, otherwise created in katsu
+    identifier: str = Field(min_length=1)  # if from pcgl, directly inherited, otherwise created in katsu
 
     @classmethod
-    def from_base(cls, base: DatasetModelBase, id: str) -> "DatasetModel":
-        """Create a DatasetModel from a DatasetModelBase with the given id."""
-        return cls(id=id, **base.model_dump())
+    def from_base(cls, base: DatasetModelBase, identifier: str) -> "DatasetModel":
+        """Create a DatasetModel from a DatasetModelBase with the given identifier."""
+        return cls(identifier=identifier, **base.model_dump())
 
 
 class ProjectScopedDatasetModel(DatasetModel):
@@ -377,9 +377,9 @@ class ProjectScopedDatasetModel(DatasetModel):
     project: str = Field(min_length=1)
 
     @classmethod
-    def from_base(cls, base: DatasetModelBase, id: str, project: str) -> "ProjectScopedDatasetModel":
-        """Create a ProjectScopedDatasetModel from a DatasetModelBase with the given id and project."""
-        return cls(id=id, project=project, **base.model_dump())
+    def from_base(cls, base: DatasetModelBase, identifier: str, project: str) -> "ProjectScopedDatasetModel":
+        """Create a ProjectScopedDatasetModel from a DatasetModelBase with the given identifier and project."""
+        return cls(identifier=identifier, project=project, **base.model_dump())
 
     @classmethod
     def from_dataset_model(cls, dataset: "DatasetModel", project: str) -> "ProjectScopedDatasetModel":

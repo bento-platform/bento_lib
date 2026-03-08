@@ -253,7 +253,7 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
         privacy="Controlled Access",
     )
 
-    assert dataset.id == "STUDY001"
+    assert dataset.identifier == "STUDY001"
     assert dataset.title == "Cancer Genomics Study"
     assert dataset.description == "A comprehensive study of cancer genomics"
     assert dataset.schema_version == "1.0"
@@ -317,7 +317,7 @@ def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact
         links=[link, data_access_link],
     )
 
-    assert dataset.id == "STUDY002"
+    assert dataset.identifier == "STUDY002"
     assert dataset.publications is None
     assert dataset.pcgl_program_name is None
     assert len(dataset.participant_criteria) == 1

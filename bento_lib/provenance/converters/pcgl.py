@@ -109,7 +109,7 @@ def pcgl_study_to_dataset(
         schema_version="1.0",
         title=study.study_name,
         description=study.study_description,
-        id=study.study_id,
+        identifier=study.study_id,
         keywords=keywords,
         stakeholders=stakeholders,
         funding_sources=funding_sources,

@@ -1,5 +1,5 @@
 {
-  "id": "dataset-json-full-001",
+  "identifier": "dataset-json-full-001",
   "language": "en",
   "schema_version": "1.0",
   "title": "Full Test Dataset from JSON",

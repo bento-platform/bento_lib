@@ -20,7 +20,7 @@ def test_dataset_model_full(dataset_full):
     """Test full DatasetModel validates and key nested types are correct."""
     ds = dataset_full
 
-    assert ds.id == "dataset-json-full-001"
+    assert ds.identifier == "dataset-json-full-001"
     assert ds.title == "Full Test Dataset from JSON"
 
     # Nested types resolved correctly
@@ -48,7 +48,7 @@ def test_dataset_model_minimal(dataset_minimal):
     """Test minimal DatasetModel with only required/few optional fields."""
     ds = dataset_minimal
 
-    assert ds.id == "dataset-json-001"
+    assert ds.identifier == "dataset-json-001"
     assert ds.title == "Test Dataset from JSON"
     assert ds.keywords is None
     assert ds.counts is None
@@ -64,7 +64,7 @@ def test_dataset_model_translation(dataset_full):
     ds = dataset_full
     ds.language = FR
 
-    assert ds.id == "dataset-json-full-001"
+    assert ds.identifier == "dataset-json-full-001"
     assert ds.stakeholders[1].roles[0] == "Co-Investigator"
     assert ds.publications[0].publication_type == "Journal Article"
     assert ds.publications[0].publication_venue.venue_type == "Journal"
@@ -72,7 +72,7 @@ def test_dataset_model_translation(dataset_full):
     # when serialized, serialized based on language
     ds_fr = ds.model_dump()
 
-    assert ds_fr["id"] == "dataset-json-full-001"
+    assert ds_fr["identifier"] == "dataset-json-full-001"
     assert ds_fr["stakeholders"][1]["roles"][0] == "Co-chercheur"
     assert ds_fr["publications"][0]["publication_type"] == "Article de revue"
     assert ds_fr["publications"][0]["publication_venue"]["venue_type"] == "Revue"
@@ -80,11 +80,11 @@ def test_dataset_model_translation(dataset_full):
 
 def test_dataset_model_from_base(dataset_full):
     ds_dict = dataset_full.model_dump()
-    del ds_dict["id"]
+    del ds_dict["identifier"]
     dmb = DatasetModelBase.model_validate(ds_dict)
     ds = DatasetModel.from_base(dmb, "Dataset-001")
 
-    assert ds.id == "Dataset-001"
+    assert ds.identifier == "Dataset-001"
 
     assert isinstance(ds, DatasetModel)
 
@@ -101,15 +101,15 @@ def test_dataset_model_from_base(dataset_full):
 def test_project_scoped_dataset_model_from_base(dataset_minimal):
     """from_base and from_dataset_model both create a valid ProjectScopedDatasetModel."""
     ds_dict = dataset_minimal.model_dump()
-    del ds_dict["id"]
+    del ds_dict["identifier"]
     base = DatasetModelBase.model_validate(ds_dict)
     ds = ProjectScopedDatasetModel.from_base(base, "dataset-002", "project-001")
-    assert ds.id == "dataset-002"
+    assert ds.identifier == "dataset-002"
     assert ds.project == "project-001"
     assert isinstance(ds, ProjectScopedDatasetModel)
 
     ds2 = ProjectScopedDatasetModel.from_dataset_model(dataset_minimal, "project-001")
-    assert ds2.id == dataset_minimal.id
+    assert ds2.identifier == dataset_minimal.identifier
     assert ds2.project == "project-001"
     assert isinstance(ds2, ProjectScopedDatasetModel)
 
@@ -133,7 +133,7 @@ def test_contact_at_least_one_field():
 def test_dataset_model_keyword_resource_validation(dataset_full):
     """OntologyClass keywords must have a matching resource by namespace_prefix."""
     ds_dict = dataset_full.model_dump()
-    del ds_dict["id"]
+    del ds_dict["identifier"]
 
     # Remove the HP resource — HP: CURIEs in keywords should now fail
     ds_dict["resources"] = None
