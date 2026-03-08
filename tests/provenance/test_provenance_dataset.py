@@ -5,6 +5,7 @@ from bento_lib.provenance.dataset import (
     Contact,
     DatasetModelBase,
     DatasetModel,
+    ProjectScopedDatasetModel,
     Person,
     Organization,
     License,
@@ -95,6 +96,22 @@ def test_dataset_model_from_base(dataset_full):
     assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)
+
+
+def test_project_scoped_dataset_model_from_base(dataset_minimal):
+    """from_base and from_dataset_model both create a valid ProjectScopedDatasetModel."""
+    ds_dict = dataset_minimal.model_dump()
+    del ds_dict["id"]
+    base = DatasetModelBase.model_validate(ds_dict)
+    ds = ProjectScopedDatasetModel.from_base(base, "dataset-002", "project-001")
+    assert ds.id == "dataset-002"
+    assert ds.project == "project-001"
+    assert isinstance(ds, ProjectScopedDatasetModel)
+
+    ds2 = ProjectScopedDatasetModel.from_dataset_model(dataset_minimal, "project-001")
+    assert ds2.id == dataset_minimal.id
+    assert ds2.project == "project-001"
+    assert isinstance(ds2, ProjectScopedDatasetModel)
 
 
 def test_contact_at_least_one_field():

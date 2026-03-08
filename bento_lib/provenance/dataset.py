@@ -21,6 +21,7 @@ __all__ = [
     "LongDescription",
     "PersonOrOrganization",
     "DatasetModel",
+    "ProjectScopedDatasetModel",
 ]
 
 from typing import Annotated, Literal
@@ -368,3 +369,19 @@ class DatasetModel(DatasetModelBase):
     def from_base(cls, base: DatasetModelBase, id: str) -> "DatasetModel":
         """Create a DatasetModel from a DatasetModelBase with the given id."""
         return cls(id=id, **base.model_dump())
+
+
+class ProjectScopedDatasetModel(DatasetModel):
+    """Dataset model with an associated project field."""
+
+    project: str = Field(min_length=1)
+
+    @classmethod
+    def from_base(cls, base: DatasetModelBase, id: str, project: str) -> "ProjectScopedDatasetModel":
+        """Create a ProjectScopedDatasetModel from a DatasetModelBase with the given id and project."""
+        return cls(id=id, project=project, **base.model_dump())
+
+    @classmethod
+    def from_dataset_model(cls, dataset: "DatasetModel", project: str) -> "ProjectScopedDatasetModel":
+        """Create a ProjectScopedDatasetModel from a DatasetModel with the given project."""
+        return cls(project=project, **dataset.model_dump())
