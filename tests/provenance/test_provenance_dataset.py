@@ -100,17 +100,21 @@ def test_dataset_model_from_base(dataset_full):
 
 def test_project_scoped_dataset_model_from_base(dataset_minimal):
     """from_base and from_dataset_model both create a valid ProjectScopedDatasetModel."""
+    from uuid import UUID
+
+    project_id = UUID("12345678-1234-5678-1234-567812345678")
+
     ds_dict = dataset_minimal.model_dump()
     del ds_dict["identifier"]
     base = DatasetModelBase.model_validate(ds_dict)
-    ds = ProjectScopedDatasetModel.from_base(base, "dataset-002", "project-001")
+    ds = ProjectScopedDatasetModel.from_base(base, "dataset-002", project_id)
     assert ds.identifier == "dataset-002"
-    assert ds.project == "project-001"
+    assert ds.project == project_id
     assert isinstance(ds, ProjectScopedDatasetModel)
 
-    ds2 = ProjectScopedDatasetModel.from_dataset_model(dataset_minimal, "project-001")
+    ds2 = ProjectScopedDatasetModel.from_dataset_model(dataset_minimal, project_id)
     assert ds2.identifier == dataset_minimal.identifier
-    assert ds2.project == "project-001"
+    assert ds2.project == project_id
     assert isinstance(ds2, ProjectScopedDatasetModel)
 
 

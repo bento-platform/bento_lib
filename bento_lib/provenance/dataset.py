@@ -26,6 +26,7 @@ __all__ = [
 
 from typing import Annotated, Literal
 from datetime import date
+from uuid import UUID
 from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict, model_validator
 from geojson_pydantic import Feature as GeoJSONFeature
 
@@ -376,14 +377,14 @@ class DatasetModel(DatasetModelBase):
 class ProjectScopedDatasetModel(DatasetModel):
     """Dataset model with an associated project field."""
 
-    project: str = Field(min_length=1)
+    project: UUID
 
     @classmethod
-    def from_base(cls, base: DatasetModelBase, identifier: str, project: str) -> "ProjectScopedDatasetModel":
+    def from_base(cls, base: DatasetModelBase, identifier: str, project: UUID) -> "ProjectScopedDatasetModel":
         """Create a ProjectScopedDatasetModel from a DatasetModelBase with the given identifier and project."""
         return cls(identifier=identifier, project=project, **base.model_dump())
 
     @classmethod
-    def from_dataset_model(cls, dataset: "DatasetModel", project: str) -> "ProjectScopedDatasetModel":
+    def from_dataset_model(cls, dataset: "DatasetModel", project: UUID) -> "ProjectScopedDatasetModel":
         """Create a ProjectScopedDatasetModel from a DatasetModel with the given project."""
         return cls(project=project, **dataset.model_dump())
