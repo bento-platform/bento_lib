@@ -122,6 +122,10 @@ adequately describes the associated data.
 
 All Bento channels are prefixed with `bento.`.
 
+### `i18n`
+
+`i18n` contains helpers and type definitions for internationalized text.
+
 ### `logging`
 
 `logging` contains helper functions and types for standardized Bento logging 
