@@ -312,6 +312,7 @@ class DatasetModelBase(TranslatableModel):
     title: str = Field(min_length=1)
     description: str = Field(min_length=1)
     long_description: LongDescription | None = None
+    taxonomy: list[OntologyClass | str] | None = None
 
     keywords: list[str | OntologyClass] | None = Field(default=None, min_length=1)
     resources: list[VersionedOntologyResource] | None = Field(
@@ -351,14 +352,22 @@ class DatasetModelBase(TranslatableModel):
 
     @model_validator(mode="after")
     def check_keyword_resources(self) -> "DatasetModelBase":
-        if not self.keywords:
-            return self
         resource_prefixes = {r.namespace_prefix for r in self.resources} if self.resources else set()
-        missing = sorted(
-            {kw.id.split(":")[0] for kw in self.keywords if isinstance(kw, OntologyClass)} - resource_prefixes
-        )
-        if missing:
-            raise ValueError(f"keywords contain OntologyClass CURIEs with no matching resource: {missing}")
+
+        if self.keywords:
+            missing = sorted(
+                {kw.id.split(":")[0] for kw in self.keywords if isinstance(kw, OntologyClass)} - resource_prefixes
+            )
+            if missing:
+                raise ValueError(f"keywords contain OntologyClass CURIEs with no matching resource: {missing}")
+
+        if self.taxonomy:
+            missing = sorted(
+                {t.id.split(":")[0] for t in self.taxonomy if isinstance(t, OntologyClass)} - resource_prefixes
+            )
+            if missing:
+                raise ValueError(f"taxonomy contains OntologyClass CURIEs with no matching resource: {missing}")
+
         return self
 
 

@@ -147,3 +147,20 @@ def test_dataset_model_keyword_resource_validation(dataset_full):
     # keywords=None should always pass regardless of resources
     ds_dict["keywords"] = None
     DatasetModelBase.model_validate(ds_dict)  # no error
+
+
+def test_dataset_model_taxonomy_resource_validation(dataset_full):
+    """OntologyClass taxonomy entries must have a matching resource by namespace_prefix."""
+    ds_dict = dataset_full.model_dump()
+    del ds_dict["identifier"]
+
+    # Add an OntologyClass taxonomy entry and remove resources — should fail
+    ds_dict["taxonomy"] = [{"id": "NCBITaxon:9606", "label": "Homo sapiens"}]
+    ds_dict["resources"] = None
+    with pytest.raises(Exception, match="no matching resource"):
+        DatasetModelBase.model_validate(ds_dict)
+
+    # taxonomy=None should always pass regardless of resources (clear keywords too to isolate)
+    ds_dict["taxonomy"] = None
+    ds_dict["keywords"] = None
+    DatasetModelBase.model_validate(ds_dict)  # no error
