@@ -259,6 +259,7 @@ class Logo(BaseModel):
     url: AnyUrl
     theme: Literal["light", "dark", "default"] = "default"
     description: str | None = Field(default=None, min_length=1)
+    contains_text: bool = Field(default=False, description="Whether the logo contains branding text to the left or right of the logo image.")
 
 
 class SpatialCoverageProperties(BaseModel):
