@@ -329,7 +329,7 @@ class DatasetModelBase(TranslatableModel):
     license: License | None = None
     counts: list[Count] | None = Field(default=None, min_length=1)
     primary_contact: PersonOrOrganization
-    links: list[Link] = Field(min_length=1)
+    links: list[Link] | None = Field(default=None, min_length=1)
     publications: list[Publication] | None = Field(default=None, min_length=1)
     logos: list[Logo] | None = Field(default=None, min_length=1)
     release_date: date | None = None
