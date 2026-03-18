@@ -312,7 +312,7 @@ class DatasetModelBase(TranslatableModel):
     title: str = Field(min_length=1)
     description: str = Field(min_length=1)
     long_description: LongDescription | None = None
-    taxonomy: list[OntologyClass | str] | None = Field(default=None, min_length=1)
+    taxa: list[OntologyClass | str] | None = Field(default=None, min_length=1)
 
     keywords: list[str | OntologyClass] | None = Field(default=None, min_length=1)
     resources: list[VersionedOntologyResource] | None = Field(
@@ -361,12 +361,12 @@ class DatasetModelBase(TranslatableModel):
             if missing:
                 raise ValueError(f"keywords contain OntologyClass CURIEs with no matching resource: {missing}")
 
-        if self.taxonomy:
+        if self.taxa:
             missing = sorted(
-                {t.id.split(":")[0] for t in self.taxonomy if isinstance(t, OntologyClass)} - resource_prefixes
+                {t.id.split(":")[0] for t in self.taxa if isinstance(t, OntologyClass)} - resource_prefixes
             )
             if missing:
-                raise ValueError(f"taxonomy contains OntologyClass CURIEs with no matching resource: {missing}")
+                raise ValueError(f"taxa contains OntologyClass CURIEs with no matching resource: {missing}")
 
         return self
 
