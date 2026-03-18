@@ -312,7 +312,7 @@ class DatasetModelBase(TranslatableModel):
     title: str = Field(min_length=1)
     description: str = Field(min_length=1)
     long_description: LongDescription | None = None
-    taxonomy: list[OntologyClass | str] | None = None
+    taxonomy: list[OntologyClass | str] | None = Field(default=None, min_length=1)
 
     keywords: list[str | OntologyClass] | None = Field(default=None, min_length=1)
     resources: list[VersionedOntologyResource] | None = Field(
