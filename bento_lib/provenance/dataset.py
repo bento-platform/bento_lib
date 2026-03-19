@@ -42,6 +42,7 @@ Role = TranslatedLiteral(EN, FR)(
     ("Sub-Investigator",          "Sous-chercheur"),
     ("Study Director",            "Directeur d'étude"),
     ("Project Lead",              "Chef de projet"),
+    ("Project Manager",           "Gestionnaire de projet"),
     # Research team
     ("Researcher",                "Chercheur"),
     ("Research Assistant",        "Assistant de recherche"),
