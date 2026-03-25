@@ -80,6 +80,8 @@ Role = TranslatedLiteral(EN, FR)(
     ("Data Controller",           "Responsable du traitement des données"),
     ("Data Processor",            "Sous-traitant des données"),
     ("Data Contributor",          "Contributeur de données"),
+    ("Data Custodian",            "Gardien des données"),
+    ("Data Producer",             "Producteur de données"),
     # External stakeholders
     ("Partner",                   "Partenaire"),
     ("Stakeholder",               "Partie prenante"),
