@@ -204,7 +204,7 @@ class Person(BaseModel):
     affiliations: list[Organization | str] | None = Field(default=None, min_length=1)
     contact: Contact | None = None
     location: str | None = Field(default=None, min_length=1)
-    orcid_id: OrcidId | None = None
+    orcid: OrcidId | None = None
     roles: list[RoleAnnotated] = Field(min_length=1)
 
 
