@@ -27,11 +27,14 @@ __all__ = [
 from typing import Annotated, Literal
 from datetime import date
 from uuid import UUID
-from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict, model_validator
+from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict, StringConstraints, model_validator
+
 from geojson_pydantic import Feature as GeoJSONFeature
 
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
+
+OrcidId = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$")]
 
 # Turning formating off to preserve columnar structure
 # fmt: off
@@ -201,6 +204,7 @@ class Person(BaseModel):
     affiliations: list[Organization | str] | None = Field(default=None, min_length=1)
     contact: Contact | None = None
     location: str | None = Field(default=None, min_length=1)
+    orcid_id: OrcidId | None = None
     roles: list[RoleAnnotated] = Field(min_length=1)
 
 
