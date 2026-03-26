@@ -327,7 +327,7 @@ class DatasetModelBase(TranslatableModel):
         min_length=1,
         description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
     )
-    stakeholders: list[PersonOrOrganization] = Field(min_length=1)
+    stakeholders: list[PersonOrOrganization] | None = Field(default=None, min_length=1)
     funding_sources: list[FundingSource | Link] | Annotated[str, Field(min_length=1)] | None = None
 
     spatial_coverage: str | SpatialCoverageFeature | None = Field(default=None, min_length=1)
