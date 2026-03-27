@@ -291,10 +291,10 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
 
     # Check PCGL-specific fields
-    assert dataset.pcgl_domain == ["Cancer", "Population Genomics"]
+    assert dataset.domain == ["Cancer", "Population Genomics"]
     assert dataset.study_status == "ONGOING"
     assert dataset.study_context == "RESEARCH"
-    assert dataset.pcgl_program_name == "National Cancer Program"
+    assert dataset.program_name == "National Cancer Program"
 
     # Check optional fields passed through
     assert dataset.spatial_coverage == "Canada"
@@ -319,7 +319,7 @@ def test_pcgl_study_to_dataset_minimal(minimal_pcgl_study, basic_primary_contact
 
     assert dataset.identifier == "STUDY002"
     assert dataset.publications is None
-    assert dataset.pcgl_program_name is None
+    assert dataset.program_name is None
     assert len(dataset.participant_criteria) == 1
     assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+"
 

@@ -34,12 +34,12 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
 
     assert dataset.title == "Cancer Study"
     assert dataset.description == "A cancer genomics study"
-    assert dataset.pcgl_program_name == "Cancer Program"
+    assert dataset.program_name == "Cancer Program"
     assert dataset.keywords == ["cancer", "genomics"]
     assert dataset.study_status == "ONGOING"
     assert dataset.study_context == "RESEARCH"
-    assert dataset.pcgl_domain[0] == "Cancer"
-    assert dataset.pcgl_domain[1] == "Population Genomics"
+    assert dataset.domain[0] == "Cancer"
+    assert dataset.domain[1] == "Population Genomics"
     assert dataset.release_date == date(2023, 1, 1)
     assert dataset.last_modified == date(2023, 6, 1)
 
@@ -90,7 +90,7 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
         ],
     )
 
-    assert len(dataset.pcgl_domain) == 1
-    assert dataset.pcgl_domain[0] == "Other"
+    assert len(dataset.domain) == 1
+    assert dataset.domain[0] == "Other"
     assert dataset.study_status == "COMPLETED"
     assert dataset.study_context == "CLINICAL"

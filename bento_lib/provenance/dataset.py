@@ -346,10 +346,11 @@ class DatasetModelBase(TranslatableModel):
     study_status: Literal["ONGOING", "COMPLETED"] | None = None
     study_context: Literal["CLINICAL", "RESEARCH"] | None = None
 
-    pcgl_domain: list[str] | None = Field(
+    # Derived from the PCGL study model
+    domain: list[str] | None = Field(
         default=None, min_length=1, description="List of specific scientific or clinical domains addressed by the study"
     )
-    pcgl_program_name: str | None = Field(
+    program_name: str | None = Field(
         None, min_length=1, description="The overarching program the study belongs to (if applicable)"
     )
 
