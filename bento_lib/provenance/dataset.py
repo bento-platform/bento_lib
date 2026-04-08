@@ -7,6 +7,8 @@ __all__ = [
     "Contact",
     "Organization",
     "Person",
+    "PersonGeneric",
+    "PersonGenericOrOrganization",
     "ParticipantCriteria",
     "Count",
     "License",
@@ -74,6 +76,9 @@ Role = TranslatedLiteral(EN, FR)(
     ("Sponsor",                   "Commanditaire"),
     ("Funder",                    "Bailleur de fonds"),
     ("Grant Agency",              "Organisme subventionnaire"),
+    # Publications
+    ("Author",                    "Auteur"),
+    ("Corresponding Author",      "Auteur correspondant"),
     # Contributors (non-research)
     ("Consultant",                "Consultant"),
     ("Advisor",                   "Conseiller"),
@@ -192,7 +197,7 @@ class Organization(BaseModel):
     roles: list[RoleAnnotated] = Field(min_length=1)
 
 
-class Person(BaseModel):
+class PersonGeneric(BaseModel):
     type: Literal["person"]
     name: str = Field(min_length=1)
     honorific: str | None = Field(default=None, min_length=1)
@@ -205,10 +210,15 @@ class Person(BaseModel):
     contact: Contact | None = None
     location: str | None = Field(default=None, min_length=1)
     orcid: Orcid | None = None
+    roles: list[RoleAnnotated] = Field(default_factory=list)
+
+
+class Person(PersonGeneric):
     roles: list[RoleAnnotated] = Field(min_length=1)
 
 
 PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="type")]
+PersonGenericOrOrganization = Annotated[PersonGeneric | Organization, Field(discriminator="type")]
 
 
 class ParticipantCriteria(BaseModel):
@@ -250,7 +260,7 @@ class Publication(BaseModel):
     url: HttpUrl
     doi: str | None = Field(default=None, min_length=1)
     publication_type: PublicationTypeAnnotated | Other
-    authors: list[PersonOrOrganization] | None = Field(default=None, min_length=1)
+    authors: list[PersonGenericOrOrganization] | None = Field(default=None, min_length=1)
     publication_date: date | None = None
     publication_venue: PublicationVenue | None = None
     description: str | None = Field(default=None, min_length=1)
@@ -300,7 +310,7 @@ class TypedLink(Link):
 class FundingSource(BaseModel):
     """Funding source for the dataset/study."""
 
-    funder: str | PersonOrOrganization | None = Field(default=None, min_length=1)
+    funder: Annotated[str, Field(min_length=1)] | PersonOrOrganization | None = None
     grant_numbers: list[str] | None = Field(default=None, min_length=1)
 
 
