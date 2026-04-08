@@ -7,8 +7,6 @@ __all__ = [
     "Contact",
     "Organization",
     "Person",
-    "PersonGeneric",
-    "PersonGenericOrOrganization",
     "ParticipantCriteria",
     "Count",
     "License",
@@ -207,7 +205,7 @@ class Organization(BaseModel):
     roles: list[RoleAnnotated] = Field(min_length=1)
 
 
-class PersonGeneric(BaseModel):
+class Person(BaseModel):
     type: Literal["person"]
     name: str = Field(min_length=1)
     honorific: str | None = Field(default=None, min_length=1)
@@ -223,12 +221,7 @@ class PersonGeneric(BaseModel):
     roles: list[RoleAnnotated] = Field(default_factory=list)
 
 
-class Person(PersonGeneric):
-    roles: list[RoleAnnotated] = Field(min_length=1)
-
-
 PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="type")]
-PersonGenericOrOrganization = Annotated[PersonGeneric | Organization, Field(discriminator="type")]
 
 
 class ParticipantCriteria(BaseModel):
@@ -270,7 +263,7 @@ class Publication(BaseModel):
     url: HttpUrl
     doi: str | None = Field(default=None, min_length=1)
     publication_type: PublicationTypeAnnotated | Other
-    authors: list[PersonGenericOrOrganization] | None = Field(default=None, min_length=1)
+    authors: list[PersonOrOrganization] | None = Field(default=None, min_length=1)
     publication_date: date | None = None
     publication_venue: PublicationVenue | None = None
     description: str | None = Field(default=None, min_length=1)
@@ -397,6 +390,11 @@ class DatasetModelBase(TranslatableModel):
             )
             if missing:
                 raise ValueError(f"taxa contains OntologyClass CURIEs with no matching resource: {missing}")
+
+        if self.stakeholders:
+            missing_roles = [s.name for s in self.stakeholders if isinstance(s, Person) and not s.roles]
+            if missing_roles:
+                raise ValueError(f"stakeholder persons must have at least one role: {missing_roles}")
 
         return self
 
