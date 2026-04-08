@@ -5,9 +5,11 @@ from bento_lib.provenance.dataset import (
     Contact,
     DatasetModelBase,
     DatasetModel,
-    ProjectScopedDatasetModel,
-    Person,
+    FundingSource,
     Organization,
+    Person,
+    ProjectScopedDatasetModel,
+    Publication,
     License,
     PublicationVenue,
     Phone,
@@ -155,6 +157,8 @@ def test_dataset_model_taxa_resource_validation(dataset_full):
     del ds_dict["identifier"]
 
     # Add an OntologyClass taxa entry and remove resources — should fail
+    # Clear keywords first so the keyword check doesn't fire before the taxa check
+    ds_dict["keywords"] = None
     ds_dict["taxa"] = [{"id": "NCBITaxon:9606", "label": "Homo sapiens"}]
     ds_dict["resources"] = None
     with pytest.raises(Exception, match="no matching resource"):
@@ -164,3 +168,61 @@ def test_dataset_model_taxa_resource_validation(dataset_full):
     ds_dict["taxa"] = None
     ds_dict["keywords"] = None
     DatasetModelBase.model_validate(ds_dict)  # no error
+
+
+def test_person_roles_optional():
+    """Person can be created without roles."""
+    p = Person(type="person", name="Jane Doe")
+    assert p.roles == []
+
+
+def test_person_with_roles():
+    """Person accepts Author and Corresponding Author roles."""
+    p = Person(type="person", name="Jane Doe", roles=["Author"])
+    assert p.roles == ["Author"]
+
+    p2 = Person(type="person", name="Jane Doe", roles=["Corresponding Author"])
+    assert p2.roles == ["Corresponding Author"]
+
+
+def test_stakeholder_person_requires_roles(dataset_minimal):
+    """DatasetModelBase rejects Person stakeholders with no roles."""
+    ds_dict = dataset_minimal.model_dump()
+    del ds_dict["identifier"]
+    ds_dict["stakeholders"] = [{"type": "person", "name": "No Role Person", "roles": []}]
+
+    with pytest.raises(ValidationError, match="at least one role"):
+        DatasetModelBase.model_validate(ds_dict)
+
+
+def test_stakeholder_organization_no_role_enforcement(dataset_minimal):
+    """Organization stakeholders are not subject to the person-roles validator (they enforce roles via Field)."""
+    ds_dict = dataset_minimal.model_dump()
+    del ds_dict["identifier"]
+    ds_dict["stakeholders"] = [{"type": "organization", "name": "Some Org", "roles": ["Institution"]}]
+    DatasetModelBase.model_validate(ds_dict)  # no error
+
+
+def test_publication_author_without_roles():
+    """Publication authors may be Person instances with no roles."""
+    pub = Publication(
+        title="A Study",
+        url="https://example.com/pub",
+        publication_type="Journal Article",
+        authors=[{"type": "person", "name": "Jane Doe", "roles": []}],
+    )
+    assert isinstance(pub.authors[0], Person)
+    assert pub.authors[0].roles == []
+
+
+def test_funding_source_funder_empty_string_invalid():
+    """FundingSource rejects an empty string funder."""
+    with pytest.raises(ValidationError):
+        FundingSource(funder="")
+
+
+def test_funding_source_funder_person_without_roles():
+    """FundingSource accepts a Person funder with no roles."""
+    fs = FundingSource(funder={"type": "person", "name": "Jane Doe", "roles": []})
+    assert isinstance(fs.funder, Person)
+    assert fs.funder.roles == []
