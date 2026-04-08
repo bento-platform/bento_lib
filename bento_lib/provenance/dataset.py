@@ -29,7 +29,17 @@ __all__ = [
 from typing import Annotated, Literal
 from datetime import date
 from uuid import UUID
-from pydantic import AnyUrl, BaseModel, BeforeValidator, EmailStr, Field, HttpUrl, ConfigDict, StringConstraints, model_validator
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    BeforeValidator,
+    EmailStr,
+    Field,
+    HttpUrl,
+    ConfigDict,
+    StringConstraints,
+    model_validator,
+)
 
 from geojson_pydantic import Feature as GeoJSONFeature
 
@@ -276,7 +286,9 @@ class Logo(BaseModel):
     url: AnyUrl
     theme: Literal["light", "dark", "default"] = "default"
     description: str | None = Field(default=None, min_length=1)
-    contains_text: bool = Field(default=False, description="Whether the logo contains branding text to the left or right of the logo image.")
+    contains_text: bool = Field(
+        default=False, description="Whether the logo contains branding text to the left or right of the logo image."
+    )
 
 
 class SpatialCoverageProperties(BaseModel):
