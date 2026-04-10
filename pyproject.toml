@@ -33,7 +33,7 @@ fastapi = { version = ">=0.129.0,<0.136", optional = true }
 flask = { version = ">=3.0.3,<4", optional = true }
 jsonschema = ">=4.23.0,<5"
 psycopg2-binary = ">=2.9.9,<3.0"
-pydantic = ">=2.11.3,<3"
+pydantic = { version = ">=2.11.3,<3", extras = ["email"] }
 pydantic-settings = ">=2.8.1"
 redis = ">=5.2.1,<8"
 requests = ">=2.32.3,<3"
@@ -42,6 +42,8 @@ structlog = ">=25.2.0,<26"
 uvicorn = { version = "*", optional = true }
 werkzeug = ">=3.0.6,<4"
 geojson-pydantic = "^2.0.0"
+pydantic-extra-types = "^2.11.0"
+pycountry = "^24.6.1"
 
 [tool.poetry.group.dev.dependencies]
 aioresponses = "^0.7.6"
