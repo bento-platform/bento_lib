@@ -20,6 +20,7 @@ __all__ = [
     "FundingSource",
     "LongDescription",
     "PersonOrOrganization",
+    "DatasetModelBase",
     "DatasetModel",
     "ProjectScopedDatasetModel",
 ]
