@@ -169,6 +169,20 @@ def test_dataset_model_taxa_resource_validation(dataset_full):
     ds_dict["keywords"] = None
     DatasetModelBase.model_validate(ds_dict)  # no error
 
+    # OntologyClass taxa with a matching resource — should pass (covers if missing: False branch)
+    ds_dict["taxa"] = [{"id": "NCBITaxon:9606", "label": "Homo sapiens"}]
+    ds_dict["resources"] = [
+        {
+            "id": "ncbitaxon",
+            "version": "2024-01-01",
+            "namespace_prefix": "NCBITaxon",
+            "iri_prefix": "http://purl.obolibrary.org/obo/NCBITaxon_",
+            "url": "http://purl.obolibrary.org/obo/ncbitaxon.owl",
+            "name": "NCBI Taxonomy",
+        }
+    ]
+    DatasetModelBase.model_validate(ds_dict)  # no error
+
 
 def test_person_roles_optional():
     """Person can be created without roles."""
@@ -200,6 +214,14 @@ def test_stakeholder_organization_no_role_enforcement(dataset_minimal):
     ds_dict = dataset_minimal.model_dump()
     del ds_dict["identifier"]
     ds_dict["stakeholders"] = [{"type": "organization", "name": "Some Org", "roles": ["Institution"]}]
+    DatasetModelBase.model_validate(ds_dict)  # no error
+
+
+def test_no_stakeholders_skips_roles_validation(dataset_minimal):
+    """DatasetModelBase with no stakeholders skips the person-roles check (covers if self.stakeholders: False branch)."""
+    ds_dict = dataset_minimal.model_dump()
+    del ds_dict["identifier"]
+    ds_dict["stakeholders"] = None
     DatasetModelBase.model_validate(ds_dict)  # no error
 
 
