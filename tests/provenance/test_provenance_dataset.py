@@ -210,19 +210,14 @@ def test_stakeholder_person_requires_roles(dataset_minimal):
 
 
 def test_stakeholder_organization_no_role_enforcement(dataset_minimal):
-    """Organization stakeholders are not subject to the person-roles validator (they enforce roles via Field)."""
+    """Organization stakeholders are not subject to the person-roles validator; None stakeholders also pass."""
     ds_dict = dataset_minimal.model_dump()
     del ds_dict["identifier"]
     ds_dict["stakeholders"] = [{"type": "organization", "name": "Some Org", "roles": ["Institution"]}]
     DatasetModelBase.model_validate(ds_dict)  # no error
 
-
-def test_no_stakeholders_skips_roles_validation(dataset_minimal):
-    """DatasetModelBase with no stakeholders skips the person-roles check (covers if self.stakeholders: False branch)."""
-    ds_dict = dataset_minimal.model_dump()
-    del ds_dict["identifier"]
     ds_dict["stakeholders"] = None
-    DatasetModelBase.model_validate(ds_dict)  # no error
+    DatasetModelBase.model_validate(ds_dict)  # no error — skips the roles check entirely
 
 
 def test_publication_author_without_roles():
