@@ -10,6 +10,7 @@ from bento_lib.discovery import (
     FieldDefinition,
     NumberFieldDefinition,
     OverviewChart,
+    OverviewSection,
 )
 
 from .common import (
@@ -23,56 +24,57 @@ from .common import (
 )
 
 
+AGE_HISTOGRAM_BASIC_DICT = {
+    "field": "age",
+    "chart_type": "histogram",
+}
+
+MAP_CHOROPLETH_DICT = {
+    "field": "map",
+    "chart_type": "choropleth",
+    "color_mode": {
+        "mode": "continuous",
+        "min_color": "rgba(178, 226, 226, 0.6)",
+        "max_color": "rgba(35, 139, 69, 0.6)",
+    },
+    "center": [70.15, -95.5],
+    "zoom": 1.75,
+    "category_prop": "pop",
+    "features": {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "area": 4031260000000.0,
+                    "perimeter": 8812080.0,
+                    "pop": "ARCTIC BASIN",
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    # truncated from real values because otherwise it takes up too much room in the code:
+                    "coordinates": [
+                        [
+                            [114.781740188598945, 80.782754898070891],
+                            [114.781740188598945, 81.782754898070891],  # fake 4th coord :)
+                            [73.338808059692511, 83.163591384887681],
+                            [114.781740188598945, 80.782754898070891],
+                        ]
+                    ],
+                },
+            },
+        ],
+    },
+}
+
+
 def test_overview_charts_def():
-    m1 = OverviewChart.model_validate(
-        {
-            "field": "age",
-            "chart_type": "histogram",
-        }
-    )
+    m1 = OverviewChart.model_validate(AGE_HISTOGRAM_BASIC_DICT)
 
     assert m1.field == "age"
     assert m1.chart_type == "histogram"
 
-    m2 = OverviewChart.model_validate(
-        {
-            "field": "map",
-            "chart_type": "choropleth",
-            "color_mode": {
-                "mode": "continuous",
-                "min_color": "rgba(178, 226, 226, 0.6)",
-                "max_color": "rgba(35, 139, 69, 0.6)",
-            },
-            "center": [70.15, -95.5],
-            "zoom": 1.75,
-            "category_prop": "pop",
-            "features": {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "area": 4031260000000.0,
-                            "perimeter": 8812080.0,
-                            "pop": "ARCTIC BASIN",
-                        },
-                        "geometry": {
-                            "type": "Polygon",
-                            # truncated from real values because otherwise it takes up too much room in the code:
-                            "coordinates": [
-                                [
-                                    [114.781740188598945, 80.782754898070891],
-                                    [114.781740188598945, 81.782754898070891],  # fake 4th coord :)
-                                    [73.338808059692511, 83.163591384887681],
-                                    [114.781740188598945, 80.782754898070891],
-                                ]
-                            ],
-                        },
-                    },
-                ],
-            },
-        }
-    )
+    m2 = OverviewChart.model_validate(MAP_CHOROPLETH_DICT)
 
     assert m2.field == "map"
     assert m2.chart_type == "choropleth"
@@ -87,6 +89,7 @@ def test_load_discovery_config_dict():
                     "charts": [
                         {"field": "age", "chart_type": "histogram"},
                     ],
+                    "default_charts": ["age"],
                 }
             ],
             "search": [
@@ -380,3 +383,33 @@ def test_invalid_mappings(mapping: str, err_str: str):
 
     assert e.value.error_count() == 1
     assert err_str in str(e.value)
+
+
+def test_invalid_overview_section_1():
+    with pytest.raises(ValidationError) as e:
+        OverviewSection.model_validate(
+            {
+                "section_title": "Test",
+                "charts": [AGE_HISTOGRAM_BASIC_DICT, MAP_CHOROPLETH_DICT],
+                "default_charts": [],  # cannot be empty: no default representation should be `0`
+            }
+        )
+
+    assert e.value.error_count() == 2
+    assert "List should have at least 1 item after validation, not 0" in str(e.value)
+    assert "Input should be a valid integer" in str(e.value)
+
+
+def test_invalid_overview_section_2():
+    with pytest.raises(ValidationError) as e:
+        OverviewSection.model_validate(
+            {
+                "section_title": "Test",
+                "charts": [AGE_HISTOGRAM_BASIC_DICT, MAP_CHOROPLETH_DICT],
+                "default_charts": -1,  # cannot be negative
+            }
+        )
+
+    assert e.value.error_count() == 2
+    assert "Input should be a valid list" in str(e.value)
+    assert "Input should be greater than or equal to 0" in str(e.value)

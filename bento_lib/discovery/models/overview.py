@@ -1,5 +1,5 @@
 from geojson_pydantic import Polygon, Feature, FeatureCollection
-from pydantic import BaseModel, Field, NonNegativeInt, RootModel
+from pydantic import BaseModel, Field, NonNegativeInt, RootModel, conlist
 from typing import Any, Literal
 from ._internal import NoAdditionalProperties
 
@@ -112,7 +112,7 @@ class OverviewSection(BaseModel, NoAdditionalProperties):
     charts: list[OverviewChart] = Field(
         ..., title="Charts", description="List of chart definitions contained in the section."
     )
-    default_charts: list[str] | NonNegativeInt | None = Field(
+    default_charts: conlist(str, min_length=1) | NonNegativeInt | None = Field(
         default=None,
         title="Default charts",
         description=(
