@@ -1,6 +1,8 @@
 from geojson_pydantic import Polygon, Feature, FeatureCollection
 from pydantic import BaseModel, Field, NonNegativeInt, RootModel, conlist
 from typing import Any, Literal
+
+from bento_lib.utils.operators import is_not_none
 from ._internal import NoAdditionalProperties
 
 __all__ = [
@@ -13,8 +15,15 @@ __all__ = [
     "OverviewSection",
 ]
 
+FIELD_Y_TITLE = "Field (Y axis)"
+FIELD_Y_DESCRIPTION = (
+    "Field ID for Y-axis, as defined by a key in the fields section of the discovery configuration. Specified "
+    "for certain types of charts (e.g., scatter plots)."
+)
+
 
 class BaseOverviewChart(BaseModel, NoAdditionalProperties):
+    # Begin fields for field IDs ---------------------------------------------------------------------------------------
     field: str = Field(
         ...,
         title="Field",
@@ -23,7 +32,12 @@ class BaseOverviewChart(BaseModel, NoAdditionalProperties):
             "of."
         ),
     )
-    chart_type: Literal["bar", "choropleth", "histogram", "pie"] = Field(
+    field_y: str | None = Field(default=None, title=FIELD_Y_TITLE, description=FIELD_Y_DESCRIPTION)
+    field_color: str | None = Field(default=None, title="Field (color)", description="TODO")
+    field_style: str | None = Field(default=None, title="Field (style)", description="TODO (shape or line style)")
+    field_size: str | None = Field(default=None, title="Field (size)", description="TODO (shape or line size)")
+    # End fields for field IDs -----------------------------------------------------------------------------------------
+    chart_type: Literal["bar", "choropleth", "geojson", "histogram", "pie"] = Field(
         ...,
         title="Chart type",
         description="Chart type when displaying. Only one chart type is currently permitted per field.",
@@ -38,17 +52,50 @@ class BaseOverviewChart(BaseModel, NoAdditionalProperties):
         ),
     )
 
+    def fields(self) -> tuple[str | None, ...]:
+        return self.field, self.field_y, self.field_color, self.field_style, self.field_size
+
+    def set_fields(self) -> tuple[str, ...]:
+        return tuple(filter(is_not_none, self.fields()))
+
+    def chart_id(self):
+        return "_".join(map(str, filter(is_not_none, (*self.fields(), self.chart_type))))
+
 
 class BarChart(BaseOverviewChart):
+    field_y: None = None
+    field_style: None = None
+    field_size: None = None
     chart_type: Literal["bar"] = "bar"
 
 
+class GeoJSONChart(BaseOverviewChart):
+    field_y: None = None
+    chart_type: Literal["geojson"] = "geojson"
+
+
+class HeatMapChart(BaseOverviewChart):
+    field_color: str = Field(..., title="Field (color)", description="TODO")
+
+
 class HistogramChart(BaseOverviewChart):
+    field_y: None = None
+    field_style: None = None
+    field_size: None = None
     chart_type: Literal["histogram"] = "histogram"
 
 
 class PieChart(BaseOverviewChart):
+    field_y: None = None
+    field_color: None = None
+    field_style: None = None
+    field_size: None = None
     chart_type: Literal["pie"] = "pie"
+
+
+class ScatterChart(BaseOverviewChart):
+    field_y: str = Field(..., title=FIELD_Y_TITLE, description=FIELD_Y_DESCRIPTION)  # y is mandatory for scatter plots
+    chart_type: Literal["scatter"] = "scatter"
 
 
 class ChoroplethColorModeContinuous(BaseModel, NoAdditionalProperties):
@@ -64,6 +111,11 @@ class ChoroplethColorModeContinuous(BaseModel, NoAdditionalProperties):
 
 class ChoroplethChart(BaseOverviewChart):
     chart_type: Literal["choropleth"] = "choropleth"
+    field_y: None = None
+    field_color: None = None
+    field_style: None = None
+    field_size: None = None
+
     color_mode: ChoroplethColorModeContinuous = Field(
         discriminator="mode",
         title="Color mode",
@@ -90,7 +142,9 @@ class OverviewChart(RootModel):
     Defines a chart for displaying overview data, including a field, chart type, and additional chart configuration.
     """
 
-    root: BarChart | HistogramChart | PieChart | ChoroplethChart = Field(discriminator="chart_type")
+    root: BarChart | ChoroplethChart | GeoJSONChart | HeatMapChart | HistogramChart | PieChart | ScatterChart = Field(
+        discriminator="chart_type"
+    )
 
     def __getattr__(self, item):
         return getattr(self.root, item)
