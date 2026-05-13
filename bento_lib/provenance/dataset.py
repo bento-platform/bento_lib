@@ -346,7 +346,7 @@ class DatasetModelBase(TranslatableModel):
     stakeholders: list[PersonOrOrganization] | None = Field(default=None, min_length=1)
     funding_sources: list[FundingSource | Link] | Annotated[str, Field(min_length=1)] | None = None
 
-    spatial_coverage: str | SpatialCoverageFeature | None = Field(default=None, min_length=1)
+    spatial_coverage: Annotated[str, Field(min_length=1)] | SpatialCoverageFeature | None = None
     version: str | None = Field(default=None, min_length=1)
     privacy: str | None = Field(default=None, min_length=1)
     license: License | None = None
