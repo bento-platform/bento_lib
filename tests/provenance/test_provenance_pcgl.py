@@ -295,6 +295,7 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert dataset.study_status == "ONGOING"
     assert dataset.study_context == "RESEARCH"
     assert dataset.program_name == "National Cancer Program"
+    assert dataset.dac_id == "DAC001"
 
     # Check optional fields passed through
     assert dataset.spatial_coverage == "Canada"

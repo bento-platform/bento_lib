@@ -186,6 +186,7 @@
   "study_context": "RESEARCH",
   "domain": ["Genomics", "Cancer Research"],
   "program_name": "National Cancer Genomics Program",
+  "dac_id": "DAC000010",
   "extra_properties": {
     "institution_code": "TU-001",
     "ethics_approval": "IRB-2022-456",
