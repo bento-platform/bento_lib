@@ -20,9 +20,29 @@ from .common import (
     DISCOVERY_CONFIG_INVALID_3_PATH,
     DISCOVERY_CONFIG_INVALID_4_PATH,
     DISCOVERY_CONFIG_INVALID_5_PATH,
+    DISCOVERY_CONFIG_INVALID_6_PATH,
+    DISCOVERY_CONFIG_INVALID_7_PATH,
+    DISCOVERY_CONFIG_INVALID_8_PATH,
+    DISCOVERY_CONFIG_INVALID_9_PATH,
     DISCOVERY_CONFIG_WARNING_PATH,
 )
 
+
+AGE_NUMERIC_FIELD_DICT = {
+    "mapping": "individual/age_numeric",
+    "title": "Age",
+    "description": "Age at arrival",
+    "datatype": "number",
+    "minimum_permissions": "data",
+    "config": {
+        "bin_size": 10,
+        "taper_left": 10,
+        "taper_right": 100,
+        "units": "years",
+        "minimum": 0,
+        "maximum": 100,
+    },
+}
 
 AGE_HISTOGRAM_BASIC_DICT = {
     "field": "age",
@@ -83,12 +103,14 @@ def test_overview_charts_def():
 def test_load_discovery_config_dict():
     cfg, warnings = load_discovery_config_from_dict(
         {
+            "charts": {
+                "age": AGE_HISTOGRAM_BASIC_DICT,
+            },
+            "catalogue_charts": ["age"],
             "overview": [
                 {
                     "section_title": "General",
-                    "charts": [
-                        {"field": "age", "chart_type": "histogram"},
-                    ],
+                    "charts": [AGE_HISTOGRAM_BASIC_DICT],
                     "default_charts": ["age"],
                 }
             ],
@@ -101,26 +123,14 @@ def test_load_discovery_config_dict():
                 },
             ],
             "fields": {
-                "age": {
-                    "mapping": "individual/age_numeric",
-                    "title": "Age",
-                    "description": "Age at arrival",
-                    "datatype": "number",
-                    "minimum_permissions": "data",
-                    "config": {
-                        "bin_size": 10,
-                        "taper_left": 10,
-                        "taper_right": 100,
-                        "units": "years",
-                        "minimum": 0,
-                        "maximum": 100,
-                    },
-                },
+                "age": AGE_NUMERIC_FIELD_DICT,
             },
             "rules": {"count_threshold": 5, "max_query_parameters": 2},
         }
     )
 
+    assert len(cfg.charts) == 1
+    assert len(cfg.catalogue_charts) == 1
     assert len(cfg.overview) == 1
     assert cfg.get_chart_field_ids() == ("age",)
     assert cfg.get_searchable_field_ids() == ("age",)
@@ -151,9 +161,14 @@ def test_load_discovery_config_dict():
     assert cfg.fields["age"].get_entity() == "individual"
     assert cfg.fields["age"].root.get_entity_and_field_path() == ("individual", ("age_numeric",))
 
+    # catalogue mode
+    assert cfg.get_chart_field_ids(catalogue_mode=True) == ("age",)
+
 
 def test_load_discovery_config_dict_blank():
     cfg, warnings = load_discovery_config_from_dict({})
+    assert cfg.charts == {}
+    assert cfg.catalogue_charts == []
     assert cfg.overview == []
     assert cfg.search == []
     assert cfg.fields == {}
@@ -203,6 +218,30 @@ overview
             DISCOVERY_CONFIG_INVALID_5_PATH,
             ValidationError,
             "search > section Measurements [0] > lab_test_result_value [1] [type=field already seen",
+        ),
+        # missing chart definition in config.charts referenced in catalogue_charts
+        (
+            DISCOVERY_CONFIG_INVALID_6_PATH,
+            ValidationError,
+            "catalogue_charts > date_of_consent [2] [type=chart definition not found",
+        ),
+        # bad field definition in chart definition
+        (
+            DISCOVERY_CONFIG_INVALID_7_PATH,
+            ValidationError,
+            "charts > age [type=field definition not found",
+        ),
+        # same field repeated in two different chart definitions
+        (
+            DISCOVERY_CONFIG_INVALID_8_PATH,
+            ValidationError,
+            "charts > age2 [type=field already seen",
+        ),
+        # same chart ID repeated multiple times in catalogue_charts
+        (
+            DISCOVERY_CONFIG_INVALID_9_PATH,
+            ValidationError,
+            "catalogue_charts > sex [2] [type=chart already seen",
         ),
     ],
 )
