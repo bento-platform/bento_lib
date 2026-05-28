@@ -94,8 +94,8 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
         description="Chart definitions for use in catalogue_charts. These are not yet used for overview charts.",
     )
 
-    # TODO: A future breaking change could move chart specification to be field-attached, rather than fixed into a
-    #  layout, and then the same chart definition could be used for both the catalogue and the overview.
+    # TODO: A future breaking change could move chart specification to be entirely in the charts field above, rather
+    #  than fixed into a layout, and then the same chart definition could be used for both catalogue and overview.
 
     catalogue_charts: list[str] = Field(
         default_factory=list,
