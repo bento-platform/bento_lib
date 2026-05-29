@@ -1,5 +1,7 @@
 import pytest
 from pydantic import ValidationError
+
+from bento_lib.discovery import DiscoveryConfig
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.provenance.dataset import (
     Contact,
@@ -35,6 +37,7 @@ def test_dataset_model_full(dataset_full):
     assert isinstance(ds.spatial_coverage, str)
     assert isinstance(ds.license, License)
     assert isinstance(ds.publications[0].publication_venue, PublicationVenue)
+    assert isinstance(ds.discovery, DiscoveryConfig)
 
     # Collection lengths as a smoke test for list parsing
     assert len(ds.keywords) == 4

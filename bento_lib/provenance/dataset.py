@@ -1,5 +1,6 @@
 __all__ = [
     "Role",
+    "RoleAnnotated",
     "PublicationType",
     "PublicationVenueType",
     "Other",
@@ -42,11 +43,16 @@ from pydantic import (
 
 from geojson_pydantic import Feature as GeoJSONFeature
 
+from bento_lib.discovery import DiscoveryConfig
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
 
 Orcid = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$")]
 
+# Roles for individuals and organizations in a dataset
+#  - includes terms that map to DataCite:
+#      https://datacite-metadata-schema.readthedocs.io/en/4.6/appendices/appendix-1/contributorType/
+#  - extends well beyond this to try to allow maximal descriptivity
 # Turning formating off to preserve columnar structure
 # fmt: off
 Role = TranslatedLiteral(EN, FR)(
@@ -55,10 +61,11 @@ Role = TranslatedLiteral(EN, FR)(
     ("Co-Investigator",           "Co-chercheur"),
     ("Sub-Investigator",          "Sous-chercheur"),
     ("Study Director",            "Directeur d'étude"),
-    ("Project Lead",              "Chef de projet"),
+    ("Project Lead",              "Chef de projet"),  # DataCite: ProjectLeader
     ("Project Manager",           "Gestionnaire de projet"),
+    ("Contact Person",            "Personne-ressource"),  # DataCite: ContactPerson
     # Research team
-    ("Researcher",                "Chercheur"),
+    ("Researcher",                "Chercheur"),  # DataCite: Researcher
     ("Research Assistant",        "Assistant de recherche"),
     ("Data Scientist",            "Scientifique des données"),
     ("Statistician",              "Statisticien"),
@@ -68,13 +75,21 @@ Role = TranslatedLiteral(EN, FR)(
     ("Participant",               "Participant"),
     ("Subject",                   "Sujet"),
     ("Volunteer",                 "Volontaire"),
+    # Other individual roles
+    ("Editor",                    "Éditeur"),  # DataCite: Editor
+    ("Translator",                "Traducteur"),  # DataCite: Translator
     # Organizational / institutional roles
+    ("Principal Laboratory",      "Laboratoire principal"),
     ("Sponsoring Organization",   "Organisation commanditaire"),
+    ("Collaborating Laboratory",  "Laboratoire collaborateur"),
     ("Collaborating Organization","Organisation collaboratrice"),
     ("Consortium",                "Consortium"),
+    ("Distributor",               "Distributeur"),  # DataCite: Distributor
     ("Institution",               "Institution"),
+    ("Hosting Institution",       "Institution hôte"),  # DataCite: HostingInstitution
     ("Site",                      "Site"),
     ("Research Center",           "Centre de recherche"),
+    ("Research Group",            "Groupe de recherche"),  # DataCite: ResearchGroup
     ("Publisher",                 "Éditeur"),
     # Ethics & compliance
     ("IRB",                       "CÉR"),
@@ -82,7 +97,7 @@ Role = TranslatedLiteral(EN, FR)(
     ("Data Monitoring Committee", "Comité de surveillance des données"),
     ("Compliance Officer",        "Responsable de la conformité"),
     # Funding & support
-    ("Sponsor",                   "Commanditaire"),
+    ("Sponsor",                   "Commanditaire"),  # DataCite: Sponsor
     ("Funder",                    "Bailleur de fonds"),
     ("Grant Agency",              "Organisme subventionnaire"),
     # Publications
@@ -93,11 +108,13 @@ Role = TranslatedLiteral(EN, FR)(
     ("Advisor",                   "Conseiller"),
     ("Reviewer",                  "Évaluateur"),
     # Data & technical roles
+    ("Data Collector",            "Collecteur de données"),  # DataCite: DataCollector
     ("Data Provider",             "Fournisseur de données"),
     ("Data Controller",           "Responsable du traitement des données"),
     ("Data Processor",            "Sous-traitant des données"),
     ("Data Contributor",          "Contributeur de données"),
     ("Data Custodian",            "Gardien des données"),
+    ("Data Manager",              "Gestionnaire de données"),  # DataCite: DataManager
     ("Data Producer",             "Producteur de données"),
     # External stakeholders
     ("Partner",                   "Partenaire"),
@@ -203,7 +220,13 @@ class Organization(BaseModel):
     description: str | None = Field(default=None, min_length=1)
     contact: Contact | None = None
     location: str | None = Field(default=None, min_length=1)
-    roles: list[RoleAnnotated] = Field(min_length=1)
+    roles: list[RoleAnnotated] = Field(
+        min_length=1,
+        description=(
+            "Role(s) this organization holds in relation to the work. It is good to include at least one "
+            "DataCite-compatible role."
+        ),
+    )
 
 
 class Person(BaseModel):
@@ -219,7 +242,13 @@ class Person(BaseModel):
     contact: Contact | None = None
     location: str | None = Field(default=None, min_length=1)
     orcid: Orcid | None = None
-    roles: list[RoleAnnotated] = Field(default_factory=list)
+    roles: list[RoleAnnotated] = Field(
+        default_factory=list,
+        description=(
+            "Role(s) this individual holds in relation to the work. It is good to include at least one "
+            "DataCite-compatible role."
+        ),
+    )
 
 
 PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="type")]
@@ -370,6 +399,20 @@ class DatasetModelBase(TranslatableModel):
         None, min_length=1, description="The overarching program the study belongs to (if applicable)"
     )
 
+    #  - PCGL-specific field: PCGL DAC ID
+    pcgl_dac_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Unique identifier of the Data Access Committee (DAC) in PCGL to which the study is assigned",
+    )
+
+    # Discovery configuration specific to this dataset
+    discovery: DiscoveryConfig | None = Field(
+        default=None,
+        description="Dataset-level discovery configuration; falls back to project/instance config if not set.",
+    )
+
+    # Extra properties: anything that doesn't fit elsewhere in the model
     extra_properties: dict[str, str | int | float | bool | None] | None = Field(
         None, description="Additional custom metadata properties not covered by the standard schema"
     )
