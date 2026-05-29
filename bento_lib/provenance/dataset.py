@@ -398,7 +398,9 @@ class DatasetModelBase(TranslatableModel):
     program_name: str | None = Field(
         None, min_length=1, description="The overarching program the study belongs to (if applicable)"
     )
-    dac_id: str | None = Field(
+
+    #  - PCGL-specific field: PCGL DAC ID
+    pcgl_dac_id: str | None = Field(
         default=None,
         min_length=1,
         description="Unique identifier of the Data Access Committee (DAC) in PCGL to which the study is assigned",
