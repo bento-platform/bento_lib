@@ -5,7 +5,7 @@ from typing import Literal, Self
 
 from ..exceptions import DiscoveryValidationError
 from .fields import FieldDefinition
-from .overview import OverviewSection
+from .overview import OverviewChart, OverviewSection
 from .search import SearchSection
 from ._internal import NoAdditionalProperties
 
@@ -17,6 +17,8 @@ __all__ = [
     "DiscoveryConfig",
 ]
 
+CHART_DEF_NOT_FOUND = "chart definition not found"
+CHART_ALREADY_SEEN = "chart already seen"
 FIELD_DEF_NOT_FOUND = "field definition not found"
 FIELD_ALREADY_SEEN = "field already seen"
 
@@ -84,6 +86,25 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
     # information about who prepared the discovery configuration and when it was generated.
     metadata: DiscoveryConfigMetadata = DiscoveryConfigMetadata()
 
+    # Shared chart definitions. Dictionary of {chart_id: chart definition}. For now, these are just used for catalogue
+    # charts, but in the long run they should be used for overview charts as well.
+    charts: dict[str, OverviewChart] = Field(
+        default_factory=dict,
+        title="Chart definitions",
+        description="Chart definitions for use in catalogue_charts. These are not yet used for overview charts.",
+    )
+
+    # TODO: A future breaking change could move chart specification to be entirely in the charts field above, rather
+    #  than fixed into a layout, and then the same chart definition could be used for both catalogue and overview.
+
+    catalogue_charts: list[str] = Field(
+        default_factory=list,
+        title="Catalogue charts",
+        description=(
+            "Chart IDs to show in the data catalogue view (if enabled.) This only applies for an instance-level "
+            "configuration file; in any other scope, it will be ignored."
+        ),
+    )
     overview: list[OverviewSection] = []
     search: list[SearchSection] = []
     fields: dict[str, FieldDefinition] = {}
@@ -94,6 +115,34 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
     )
 
     # Validators -------------------------------------------------------------------------------------------------------
+
+    def _check_chart_definitions(self):
+        seen_chart_fields: set[str] = set()
+        for chart_id, chart in self.charts.items():
+            exc_path = f"charts > {chart_id}"
+            log_data = dict(chart_id=chart_id, field_id=chart.field)
+            if chart.field not in self.fields:
+                raise DiscoveryValidationError(FIELD_DEF_NOT_FOUND, exc_path, log_data)
+            if chart.field in seen_chart_fields:
+                raise DiscoveryValidationError(FIELD_ALREADY_SEEN, exc_path, log_data)
+            seen_chart_fields.add(chart.field)
+
+    def _check_catalogue_chart_references(self):
+        """
+        Validate overview and check for chart duplicates.
+        Raises a DiscoveryValidationError if an error is found; otherwise, does nothing.
+        """
+
+        seen_charts: set[str] = set()
+
+        for c_idx, chart_id in enumerate(self.catalogue_charts):
+            exc_path = f"catalogue_charts > {chart_id} [{c_idx}]"
+            log_data = dict(chart_id=chart_id, chart_idx=c_idx)
+            if chart_id not in self.charts:
+                raise DiscoveryValidationError(CHART_DEF_NOT_FOUND, exc_path, log_data)
+            if chart_id in seen_charts:
+                raise DiscoveryValidationError(CHART_ALREADY_SEEN, exc_path, log_data)
+            seen_charts.add(chart_id)
 
     def _check_overview_field_references(self):
         """
@@ -131,17 +180,21 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
 
     @model_validator(mode="after")
     def check_field_references(self) -> Self:
+        self._check_chart_definitions()
+        self._check_catalogue_chart_references()
         self._check_overview_field_references()
         self._check_search_field_references()
         return self
 
     # Methods ----------------------------------------------------------------------------------------------------------
 
-    def get_chart_field_ids(self) -> tuple[str, ...]:
+    def get_chart_field_ids(self, catalogue_mode: bool = False) -> tuple[str, ...]:
         """
         Gets all field IDs used by charts.
         :return: A tuple of field IDs.
         """
+        if catalogue_mode:
+            return tuple(self.charts[chart_id].field for chart_id in self.catalogue_charts)
         return tuple(chart.field for section in self.overview for chart in section.charts)
 
     def get_searchable_field_ids(self) -> tuple[str, ...]:

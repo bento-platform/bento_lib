@@ -1,0 +1,59 @@
+{
+    "version": "1",
+    "metadata": {
+        "description": "An invalid test discovery configuration",
+        "authors": ["David Lougheed <david.lougheed@mail.mcgill.ca>"],
+        "timestamp": "2025-04-17T10:56:58Z"
+    },
+    "charts": {
+        "age": {
+            "field": "age",
+            "chart_type": "histogram"
+        },
+        "sex": {
+            "field": "sex",
+            "chart_type": "pie"
+        }
+    },
+    "catalogue_charts": ["age", "sex", "date_of_consent"],
+    "overview": [],
+    "search": [],
+    "fields": {
+        "age": {
+            "mapping": "individual/age_numeric",
+            "title": "Age",
+            "description": "Age at arrival",
+            "datatype": "number",
+            "config": {
+                "bin_size": 10,
+                "taper_left": 10,
+                "taper_right": 100,
+                "units": "years",
+                "minimum": 0,
+                "maximum": 100
+            }
+        },
+        "sex": {
+            "mapping": "individual/sex",
+            "title": "Sex",
+            "description": "Sex at birth",
+            "datatype": "string",
+            "config": {
+                "enum": null
+            }
+        },
+        "date_of_consent": {
+            "mapping": "individual/extra_properties/date_of_consent",
+            "title": "Verbal consent date",
+            "description": "Date of initial verbal consent (participant, legal representative or tutor), yyyy-mm-dd",
+            "datatype": "date",
+            "config": {
+                "bin_by": "month"
+            }
+        }
+    },
+    "rules": {
+        "count_threshold": 5,
+        "max_query_parameters": 2
+    }
+}

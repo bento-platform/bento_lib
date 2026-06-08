@@ -17,6 +17,10 @@ __all__ = [
     "DISCOVERY_CONFIG_INVALID_3_PATH",
     "DISCOVERY_CONFIG_INVALID_4_PATH",
     "DISCOVERY_CONFIG_INVALID_5_PATH",
+    "DISCOVERY_CONFIG_INVALID_6_PATH",
+    "DISCOVERY_CONFIG_INVALID_7_PATH",
+    "DISCOVERY_CONFIG_INVALID_8_PATH",
+    "DISCOVERY_CONFIG_INVALID_9_PATH",
     "DISCOVERY_CONFIG_WARNING_PATH",
     "SARS_COV_2_FASTA_PATH",
     "WDL_DIR",
@@ -55,6 +59,10 @@ DISCOVERY_CONFIG_INVALID_2_PATH = DATA_DIR / "discovery_config_invalid_2.json"
 DISCOVERY_CONFIG_INVALID_3_PATH = DATA_DIR / "discovery_config_invalid_3.json"
 DISCOVERY_CONFIG_INVALID_4_PATH = DATA_DIR / "discovery_config_invalid_4.json"
 DISCOVERY_CONFIG_INVALID_5_PATH = DATA_DIR / "discovery_config_invalid_5.json"
+DISCOVERY_CONFIG_INVALID_6_PATH = DATA_DIR / "discovery_config_invalid_6.json"
+DISCOVERY_CONFIG_INVALID_7_PATH = DATA_DIR / "discovery_config_invalid_7.json"
+DISCOVERY_CONFIG_INVALID_8_PATH = DATA_DIR / "discovery_config_invalid_8.json"
+DISCOVERY_CONFIG_INVALID_9_PATH = DATA_DIR / "discovery_config_invalid_9.json"
 DISCOVERY_CONFIG_WARNING_PATH = DATA_DIR / "discovery_config_warning.json"
 SARS_COV_2_FASTA_PATH = DATA_DIR / "sars_cov_2.fa"
 
