@@ -1,6 +1,5 @@
 import aiohttp
 import pytest
-import pytest_asyncio
 from aiointercept import aiointercept
 from logging import getLogger
 from structlog.stdlib import get_logger
