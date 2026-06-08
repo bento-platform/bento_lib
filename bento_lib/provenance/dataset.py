@@ -348,6 +348,12 @@ class FundingSource(BaseModel):
     funder: Annotated[str, Field(min_length=1)] | PersonOrOrganization | None = None
     grant_numbers: list[str] | None = Field(default=None, min_length=1)
 
+    @model_validator(mode="after")
+    def check_not_null(self) -> "FundingSource":
+        if self.funder is None and self.grant_numbers is None:
+            raise ValueError("FundingSource must have at least one of funder / grant number(s)")
+        return self
+
 
 class LongDescription(BaseModel):
     """Extended description with content type specification."""

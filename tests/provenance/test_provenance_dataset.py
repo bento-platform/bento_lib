@@ -246,3 +246,9 @@ def test_funding_source_funder_person_without_roles():
     fs = FundingSource(funder={"type": "person", "name": "Jane Doe", "roles": []})
     assert isinstance(fs.funder, Person)
     assert fs.funder.roles == []
+
+
+def test_funding_source_all_null_invalid():
+    """FundingSource rejects a completely empty initialization."""
+    with pytest.raises(ValidationError):
+        FundingSource(funder=None, grant_numbers=None)
