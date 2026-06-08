@@ -1,7 +1,7 @@
 import logging
 import pytest
 
-from aioresponses import aioresponses
+from aiointercept import aiointercept
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.requests import Request
@@ -385,35 +385,35 @@ def test_fastapi_auth(
     inc_headers: bool,
     test_code: int,
     # fixtures
-    aioresponse: aioresponses,
+    aio: aiointercept,
     fastapi_client_auth: TestClient,
 ):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=authz_code, payload={"result": [[authz_res]]})
+    aio.post("https://bento-auth.local/policy/evaluate", status=authz_code, payload={"result": [[authz_res]]})
     r = fastapi_client_auth.post(
         test_url, headers=(TEST_AUTHZ_HEADERS if inc_headers else {}), json=TEST_AUTHZ_VALID_POST_BODY
     )
     assert r.status_code == test_code
 
 
-def test_fastapi_auth_invalid_body(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+def test_fastapi_auth_invalid_body(aio: aiointercept, fastapi_client_auth: TestClient):
+    aio.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.post("/post-private", headers=TEST_AUTHZ_HEADERS, json={"test1": "a"})
     assert r.status_code == 400
 
 
-def test_fastapi_auth_500(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+def test_fastapi_auth_500(aio: aiointercept, fastapi_client_auth: TestClient):
+    aio.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.get("/get-500", headers=TEST_AUTHZ_HEADERS)
     assert r.status_code == 500
 
 
-def test_fastapi_auth_missing_token(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+def test_fastapi_auth_missing_token(fastapi_client_auth: TestClient):
     # forbidden - no token
     r = fastapi_client_auth.post("/post-private", json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == 401
 
 
-def test_fastapi_auth_options_call(aioresponse: aioresponses, fastapi_client_auth: TestClient):
+def test_fastapi_auth_options_call(fastapi_client_auth: TestClient):
     # allow OPTIONS through
     r = fastapi_client_auth.options(
         "/post-private",
@@ -425,22 +425,22 @@ def test_fastapi_auth_options_call(aioresponse: aioresponses, fastapi_client_aut
     assert r.status_code == 200
 
 
-def test_fastapi_auth_post_with_token_in_body(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+def test_fastapi_auth_post_with_token_in_body(aio: aiointercept, fastapi_client_auth: TestClient):
+    aio.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.post("/post-with-token-in-body", json={"token": "test", "payload": "hello world"})
     assert r.status_code == 200
     assert r.text == '{"payload":"hello world"}'
 
 
-def test_fastapi_auth_post_with_token_evaluate_one(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+def test_fastapi_auth_post_with_token_evaluate_one(aio: aiointercept, fastapi_client_auth: TestClient):
+    aio.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.post("/post-with-token-evaluate-one", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":true}'
 
 
-def test_fastapi_auth_post_with_token_evaluate_to_dict(aioresponse: aioresponses, fastapi_client_auth: TestClient):
-    aioresponse.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
+def test_fastapi_auth_post_with_token_evaluate_to_dict(aio: aiointercept, fastapi_client_auth: TestClient):
+    aio.post("https://bento-auth.local/policy/evaluate", status=200, payload={"result": [[True]]})
     r = fastapi_client_auth.post("/post-with-token-evaluate-to-dict", json={"token": "test"})
     assert r.status_code == 200
     assert r.text == '{"payload":[{"ingest:data":true}]}'
@@ -452,7 +452,7 @@ def test_fastapi_auth_put_not_included(fastapi_client_auth: TestClient):
 
 
 @pytest.mark.asyncio
-async def test_fastapi_auth_disabled(aioresponse: aioresponses, fastapi_client_auth_disabled: TestClient):
+async def test_fastapi_auth_disabled(aio: aiointercept, fastapi_client_auth_disabled: TestClient):
     # middleware is disabled, should work anyway
     r = fastapi_client_auth_disabled.post("/post-public", json=TEST_AUTHZ_VALID_POST_BODY)
     assert r.status_code == 200

@@ -46,7 +46,7 @@ pydantic-extra-types = "^2.11.0"
 pycountry = "^26.2.16"
 
 [tool.poetry.group.dev.dependencies]
-aioresponses = "^0.7.6"
+aiointercept = "^0.1.5"
 coverage = "^7.4.1"
 httpx = "^0.28.1"
 mypy = "~2.1.0"

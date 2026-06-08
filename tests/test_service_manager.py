@@ -1,6 +1,7 @@
 import aiohttp
 import pytest
-from aioresponses import aioresponses
+import pytest_asyncio
+from aiointercept import aiointercept
 from logging import getLogger
 from structlog.stdlib import get_logger
 from bento_lib.service_info.manager import ServiceManagerError, ServiceManager
@@ -51,8 +52,8 @@ BENTO_SERVICES_PAYLOAD = {
 
 
 @pytest.mark.asyncio
-async def test_service_manager_bento_services(aioresponse: aioresponses, service_manager: ServiceManager):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+async def test_service_manager_bento_services(aio: aiointercept, service_manager: ServiceManager):
+    aio.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     res = await service_manager.fetch_bento_services()
     assert len(res) == 2
@@ -63,10 +64,8 @@ async def test_service_manager_bento_services(aioresponse: aioresponses, service
 
 
 @pytest.mark.asyncio
-async def test_service_manager_bento_services_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
-):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+async def test_service_manager_bento_services_std_logger(aio: aiointercept, service_manager_std_logger: ServiceManager):
+    aio.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     res = await service_manager_std_logger.fetch_bento_services()
     assert len(res) == 2
@@ -77,10 +76,8 @@ async def test_service_manager_bento_services_std_logger(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_bento_services_empty(
-    aioresponse: aioresponses, service_manager: ServiceManager, log_output
-):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload={})
+async def test_service_manager_bento_services_empty(aio: aiointercept, service_manager: ServiceManager, log_output):
+    aio.get(f"{SR_URL}/bento-services", status=200, payload={})
 
     res = await service_manager.fetch_bento_services()
     assert res == {}
@@ -95,10 +92,8 @@ async def test_service_manager_bento_services_empty(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_bento_services_err(
-    aioresponse: aioresponses, service_manager: ServiceManager, log_output
-):
-    aioresponse.get(f"{SR_URL}/bento-services", status=500)
+async def test_service_manager_bento_services_err(aio: aiointercept, service_manager: ServiceManager, log_output):
+    aio.get(f"{SR_URL}/bento-services", status=500)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager.fetch_bento_services()
@@ -117,8 +112,8 @@ async def test_service_manager_bento_services_err(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_bento_services_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+async def test_service_manager_bento_services_by_kind(aio: aiointercept, service_manager: ServiceManager):
+    aio.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     assert (await service_manager.get_bento_service_record_by_kind("service-registry")) == BENTO_SERVICES_PAYLOAD[
         "service-registry"
@@ -129,9 +124,9 @@ async def test_service_manager_bento_services_by_kind(aioresponse: aioresponses,
 
 @pytest.mark.asyncio
 async def test_service_manager_bento_services_by_kind_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+    aio.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     assert (
         await service_manager_std_logger.get_bento_service_record_by_kind("service-registry")
@@ -143,8 +138,8 @@ async def test_service_manager_bento_services_by_kind_std_logger(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_bento_service_urls_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+async def test_service_manager_bento_service_urls_by_kind(aio: aiointercept, service_manager: ServiceManager):
+    aio.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     assert (await service_manager.get_bento_service_url_by_kind("service-registry")) == BENTO_SERVICES_PAYLOAD[
         "service-registry"
@@ -157,9 +152,9 @@ async def test_service_manager_bento_service_urls_by_kind(aioresponse: aiorespon
 
 @pytest.mark.asyncio
 async def test_service_manager_bento_service_urls_by_kind_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
-    aioresponse.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
+    aio.get(f"{SR_URL}/bento-services", status=200, payload=BENTO_SERVICES_PAYLOAD)
 
     assert (
         await service_manager_std_logger.get_bento_service_url_by_kind("service-registry")
@@ -206,8 +201,8 @@ SERVICES_PAYLOAD = [
 
 
 @pytest.mark.asyncio
-async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service_manager: ServiceManager):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD, repeat=True)
+async def test_service_manager_ga4gh_services(aio: aiointercept, service_manager: ServiceManager):
+    aio.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD, repeat=True)
 
     res = await service_manager.fetch_service_list()
     assert len(res) == 2
@@ -221,10 +216,8 @@ async def test_service_manager_ga4gh_services(aioresponse: aioresponses, service
 
 
 @pytest.mark.asyncio
-async def test_service_manager_ga4gh_services_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
-):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD, repeat=True)
+async def test_service_manager_ga4gh_services_std_logger(aio: aiointercept, service_manager_std_logger: ServiceManager):
+    aio.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD, repeat=True)
 
     res = await service_manager_std_logger.fetch_service_list()
     assert len(res) == 2
@@ -238,8 +231,8 @@ async def test_service_manager_ga4gh_services_std_logger(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_ga4gh_services_by_kind(aioresponse: aioresponses, service_manager: ServiceManager):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
+async def test_service_manager_ga4gh_services_by_kind(aio: aiointercept, service_manager: ServiceManager):
+    aio.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
 
     # check we can get our services by kind, but not a service which doesn't exist
     assert (await service_manager.get_service_info_by_kind("service-registry")) == SERVICES_PAYLOAD[0]
@@ -249,9 +242,9 @@ async def test_service_manager_ga4gh_services_by_kind(aioresponse: aioresponses,
 
 @pytest.mark.asyncio
 async def test_service_manager_ga4gh_services_by_kind_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
+    aio.get(f"{SR_URL}/services", status=200, payload=SERVICES_PAYLOAD)
 
     # check we can get our services by kind, but not a service which doesn't exist
     assert (await service_manager_std_logger.get_service_info_by_kind("service-registry")) == SERVICES_PAYLOAD[0]
@@ -260,10 +253,8 @@ async def test_service_manager_ga4gh_services_by_kind_std_logger(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_ga4gh_services_empty(
-    aioresponse: aioresponses, service_manager: ServiceManager, log_output
-):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=[], repeat=True)
+async def test_service_manager_ga4gh_services_empty(aio: aiointercept, service_manager: ServiceManager, log_output):
+    aio.get(f"{SR_URL}/services", status=200, payload=[], repeat=True)
 
     res = await service_manager.fetch_service_list()
     assert res == []
@@ -282,9 +273,9 @@ async def test_service_manager_ga4gh_services_empty(
 
 @pytest.mark.asyncio
 async def test_service_manager_ga4gh_services_empty_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=[], repeat=True)
+    aio.get(f"{SR_URL}/services", status=200, payload=[], repeat=True)
 
     res = await service_manager_std_logger.fetch_service_list()
     assert res == []
@@ -303,10 +294,8 @@ SERVICE_LIST_LOG_OUTPUT = [
 
 
 @pytest.mark.asyncio
-async def test_service_manager_ga4gh_services_err(
-    aioresponse: aioresponses, service_manager: ServiceManager, log_output
-):
-    aioresponse.get(f"{SR_URL}/services", status=500)
+async def test_service_manager_ga4gh_services_err(aio: aiointercept, service_manager: ServiceManager, log_output):
+    aio.get(f"{SR_URL}/services", status=500)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager.fetch_service_list()
@@ -318,9 +307,9 @@ async def test_service_manager_ga4gh_services_err(
 
 @pytest.mark.asyncio
 async def test_service_manager_ga4gh_services_err_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
-    aioresponse.get(f"{SR_URL}/services", status=500)
+    aio.get(f"{SR_URL}/services", status=500)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager_std_logger.fetch_service_list()
@@ -351,7 +340,7 @@ DATA_TYPE_SERVICE_PAYLOAD = [
 
 
 @pytest.mark.asyncio
-async def test_service_manager_data_types(aioresponse: aioresponses, service_manager: ServiceManager):
+async def test_service_manager_data_types(aio: aiointercept, service_manager: ServiceManager):
     dt_payload = [
         {
             "id": "experiment",
@@ -368,8 +357,8 @@ async def test_service_manager_data_types(aioresponse: aioresponses, service_man
 
     # repeat=True hack needed for running get() inside asyncio.gather for some reason:
     # https://github.com/pnuckowski/aioresponses/issues/205
-    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD, repeat=True)
+    aio.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
+    aio.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD, repeat=True)
 
     res = await service_manager.fetch_data_types(existing_session=session)
     assert res == {
@@ -387,9 +376,7 @@ async def test_service_manager_data_types(aioresponse: aioresponses, service_man
 
 
 @pytest.mark.asyncio
-async def test_service_manager_data_types_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
-):
+async def test_service_manager_data_types_std_logger(aio: aiointercept, service_manager_std_logger: ServiceManager):
     dt_payload = [
         {
             "id": "experiment",
@@ -406,8 +393,9 @@ async def test_service_manager_data_types_std_logger(
 
     # repeat=True hack needed for running get() inside asyncio.gather for some reason:
     # https://github.com/pnuckowski/aioresponses/issues/205
-    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD, repeat=True)
+    # TODO
+    aio.get("https://bentov211.local/api/metadata/data-types", status=200, payload=dt_payload, repeat=True)
+    aio.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD, repeat=True)
 
     res = await service_manager_std_logger.fetch_data_types(existing_session=session)
     assert res == {
@@ -427,10 +415,8 @@ async def test_service_manager_data_types_std_logger(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_data_types_service_err(
-    aioresponse: aioresponses, service_manager: ServiceManager, log_output
-):
-    aioresponse.get(f"{SR_URL}/services", status=500)
+async def test_service_manager_data_types_service_err(aio: aiointercept, service_manager: ServiceManager, log_output):
+    aio.get(f"{SR_URL}/services", status=500)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager.fetch_data_types()
@@ -442,9 +428,9 @@ async def test_service_manager_data_types_service_err(
 
 @pytest.mark.asyncio
 async def test_service_manager_data_types_service_err_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
-    aioresponse.get(f"{SR_URL}/services", status=500)
+    aio.get(f"{SR_URL}/services", status=500)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager_std_logger.fetch_data_types()
@@ -453,13 +439,11 @@ async def test_service_manager_data_types_service_err_std_logger(
 
 
 @pytest.mark.asyncio
-async def test_service_manager_data_types_dt_err(
-    aioresponse: aioresponses, service_manager: ServiceManager, log_output
-):
+async def test_service_manager_data_types_dt_err(aio: aiointercept, service_manager: ServiceManager, log_output):
     # repeat=True hack needed for running get() inside asyncio.gather for some reason:
     # https://github.com/pnuckowski/aioresponses/issues/205
-    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
+    aio.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
+    aio.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager.fetch_data_types()
@@ -479,12 +463,12 @@ async def test_service_manager_data_types_dt_err(
 
 @pytest.mark.asyncio
 async def test_service_manager_data_types_dt_err_std_logger(
-    aioresponse: aioresponses, service_manager_std_logger: ServiceManager
+    aio: aiointercept, service_manager_std_logger: ServiceManager
 ):
     # repeat=True hack needed for running get() inside asyncio.gather for some reason:
     # https://github.com/pnuckowski/aioresponses/issues/205
-    aioresponse.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
-    aioresponse.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
+    aio.get("https://bentov211.local/api/metadata/data-types", status=500, repeat=True)
+    aio.get(f"{SR_URL}/services", status=200, payload=DATA_TYPE_SERVICE_PAYLOAD)
 
     with pytest.raises(ServiceManagerError) as e:
         await service_manager_std_logger.fetch_data_types()
