@@ -245,21 +245,21 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     taper_right: int = Field(
         ..., title="Taper right", description="Lower limit (inclusive) of largest bin, unless maximum = taper_right."
     )
-    minimum: int = Field(..., title="Minimum", description="Minimum value to include in binned data")
-    maximum: int = Field(..., title="Maximum", description="Maximum value to include in binned data")
+    minimum: int | None = Field(None, title="Minimum", description="Minimum value to include in binned data")
+    maximum: int | None = Field(None, title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
     def check_bin_config(self) -> Self:
-        if self.maximum < self.minimum:
+        if self.maximum is not None and self.minimum is not None and self.maximum < self.minimum:
             raise ValueError("maximum cannot be less than minimum")
 
         if self.taper_right < self.taper_left:
             raise ValueError("taper_right cannot be less than taper_left")
 
-        if self.minimum > self.taper_left:
+        if self.minimum is not None and self.minimum > self.taper_left:
             raise ValueError("taper_left cannot be less than minimum")
 
-        if self.taper_right > self.maximum:
+        if self.maximum is not None and self.taper_right > self.maximum:
             raise ValueError("taper_right cannot be greater than maximum")
 
         if (self.taper_right - self.taper_left) % self.bin_size:
