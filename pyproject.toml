@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bento-lib"
-version = "15.2.0"
+version = "16.0.0"
 description = "A set of common utilities and helpers for Bento platform services."
 authors = [
     "David Lougheed <david.lougheed@mail.mcgill.ca>",
@@ -29,16 +29,16 @@ aiohttp = ">=3.10.10,<4"
 asyncpg = { version = ">=0.29.0,<0.32.0", optional = true }
 django = { version = ">=5.1.8,<6.1", optional = true }
 djangorestframework = { version = ">=3.16.0,<3.18", optional = true }
-fastapi = { version = ">=0.129.0,<0.137", optional = true }
+fastapi = { version = ">=0.136.0,<0.137", optional = true }
 flask = { version = ">=3.0.3,<4", optional = true }
 jsonschema = ">=4.23.0,<5"
 psycopg2-binary = ">=2.9.9,<3.0"
 pydantic = { version = ">=2.11.3,<3", extras = ["email"] }
 pydantic-settings = ">=2.8.1"
-redis = ">=5.2.1,<8"
+redis = ">=7.4.1,<9"
 requests = ">=2.32.3,<3"
 rich = ">=14.0.0,<16"  # for logger exception formatting in development
-structlog = ">=25.2.0,<26"
+structlog = ">=25.2.0,<27"
 uvicorn = { version = "*", optional = true }
 werkzeug = ">=3.0.6,<4"
 geojson-pydantic = "^2.0.0"
