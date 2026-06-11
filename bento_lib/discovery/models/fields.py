@@ -223,7 +223,7 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     Configuration for a number field with automatically-generated bins.
 
     Behaviour is similar to manually configured bins. For instance, the following cases apply to the lower boundary:
-    
+
         If minimum == taper_left, bins are generated from taper_left to taper_right:
             so given {"minimum": 5, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
                 [5, 15)   [15, 25)   [25, 35)   ...
@@ -232,7 +232,7 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
                 <5*  [5, 15)   [15, 25)   [25, 35)   ...
                 *but only includes values in [0, 5)
         If minimum is None, the same "everything below taper_left" bin is added, but is unbounded from below.
-                   
+
     Note: limited to operations on integer values for simplicity.
     A word of caution: when implementing handling of floating point values, be aware of string format (might need to
     add precision to config?) computations of modulo.
