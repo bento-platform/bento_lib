@@ -222,16 +222,16 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     """
     Configuration for a number field with automatically-generated bins.
 
-    There are two broad cases for a lower or upper boundary of the bin range, depending on the value of the
-    lowest/highest bin and taper_left/right. For instance, the following cases apply to the lower boundary:
+    Behaviour is similar to manually configured bins. For instance, the following cases apply to the lower boundary:
 
         If minimum == taper_left, bins are generated from taper_left to taper_right:
             so given {"minimum": 5, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
                 [5, 15)   [15, 25)   [25, 35)   ...
-        If minimum < taper_left, an "everything below taper_left" bin is added for values within [minumum, taper_left):
+        If minimum < taper_left, an "everything below taper_left" bin is added for values within [minimum, taper_left):
             so given {"minimum": 0, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
                 <5*  [5, 15)   [15, 25)   [25, 35)   ...
                 *but only includes values in [0, 5)
+        If minimum is None, the same "everything below taper_left" bin is added, but is unbounded from below.
 
     Note: limited to operations on integer values for simplicity.
     A word of caution: when implementing handling of floating point values, be aware of string format (might need to
@@ -245,21 +245,21 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     taper_right: int = Field(
         ..., title="Taper right", description="Lower limit (inclusive) of largest bin, unless maximum = taper_right."
     )
-    minimum: int = Field(..., title="Minimum", description="Minimum value to include in binned data")
-    maximum: int = Field(..., title="Maximum", description="Maximum value to include in binned data")
+    minimum: int | None = Field(None, title="Minimum", description="Minimum value to include in binned data")
+    maximum: int | None = Field(None, title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
     def check_bin_config(self) -> Self:
-        if self.maximum < self.minimum:
+        if self.maximum is not None and self.minimum is not None and self.maximum < self.minimum:
             raise ValueError("maximum cannot be less than minimum")
 
         if self.taper_right < self.taper_left:
             raise ValueError("taper_right cannot be less than taper_left")
 
-        if self.minimum > self.taper_left:
+        if self.minimum is not None and self.minimum > self.taper_left:
             raise ValueError("taper_left cannot be less than minimum")
 
-        if self.taper_right > self.maximum:
+        if self.maximum is not None and self.taper_right > self.maximum:
             raise ValueError("taper_right cannot be greater than maximum")
 
         if (self.taper_right - self.taper_left) % self.bin_size:
