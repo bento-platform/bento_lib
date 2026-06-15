@@ -397,6 +397,12 @@ class DatasetModelBase(TranslatableModel):
     study_status: Literal["ONGOING", "COMPLETED"] | None = None
     study_context: Literal["CLINICAL", "RESEARCH"] | None = None
 
+    duo_codes: list[OntologyClass] | None = Field(
+        default=None,
+        min_length=1,
+        description="Data Use Ontology (DUO) codes describing the conditions under which this dataset can be accessed",
+    )
+
     # Derived from the PCGL study model
     domain: list[str] | None = Field(
         default=None, min_length=1, description="List of specific scientific or clinical domains addressed by the study"
@@ -440,6 +446,11 @@ class DatasetModelBase(TranslatableModel):
             )
             if missing:
                 raise ValueError(f"taxa contains OntologyClass CURIEs with no matching resource: {missing}")
+
+        if self.duo_codes:
+            missing = sorted({code.id.split(":")[0] for code in self.duo_codes} - resource_prefixes)
+            if missing:
+                raise ValueError(f"duo_codes contain OntologyClass CURIEs with no matching resource: {missing}")
 
         if self.stakeholders:
             missing_roles = [s.name for s in self.stakeholders if isinstance(s, Person) and not s.roles]
