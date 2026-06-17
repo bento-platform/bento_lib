@@ -151,8 +151,8 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         return res.json()
 
     @staticmethod
-    def _evaluate_body(resources: Iterable[dict], permissions: Iterable[Permission]) -> dict:
-        return {"resources": tuple(resources), "permissions": tuple(permissions)}
+    def _evaluate_body(resources: tuple[dict, ...], permissions: Iterable[Permission]) -> dict:
+        return {"resources": resources, "permissions": tuple(permissions)}
 
     @staticmethod
     def _matrix_tuple_cast(authz_result: list[list[bool]]) -> EvaluationResultMatrix:
@@ -176,6 +176,9 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     ) -> EvaluationResultMatrix:
         if mark_authz_done:
             self.mark_authz_done(request)
+        resources = tuple(resources)
+        if not resources:
+            return ()  # skip network call if we are calling on no resources
         return self._matrix_tuple_cast(
             self.authz_post(
                 request,
@@ -243,6 +246,9 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
     ) -> EvaluationResultMatrix:
         if mark_authz_done:
             self.mark_authz_done(request)
+        resources = tuple(resources)
+        if not resources:
+            return ()  # skip network call if we are calling on no resources
         return self._matrix_tuple_cast(
             (
                 await self.async_authz_post(
