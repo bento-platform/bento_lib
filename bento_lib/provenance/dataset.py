@@ -13,7 +13,6 @@ __all__ = [
     "License",
     "PublicationVenue",
     "Publication",
-    "Logo",
     "SpatialCoverageProperties",
     "SpatialCoverageFeature",
     "Link",
@@ -46,6 +45,9 @@ from geojson_pydantic import Feature as GeoJSONFeature
 from bento_lib.discovery import DiscoveryConfig
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
+
+from .common.logo import Logo
+from .common.long_description import LongDescription
 
 Orcid = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$")]
 
@@ -299,21 +301,6 @@ class Publication(BaseModel):
     description: str | None = Field(default=None, min_length=1)
 
 
-class Logo(BaseModel):
-    """
-    Logo resource with optional theme-specific variants.
-
-    Supports light/dark theme variants for optimal display across different UI themes.
-    """
-
-    url: AnyUrl
-    theme: Literal["light", "dark", "default"] = "default"
-    description: str | None = Field(default=None, min_length=1)
-    contains_text: bool = Field(
-        default=False, description="Whether the logo contains branding text to the left or right of the logo image."
-    )
-
-
 class SpatialCoverageProperties(BaseModel):
     """Properties for spatial coverage GeoJSON with required name field."""
 
@@ -353,13 +340,6 @@ class FundingSource(BaseModel):
         if self.funder is None and self.grant_numbers is None:
             raise ValueError("FundingSource must have at least one of funder / grant number(s)")
         return self
-
-
-class LongDescription(BaseModel):
-    """Extended description with content type specification."""
-
-    content: str = Field(min_length=1)
-    content_type: Literal["text/html", "text/markdown", "text/plain"]
 
 
 class DatasetModelBase(TranslatableModel):

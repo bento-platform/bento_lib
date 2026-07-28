@@ -1,3 +1,5 @@
+from .common.logo import Logo
+from .common.long_description import LongDescription
 from .dataset import (
     DatasetModel,
     DatasetModelBase,
@@ -8,8 +10,6 @@ from .dataset import (
     License,
     Link,
     TypedLink,
-    Logo,
-    LongDescription,
     Organization,
     Other,
     ParticipantCriteria,
