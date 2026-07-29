@@ -2,22 +2,22 @@ import pytest
 from pydantic import ValidationError
 
 from bento_lib.discovery import DiscoveryConfig
+from bento_lib.i18n import FR
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.provenance.dataset import (
     Contact,
-    DatasetModelBase,
     DatasetModel,
+    DatasetModelBase,
     FundingSource,
+    License,
+    LongDescription,
     Organization,
     Person,
+    Phone,
     ProjectScopedDatasetModel,
     Publication,
-    License,
     PublicationVenue,
-    Phone,
-    LongDescription,
 )
-from bento_lib.i18n import FR
 
 
 def test_dataset_model_full(dataset_full):

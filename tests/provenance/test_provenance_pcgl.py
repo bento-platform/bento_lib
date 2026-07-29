@@ -5,16 +5,15 @@ from datetime import date
 import pytest
 from pydantic import HttpUrl, ValidationError
 
+from bento_lib.provenance import Contact, Organization, Person
+from bento_lib.provenance.converters import pcgl_study_to_dataset
 from bento_lib.provenance.dataset import Count, Link
-
 from bento_lib.provenance.external.pcgl import (
-    Study,
-    PrincipalInvestigator,
     Collaborator,
     FundingSource,
+    PrincipalInvestigator,
+    Study,
 )
-from bento_lib.provenance.converters import pcgl_study_to_dataset
-from bento_lib.provenance import Person, Organization, Contact
 
 
 def test_principal_investigator():

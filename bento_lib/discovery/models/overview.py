@@ -1,6 +1,8 @@
-from geojson_pydantic import Polygon, Feature, FeatureCollection
-from pydantic import BaseModel, Field, NonNegativeInt, RootModel, conlist
 from typing import Any, Literal
+
+from geojson_pydantic import Feature, FeatureCollection, Polygon
+from pydantic import BaseModel, Field, NonNegativeInt, RootModel, conlist
+
 from ._internal import NoAdditionalProperties
 
 __all__ = [

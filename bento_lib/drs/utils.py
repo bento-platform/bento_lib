@@ -1,7 +1,7 @@
+from urllib.parse import urlparse
+
 import aiohttp
 import requests
-
-from urllib.parse import urlparse
 
 from .exceptions import DrsInvalidScheme, DrsRecordNotFound, DrsRequestError
 
@@ -71,11 +71,10 @@ async def fetch_drs_record_by_uri_async(drs_uri: str, session_kwargs: dict | Non
 
     decoded_object_uri = decode_drs_uri(drs_uri)
 
-    async with aiohttp.ClientSession(**(session_kwargs or {})) as session:
-        async with session.get(decoded_object_uri) as drs_res:
-            if drs_res.status == 404:
-                raise DrsRecordNotFound(f"Could not find DRS record at '{decoded_object_uri}'")
-            elif drs_res.status != 200:
-                raise DrsRequestError(f"Could not fetch '{decoded_object_uri}' (status: {drs_res.status})")
+    async with aiohttp.ClientSession(**(session_kwargs or {})) as session, session.get(decoded_object_uri) as drs_res:
+        if drs_res.status == 404:
+            raise DrsRecordNotFound(f"Could not find DRS record at '{decoded_object_uri}'")
+        elif drs_res.status != 200:
+            raise DrsRequestError(f"Could not fetch '{decoded_object_uri}' (status: {drs_res.status})")
 
-            return await drs_res.json()
+        return await drs_res.json()

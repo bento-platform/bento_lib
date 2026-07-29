@@ -1,13 +1,14 @@
 import sys
 from datetime import datetime
-from pydantic import BaseModel, Field, model_validator
 from typing import Literal, Self
 
+from pydantic import BaseModel, Field, model_validator
+
 from ..exceptions import DiscoveryValidationError
+from ._internal import NoAdditionalProperties
 from .fields import FieldDefinition
 from .overview import OverviewSection
 from .search import SearchSection
-from ._internal import NoAdditionalProperties
 
 __all__ = [
     "DiscoveryConfigRules",
@@ -105,7 +106,7 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
             section_title = section.section_title
             for c_idx, chart in enumerate(section.charts):
                 exc_path = f"overview > section {section_title} [{s_idx}] > {chart.field} {chart.chart_type} [{c_idx}]"
-                log_data = dict(section=section_title, field=chart.field, chart_idx=c_idx)
+                log_data = {"section": section_title, "field": chart.field, "chart_idx": c_idx}
                 if chart.field not in self.fields:
                     raise DiscoveryValidationError(FIELD_DEF_NOT_FOUND, exc_path, log_data)
                 if chart.field in seen_chart_fields:
@@ -122,7 +123,7 @@ class DiscoveryConfig(BaseModel, NoAdditionalProperties):
             section_title = section.section_title
             for f_idx, f in enumerate(section.fields):
                 exc_path = f"search > section {section_title} [{s_idx}] > {f} [{f_idx}]"
-                log_data = dict(section=section_title, field=f)
+                log_data = {"section": section_title, "field": f}
                 if f not in self.fields:
                     raise DiscoveryValidationError(FIELD_DEF_NOT_FOUND, exc_path, log_data)
                 if f in seen_search_fields:

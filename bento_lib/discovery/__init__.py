@@ -1,4 +1,4 @@
-from . import helpers
+from . import helpers  # noqa: I001
 from . import models
 from . import types
 from .helpers import load_discovery_config_from_dict, load_discovery_config

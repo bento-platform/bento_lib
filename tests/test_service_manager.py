@@ -1,9 +1,11 @@
+from logging import getLogger
+
 import aiohttp
 import pytest
 from aiointercept import aiointercept
-from logging import getLogger
 from structlog.stdlib import get_logger
-from bento_lib.service_info.manager import ServiceManagerError, ServiceManager
+
+from bento_lib.service_info.manager import ServiceManager, ServiceManagerError
 
 logger = get_logger("bento_lib.test")
 std_logger = getLogger("bento_lib.test_std")

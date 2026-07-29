@@ -5,6 +5,9 @@ __all__ = ["pcgl_study_to_dataset"]
 from collections import defaultdict
 from datetime import date
 from typing import cast
+
+from bento_lib.ontologies.models import OntologyClass
+
 from ..dataset import (
     Count,
     DatasetModel,
@@ -19,7 +22,6 @@ from ..dataset import (
     RoleAnnotated,
 )
 from ..external.pcgl import Study
-from bento_lib.ontologies.models import OntologyClass
 
 
 def _parse_participant_criteria(criteria_str: str | None) -> list[ParticipantCriteria] | None:

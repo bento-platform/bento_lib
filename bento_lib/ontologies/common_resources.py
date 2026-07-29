@@ -1,4 +1,5 @@
 from pydantic import HttpUrl
+
 from .models import OntologyResource
 
 __all__ = [

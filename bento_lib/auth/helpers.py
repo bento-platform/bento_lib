@@ -1,4 +1,4 @@
-from .permissions import Permission, LEVEL_PROJECT, LEVEL_DATASET, PERMISSIONS
+from .permissions import LEVEL_DATASET, LEVEL_PROJECT, PERMISSIONS, Permission
 
 __all__ = [
     "permission_valid_for_resource",

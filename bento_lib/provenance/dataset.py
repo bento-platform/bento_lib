@@ -26,26 +26,26 @@ __all__ = [
     "ProjectScopedDatasetModel",
 ]
 
-from typing import Annotated, Literal
 from datetime import date
+from typing import Annotated, Literal
 from uuid import UUID
+
+from geojson_pydantic import Feature as GeoJSONFeature
 from pydantic import (
     AnyUrl,
     BaseModel,
     BeforeValidator,
+    ConfigDict,
     EmailStr,
     Field,
     HttpUrl,
-    ConfigDict,
     StringConstraints,
     model_validator,
 )
 
-from geojson_pydantic import Feature as GeoJSONFeature
-
 from bento_lib.discovery import DiscoveryConfig
+from bento_lib.i18n import EN, FR, TranslatableModel, TranslatedLiteral
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
-from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
 
 Orcid = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$")]
 

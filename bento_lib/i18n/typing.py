@@ -1,9 +1,10 @@
 from __future__ import annotations
+
+from typing import Any, override
+
 from pydantic import BaseModel, GetCoreSchemaHandler, SerializationInfo
 from pydantic_core import core_schema
-from typing import Any, override
 from pydantic_extra_types.language_code import LanguageAlpha2
-
 
 EN = LanguageAlpha2("en")
 ES = LanguageAlpha2("es")
@@ -57,7 +58,8 @@ class TranslatedLiteral:
 
     def _validate(self, value: Any) -> str:
         if not isinstance(value, str):
-            raise ValueError(f"Expected string, got {type(value).__name__}")
+            # TODO: should be TypeError
+            raise ValueError(f"Expected string, got {type(value).__name__}")  # noqa: TRY004
         if value in self.en_values:
             return value
         if value in self.to_en:

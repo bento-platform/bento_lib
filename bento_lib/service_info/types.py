@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict
 from typing import Literal, NotRequired, Required, TypedDict
+
+from pydantic import BaseModel, ConfigDict
 
 __all__ = [
     "GA4GHServiceType",

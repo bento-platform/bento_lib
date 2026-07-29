@@ -56,7 +56,7 @@ pytest-cov = "^7.0.0"
 pytest-django = "^4.11.1"
 python-dateutil = "^2.8.2"
 responses = "^0.26.0"
-ruff = "^0.15.1"
+ruff = "^0.16.0"
 tox = "^4.13.0"
 types-aiofiles = "^25.1.0.20251011"
 types-colorama = "^0.4.15.20240205"
@@ -83,6 +83,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 line-length = 120
 target-version = "py312"
+
+[tool.ruff.lint]
+ignore = ["PYI041", "RUF022"]
 
 [tool.mypy]
 disable_error_code = ["import-untyped"]

@@ -1,19 +1,21 @@
 from importlib import metadata
 
-from . import apps
-from . import auth
-from . import discovery
-from . import drs
-from . import events
-from . import i18n
-from . import ontologies
-from . import provenance
-from . import schemas
-from . import search
-from . import service_info
-from . import streaming
-from . import utils
-from . import workflows
+from . import (
+    apps,
+    auth,
+    discovery,
+    drs,
+    events,
+    i18n,
+    ontologies,
+    provenance,
+    schemas,
+    search,
+    service_info,
+    streaming,
+    utils,
+    workflows,
+)
 
 __version__ = metadata.version(__name__)
 __all__ = [

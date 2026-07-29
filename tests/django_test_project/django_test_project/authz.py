@@ -1,4 +1,5 @@
 from django.conf import settings
+
 from bento_lib.auth.middleware.django import DjangoAuthMiddleware
 from tests.common import authz_test_exempt_patterns
 
