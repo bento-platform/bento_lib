@@ -1,15 +1,17 @@
 import logging
 import os
+
 import pytest
+
 from bento_lib.config.pydantic import BentoBaseConfig, BentoFastAPIBaseConfig
 from bento_lib.service_info.helpers import build_service_info_from_pydantic_config
 from bento_lib.service_info.types import BentoExtraServiceInfo, GA4GHServiceType
 
-TEST_CONFIG_VALUES = dict(
-    service_id="test",
-    service_name="Test",
-    bento_authz_service_url="https://authz.local/",
-)
+TEST_CONFIG_VALUES = {
+    "service_id": "test",
+    "service_name": "Test",
+    "bento_authz_service_url": "https://authz.local/",
+}
 
 TEST_BENTO_SERVICE_INFO: BentoExtraServiceInfo = {"serviceKind": "asdf", "dataService": False}
 TEST_SERVICE_TYPE: GA4GHServiceType = {"group": "ca.c3g.bento", "artifact": "beacon", "version": "1.0.0"}

@@ -1,6 +1,7 @@
 import pytest
 
 from bento_lib import workflows
+
 from .common import WDL_DIR, WORKFLOW_DEF
 
 
@@ -32,7 +33,7 @@ def test_workflow_set():
         type="analysis",
         description="A test workflow",
         data_type="experiment",
-        tags=["experiment", "cbioportal"],
+        tags=frozenset({"experiment", "cbioportal"}),
         file="test2.wdl",
         inputs=[
             workflows.models.WorkflowStringInput(id="input1", type="string"),

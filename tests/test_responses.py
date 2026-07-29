@@ -1,6 +1,8 @@
-import bento_lib.responses as responses
 import json
+
 from dateutil.parser import isoparse
+
+from bento_lib import responses
 
 
 def test_errors():
@@ -60,7 +62,7 @@ def test_errors():
     assert e["detail"] == "test message"
 
     # beacon
-    e = responses.errors.forbidden_error("test message", beacon_meta_callback=lambda: {})
+    e = responses.errors.forbidden_error("test message", beacon_meta_callback=dict)
     assert len(list(e.keys())) == 6
     assert e["error"]["errorCode"] == 403
     assert e["error"]["errorMessage"] == "test message"

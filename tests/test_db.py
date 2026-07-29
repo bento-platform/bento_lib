@@ -1,11 +1,12 @@
 import asyncio
 import pathlib
+from collections.abc import AsyncGenerator
+
 import asyncpg
 import pytest
 import pytest_asyncio
-from bento_lib.db.pg_async import PgAsyncDatabaseException, PgAsyncDatabase
-from typing import AsyncGenerator
 
+from bento_lib.db.pg_async import PgAsyncDatabase, PgAsyncDatabaseException
 
 TEST_SCHEMA = pathlib.Path(__file__).parent / "data" / "test.sql"
 

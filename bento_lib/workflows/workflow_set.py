@@ -1,7 +1,9 @@
-import werkzeug.utils
 from collections import defaultdict
 from pathlib import Path
 from typing import cast
+
+import werkzeug.utils
+
 from .models import WorkflowDefinition
 
 __all__ = [

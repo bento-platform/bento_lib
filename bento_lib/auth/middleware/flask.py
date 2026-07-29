@@ -1,7 +1,7 @@
 import json
+from functools import wraps
 
 from flask import Flask, Request, Response, current_app, g, request
-from functools import wraps
 
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.base import BaseAuthMiddleware
@@ -84,14 +84,14 @@ class FlaskAuthMiddleware(BaseAuthMiddleware):
         require_token: bool = True,
         set_authz_flag: bool = True,
     ):
-        resource = resource or RESOURCE_EVERYTHING  # If no resource specified, require the permissions node-wide.
+        rse = resource or RESOURCE_EVERYTHING  # If no resource specified, require the permissions node-wide.
 
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 if self.enabled:
                     try:
-                        self.check_authz_evaluate(request, permissions, resource, require_token, set_authz_flag)
+                        self.check_authz_evaluate(request, permissions, rse, require_token, set_authz_flag)
                     except BentoAuthException as e:
                         return self._make_auth_error(e)
                 return current_app.ensure_sync(func)(*args, **kwargs)

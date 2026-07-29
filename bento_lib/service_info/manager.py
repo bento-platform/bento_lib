@@ -1,13 +1,13 @@
-import aiohttp
 import asyncio
 import contextlib
-
+from collections.abc import AsyncIterator
 from logging import Logger
-from structlog.stdlib import BoundLogger
-from typing import AsyncIterator
 from urllib.parse import urljoin
 
-from .types import GA4GHServiceInfo, BentoDataTypeServiceListing, BentoServiceRecord, BentoDataType
+import aiohttp
+from structlog.stdlib import BoundLogger
+
+from .types import BentoDataType, BentoDataTypeServiceListing, BentoServiceRecord, GA4GHServiceInfo
 
 __all__ = [
     "ServiceManagerError",
@@ -242,7 +242,7 @@ class ServiceManager:
             async with s.get(dt_url, headers=headers) as r:
                 if not r.ok:
                     err = "recieved error from data-types URL"
-                    log_data = dict(url=dt_url, status=r.status, body=await r.json())
+                    log_data = {"url": dt_url, "status": r.status, "body": await r.json()}
                     # TODO: async when structlog only:
                     self._logger.error(err, **log_data) if self._is_structlog else self._logger.error(
                         f"{err} %s", log_data

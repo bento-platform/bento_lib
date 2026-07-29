@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 from typing import cast
 
-from .types import PhenoV2Resource, PhenoV2OntologyClassDict
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+
+from .types import PhenoV2OntologyClassDict, PhenoV2Resource
 
 __all__ = [
     "NC_NAME_PATTERN",

@@ -1,6 +1,7 @@
+import pathlib
+
 import aiofiles
 import aiofiles.os
-import pathlib
 
 from .range import validate_interval
 

@@ -1,7 +1,10 @@
 import re
-from bento_lib.ontologies.models import OntologyClass
-from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
 from typing import Annotated, Literal, Self, get_args
+
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
+
+from bento_lib.ontologies.models import OntologyClass
+
 from ..types import DiscoveryEntity
 from ._internal import NoAdditionalProperties
 

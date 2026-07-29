@@ -1,4 +1,4 @@
-from . import config, fields, overview, search
+from . import config, fields, overview, search  # noqa: I001
 from .config import RULES_NO_PERMISSIONS, RULES_FULL_PERMISSIONS, DiscoveryConfig, DiscoveryConfigRules
 from .fields import (
     FieldDefinition,

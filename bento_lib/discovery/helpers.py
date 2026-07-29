@@ -1,9 +1,10 @@
 import json
 from pathlib import Path
-from pydantic import ValidationError
+
 from structlog.stdlib import BoundLogger
 
 from bento_lib._internal import internal_logger
+
 from .models.config import DiscoveryConfig
 from .types import WarningsTuple
 
@@ -52,10 +53,7 @@ def load_discovery_config_from_dict(
     #    the Pydantic model validates the following:
     #     a) make sure all fields in overview and search are defined
     #     b) make sure fields are not listed more than once as a chart or as a search filter
-    try:
-        cfg = DiscoveryConfig.model_validate(config_data)
-    except ValidationError as e:
-        raise e
+    cfg = DiscoveryConfig.model_validate(config_data)  # Can raise Pydantic ValidationError
 
     # 2. validate the config's internal references and overview chart/search field entries
     #  - issue and collect warnings if any fields are defined that the config doesn't reference anywhere

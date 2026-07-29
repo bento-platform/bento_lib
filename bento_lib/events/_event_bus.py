@@ -1,13 +1,13 @@
 import json
 import logging
 import uuid
+from collections.abc import Callable
+from datetime import UTC, datetime
 
-from datetime import datetime, timezone
 from jsonschema.exceptions import SchemaError
 from jsonschema.validators import Draft7Validator
-from redis.client import Redis, PubSub, PubSubWorkerThread
+from redis.client import PubSub, PubSubWorkerThread, Redis
 from redis.exceptions import ConnectionError as RedisConnectionError
-from typing import Callable
 
 from bento_lib.logging.types import StdOrBoundLogger
 
@@ -51,12 +51,13 @@ class EventBus:
         connection_data: dict = kwargs or default_connection_data
 
         try:
-            self._rc = self._get_redis(**connection_data)
-            self._rc.get("")  # Dummy request to check connection
-        except RedisConnectionError as e:
+            rc = self._get_redis(**connection_data)
+            rc.get("")  # Dummy request to check connection
+            self._rc = rc
+        except RedisConnectionError:
             self._rc = None
             if not allow_fake:
-                raise e
+                raise  # re-raise same exception
             logger.warning(f"Starting event bus in 'fake' mode (tried connection data: {connection_data})")
 
         self._ps: PubSub | None = None
@@ -136,9 +137,9 @@ class EventBus:
                 "id": str(uuid.uuid4()),
                 # Events can arrive out-of-order; we can put them back in order using this generation-time timestamp
                 # (UTC timezone, in milliseconds):
-                "timestamp": round(datetime.now(timezone.utc).timestamp() * 1000),
+                "timestamp": round(datetime.now(UTC).timestamp() * 1000),
                 # legacy version: "ts"  TODO: deprecated: remove
-                "ts": datetime.now(timezone.utc).isoformat(),
+                "ts": datetime.now(UTC).isoformat(),
                 "type": event_type.lower(),
                 "data": event_data,
                 **attrs,

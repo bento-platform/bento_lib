@@ -1,4 +1,5 @@
 import logging
+
 from structlog.stdlib import BoundLogger, get_logger
 
 __all__ = ["internal_logger"]

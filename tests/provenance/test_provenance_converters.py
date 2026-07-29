@@ -3,8 +3,8 @@
 from datetime import date
 
 from bento_lib.provenance import Organization, Person
-from bento_lib.provenance.dataset import Count, Link
 from bento_lib.provenance.converters.pcgl import _parse_participant_criteria, pcgl_study_to_dataset
+from bento_lib.provenance.dataset import Count, Link
 
 
 def test_parse_participant_criteria():
@@ -44,10 +44,12 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert dataset.last_modified == date(2023, 6, 1)
 
     # Check participant criteria (PCGL string wrapped as a single Other-typed entry)
+    assert dataset.participant_criteria is not None
     assert len(dataset.participant_criteria) == 1
     assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
 
     # Check stakeholders (1 PI, 2 institutions, 2 collaborators = 5 total)
+    assert dataset.stakeholders is not None
     assert len(dataset.stakeholders) == 5
 
     # Find PI (parsed from "Jane Smith")
@@ -61,6 +63,7 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert {inst.name for inst in institutions} == {"Test University", "Research Hospital"}
 
     # Check funding sources - should be grouped by funder name
+    assert dataset.funding_sources is not None
     assert len(dataset.funding_sources) == 2  # NIH and NSF grouped
     funders = {f.funder for f in dataset.funding_sources}
     assert "NIH" in funders
@@ -71,6 +74,7 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert nsf_funder.grant_numbers is None  # NSF had null grant_number
 
     # Check publications
+    assert dataset.publications is not None
     assert len(dataset.publications) == 2
     assert str(dataset.publications[0].url) == "https://doi.org/10.1234/example"
     assert dataset.publications[0].doi == "10.1234/example"
@@ -90,6 +94,7 @@ def test_pcgl_study_to_dataset_minimal(pcgl_study_minimal, basic_pi):
         ],
     )
 
+    assert dataset.domain is not None
     assert len(dataset.domain) == 1
     assert dataset.domain[0] == "Other"
     assert dataset.study_status == "COMPLETED"

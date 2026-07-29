@@ -1,11 +1,11 @@
-import bento_lib.events
-import pytest
 import os
-import redis
 import time
 
+import pytest
+import redis
 from jsonschema import validate
 
+import bento_lib.events
 
 TEST_SERVICE = "test_service"
 TEST_SERVICE_EVENT = "test_service_event"
@@ -18,7 +18,7 @@ TEST_EVENT_BODY = "test"
 
 
 TEST_REDIS_HOST = os.environ.get("TEST_REDIS_HOST", "localhost")
-TEST_REDIS_PORT = int(os.environ.get("TEST_REDIS_PORT", 6379))
+TEST_REDIS_PORT = int(os.environ.get("TEST_REDIS_PORT", "6379"))
 
 event_bus = bento_lib.events.EventBus(host=TEST_REDIS_HOST, port=TEST_REDIS_PORT)
 

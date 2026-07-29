@@ -1,12 +1,12 @@
 import time
+from collections.abc import Awaitable, Callable
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
 from django.http import HttpRequest, HttpResponse
 from rest_framework import status
 from structlog.stdlib import BoundLogger
-from typing import Awaitable, Callable
 
-from .common import LogHTTPInfo, LogNetworkInfo, LogNetworkClientInfo, log_access
+from .common import LogHTTPInfo, LogNetworkClientInfo, LogNetworkInfo, log_access
 
 __all__ = [
     "BentoDjangoAccessLoggerMiddleware",
@@ -42,7 +42,7 @@ class BentoDjangoAccessLoggerMiddleware:
                 response: HttpResponse = HttpResponse(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 try:
                     response = await inner_self.get_response(request)
-                except Exception as e:  # pragma: no cover
+                except Exception as e:  # pragma: no cover  # noqa: BLE001
                     await self._service_logger.aexception("uncaught exception", exc_info=e)
                 finally:
                     # When the response has finished or errored out, write the access log message:
@@ -65,6 +65,6 @@ class BentoDjangoAccessLoggerMiddleware:
                         ),
                     )
 
-                    return response
+                    return response  # noqa: B012
 
         return InnerMiddleware
