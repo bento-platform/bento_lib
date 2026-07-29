@@ -7,7 +7,7 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from httpx import Response as HttpxResponse
+from httpx2 import Response as HttpxResponse
 from pydantic import BaseModel
 
 from bento_lib.apps.fastapi import BentoFastAPI

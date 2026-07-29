@@ -48,7 +48,7 @@ pycountry = "^26.2.16"
 [tool.poetry.group.dev.dependencies]
 aiointercept = "^0.1.5"
 coverage = "^7.4.1"
-httpx = "^0.28.1"
+httpx2 = "^2.9.1"
 mypy = "~2.3.0"
 pytest = "^9.0.1"
 pytest-asyncio = "^1.0.0"
