@@ -1,4 +1,4 @@
-from .base import ToSchemaOrgJsonLd
+from .base import JsonLd, ToJsonLd
 from .utils import first_if_only_else_all
 
-__all__ = ["ToSchemaOrgJsonLd", "first_if_only_else_all"]
+__all__ = ["JsonLd", "ToJsonLd", "first_if_only_else_all"]
