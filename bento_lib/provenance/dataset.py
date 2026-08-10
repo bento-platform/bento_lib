@@ -45,6 +45,7 @@ from pydantic import (
 
 from bento_lib.discovery import DiscoveryConfig
 from bento_lib.i18n import EN, FR, TranslatableModel, TranslatedLiteral
+from bento_lib.jsonld import JsonLd, ToJsonLd, first_if_only_else_all
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 
 Orcid = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$")]
@@ -198,8 +199,12 @@ class Phone(BaseModel):
     number: int
     extension: int | None = None
 
+    def as_str(self) -> str:
+        ext_str = "ext. " + str(self.extension) if self.extension is not None else ""
+        return " ".join((f"+{self.country_code}", str(self.number), ext_str))
 
-class Contact(BaseModel):
+
+class Contact(BaseModel, ToJsonLd):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
     website: HttpUrl | None = None
@@ -213,8 +218,17 @@ class Contact(BaseModel):
             raise ValueError("Contact must have at least one field (website, email, address, or phone)")
         return self
 
+    def to_json_ld(self) -> JsonLd | None:
+        return JsonLd(
+            "schema:ContactPoint",
+            {
+                **({"schema:email": first_if_only_else_all(self.email)} if self.email else {}),
+                **({"schema:telephone": self.phone.as_str()} if self.phone else {}),
+            }
+        )
 
-class Organization(BaseModel):
+
+class Organization(BaseModel, ToJsonLd):
     type: Literal["organization"]
     name: str = Field(min_length=1)
     description: str | None = Field(default=None, min_length=1)
@@ -228,8 +242,18 @@ class Organization(BaseModel):
         ),
     )
 
+    def to_json_ld(self) -> JsonLd:
+        return JsonLd(
+            "schema:Organization",
+            {
+                "schema:name": self.name,
+                **({"schema:description": self.description} if self.description else {}),
+                **({"schema:contactPoint": self.contact.to_json_ld()} if self.contact else {}),
+            }
+        )
 
-class Person(BaseModel):
+
+class Person(BaseModel, ToJsonLd):
     type: Literal["person"]
     name: str = Field(min_length=1)
     honorific: str | None = Field(default=None, min_length=1)
@@ -249,6 +273,17 @@ class Person(BaseModel):
             "DataCite-compatible role."
         ),
     )
+
+    def to_json_ld(self) -> JsonLd | None:
+        return JsonLd(
+            ["schema:Person", "foaf:Person"],
+            {
+                "schema:name": self.name,
+                **({"schema:sameAs": f"https://orcid.org/{self.orcid}"} if self.orcid else {}),
+                **({"schema:honorificPrefix": self.honorific} if self.honorific else {}),
+                **({"schema:contactPoint": self.contact.to_json_ld()} if self.contact else {}),
+            }
+        )
 
 
 PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="type")]
@@ -284,7 +319,7 @@ class PublicationVenue(BaseModel):
     location: str | None = Field(default=None, min_length=1)
 
 
-class Publication(BaseModel):
+class Publication(BaseModel, ToJsonLd):
     """
     Publication or related resource link with metadata.
     """
@@ -449,7 +484,7 @@ class DatasetModelBase(TranslatableModel):
         return self
 
 
-class DatasetModel(DatasetModelBase):
+class DatasetModel(DatasetModelBase, ToJsonLd):
     """Dataset model with required identifier field."""
 
     identifier: str = Field(
@@ -460,6 +495,61 @@ class DatasetModel(DatasetModelBase):
     def from_base(cls, base: DatasetModelBase, identifier: str) -> "DatasetModel":
         """Create a DatasetModel from a DatasetModelBase with the given identifier."""
         return cls(identifier=identifier, **base.model_dump())
+
+    def to_json_ld(self) -> JsonLd | None:
+        keywords = [kw.label if isinstance(kw, OntologyClass) else kw for kw in (self.keywords or ())]
+
+        funding = []
+        funders = []  # non-grant funders
+
+        for f in self.funding_sources or ():
+            if isinstance(f, FundingSource):
+                funder: JsonLd | None = None
+                if isinstance(f.funder, (Organization, Person)):
+                    funder = f.funder.to_json_ld()
+                elif isinstance(f.funder, str):
+                    funder = JsonLd(
+                        "schema:Organization",
+                        {
+                            "schema:name": f.funder,
+                        },
+                    )
+
+                if f.grant_numbers:  # Grant numbers; treat each one as a separate grant
+                    for gn in f.grant_numbers:
+                        funding.append(
+                            JsonLd(
+                                "schema:Grant",
+                                {
+                                    "schema:identifier": gn,
+                                    "schema:funder": funder,
+                                },
+                            )
+                        )
+                elif f.funder:  # Funder only, no grant numbers
+                    funders.append(funder)
+
+        return JsonLd(
+            ["dcat:Dataset", "schema:Dataset"],
+            {
+                # Name/title
+                "dcterms:name": self.title,
+                "schema:name": self.title,
+                # Description
+                "dcterms:description": self.description,
+                "schema:description": self.description,
+                # purposefully don't map inLanguage - we don't know the language of the *contents* of the dataset
+                # Keywords
+                "dcat:keyword": keywords,
+                "schema:keywords": [kw.label if isinstance(kw, OntologyClass) else kw for kw in (self.keywords or ())],
+                # Funders and funding
+                "schema:funder": funders,
+                "schema:funding": funding,
+                # Dataset version
+                "dcterms:version": self.version,
+                "schema:version": self.version,
+            },
+        )
 
 
 class ProjectScopedDatasetModel(DatasetModel):
