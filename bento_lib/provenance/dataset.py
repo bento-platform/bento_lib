@@ -148,6 +148,11 @@ PublicationType = TranslatedLiteral(EN, FR)(
     ("Dataset",                "Jeu de données"),
     ("Software",               "Logiciel"),
     ("Software Paper",         "Article sur un logiciel"),
+    # Multimedia
+    ("Audio",                  "Audio"),
+    ("Documentary",            "Documentaire"),
+    ("Podcast",                "Balado"),
+    ("Video",                  "Vidéo"),
     # Reviews and other
     ("Survey",                 "Enquête"),
     ("Review Article",         "Article de synthèse"),
