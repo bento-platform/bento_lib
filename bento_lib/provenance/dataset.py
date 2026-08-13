@@ -529,6 +529,8 @@ class DatasetModel(DatasetModelBase, ToJsonLd):
                 elif f.funder:  # Funder only, no grant numbers
                     funders.append(funder)
 
+        last_modified = self.last_modified.isoformat() if self.last_modified else None
+
         return JsonLd(
             ["dcat:Dataset", "schema:Dataset"],
             {
@@ -545,6 +547,9 @@ class DatasetModel(DatasetModelBase, ToJsonLd):
                 # Funders and funding
                 "schema:funder": funders,
                 "schema:funding": funding,
+                # Modification date
+                "dcterms:modification_date": last_modified,
+                "schema:dateModified": last_modified,
                 # Dataset version
                 "dcterms:version": self.version,
                 "schema:version": self.version,
