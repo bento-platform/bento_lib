@@ -224,7 +224,7 @@ class Contact(BaseModel, ToJsonLd):
             {
                 **({"schema:email": first_if_only_else_all(self.email)} if self.email else {}),
                 **({"schema:telephone": self.phone.as_str()} if self.phone else {}),
-            }
+            },
         )
 
 
@@ -249,7 +249,7 @@ class Organization(BaseModel, ToJsonLd):
                 "schema:name": self.name,
                 **({"schema:description": self.description} if self.description else {}),
                 **({"schema:contactPoint": self.contact.to_json_ld()} if self.contact else {}),
-            }
+            },
         )
 
 
@@ -282,7 +282,7 @@ class Person(BaseModel, ToJsonLd):
                 **({"schema:sameAs": f"https://orcid.org/{self.orcid}"} if self.orcid else {}),
                 **({"schema:honorificPrefix": self.honorific} if self.honorific else {}),
                 **({"schema:contactPoint": self.contact.to_json_ld()} if self.contact else {}),
-            }
+            },
         )
 
 
