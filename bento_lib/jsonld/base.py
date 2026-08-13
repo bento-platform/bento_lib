@@ -3,15 +3,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import overload
 
+from rdflib import BNode, Graph, URIRef
 from structlog.stdlib import BoundLogger
 
 from .utils import first_if_only_else_all
 
-__all__ = ["JsonLd", "ToJsonLd"]
+__all__ = ["JsonLd", "ToRdf"]
 
 
 @overload
-def _rec_render_json_ld(v: ToJsonLd | None, namespaces: frozenset[str], logger: BoundLogger) -> dict | None: ...
+def _rec_render_json_ld(v: ToRdf | None, namespaces: frozenset[str], logger: BoundLogger) -> dict | None: ...
 
 
 @overload
@@ -31,15 +32,15 @@ def _rec_render_json_ld(v: str | None, namespaces: frozenset[str], logger: Bound
 
 
 def _rec_render_json_ld(
-    v: ToJsonLd | JsonLd | dict | list | str | None, namespaces: frozenset[str], logger: BoundLogger
+    v: ToRdf | JsonLd | dict | list | str | None, namespaces: frozenset[str], logger: BoundLogger
 ) -> dict | list | str | None:
     if isinstance(v, list):
         res = [vvv for vvv in (_rec_render_json_ld(vv, namespaces, logger) for vv in v) if vvv is not None]
         if not res:
             return None  # normalize [] --> None
         return first_if_only_else_all(res)
-    if isinstance(v, ToJsonLd):
-        return _rec_render_json_ld(v.to_json_ld(), namespaces, logger)
+    if isinstance(v, ToRdf):
+        return _rec_render_json_ld(v.to_rdf(), namespaces, logger)
     elif isinstance(v, JsonLd):
         norm_dict = v.render(logger, top_level=False, namespaces=namespaces)
         if not norm_dict or all(isinstance(k, str) and k.startswith("@") for k in norm_dict):
@@ -88,11 +89,11 @@ class JsonLd:
         return final
 
 
-class ToJsonLd(ABC):
+class ToRdf(ABC):
     """
-    Mixin implementing the `to_json_ld` interface, for mapping a Pydantic model to a JsonLd object, which can then be
-    reduced to a JSON LD dictionary representation.
+    Mixin implementing the `to_json_ld` interface, for mapping a Pydantic model to an rdflib BNode and adding it to an
+    rdflib Graph, which can then be reduced to a JSON LD dictionary representation.
     """
 
     @abstractmethod
-    def to_json_ld(self) -> JsonLd | None: ...
+    def to_rdf(self, g: Graph) -> BNode | URIRef | None: ...

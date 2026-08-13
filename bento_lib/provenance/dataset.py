@@ -42,10 +42,13 @@ from pydantic import (
     StringConstraints,
     model_validator,
 )
+from rdflib import BNode, Graph, URIRef
+from rdflib import Literal as RdfLiteral
+from rdflib.namespace import DCAT, DCTERMS, FOAF, RDF, SDO
 
 from bento_lib.discovery import DiscoveryConfig
 from bento_lib.i18n import EN, FR, TranslatableModel, TranslatedLiteral
-from bento_lib.jsonld import JsonLd, ToJsonLd, first_if_only_else_all
+from bento_lib.jsonld import JsonLd, ToRdf
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
 
 Orcid = Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$")]
@@ -204,7 +207,7 @@ class Phone(BaseModel):
         return " ".join((f"+{self.country_code}", str(self.number), ext_str))
 
 
-class Contact(BaseModel, ToJsonLd):
+class Contact(BaseModel, ToRdf):
     """Inspired by subset of https://schema.org/ContactPoint"""
 
     website: HttpUrl | None = None
@@ -218,17 +221,21 @@ class Contact(BaseModel, ToJsonLd):
             raise ValueError("Contact must have at least one field (website, email, address, or phone)")
         return self
 
-    def to_json_ld(self) -> JsonLd | None:
-        return JsonLd(
-            "schema:ContactPoint",
-            {
-                **({"schema:email": first_if_only_else_all(self.email)} if self.email else {}),
-                **({"schema:telephone": self.phone.as_str()} if self.phone else {}),
-            },
-        )
+    def to_rdf(self, g: Graph) -> BNode | None:
+        if not self.email and not self.phone:
+            return None  # will be an empty object
+
+        contact = BNode()
+        g.add((contact, RDF.type, SDO.ContactPoint))
+        for e in self.email or ():
+            g.add((contact, SDO.email, RdfLiteral(e)))
+        if self.phone:
+            g.add((contact, SDO.telephone, RdfLiteral(self.phone.as_str())))
+
+        return contact
 
 
-class Organization(BaseModel, ToJsonLd):
+class Organization(BaseModel, ToRdf):
     type: Literal["organization"]
     name: str = Field(min_length=1)
     description: str | None = Field(default=None, min_length=1)
@@ -242,18 +249,18 @@ class Organization(BaseModel, ToJsonLd):
         ),
     )
 
-    def to_json_ld(self) -> JsonLd:
-        return JsonLd(
-            "schema:Organization",
-            {
-                "schema:name": self.name,
-                **({"schema:description": self.description} if self.description else {}),
-                **({"schema:contactPoint": self.contact.to_json_ld()} if self.contact else {}),
-            },
-        )
+    def to_rdf(self, g: Graph) -> BNode | None:
+        org = BNode()
+        g.add((org, RDF.type, SDO.Organization))
+        g.add((org, SDO.name, RdfLiteral(self.name)))
+        if self.description:
+            g.add((org, SDO.name, RdfLiteral(self.description)))
+        if self.contact and (c := self.contact.to_rdf(g)):
+            g.add((org, SDO.contactPoint, c))
+        return org
 
 
-class Person(BaseModel, ToJsonLd):
+class Person(BaseModel, ToRdf):
     type: Literal["person"]
     name: str = Field(min_length=1)
     honorific: str | None = Field(default=None, min_length=1)
@@ -274,16 +281,41 @@ class Person(BaseModel, ToJsonLd):
         ),
     )
 
-    def to_json_ld(self) -> JsonLd | None:
-        return JsonLd(
-            ["schema:Person", "foaf:Person"],
-            {
-                "schema:name": self.name,
-                **({"schema:sameAs": f"https://orcid.org/{self.orcid}"} if self.orcid else {}),
-                **({"schema:honorificPrefix": self.honorific} if self.honorific else {}),
-                **({"schema:contactPoint": self.contact.to_json_ld()} if self.contact else {}),
-            },
-        )
+    def to_rdf(self, g: Graph) -> BNode | None:
+        person = BNode()
+        g.add((person, RDF.type, FOAF.Person))
+        g.add((person, RDF.type, SDO.Person))
+
+        # Name
+        g.add((person, FOAF.name, RdfLiteral(self.name)))
+        g.add((person, SDO.name, RdfLiteral(self.name)))
+
+        # Other names
+        for on in self.other_names or ():
+            g.add((person, SDO.alternateName, RdfLiteral(on)))
+
+        # Affiliations
+        for af in self.affiliations or ():
+            if isinstance(af, Organization):
+                org = af
+            else:  # str
+                org = Organization(type="organization", name=af, roles=[])
+            if afn := org.to_rdf(g):
+                g.add((person, SDO.affiliation, afn))
+
+        # ORCID
+        if self.orcid:
+            g.add((person, SDO.sameAs, RdfLiteral(f"https://orcid.org/{self.orcid}")))
+
+        # Honorifics
+        if self.honorific:
+            g.add((person, SDO.honorificPrefix, RdfLiteral(self.honorific)))
+
+        # Contact information
+        if self.contact and (c := self.contact.to_rdf(g)):
+            g.add((person, SDO.contactPoint, c))
+
+        return person
 
 
 PersonOrOrganization = Annotated[Person | Organization, Field(discriminator="type")]
@@ -301,12 +333,26 @@ class Count(BaseModel):
     description: str = Field(min_length=1)
 
 
-class License(BaseModel):
+class License(BaseModel, ToRdf):
     """Derived from DCAT"""
 
     label: str = Field(min_length=1)
     type: str = Field(min_length=1)
     url: HttpUrl
+
+    def to_rdf(self, g: Graph) -> BNode | URIRef | None:
+        lic = URIRef(str(self.url))
+
+        label = RdfLiteral(self.label)
+        # Label/name/title
+        g.add((lic, DCTERMS.title, label))
+        g.add((lic, SDO.name, label))
+        # License type
+        g.add((lic, DCTERMS.type, RdfLiteral(self.type)))
+        # License URL
+        g.add((lic, SDO.url, RdfLiteral(self.url)))
+
+        return lic
 
 
 class PublicationVenue(BaseModel):
@@ -319,7 +365,7 @@ class PublicationVenue(BaseModel):
     location: str | None = Field(default=None, min_length=1)
 
 
-class Publication(BaseModel, ToJsonLd):
+class Publication(BaseModel, ToRdf):
     """
     Publication or related resource link with metadata.
     """
@@ -332,6 +378,26 @@ class Publication(BaseModel, ToJsonLd):
     publication_date: date | None = None
     publication_venue: PublicationVenue | None = None
     description: str | None = Field(default=None, min_length=1)
+
+    def to_rdf(self, g: Graph) -> BNode | None:
+        pub = BNode()
+        if self.publication_type in frozenset(
+            (
+                "Journal Article",
+                "Review Article",
+                "Conference Paper",
+                "Workshop Paper",
+                "Short Paper",
+                "Preprint",
+            )
+        ):
+            g.add((pub, RDF.type, SDO.ScholarlyArticle))
+            for a in self.authors or ():
+                if auth := a.to_rdf(g):
+                    g.add((pub, SDO.author, auth))
+            return pub
+        else:
+            return None  # Not mappable
 
 
 class Logo(BaseModel):
@@ -484,7 +550,7 @@ class DatasetModelBase(TranslatableModel):
         return self
 
 
-class DatasetModel(DatasetModelBase, ToJsonLd):
+class DatasetModel(DatasetModelBase, ToRdf):
     """Dataset model with required identifier field."""
 
     identifier: str = Field(
@@ -496,65 +562,84 @@ class DatasetModel(DatasetModelBase, ToJsonLd):
         """Create a DatasetModel from a DatasetModelBase with the given identifier."""
         return cls(identifier=identifier, **base.model_dump())
 
-    def to_json_ld(self) -> JsonLd | None:
-        keywords = [kw.label if isinstance(kw, OntologyClass) else kw for kw in (self.keywords or ())]
+    def to_rdf(self, g: Graph) -> BNode | None:
+        keywords: list[RdfLiteral] = [
+            RdfLiteral(kw.label, lang=self.language)
+            if isinstance(kw, OntologyClass)
+            else RdfLiteral(kw, lang=self.language)
+            for kw in (self.keywords or ())
+        ]
 
-        funding = []
-        funders = []  # non-grant funders
+        funding: list[BNode] = []
+        funders: list[BNode] = []  # non-grant funders
 
         for f in self.funding_sources or ():
             if isinstance(f, FundingSource):
-                funder: JsonLd | None = None
+                funder: BNode | None = None
                 if isinstance(f.funder, (Organization, Person)):
-                    funder = f.funder.to_json_ld()
+                    funder = f.funder.to_rdf(g)
                 elif isinstance(f.funder, str):
-                    funder = JsonLd(
-                        "schema:Organization",
-                        {
-                            "schema:name": f.funder,
-                        },
-                    )
+                    fndr = BNode()
+                    g.add((fndr, RDF.type, SDO.Organization))
+                    g.add((fndr, SDO.name, RdfLiteral(f.funder)))
+                    funder = fndr
 
                 if f.grant_numbers:  # Grant numbers; treat each one as a separate grant
                     for gn in f.grant_numbers:
-                        funding.append(
-                            JsonLd(
-                                "schema:Grant",
-                                {
-                                    "schema:identifier": gn,
-                                    "schema:funder": funder,
-                                },
-                            )
-                        )
-                elif f.funder:  # Funder only, no grant numbers
+                        grant = BNode()
+                        g.add((grant, RDF.type, SDO.Grant))
+                        g.add((grant, SDO.identifier, RdfLiteral(gn)))
+                        if funder:
+                            g.add((grant, SDO.funder, funder))
+                        funding.append(grant)
+                elif funder:  # Funder only, no grant numbers
                     funders.append(funder)
 
-        last_modified = self.last_modified.isoformat() if self.last_modified else None
+        ds = BNode()
 
-        return JsonLd(
-            ["dcat:Dataset", "schema:Dataset"],
-            {
-                # Name/title
-                "dcterms:name": self.title,
-                "schema:name": self.title,
-                # Description
-                "dcterms:description": self.description,
-                "schema:description": self.description,
-                # purposefully don't map inLanguage - we don't know the language of the *contents* of the dataset
-                # Keywords
-                "dcat:keyword": keywords,
-                "schema:keywords": [kw.label if isinstance(kw, OntologyClass) else kw for kw in (self.keywords or ())],
-                # Funders and funding
-                "schema:funder": funders,
-                "schema:funding": funding,
-                # Modification date
-                "dcterms:modification_date": last_modified,
-                "schema:dateModified": last_modified,
-                # Dataset version
-                "dcterms:version": self.version,
-                "schema:version": self.version,
-            },
-        )
+        # purposefully don't map:
+        #  - inLanguage - we don't know the language of the *contents* of the dataset
+
+        # Type
+        g.add((ds, RDF.type, DCAT.Dataset))
+        g.add((ds, RDF.type, SDO.Dataset))
+
+        # Name/title
+        title = RdfLiteral(self.title, lang=self.language)
+        g.add((ds, DCTERMS.title, title))
+        g.add((ds, SDO.name, title))
+
+        # Description
+        if self.description:
+            description = RdfLiteral(self.description, lang=self.language)
+            g.add((ds, DCTERMS.description, description))
+            g.add((ds, SDO.description, description))
+
+        # Keywords
+        for kw in keywords:
+            g.add((ds, DCAT.keyword, kw))
+            g.add((ds, SDO.keywords, kw))
+
+        # Funders and funding
+        for gr in funding:
+            g.add((ds, SDO.funding, gr))  # not explicitly defined on namespace but still works with rdflib
+        for f in funders:
+            g.add((ds, SDO.funder, f))
+
+        # License
+        # TODO:
+
+        # Modification date
+        if last_modified := (RdfLiteral(self.last_modified.isoformat()) if self.last_modified else None):
+            g.add((ds, DCTERMS.modified, last_modified))
+            g.add((ds, SDO.dateModified, last_modified))
+
+        # Dataset version
+        if version := (RdfLiteral(self.version) if self.version else None):
+            g.add((ds, DCAT.version, version))  # not explicitly defined on namespace but still works with rdflib
+            g.add((ds, SDO.version, version))
+
+        return ds
 
 
 class ProjectScopedDatasetModel(DatasetModel):
