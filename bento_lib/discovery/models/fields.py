@@ -302,8 +302,7 @@ class NumberFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
 
 
 class DateFieldConfig(BaseModel, NoAdditionalProperties):
-    # Currently only binning by month is implemented:
-    bin_by: Literal["month"] = Field(
+    bin_by: Literal["year", "month"] = Field(
         ...,
         title="Bin by",
         description="Specifies how to bin the date field for filtering and chart rendering.",
