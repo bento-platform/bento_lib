@@ -163,13 +163,14 @@ PublicationType = TranslatedLiteral(EN, FR)(
 PublicationTypeAnnotated = Annotated[str, PublicationType]
 
 PublicationVenueType = TranslatedLiteral(EN, FR)(
-    ("Journal",          "Revue"),
-    ("Conference",       "Conférence"),
-    ("Workshop",         "Atelier"),
-    ("Repository",       "Dépôt"),
-    ("Publisher",        "Éditeur"),
-    ("University",       "Université"),
-    ("Data Repository",  "Dépôt de données"),
+    ("Journal",             "Revue"),
+    ("Conference",          "Conférence"),
+    ("Workshop",            "Atelier"),
+    ("Repository",          "Dépôt"),
+    ("Publisher",           "Éditeur"),
+    ("University",          "Université"),
+    ("Data Repository",     "Dépôt de données"),
+    ("Preprint Repository", "Dépôt de prépublications"),
 )
 PublicationVenueTypeAnnotated = Annotated[str, PublicationVenueType]
 
