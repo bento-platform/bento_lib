@@ -71,6 +71,7 @@ class GA4GHServiceInfo(TypedDict):
     # Bento-specific service info properties are contained inside a nested, "bento"-keyed dictionary
     bento: NotRequired[BentoExtraServiceInfo]
     # DRS-specific extras (as of DRS 1.5.0)
+    maxBulkRequestLength: NotRequired[int]  # ugly DRS-only top-level field; deprecated for DRS spec v2.0.0
     drs: NotRequired[DRSExtraServiceInfo]
 
 
