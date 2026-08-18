@@ -147,6 +147,11 @@ class StringFieldConfig(BaseModel, NoAdditionalProperties):
             "the discovery rules."
         ),
     )
+    labels: dict[str, str] | None = Field(
+        default=None,
+        title="Labels",
+        description="Human-readable labels for enum values. Structure is {<enum value>: <label>}.",
+    )
 
 
 class StringFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
