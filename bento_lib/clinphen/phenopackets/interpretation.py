@@ -55,9 +55,28 @@ class VcfRecord(BaseModel):
     info: str = Field(default="", exclude_if=eq_blank)
 
 
+class Expression(BaseModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/variant.html#expression
+    """
+
+    syntax: str
+    value: str
+    version: str | None = Field(default=None, exclude_if=is_none)
+
+
+class Extension(BaseModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/variant.html#extension
+    """
+
+    name: str
+    value: str
+
+
 class VariationDescriptor(BaseModel):
     id: str
-    variation: Variation | None = Field(default=None, exclude_if=is_none)
+    variation: dict | None = Field(default=None, exclude_if=is_none)  # TODO: VRS variation model
     label: str = Field(default="", exclude_if=eq_blank)
     description: str = Field(default="", exclude_if=eq_blank)
     gene_context: GeneDescriptor | None = Field(default=None, exclude_if=is_none)
@@ -66,7 +85,9 @@ class VariationDescriptor(BaseModel):
     xrefs: list[str] = Field(default_factory=list, exclude_if=not_)
     alternate_labels: list[str] = Field(default_factory=list, exclude_if=not_)
     extensions: list[Extension] = Field(default_factory=list, exclude_if=not_)
-    molecule_context: MoleculeContext
+    molecule_context: Literal["unspecified_molecule_context", "genomic", "transcript", "protein"] | None = Field(
+        default=None, exclude_if=is_none
+    )
     structural_type: OntologyClass | None = Field(default=None, exclude_if=is_none)
     vrs_ref_allele_seq: str = Field(default="", exclude_if=eq_blank)
     allelic_state: OntologyClass | None = Field(default=None, exclude_if=is_none)
