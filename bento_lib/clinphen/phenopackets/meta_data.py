@@ -2,27 +2,28 @@ from datetime import datetime
 from operator import not_
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from bento_lib.ontologies.models import VersionedOntologyResource
-from bento_lib.utils.operators import eq_blank
 
+from .._fields import FIELD_BLANKABLE
+from .._models import BentoClinPhenModel
 from .external_reference import ExternalReference
 
 __all__ = ["Update", "MetaData"]
 
 
-class Update(BaseModel):
+class Update(BentoClinPhenModel):
     timestamp: datetime  # TODO
-    updated_by: str = Field(alias="updatedBy", default="", exclude_if=eq_blank)
-    comment: str = Field(default="", exclude_if=eq_blank)
+    updated_by: str = FIELD_BLANKABLE
+    comment: str = FIELD_BLANKABLE
 
 
-class MetaData(BaseModel):
+class MetaData(BentoClinPhenModel):
     created: datetime  # TODO
-    created_by: str = Field(..., alias="createdBy", min_length=1)
-    submitted_by: str = Field(default="", alias="submittedBy", exclude_if=eq_blank)
+    created_by: str = Field(..., min_length=1)
+    submitted_by: str = FIELD_BLANKABLE
     resources: list[VersionedOntologyResource] = Field(..., min_length=1)
     updates: list[Update] = Field(default_factory=list, exclude_if=not_)
-    phenopacket_schema_version: Literal["2.0"] = Field(default="2.0", alias="phenopacketSchemaVersion")
+    phenopacket_schema_version: Literal["2.0"] = Field(default="2.0")
     external_references: list[ExternalReference] = Field(default_factory=list, exclude_if=not_)

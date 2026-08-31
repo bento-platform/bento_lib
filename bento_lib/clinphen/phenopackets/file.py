@@ -1,11 +1,11 @@
 from operator import not_
 
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import AnyUrl, Field
+
+from .._models import BentoClinPhenModel
 
 
-class File(BaseModel):
+class File(BentoClinPhenModel):
     uri: AnyUrl
-    individual_to_file_identifiers: dict[str, str] = Field(
-        alias="individualToFileIdentifiers", default_factory=dict, exclude_if=not_
-    )
-    file_attributes: dict[str, str] = Field(alias="fileAttributes", default_factory=dict, exclude_if=not_)
+    individual_to_file_identifiers: dict[str, str] = Field(default_factory=dict, exclude_if=not_)
+    file_attributes: dict[str, str] = Field(default_factory=dict, exclude_if=not_)

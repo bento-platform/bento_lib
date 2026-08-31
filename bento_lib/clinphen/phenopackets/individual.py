@@ -2,22 +2,24 @@ from datetime import datetime
 from operator import not_
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.utils.operators import is_none
 
+from .._fields import FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 from .time_element import TimeElement
 from .vital_status import VitalStatus
 
 
-class Individual(BaseModel):
+class Individual(BentoClinPhenModel):
     id: str
-    alternate_ids: list[str] = Field(default_factory=list, alias="alternateIds", exclude_if=not_)  # TODO: format
-    date_of_birth: datetime
-    time_at_last_encounter: TimeElement | None = Field(default=None, alias="timeAtLastEncounter", exclude_if=is_none)
-    vital_status: VitalStatus
-    sex: Literal["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"] | None  # TODO: default to unknown sex?
+    alternate_ids: list[str] = Field(default_factory=list, exclude_if=not_)  # TODO: format
+    date_of_birth: datetime | None = FIELD_NULLABLE
+    time_at_last_encounter: TimeElement | None = FIELD_NULLABLE
+    vital_status: VitalStatus | None = FIELD_NULLABLE
+    sex: Literal["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"] | None = FIELD_NULLABLE  # TODO: default to unknown sex?
     karyotypic_sex: Literal[
         "UNKNOWN_KARYOTYPE",
         "XX",
@@ -30,6 +32,6 @@ class Individual(BaseModel):
         "XXXX",
         "XYY",
         "OTHER_KARYOTYPE",
-    ]  # TODO: default to unknown karyotype?
+    ] | None = FIELD_NULLABLE  # TODO: default to unknown karyotype?
     gender: OntologyClass | None = Field(default=None, exclude_if=is_none)
     taxonomy: OntologyClass | None = Field(default=None, exclude_if=is_none)

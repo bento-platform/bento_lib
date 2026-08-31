@@ -1,11 +1,12 @@
 from operator import not_
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.utils.operators import is_none
 
+from .._fields import FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 from .external_reference import ExternalReference
 from .procedure import Procedure
 from .quantity import Quantity
@@ -22,38 +23,38 @@ type DrugType = Literal[
 type RegimenStatus = Literal["UNKNOWN_STATUS", "STARTED", "COMPLETED", "DISCONTINUED"]
 
 
-class DoseInterval(BaseModel):
+class DoseInterval(BentoClinPhenModel):
     quantity: Quantity
     schedule_frequency: OntologyClass
     interval: TimeInterval
 
 
-class Treatment(BaseModel):
+class Treatment(BentoClinPhenModel):
     agent: OntologyClass
-    route_of_administration: OntologyClass | None
+    route_of_administration: OntologyClass | None = FIELD_NULLABLE
     dose_intervals: list[DoseInterval] = Field(default_factory=list, exclude_if=not_)
-    drug_type: DrugType | None = Field(default=None, exclude_if=is_none)
-    cumulative_dose: Quantity | None
+    drug_type: DrugType | None = FIELD_NULLABLE
+    cumulative_dose: Quantity | None = FIELD_NULLABLE
 
 
-class RadiationTherapy(BaseModel):
+class RadiationTherapy(BentoClinPhenModel):
     modality: OntologyClass
     body_site: OntologyClass
     dosage: int
     fractions: int
 
 
-class TherapeuticRegimen(BaseModel):
+class TherapeuticRegimen(BentoClinPhenModel):
     identifier: OntologyClass | ExternalReference
-    start_time: TimeElement | None
-    end_time: TimeElement | None
+    start_time: TimeElement | None = FIELD_NULLABLE
+    end_time: TimeElement | None = FIELD_NULLABLE
     regimen_status: RegimenStatus
 
 
-class MedicalAction(BaseModel):
+class MedicalAction(BentoClinPhenModel):
     action: Procedure | Treatment | RadiationTherapy | TherapeuticRegimen
-    treatment_target: OntologyClass | None
-    treatment_intent: OntologyClass | None
-    response_to_treatment: OntologyClass | None
-    adverse_events: list[OntologyClass] = Field(default_factory=list, )
-    treatment_termination_reason: OntologyClass | None
+    treatment_target: OntologyClass | None = FIELD_NULLABLE
+    treatment_intent: OntologyClass | None = FIELD_NULLABLE
+    response_to_treatment: OntologyClass | None = FIELD_NULLABLE
+    adverse_events: list[OntologyClass] = Field(default_factory=list)
+    treatment_termination_reason: OntologyClass | None = FIELD_NULLABLE

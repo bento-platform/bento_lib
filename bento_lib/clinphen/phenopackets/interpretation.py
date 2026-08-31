@@ -1,10 +1,9 @@
-from operator import not_
 from typing import Literal
 
-from pydantic import BaseModel, Field
-
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.utils.operators import eq_blank, is_none
+
+from .._fields import FIELD_BLANKABLE, FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 
 __all__ = [
     # phenopacket enums / literals
@@ -33,39 +32,41 @@ type AcmgPathogenicityClassification = Literal[
 
 type TherapeuticActionability = Literal["UNKNOWN_ACTIONABILITY", "NOT_ACTIONABLE", "ACTIONABLE"]
 
+type MoleculeContext = Literal["unspecified_molecule_context", "genomic", "transcript", "protein"]
 
-class GeneDescriptor(BaseModel):
+
+class GeneDescriptor(BentoClinPhenModel):
     value_id: str
     symbol: str
-    description: str = Field(default="", exclude_if=eq_blank)
-    alternate_ids: list[str] = Field(default_factory=list, exclude_if=not_)
-    xrefs: list[str] = Field(default_factory=list, exclude_if=not_)
-    alternate_symbols: list[str] = Field(default_factory=list, exclude_if=not_)
+    description: str = FIELD_BLANKABLE
+    alternate_ids: list[str] = FIELD_LIST_OR_EMPTY
+    xrefs: list[str] = FIELD_LIST_OR_EMPTY
+    alternate_symbols: list[str] = FIELD_LIST_OR_EMPTY
 
 
-class VcfRecord(BaseModel):
+class VcfRecord(BentoClinPhenModel):
     genome_assembly: str
     chrom: str
     pos: int
-    id: str = Field(default="", exclude_if=eq_blank)
+    id: str = FIELD_BLANKABLE
     ref: str
     alt: str
-    qual: int | None = Field(default=None, exclude_if=is_none)
-    filter: str = Field(default="", exclude_if=eq_blank)
-    info: str = Field(default="", exclude_if=eq_blank)
+    qual: int | None = FIELD_NULLABLE
+    filter: str = FIELD_BLANKABLE
+    info: str = FIELD_BLANKABLE
 
 
-class Expression(BaseModel):
+class Expression(BentoClinPhenModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/variant.html#expression
     """
 
     syntax: str
     value: str
-    version: str | None = Field(default=None, exclude_if=is_none)
+    version: str | None = FIELD_NULLABLE
 
 
-class Extension(BaseModel):
+class Extension(BentoClinPhenModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/variant.html#extension
     """
@@ -74,44 +75,42 @@ class Extension(BaseModel):
     value: str
 
 
-class VariationDescriptor(BaseModel):
+class VariationDescriptor(BentoClinPhenModel):
     id: str
-    variation: dict | None = Field(default=None, exclude_if=is_none)  # TODO: VRS variation model
-    label: str = Field(default="", exclude_if=eq_blank)
-    description: str = Field(default="", exclude_if=eq_blank)
-    gene_context: GeneDescriptor | None = Field(default=None, exclude_if=is_none)
-    expressions: list[Expression] = Field(default_factory=list, exclude_if=not_)
-    vcf_record: VcfRecord | None = Field(default=None, exclude_if=is_none)
-    xrefs: list[str] = Field(default_factory=list, exclude_if=not_)
-    alternate_labels: list[str] = Field(default_factory=list, exclude_if=not_)
-    extensions: list[Extension] = Field(default_factory=list, exclude_if=not_)
-    molecule_context: Literal["unspecified_molecule_context", "genomic", "transcript", "protein"] | None = Field(
-        default=None, exclude_if=is_none
-    )
-    structural_type: OntologyClass | None = Field(default=None, exclude_if=is_none)
-    vrs_ref_allele_seq: str = Field(default="", exclude_if=eq_blank)
-    allelic_state: OntologyClass | None = Field(default=None, exclude_if=is_none)
+    variation: dict | None = FIELD_NULLABLE  # TODO: VRS variation model
+    label: str = FIELD_BLANKABLE
+    description: str = FIELD_BLANKABLE
+    gene_context: GeneDescriptor | None = FIELD_NULLABLE
+    expressions: list[Expression] = FIELD_LIST_OR_EMPTY
+    vcf_record: VcfRecord | None = FIELD_NULLABLE
+    xrefs: list[str] = FIELD_LIST_OR_EMPTY
+    alternate_labels: list[str] = FIELD_LIST_OR_EMPTY
+    extensions: list[Extension] = FIELD_LIST_OR_EMPTY
+    molecule_context: MoleculeContext | None = FIELD_NULLABLE
+    structural_type: OntologyClass | None = FIELD_NULLABLE
+    vrs_ref_allele_seq: str = FIELD_BLANKABLE
+    allelic_state: OntologyClass | None = FIELD_NULLABLE
 
 
-class VariantInterpretation(BaseModel):
+class VariantInterpretation(BentoClinPhenModel):
     acmg_pathogenicity_classification: AcmgPathogenicityClassification
     therapeutic_actionability: TherapeuticActionability
     variation_descriptor: VariationDescriptor
 
 
-class GenomicInterpretation(BaseModel):
+class GenomicInterpretation(BentoClinPhenModel):
     subject_or_biosample_id: str
     interpretation_status: InterpretationStatus
     call: GeneDescriptor | VariantInterpretation
 
 
-class Diagnosis(BaseModel):
+class Diagnosis(BentoClinPhenModel):
     disease: OntologyClass
-    genomic_interpretations: list[GenomicInterpretation] = Field(default_factory=list, exclude_if=not_)
+    genomic_interpretations: list[GenomicInterpretation] = FIELD_LIST_OR_EMPTY
 
 
-class Interpretation(BaseModel):
+class Interpretation(BentoClinPhenModel):
     id: str
     progress_status: ProgressStatus
-    diagnosis: Diagnosis | None = Field(default=None, exclude_if=is_none)
-    summary: str = Field(default="", exclude_if=eq_blank)
+    diagnosis: Diagnosis | None = FIELD_NULLABLE
+    summary: str = FIELD_BLANKABLE

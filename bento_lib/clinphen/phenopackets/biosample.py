@@ -1,9 +1,7 @@
-from pydantic import BaseModel, Field
-
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.utils.operators import is_none
 
 from .._fields import FIELD_BLANKABLE, FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 from ..geo.geo_location import GeoLocation
 from .file import File
 from .measurement import Measurement
@@ -11,8 +9,10 @@ from .phenotypic_feature import PhenotypicFeature
 from .procedure import Procedure
 from .time_element import TimeElement
 
+__all__ = ["Biosample"]
 
-class Biosample(BaseModel):
+
+class Biosample(BentoClinPhenModel):
     # canonical fields from Phenopackets V2
     id: str
     individual_id: str | None = FIELD_NULLABLE
@@ -37,5 +37,5 @@ class Biosample(BaseModel):
     sample_storage: OntologyClass | None = FIELD_NULLABLE
 
     # Bento extended fields
-    location_collected: GeoLocation | None = Field(..., exclude_if=is_none)
+    location_collected: GeoLocation | None = FIELD_NULLABLE
     extra_properties: dict  # TODO

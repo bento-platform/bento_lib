@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.utils.operators import eq_blank, is_none
 
+from .._fields import FIELD_BLANKABLE, FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 from .procedure import Procedure
 from .quantity import Quantity
 from .time_element import TimeElement
@@ -19,28 +20,28 @@ __all__ = [
 ]
 
 
-class TypedQuantity(BaseModel):
+class TypedQuantity(BentoClinPhenModel):
     type: OntologyClass
     quantity: Quantity
 
 
-class ComplexValue(BaseModel):
+class ComplexValue(BentoClinPhenModel):
     typed_quantities: list[TypedQuantity] = Field(..., min_length=1)
 
 
-class ValueQuantity(BaseModel):
+class ValueQuantity(BentoClinPhenModel):
     quantity: Quantity | OntologyClass
 
 
-class ValueOntologyClass(BaseModel):
-    ontology_class: OntologyClass = Field(..., alias="ontologyClass")
+class ValueOntologyClass(BentoClinPhenModel):
+    ontology_class: OntologyClass
 
 
-class BaseMeasurement(BaseModel):
-    description: str = Field(default="", exclude_if=eq_blank)
+class BaseMeasurement(BentoClinPhenModel):
+    description: str = FIELD_BLANKABLE
     assay: OntologyClass
-    time_observed: TimeElement | None = Field(alias="timeObserved", default=None, exclude_if=is_none)
-    procedure: Procedure | None = Field(default=None, exclude_if=is_none)
+    time_observed: TimeElement | None = FIELD_NULLABLE
+    procedure: Procedure | None = FIELD_NULLABLE
 
 
 class MeasurementWithValue(BaseMeasurement):

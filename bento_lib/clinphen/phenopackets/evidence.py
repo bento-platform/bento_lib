@@ -1,13 +1,15 @@
-from pydantic import BaseModel, Field
-
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.utils.operators import is_none
 
+from .._fields import FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 from .external_reference import ExternalReference
 
 __all__ = ["Evidence"]
 
 
-class Evidence(BaseModel):
+class Evidence(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/evidence.html
+    """
     evidence_code: OntologyClass
-    reference: ExternalReference | None = Field(default=None, exclude_if=is_none)
+    reference: ExternalReference | None = FIELD_NULLABLE

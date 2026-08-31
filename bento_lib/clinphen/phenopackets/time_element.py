@@ -1,22 +1,25 @@
-from datetime import datetime
+"""
+https://phenopacket-schema.readthedocs.io/en/latest/time-element.html
+"""
 
-from pydantic import BaseModel, Field
+from datetime import datetime
 
 from bento_lib.ontologies.models import OntologyClass
 
+from .._models import BentoClinPhenModel
 from .age import Age, AgeRange, GestationalAge
 from .time_interval import TimeInterval
 
 
-class TimeElementOntologyClass(BaseModel):
-    ontology_class: OntologyClass = Field(..., alias="ontologyClass")
+class TimeElementOntologyClass(BentoClinPhenModel):
+    ontology_class: OntologyClass
 
 
-class TimeElementTimestamp(BaseModel):
+class TimeElementTimestamp(BentoClinPhenModel):
     timestamp: datetime  # TODO
 
 
-class TimeElementInterval(BaseModel):
+class TimeElementInterval(BentoClinPhenModel):
     interval: TimeInterval
 
 
