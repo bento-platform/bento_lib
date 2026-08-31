@@ -3,14 +3,14 @@ from pydantic import Field
 from bento_lib.ontologies.models import OntologyClass
 
 from .._fields import FIELD_BLANKABLE, FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
-from .._models import BentoClinPhenModel
+from .._models import BentoClinPhenExtraPropsModel
 from .evidence import Evidence
 from .time_element import TimeElement
 
 __all__ = ["PhenotypicFeature"]
 
 
-class PhenotypicFeature(BentoClinPhenModel):
+class PhenotypicFeature(BentoClinPhenExtraPropsModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/phenotype.html
     """
