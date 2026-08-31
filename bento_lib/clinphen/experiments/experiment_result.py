@@ -1,6 +1,7 @@
 from datetime import date
-from pydantic import AnyUrl, BaseModel
 from typing import Literal
+
+from pydantic import AnyUrl, BaseModel
 
 __all__ = [
     "ExperimentResultIndex",

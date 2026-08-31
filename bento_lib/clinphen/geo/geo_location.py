@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ConfigDict
 from typing import Literal
+
+from pydantic import BaseModel, ConfigDict
 
 __all__ = ["GeoLocationProperties", "GeoLocation"]
 

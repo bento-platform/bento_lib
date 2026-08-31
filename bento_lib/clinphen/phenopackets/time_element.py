@@ -1,7 +1,9 @@
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 from bento_lib.ontologies.models import OntologyClass
+
 from .age import Age, AgeRange, GestationalAge
 from .time_interval import TimeInterval
 

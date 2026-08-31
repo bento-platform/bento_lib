@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.utils.operators import is_none
+
 from .time_element import TimeElement
 
 __all__ = ["Procedure"]

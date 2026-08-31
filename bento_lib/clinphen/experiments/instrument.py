@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from bento_lib.ontologies.models import OntologyClass
+
 from .._fields import FIELD_BLANKABLE, FIELD_NULLABLE
 
 

@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 from bento_lib.ontologies.models import OntologyClass
 from bento_lib.utils.operators import is_none
+
 from .._fields import FIELD_BLANKABLE, FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
 from ..geo.geo_location import GeoLocation
 from .file import File

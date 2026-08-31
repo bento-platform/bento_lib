@@ -1,5 +1,7 @@
 from operator import not_
+
 from pydantic import Field
+
 from bento_lib.utils.operators import eq_blank, is_none
 
 __all__ = [

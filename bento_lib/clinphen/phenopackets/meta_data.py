@@ -1,10 +1,12 @@
 from datetime import datetime
 from operator import not_
-from pydantic import BaseModel, Field
 from typing import Literal
+
+from pydantic import BaseModel, Field
 
 from bento_lib.ontologies.models import VersionedOntologyResource
 from bento_lib.utils.operators import eq_blank
+
 from .external_reference import ExternalReference
 
 __all__ = ["Update", "MetaData"]

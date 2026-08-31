@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 
 from bento_lib.ontologies.models import OntologyClass
-from bento_lib.utils.operators import is_none, eq_blank
+from bento_lib.utils.operators import eq_blank, is_none
+
 from .procedure import Procedure
 from .quantity import Quantity
 from .time_element import TimeElement

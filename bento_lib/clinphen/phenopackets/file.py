@@ -1,5 +1,6 @@
 from operator import not_
-from pydantic import BaseModel, AnyUrl, Field
+
+from pydantic import AnyUrl, BaseModel, Field
 
 
 class File(BaseModel):
