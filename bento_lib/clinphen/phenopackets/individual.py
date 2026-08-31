@@ -11,7 +11,7 @@ from .._models import BentoClinPhenExtraPropsModel
 from .time_element import TimeElement
 from .vital_status import VitalStatus
 
-__all__ = ["KaryotypicSex", "Individual"]
+__all__ = ["Sex", "KaryotypicSex", "Individual"]
 
 type Sex = Literal["UNKNOWN_SEX", "FEMALE", "MALE", "OTHER_SEX"]
 
