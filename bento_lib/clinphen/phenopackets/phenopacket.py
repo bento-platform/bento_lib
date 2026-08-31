@@ -1,7 +1,7 @@
 from pydantic import Field
 
 from .._fields import FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
-from .._models import BentoClinPhenModel
+from .._models import BentoClinPhenExtraPropsModel
 from .biosample import Biosample
 from .disease import Disease
 from .file import File
@@ -15,7 +15,11 @@ from .phenotypic_feature import PhenotypicFeature
 __all__ = ["Phenopacket"]
 
 
-class Phenopacket(BentoClinPhenModel):
+class Phenopacket(BentoClinPhenExtraPropsModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/phenopacket.html
+    """
+
     id: str = Field(..., min_length=1)
     subject: Individual | None = FIELD_NULLABLE
     phenotypic_features: list[PhenotypicFeature] = FIELD_LIST_OR_EMPTY

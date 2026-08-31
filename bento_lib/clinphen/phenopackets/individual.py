@@ -7,7 +7,7 @@ from bento_lib.ontologies.models import OntologyClass
 from bento_lib.utils.operators import is_none
 
 from .._fields import FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
-from .._models import BentoClinPhenModel
+from .._models import BentoClinPhenExtraPropsModel
 from .time_element import TimeElement
 from .vital_status import VitalStatus
 
@@ -30,7 +30,7 @@ type KaryotypicSex = Literal[
 ]
 
 
-class Individual(BentoClinPhenModel):
+class Individual(BentoClinPhenExtraPropsModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/individual.html
     """
