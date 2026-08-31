@@ -1,9 +1,5 @@
-from operator import not_
-
-from pydantic import BaseModel, Field
-
-from bento_lib.utils.operators import is_none
-
+from .._fields import FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
+from .._models import BentoClinPhenModel
 from .biosample import Biosample
 from .disease import Disease
 from .file import File
@@ -14,15 +10,17 @@ from .medical_actions import MedicalAction
 from .meta_data import MetaData
 from .phenotypic_feature import PhenotypicFeature
 
+__all__ = ["Phenopacket"]
 
-class Phenopacket(BaseModel):
+
+class Phenopacket(BentoClinPhenModel):
     id: str
-    subject: Individual | None = Field(default=None, exclude_if=is_none)
-    phenotypic_features: list[PhenotypicFeature] = Field(default_factory=list, exclude_if=not_)
-    measurements: list[Measurement] = Field(default_factory=list, exclude_if=not_)
-    biosamples: list[Biosample] = Field(default_factory=list, exclude_if=not_)
-    interpretations: list[Interpretation] = Field(default_factory=list, exclude_if=not_)
-    diseases: list[Disease] = Field(default_factory=list, exclude_if=not_)
-    medical_actions: list[MedicalAction] = Field(default_factory=list, exclude_if=not_)
-    files: list[File] = Field(default_factory=list, exclude_if=not_)
+    subject: Individual | None = FIELD_NULLABLE
+    phenotypic_features: list[PhenotypicFeature] = FIELD_LIST_OR_EMPTY
+    measurements: list[Measurement] = FIELD_LIST_OR_EMPTY
+    biosamples: list[Biosample] = FIELD_LIST_OR_EMPTY
+    interpretations: list[Interpretation] = FIELD_LIST_OR_EMPTY
+    diseases: list[Disease] = FIELD_LIST_OR_EMPTY
+    medical_actions: list[MedicalAction] = FIELD_LIST_OR_EMPTY
+    files: list[File] = FIELD_LIST_OR_EMPTY
     meta_data: MetaData
