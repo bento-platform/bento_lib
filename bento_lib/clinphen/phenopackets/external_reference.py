@@ -2,8 +2,6 @@ from typing import Self
 
 from pydantic import model_validator
 
-from bento_lib.utils.operators import eq_blank
-
 from .._fields import FIELD_BLANKABLE
 from .._models import BentoClinPhenModel
 
