@@ -1,7 +1,9 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import AnyUrl, BaseModel
+from pydantic import AnyUrl
+
+from .._models import BentoClinPhenModel
 
 __all__ = [
     "ExperimentResultIndex",
@@ -9,7 +11,7 @@ __all__ = [
 ]
 
 
-class ExperimentResultIndex(BaseModel):
+class ExperimentResultIndex(BentoClinPhenModel):
     url: AnyUrl
     # BAI:   http://samtools.github.io/hts-specs/SAMv1.pdf "BAI" )
     # BGZF:  BGZip index files (often .gzi)
@@ -20,7 +22,7 @@ class ExperimentResultIndex(BaseModel):
     format: Literal["BAI", "BGZF", "CRAI", "CSI", "TABIX", "TRIBBLE"]
 
 
-class ExperimentResult(BaseModel):
+class ExperimentResult(BentoClinPhenModel):
     # TODO: figure out ID mess
     description: str
     filename: str
