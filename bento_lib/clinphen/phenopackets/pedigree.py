@@ -27,4 +27,5 @@ class Pedigree(BentoClinPhenModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/pedigree.html#pedigree
     """
+
     persons: list[Person] = Field(..., min_length=1)
