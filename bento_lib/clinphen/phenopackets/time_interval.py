@@ -10,6 +10,7 @@ class TimeInterval(BaseModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/time-interval.html
     """
+
     start: datetime
     end: datetime
 

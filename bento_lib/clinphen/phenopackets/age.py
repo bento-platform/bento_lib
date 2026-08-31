@@ -7,10 +7,16 @@ __all__ = ["Age", "AgeRange", "GestationalAge"]
 
 
 class Age(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/age.html
+    """
     iso8601duration: str = Field(..., title="ISO8601 Duration")
 
 
 class AgeRange(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/age.html#agerange
+    """
     start: Age
     end: Age
 
@@ -21,5 +27,7 @@ class InnerGestationalAge(BentoClinPhenModel):
 
 
 class GestationalAge(BentoClinPhenModel):
-
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/gestational-age.html
+    """
     gestational_age: InnerGestationalAge = Field(..., alias="gestationalAge")

@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from bento_lib.ontologies.models import OntologyClass
 
 from .._fields import FIELD_BLANKABLE, FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
@@ -36,6 +38,10 @@ type MoleculeContext = Literal["unspecified_molecule_context", "genomic", "trans
 
 
 class GeneDescriptor(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/gene.html
+    """
+
     value_id: str
     symbol: str
     description: str = FIELD_BLANKABLE
@@ -45,13 +51,17 @@ class GeneDescriptor(BentoClinPhenModel):
 
 
 class VcfRecord(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/variant.html#vcfrecord
+    """
+
     genome_assembly: str
     chrom: str
     pos: int
     id: str = FIELD_BLANKABLE
-    ref: str
+    ref: str = Field(..., min_length=1)
     alt: str
-    qual: int | None = FIELD_NULLABLE
+    qual: str = FIELD_BLANKABLE
     filter: str = FIELD_BLANKABLE
     info: str = FIELD_BLANKABLE
 
@@ -76,7 +86,11 @@ class Extension(BentoClinPhenModel):
 
 
 class VariationDescriptor(BentoClinPhenModel):
-    id: str
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/variant.html
+    """
+
+    id: str = Field(..., min_length=1)
     variation: dict | None = FIELD_NULLABLE  # TODO: VRS variation model
     label: str = FIELD_BLANKABLE
     description: str = FIELD_BLANKABLE
@@ -86,20 +100,28 @@ class VariationDescriptor(BentoClinPhenModel):
     xrefs: list[str] = FIELD_LIST_OR_EMPTY
     alternate_labels: list[str] = FIELD_LIST_OR_EMPTY
     extensions: list[Extension] = FIELD_LIST_OR_EMPTY
-    molecule_context: MoleculeContext | None = FIELD_NULLABLE
+    molecule_context: MoleculeContext
     structural_type: OntologyClass | None = FIELD_NULLABLE
     vrs_ref_allele_seq: str = FIELD_BLANKABLE
     allelic_state: OntologyClass | None = FIELD_NULLABLE
 
 
 class VariantInterpretation(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/variant-interpretation.html
+    """
+
     acmg_pathogenicity_classification: AcmgPathogenicityClassification
     therapeutic_actionability: TherapeuticActionability
     variation_descriptor: VariationDescriptor
 
 
 class GenomicInterpretation(BentoClinPhenModel):
-    subject_or_biosample_id: str
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/genomic-interpretation.html
+    """
+
+    subject_or_biosample_id: str = Field(..., min_length=1)
     interpretation_status: InterpretationStatus
     call: GeneDescriptor | VariantInterpretation
 

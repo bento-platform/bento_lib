@@ -14,6 +14,7 @@ class PhenotypicFeature(BentoClinPhenModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/phenotype.html
     """
+
     description: str = FIELD_BLANKABLE
     type: OntologyClass
     excluded: bool = Field(default=False)

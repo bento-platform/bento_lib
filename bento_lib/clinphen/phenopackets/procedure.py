@@ -12,6 +12,7 @@ class Procedure(BaseModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/procedure.html
     """
+
     code: OntologyClass
     body_site: OntologyClass | None = FIELD_NULLABLE
     performed: TimeElement | None = FIELD_NULLABLE

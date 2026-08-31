@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from bento_lib.ontologies.models import OntologyClass
 
 from .._fields import FIELD_BLANKABLE, FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
@@ -14,7 +16,7 @@ __all__ = ["Biosample"]
 
 class Biosample(BentoClinPhenModel):
     # canonical fields from Phenopackets V2
-    id: str
+    id: str = Field(..., min_length=1)
     individual_id: str | None = FIELD_NULLABLE
     derived_from_id: str | None = FIELD_NULLABLE
     description: str = FIELD_BLANKABLE

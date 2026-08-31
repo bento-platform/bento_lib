@@ -8,6 +8,10 @@ __all__ = ["Disease"]
 
 
 class Disease(BentoClinPhenModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/disease.html
+    """
+
     term: OntologyClass
     excluded: bool | None = FIELD_NULLABLE
     onset: TimeElement | None = FIELD_NULLABLE

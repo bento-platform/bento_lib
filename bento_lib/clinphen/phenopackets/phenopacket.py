@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from .._fields import FIELD_LIST_OR_EMPTY, FIELD_NULLABLE
 from .._models import BentoClinPhenModel
 from .biosample import Biosample
@@ -14,7 +16,7 @@ __all__ = ["Phenopacket"]
 
 
 class Phenopacket(BentoClinPhenModel):
-    id: str
+    id: str = Field(..., min_length=1)
     subject: Individual | None = FIELD_NULLABLE
     phenotypic_features: list[PhenotypicFeature] = FIELD_LIST_OR_EMPTY
     measurements: list[Measurement] = FIELD_LIST_OR_EMPTY

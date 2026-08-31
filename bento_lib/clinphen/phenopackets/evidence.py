@@ -11,5 +11,6 @@ class Evidence(BentoClinPhenModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/evidence.html
     """
+
     evidence_code: OntologyClass
     reference: ExternalReference | None = FIELD_NULLABLE

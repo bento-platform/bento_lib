@@ -13,6 +13,7 @@ class ReferenceRange(BaseModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/reference-range.html
     """
+
     unit: OntologyClass
     low: float
     high: float
@@ -28,6 +29,7 @@ class Quantity(BaseModel):
     """
     https://phenopacket-schema.readthedocs.io/en/latest/quantity.html
     """
+
     unit: OntologyClass
     value: float
     reference_range: ReferenceRange | None = FIELD_NULLABLE
