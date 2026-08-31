@@ -3,6 +3,7 @@ from importlib import metadata
 from . import (
     apps,
     auth,
+    clinphen,
     discovery,
     drs,
     events,
@@ -22,6 +23,7 @@ __all__ = [
     "__version__",
     "apps",
     "auth",
+    "clinphen",
     "discovery",
     "drs",
     "events",
