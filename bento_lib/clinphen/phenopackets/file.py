@@ -1,12 +1,9 @@
-from operator import not_
+from pydantic import AnyUrl
 
-from pydantic import AnyUrl, Field
-
+from .._fields import FIELD_DICT_OR_EMPTY
 from .._models import BentoClinPhenModel
 
 __all__ = ["File"]
-
-FIELD_DICT_OR_EMPTY = Field(default_factory=dict, exclude_if=not_)
 
 
 class File(BentoClinPhenModel):

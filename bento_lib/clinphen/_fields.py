@@ -6,6 +6,7 @@ from bento_lib.utils.operators import eq_blank, is_none
 
 __all__ = [
     "FIELD_BLANKABLE",
+    "FIELD_DICT_OR_EMPTY",
     "FIELD_LIST_OR_EMPTY",
     "FIELD_NULLABLE",
     "field_name_to_camel",
@@ -13,6 +14,7 @@ __all__ = [
 
 
 FIELD_BLANKABLE = Field(default="", exclude_if=eq_blank)
+FIELD_DICT_OR_EMPTY = Field(default_factory=dict, exclude_if=not_)
 FIELD_LIST_OR_EMPTY = Field(default_factory=list, exclude_if=not_)
 FIELD_NULLABLE = Field(default=None, exclude_if=is_none)
 
