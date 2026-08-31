@@ -35,10 +35,10 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Fetch everything for the /service-info builder test
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         name: Set up Python
         with:
           python-version: ${{ matrix.python-version }}
@@ -52,7 +52,7 @@ jobs:
           TEST_REDIS_HOST: localhost
           TEST_REDIS_PORT: 6379
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           fail_ci_if_error: true
           file: ./coverage.xml
@@ -64,8 +64,8 @@ jobs:
       matrix:
         python-version: [ '3.12', '3.13', '3.14' ]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         name: Set up Python
         with:
           python-version: ${{ matrix.python-version }}

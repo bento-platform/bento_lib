@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from .utils import decode_drs_uri, fetch_drs_record_by_uri, fetch_drs_record_by_uri_async
 
@@ -33,7 +33,7 @@ class DrsResolver:
         :return: The fetched record dictionary.
         """
 
-        now = datetime.now().timestamp()
+        now = datetime.now(UTC).timestamp()
 
         cache_record = self._drs_record_cache.get(drs_uri)
         if cache_record is not None and now - cache_record[0] <= self._cache_ttl:
@@ -52,7 +52,7 @@ class DrsResolver:
         :return: The fetched record dictionary.
         """
 
-        now = datetime.now().timestamp()
+        now = datetime.now(UTC).timestamp()
 
         cache_record = self._drs_record_cache.get(drs_uri)
         if cache_record is not None and now - cache_record[0] <= self._cache_ttl:

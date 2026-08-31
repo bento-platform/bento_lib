@@ -1,0 +1,31 @@
+{
+  "identifier": "dataset-json-001",
+  "schema_version": "1.0",
+  "title": "Test Dataset from JSON",
+  "description": "A dataset loaded from JSON fixture",
+  "stakeholders": [
+    {
+      "type": "person",
+      "name": "Jane Doe",
+      "honorific": "Dr.",
+      "affiliations": ["Test University"],
+      "roles": ["Principal Investigator"]
+    }
+  ],
+  "primary_contact": {
+    "type": "person",
+    "name": "Jane Doe",
+    "honorific": "Dr.",
+    "affiliations": ["Test University"],
+    "roles": ["Principal Investigator"]
+  },
+  "links": [
+    {
+      "label": "Study Protocol",
+      "url": "https://example.org/protocol.pdf",
+      "type": "Schema"
+    }
+  ],
+  "study_status": "ONGOING",
+  "study_context": "RESEARCH"
+}

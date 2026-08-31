@@ -1,4 +1,5 @@
 import structlog.stdlib
+
 from bento_lib.logging.structured.django import BentoDjangoAccessLoggerMiddleware
 
 __all__ = ["logger", "access_middleware"]

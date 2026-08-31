@@ -1,11 +1,13 @@
-from pydantic import BaseModel, ConfigDict
 from typing import Literal, NotRequired, Required, TypedDict
+
+from pydantic import BaseModel, ConfigDict
 
 __all__ = [
     "GA4GHServiceType",
     "GA4GHServiceOrganization",
     "GA4GHServiceOrganizationModel",
     "BentoExtraServiceInfo",
+    "DRSExtraServiceInfo",
     "GA4GHServiceInfo",
     "BentoServiceRecord",
     "BentoDataTypeServiceListing",
@@ -48,6 +50,12 @@ class BentoExtraServiceInfo(TypedDict, total=False):
     gitCommit: str
 
 
+class DRSExtraServiceInfo(TypedDict, total=False):
+    maxBulkRequestLength: Required[int]
+    objectCount: int
+    totalObjectSize: int
+
+
 class GA4GHServiceInfo(TypedDict):
     id: str
     name: str
@@ -62,6 +70,9 @@ class GA4GHServiceInfo(TypedDict):
     environment: NotRequired[Literal["dev", "prod"]]
     # Bento-specific service info properties are contained inside a nested, "bento"-keyed dictionary
     bento: NotRequired[BentoExtraServiceInfo]
+    # DRS-specific extras (as of DRS 1.5.0)
+    maxBulkRequestLength: NotRequired[int]  # ugly DRS-only top-level field; deprecated for DRS spec v2.0.0
+    drs: NotRequired[DRSExtraServiceInfo]
 
 
 class BentoServiceRecord(TypedDict):

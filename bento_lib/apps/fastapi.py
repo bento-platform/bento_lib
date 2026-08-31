@@ -1,13 +1,14 @@
+from urllib.parse import urlparse
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from urllib.parse import urlparse
 
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.fastapi import FastApiAuthMiddleware
 from bento_lib.config.pydantic import BentoFastAPIBaseConfig
-from bento_lib.logging.types import StdOrBoundLogger
 from bento_lib.logging.structured.fastapi import build_structlog_fastapi_middleware
+from bento_lib.logging.types import StdOrBoundLogger
 from bento_lib.responses.fastapi_errors import (
     bento_auth_exception_handler_factory,
     http_exception_handler_factory,

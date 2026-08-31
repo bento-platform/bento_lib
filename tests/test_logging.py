@@ -1,4 +1,5 @@
 import logging
+
 from bento_lib.logging import log_level_from_str
 from bento_lib.logging.structured import configure as struct_config
 

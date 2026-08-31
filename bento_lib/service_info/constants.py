@@ -1,4 +1,5 @@
 from typing import Literal
+
 from .types import GA4GHServiceOrganization, GA4GHServiceOrganizationModel
 
 __all__ = [

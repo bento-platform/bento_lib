@@ -1,27 +1,25 @@
-import bento_lib.responses.flask_errors as fe
-
 import asyncio
 import logging
+
 import pytest
 import responses
-
-from flask import Flask, jsonify, Request, request
+from flask import Flask, Request, jsonify, request
 from flask.testing import FlaskClient
-from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
+from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
+import bento_lib.responses.flask_errors as fe
 from bento_lib.auth.middleware.flask import FlaskAuthMiddleware
 from bento_lib.auth.permissions import P_INGEST_DATA
 from bento_lib.auth.resources import RESOURCE_EVERYTHING
 
 from .common import (
-    authz_test_include_patterns,
-    authz_test_exempt_patterns,
+    TEST_AUTHZ_HEADERS,
+    TEST_AUTHZ_VALID_POST_BODY,
     authz_test_case_params,
     authz_test_cases,
-    TEST_AUTHZ_VALID_POST_BODY,
-    TEST_AUTHZ_HEADERS,
+    authz_test_exempt_patterns,
+    authz_test_include_patterns,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +41,7 @@ def flask_client():
 
     @application.route("/500")
     def r500():
-        raise Exception("help")
+        raise Exception("help")  # noqa: TRY002
 
     @application.route("/test0")
     def test0():
@@ -111,7 +109,7 @@ def flask_client_auth():
 
     @test_app_auth.route("/get-500", methods=["GET"])
     def auth_500():
-        raise Exception("aaa")
+        raise Exception("aaa")  # noqa: TRY002
 
     @test_app_auth.route("/get-404", methods=["GET"])
     def auth_404():

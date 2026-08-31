@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Iterable, NewType
+
+from collections.abc import Iterable
+from typing import NewType
 
 
 class PermissionDefinitionError(Exception):
@@ -79,7 +81,7 @@ class Permission(str):
         return f"{verb}:{noun}"
 
     def __repr__(self):
-        return f"Permission({str(self)})"
+        return f"Permission({self!s})"
 
     @property
     def verb(self) -> PermissionVerb:

@@ -1,11 +1,15 @@
+import asyncio
 import json
-import pytest
-import responses
 import time
 
-from aioresponses import aioresponses
+import pytest
+import responses
+from aiointercept import aiointercept
+
+from bento_lib.drs import exceptions as drs_exceptions
+from bento_lib.drs import resolver as drs_resolver
+from bento_lib.drs import utils as drs_utils
 from bento_lib.responses import errors
-from bento_lib.drs import exceptions as drs_exceptions, resolver as drs_resolver, utils as drs_utils
 
 TEST_DRS_ID = "dd11912c-3433-4a0a-8a01-3c0699288bef"
 
@@ -84,15 +88,9 @@ def test_drs_uri_fetch_sync_errors():
         drs_utils.fetch_drs_record_by_uri("drs://example.org/xyz")
 
 
-@pytest.fixture
-def mocked():
-    with aioresponses() as m:
-        yield m
-
-
 @pytest.mark.asyncio
-async def test_drs_uri_fetch_async(mocked):
-    mocked.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
+async def test_drs_uri_fetch_async(aio: aiointercept):
+    aio.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
 
     assert json.dumps(
         await drs_utils.fetch_drs_record_by_uri_async(f"drs://example.org/{TEST_DRS_ID}"), sort_keys=True
@@ -100,13 +98,9 @@ async def test_drs_uri_fetch_async(mocked):
 
 
 @pytest.mark.asyncio
-async def test_drs_uri_fetch_async_errors(mocked):
-    mocked.get(
-        "https://example.org/ga4gh/drs/v1/objects/abc", payload=errors.not_found_error(drs_compat=True), status=404
-    )
-    mocked.get(
-        "https://example.org/ga4gh/drs/v1/objects/xyz", payload=errors.not_found_error(drs_compat=True), status=400
-    )
+async def test_drs_uri_fetch_async_errors(aio: aiointercept):
+    aio.get("https://example.org/ga4gh/drs/v1/objects/abc", payload=errors.not_found_error(drs_compat=True), status=404)
+    aio.get("https://example.org/ga4gh/drs/v1/objects/xyz", payload=errors.not_found_error(drs_compat=True), status=400)
 
     with pytest.raises(drs_exceptions.DrsRecordNotFound):
         await drs_utils.fetch_drs_record_by_uri_async("drs://example.org/abc")
@@ -148,10 +142,10 @@ def test_drs_resolver_class_sync():
 
 
 @pytest.mark.asyncio
-async def test_drs_resolver_class_async(mocked):
+async def test_drs_resolver_class_async(aio: aiointercept):
     r = drs_resolver.DrsResolver()
 
-    mocked.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
+    aio.get(f"https://example.org/ga4gh/drs/v1/objects/{TEST_DRS_ID}", payload=TEST_DRS_REPLY, status=200)
 
     uri = f"drs://example.org/{TEST_DRS_ID}"
     rec1 = await r.fetch_drs_record_by_uri_async(uri)
@@ -159,6 +153,6 @@ async def test_drs_resolver_class_async(mocked):
     rec2 = await r.fetch_drs_record_by_uri_async(uri)
     assert rec1 == rec2
 
-    time.sleep(1.1)
+    await asyncio.sleep(1.1)
 
     await r.fetch_drs_record_by_uri_async(uri)  # should refetch

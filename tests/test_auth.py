@@ -1,20 +1,21 @@
 import json
 
 import pytest
+
 from bento_lib.auth.helpers import permission_valid_for_resource, valid_permissions_for_resource
 from bento_lib.auth.permissions import (
-    Permission,
-    PermissionDefinitionError,
-    PERMISSIONS,
-    LEVEL_INSTANCE,
-    QUERY_VERB,
     DATA,
-    P_QUERY_PROJECT_LEVEL_BOOLEAN,
-    P_QUERY_PROJECT_LEVEL_COUNTS,
-    P_QUERY_DATA,
+    LEVEL_INSTANCE,
     P_DELETE_DATA,
     P_DELETE_DATASET,
+    P_QUERY_DATA,
+    P_QUERY_PROJECT_LEVEL_BOOLEAN,
+    P_QUERY_PROJECT_LEVEL_COUNTS,
     P_VIEW_DROP_BOX,
+    PERMISSIONS,
+    QUERY_VERB,
+    Permission,
+    PermissionDefinitionError,
 )
 from bento_lib.auth.resources import RESOURCE_EVERYTHING, build_resource
 
@@ -25,7 +26,7 @@ def test_recreate_permission_error():
 
 
 def test_permissions_equality():
-    assert P_QUERY_DATA == P_QUERY_DATA
+    assert P_QUERY_DATA == P_QUERY_DATA  # noqa: PLR0124
     assert P_QUERY_DATA == "query:data"
     assert P_QUERY_DATA != P_DELETE_DATA
     assert P_QUERY_DATA != "a"
