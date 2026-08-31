@@ -15,6 +15,10 @@ __all__ = ["Biosample"]
 
 
 class Biosample(BentoClinPhenExtraPropsModel):
+    """
+    https://phenopacket-schema.readthedocs.io/en/latest/biosample.html
+    """
+
     # canonical fields from Phenopackets V2
     id: str = Field(..., min_length=1)
     individual_id: str | None = FIELD_NULLABLE
