@@ -1,5 +1,4 @@
-from typing import Literal
-
+from geojson_pydantic import Feature, Point
 from pydantic import BaseModel, ConfigDict
 
 __all__ = ["GeoLocationProperties", "GeoLocation"]
@@ -15,8 +14,6 @@ class GeoLocationProperties(BaseModel):
     precision: str
 
 
-# TODO: inherit from GeoJSON model instead?
-class GeoLocation(BaseModel):
-    type: Literal["Feature"]
-    geometry: TODO
-    properties: GeoLocationProperties
+class GeoLocation(Feature):
+    geometry: Point
+    properties: GeoLocationProperties | None = None
