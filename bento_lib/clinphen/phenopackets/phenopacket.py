@@ -10,6 +10,7 @@ from .file import File
 from .individual import Individual
 from .interpretation import Interpretation
 from .measurement import Measurement
+from .medical_actions import MedicalAction
 from .meta_data import MetaData
 from .phenotypic_feature import PhenotypicFeature
 
