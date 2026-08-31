@@ -93,6 +93,12 @@ additional code to set up error handling and basic Bento service boilerplate.
 
 `auth` provides Python service middleware for dealing with the Bento authorization service.
 
+### `clinphen`
+
+`clinphen` contains Pydantic model definitions for Bento's 
+[Phenopackets](https://phenopacket-schema.readthedocs.io/en/latest/)-based clinical/phenotypic/experimental metadata 
+model.
+
 ### `db`
 
 `db` contains common base classes for setting up database managers.
