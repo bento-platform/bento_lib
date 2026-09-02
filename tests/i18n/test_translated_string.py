@@ -1,4 +1,5 @@
-from pydantic import BaseModel, TypeAdapter
+import pytest
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from bento_lib.i18n.typing import EN, FR, TranslatedString
 
@@ -15,6 +16,9 @@ def test_translated_string_type():
     assert ta.dump_json(HELLO, context={"translate": True}) == b'"hello"'
     assert ta.dump_json(HELLO, context={"lang": "fr"}) == b'"bonjour"'  # translate implicitly True
     assert ta.dump_json(HELLO, context={"lang": "es", "translate": True}) == b'"hello"'  # language not found
+
+    with pytest.raises(ValidationError):
+        ta.validate_python({})
 
 
 def test_translated_string_type_in_context():
