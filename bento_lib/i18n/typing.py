@@ -1,10 +1,19 @@
 from __future__ import annotations
 
-from typing import Any, override
+from typing import Annotated, Any, override
 
-from pydantic import BaseModel, GetCoreSchemaHandler, SerializationInfo
+from pydantic import AfterValidator, BaseModel, GetCoreSchemaHandler, PlainSerializer, SerializationInfo
 from pydantic_core import core_schema
 from pydantic_extra_types.language_code import LanguageAlpha2
+
+__all__ = [
+    "EN",
+    "ES",
+    "FR",
+    "TranslatedLiteral",
+    "TranslatableModel",
+    "TranslatedString",
+]
 
 EN = LanguageAlpha2("en")
 ES = LanguageAlpha2("es")
@@ -97,3 +106,33 @@ class TranslatableModel(BaseModel):
     @override
     def model_dump_json(self, **kwargs) -> str:
         return super().model_dump_json(**self._inject_lang_context(kwargs))
+
+
+type _TranslatedStringBase = str | dict[LanguageAlpha2, str]
+
+
+def _validate_translated_string(val: _TranslatedStringBase) -> _TranslatedStringBase:
+    if isinstance(val, dict) and len(val) == 0:
+        raise ValueError("TranslatedString dictionary must have at least one entry")
+    return val
+
+
+def _serialize_translated_string(val: _TranslatedStringBase, info: SerializationInfo):
+    lang: LanguageAlpha2 | None = (info.context or {}).get("lang")
+    translate: bool = (info.context or {}).get("translate", lang is not None)
+    if not translate:
+        return val
+    if isinstance(val, dict) and lang and lang in val:
+        return val[lang]
+    return val if isinstance(val, str) else next(iter(val.values()))
+
+
+"""
+Multi-language string type for Pydantic models. In order to get a 'flat' string representation, translate=True or 
+lang=<two letter ISO language code> must be passed to the Pydantic serialization context.
+"""
+type TranslatedString = Annotated[
+    _TranslatedStringBase,
+    AfterValidator(_validate_translated_string),
+    PlainSerializer(_serialize_translated_string),
+]
