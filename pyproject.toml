@@ -44,6 +44,7 @@ werkzeug = ">=3.0.6,<4"
 geojson-pydantic = "^2.0.0"
 pydantic-extra-types = "^2.11.0"
 pycountry = "^26.2.16"
+rdflib = "^7.6.0"
 
 [tool.poetry.group.dev.dependencies]
 aiointercept = "^0.1.5"
