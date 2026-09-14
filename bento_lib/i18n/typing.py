@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, override
+from typing import Annotated, Any, Literal, override
 
 from pydantic import AfterValidator, BaseModel, GetCoreSchemaHandler, PlainSerializer, SerializationInfo
 from pydantic_core import core_schema
@@ -119,12 +119,27 @@ def _validate_translated_string(val: _TranslatedStringBase) -> _TranslatedString
 
 def _serialize_translated_string(val: _TranslatedStringBase, info: SerializationInfo):
     lang: LanguageAlpha2 | None = (info.context or {}).get("lang")
-    translate: bool = (info.context or {}).get("translate", lang is not None)
-    if not translate:
+
+    # fallback should be a language code or a tuple of language codes
+    lang_fallback: LanguageAlpha2 | tuple[LanguageAlpha2, ...] = (info.context or {}).get("lang_fallback", ())
+
+    # fallback policy specifies
+    lang_fallback_policy: Literal["blank", "first"] = (info.context or {}).get("lang_fallback_policy", "first")
+
+    if not lang or isinstance(val, str):
         return val
-    if isinstance(val, dict) and lang and lang in val:
-        return val[lang]
-    return val if isinstance(val, str) else next(iter(val.values()))
+
+    if (v := val.get(lang)) is not None:
+        return v
+
+    for lf in (lang_fallback,) if isinstance(lang_fallback, LanguageAlpha2) else lang_fallback:
+        if lf in val:
+            return val[lf]
+
+    if lang_fallback_policy == "blank":
+        return ""
+
+    return next(iter(val.values()))
 
 
 """
