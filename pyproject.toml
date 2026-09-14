@@ -19,7 +19,7 @@ packages = [
 ]
 include = [
     "bento_lib/schemas/*.json",
-    "bento_lib/package.cfg",
+    "bento_lib/py.typed",
 ]
 
 [tool.poetry.dependencies]
