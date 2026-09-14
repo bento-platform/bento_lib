@@ -3,6 +3,10 @@ __all__ = [
     "RoleAnnotated",
     "PublicationType",
     "PublicationVenueType",
+    "StudyStatus",
+    "StudyStatusAnnotated",
+    "StudyContext",
+    "StudyContextAnnotated",
     "Other",
     "Phone",
     "Contact",
@@ -190,6 +194,18 @@ LinkType = TranslatedLiteral(EN, FR)(
     ("Data Request Form",      "Formulaire de demande de données"),
 )
 LinkTypeAnnotated = Annotated[str, LinkType]
+
+StudyStatus = TranslatedLiteral(EN, FR)(
+    ("ONGOING",    "EN COURS"),
+    ("COMPLETED",  "TERMINÉ"),
+)
+StudyStatusAnnotated = Annotated[str, StudyStatus]
+
+StudyContext = TranslatedLiteral(EN, FR)(
+    ("CLINICAL",  "CLINIQUE"),
+    ("RESEARCH",  "RECHERCHE"),
+)
+StudyContextAnnotated = Annotated[str, StudyContext]
 # fmt: on
 
 
@@ -400,8 +416,8 @@ class DatasetModelBase(TranslatableModel):
     last_modified: date | None = None
     participant_criteria: list[ParticipantCriteria] | None = Field(default=None, min_length=1)
 
-    study_status: Literal["ONGOING", "COMPLETED"] | None = None
-    study_context: Literal["CLINICAL", "RESEARCH"] | None = None
+    study_status: StudyStatusAnnotated | None = None
+    study_context: StudyContextAnnotated | None = None
 
     # Derived from the PCGL study model
     domain: list[str] | None = Field(
