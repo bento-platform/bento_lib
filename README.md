@@ -124,7 +124,12 @@ All Bento channels are prefixed with `bento.`.
 
 ### `i18n`
 
-`i18n` provides language literals and mixin model for handling pydantic models which are language specific.
+`i18n` provides language literals and mixin model for handling Pydantic models that contain language-specific data.
+
+### `jsonld`
+
+`jsonld` provides helper base classes and functions for creating JSON-LD (linked data) objects, especially for 
+provenance metadata.
 
 ### `logging`
 
