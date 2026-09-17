@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal, override
 
-from pydantic import AfterValidator, BaseModel, GetCoreSchemaHandler, PlainSerializer, SerializationInfo
+from pydantic import AfterValidator, BaseModel, GetCoreSchemaHandler, PlainSerializer, SerializationInfo, TypeAdapter
 from pydantic_core import core_schema
 from pydantic_extra_types.language_code import LanguageAlpha2
 
@@ -12,7 +12,9 @@ __all__ = [
     "FR",
     "TranslatedLiteral",
     "TranslatableModel",
+    "TranslatedStringFallbackPolicy",
     "TranslatedString",
+    "TRANSLATED_STRING_ADAPTER",
 ]
 
 EN = LanguageAlpha2("en")
@@ -117,6 +119,9 @@ def _validate_translated_string(val: _TranslatedStringBase) -> _TranslatedString
     return val
 
 
+type TranslatedStringFallbackPolicy = Literal["blank", "first"]
+
+
 def _serialize_translated_string(val: _TranslatedStringBase, info: SerializationInfo):
     lang: LanguageAlpha2 | None = (info.context or {}).get("lang")
 
@@ -124,7 +129,7 @@ def _serialize_translated_string(val: _TranslatedStringBase, info: Serialization
     lang_fallback: LanguageAlpha2 | tuple[LanguageAlpha2, ...] = (info.context or {}).get("lang_fallback", ())
 
     # fallback policy specifies
-    lang_fallback_policy: Literal["blank", "first"] = (info.context or {}).get("lang_fallback_policy", "first")
+    lang_fallback_policy: TranslatedStringFallbackPolicy = (info.context or {}).get("lang_fallback_policy", "first")
 
     if not lang or isinstance(val, str):
         return val
@@ -151,3 +156,9 @@ type TranslatedString = Annotated[
     AfterValidator(_validate_translated_string),
     PlainSerializer(_serialize_translated_string),
 ]
+
+"""
+Pydantic type adapter for TranslatedString type. This singleton allows rendering TranslatedStrings to a specific 
+language without needing to construct a TypeAdapter every time.
+"""
+TRANSLATED_STRING_ADAPTER = TypeAdapter(TranslatedString)
