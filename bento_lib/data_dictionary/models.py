@@ -1,11 +1,13 @@
-from jsonschema import Draft202012Validator
-from pydantic import BaseModel, Field, computed_field, model_validator
 from typing import Literal
 
+from jsonschema import Draft202012Validator
+from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic_extra_types.language_code import LanguageAlpha2
+
+from ..i18n.helpers import render_translated_text
+from ..i18n.typing import EN, TranslatedString
 from ..ontologies.models import OntologyClass
 from ..ontologies.patterns import CURIE_PATTERN
-from .types import PossiblyI18nText
-from .utils import i18n_value
 
 __all__ = [
     "DataDictionaryField",
@@ -42,8 +44,8 @@ class DataDictionaryField(BaseModel):
     is_required: bool = Field(default_factory=lambda d: d.get("is_primary_key", False), title="Is Required")
 
     property_class: OntologyClass | None
-    label: PossiblyI18nText | None  # If None, fall back to key
-    description: PossiblyI18nText = ""
+    label: TranslatedString | None  # If None, fall back to key
+    description: TranslatedString = ""
 
     unit: OntologyClass | str | None = None
 
@@ -54,7 +56,7 @@ class DataDictionaryField(BaseModel):
 
     # categorical:
     #  - in a Bento discovery configuration context, this is equivalent to "config": { "enum": null } on a string field,
-    #    meaning (in a Bento discovery context) that the data is categorical but we need to extract already-ingested
+    #    meaning (in a Bento discovery context) that the data is categorical, but we need to extract already-ingested
     #    categorical values from the database if we wanted to render a bar or pie chart.
     is_categorical: bool = Field(
         default_factory=lambda d: d.get("enum") is not None,  # Must be true if enum is set
@@ -80,14 +82,17 @@ class DataDictionaryField(BaseModel):
 
     @model_validator(mode="after")
     def check_enum(self):
-        enum_validator = Draft202012Validator({"type": "array", "items": self.as_json_schema(lang="en")})
+        enum_validator = Draft202012Validator({"type": "array", "items": self.as_json_schema(lang=EN)})
         for _ in enum_validator.iter_errors(instance=self.enum or []):
             raise ValueError(f"enum contains type other than {self.type}")
 
-    enum_labels: dict[str | int, PossiblyI18nText] | None  # TODO: only for string | int | float | ontology-class.id
+    enum_labels: dict[str | int, TranslatedString] | None  # TODO: only for string | int | float | ontology-class.id
 
     @model_validator(mode="after")
     def check_enum_labels(self):
+        if self.enum_labels is None:
+            return
+
         if self.enum_labels is not None and self.enum is None:
             raise ValueError("cannot specify enum_labels but not enum")
 
@@ -136,7 +141,7 @@ class DataDictionaryField(BaseModel):
             case _:
                 return None
 
-    def as_json_schema(self, lang: str) -> dict:
+    def as_json_schema(self, lang: LanguageAlpha2) -> dict:
         """
         Generate a JSON schema representation of the data dictionary field, for validating whether record fields match
         the data dictionary field definition.
@@ -144,7 +149,7 @@ class DataDictionaryField(BaseModel):
         :return: A JSON schema for validating JSON/dictionary records matching the field.
         """
 
-        f_desc = i18n_value(self.description, lang)
+        f_desc = render_translated_text(self.description, lang)
 
         pattern: str | None = self.pattern
 
@@ -174,12 +179,12 @@ class DataDictionaryField(BaseModel):
 
 
 class DataDictionary(BaseModel):
-    title: PossiblyI18nText = ""  # Equivalent to Semantic Engine "Schema title"
-    description: PossiblyI18nText = ""  # Equivalent to Semantic Engine "Schema description"
+    title: TranslatedString = ""  # Equivalent to Semantic Engine "Schema title"
+    description: TranslatedString = ""  # Equivalent to Semantic Engine "Schema description"
     fields: list[DataDictionaryField]  # Equivalent to Semantic Engine attributes
     additional_properties: bool = False
 
-    def as_json_schema(self, lang: str) -> dict:
+    def as_json_schema(self, lang: LanguageAlpha2) -> dict:
         """
         Generate a JSON schema representation of the data dictionary, for validating whether JSON object records match
         the data dictionary's described fields.
@@ -187,8 +192,8 @@ class DataDictionary(BaseModel):
         :return: A JSON schema for validating JSON/dictionary records matching the data dictionary's described fields.
         """
 
-        schema_title = i18n_value(self.title, lang)
-        schema_desc = i18n_value(self.description, lang)
+        schema_title = render_translated_text(self.title, lang)
+        schema_desc = render_translated_text(self.description, lang)
 
         properties = {}
         required = []
@@ -208,7 +213,7 @@ class DataDictionary(BaseModel):
             "additionalProperties": self.additional_properties,
         }
 
-    def as_json_schema_validator(self, lang: str) -> Draft202012Validator:
+    def as_json_schema_validator(self, lang: LanguageAlpha2) -> Draft202012Validator:
         """
         Return an instance of a JSON Schema validator for the JSON schema representation of the data dictionary.
         :param lang: A language for resolving I18n text objects to specific strings in the schema (descriptions, etc.)
