@@ -3,13 +3,14 @@ import responses
 import structlog.stdlib
 from django.http import JsonResponse
 from django.test import Client
+
 from tests.django_test_project.django_test_project.authz import authz
 
 from .common import (
+    TEST_AUTHZ_HEADERS,
+    TEST_AUTHZ_VALID_POST_BODY,
     authz_test_case_params,
     authz_test_cases,
-    TEST_AUTHZ_VALID_POST_BODY,
-    TEST_AUTHZ_HEADERS,
 )
 
 
@@ -49,7 +50,7 @@ def test_django_auth(
 
 
 def test_django_exc(client: Client):
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         client.post("/post-exc", data=TEST_AUTHZ_VALID_POST_BODY, content_type="application/json")
 
 

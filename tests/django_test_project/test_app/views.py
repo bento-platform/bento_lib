@@ -1,7 +1,9 @@
 import json
-from bento_lib.auth.resources import RESOURCE_EVERYTHING
-from bento_lib.auth.permissions import P_INGEST_DATA
+
 from django.http import HttpRequest, JsonResponse
+
+from bento_lib.auth.permissions import P_INGEST_DATA
+from bento_lib.auth.resources import RESOURCE_EVERYTHING
 
 from ..django_test_project.authz import authz
 
@@ -54,4 +56,4 @@ def auth_post_missing_authz(request: HttpRequest):
 
 
 def auth_post_exception(_request: HttpRequest):
-    raise Exception("hello")
+    raise ValueError("hello")

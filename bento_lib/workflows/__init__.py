@@ -4,6 +4,4 @@ __all__ = [
     "workflow_set",
 ]
 
-from . import models
-from . import utils
-from . import workflow_set
+from . import models, utils, workflow_set

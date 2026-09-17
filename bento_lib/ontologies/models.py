@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, HttpUrl, model_validator
+from typing import cast
 
-from .patterns import NC_NAME_PATTERN, CURIE_PATTERN
-from .types import PhenoV2Resource, PhenoV2OntologyClassDict
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
+
+from .patterns import CURIE_PATTERN, NC_NAME_PATTERN
+from .types import PhenoV2OntologyClassDict, PhenoV2Resource
 
 __all__ = [
     "OntologyResource",
@@ -19,6 +21,10 @@ class OntologyResource(BaseModel):
     Inspired by the Phenopackets v2 Resource model:
     https://phenopacket-schema.readthedocs.io/en/latest/resource.html
     """
+
+    # main benefit here: ontology classes with resource links become hashable
+    # also, immutability is always nice
+    model_config = ConfigDict(frozen=True)
 
     # From Phenopackets v2: "For OBO ontologies, the value of this string MUST always be the official OBO ID, which is
     #   always equivalent to the ID prefix in lower case. Examples: hp, go, mp, mondo Consult http://obofoundry.org for
@@ -78,7 +84,10 @@ class VersionedOntologyResource(OntologyResource):
     version: str = Field(..., title="Version", description="Ontology resource version")
 
     def to_phenopackets_repr(self) -> PhenoV2Resource:
-        return self.model_dump(mode="json", include={"id", "version", "name", "url", "namespace_prefix", "iri_prefix"})
+        return cast(
+            PhenoV2Resource,
+            self.model_dump(mode="json", include={"id", "version", "name", "url", "namespace_prefix", "iri_prefix"}),
+        )
 
 
 class OntologyClass(BaseModel):
@@ -87,11 +96,14 @@ class OntologyClass(BaseModel):
     https://phenopacket-schema.readthedocs.io/en/latest/ontologyclass.html
     """
 
+    # main benefit here: ontology classes become hashable
+    model_config = ConfigDict(frozen=True)
+
     id: str = Field(..., pattern=CURIE_PATTERN, title="ID", description="CURIE-formatted ontology class ID")
     label: str = Field(..., title="Label", description="Human-readable label for the ontology class", min_length=1)
 
     def to_phenopackets_repr(self) -> PhenoV2OntologyClassDict:
-        return self.model_dump(mode="json", include={"id", "label"})
+        return cast(PhenoV2OntologyClassDict, self.model_dump(mode="json", include={"id", "label"}))
 
 
 class ResourceOntologyClass(OntologyClass):
@@ -106,7 +118,7 @@ class ResourceOntologyClass(OntologyClass):
     )
 
     @model_validator(mode="after")
-    def check_curie(self) -> "ResourceOntologyClass":
+    def check_curie(self) -> ResourceOntologyClass:
         if not self.id.startswith(self.ontology.namespace_prefix + ":"):
             raise ValueError("class CURIE must start with ontology resource namespace prefix")
         return self

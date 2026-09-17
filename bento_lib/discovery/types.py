@@ -1,7 +1,7 @@
-from typing import Literal, TypeAlias
+from typing import Literal
 
 __all__ = ["WarningsTuple", "DiscoveryEntity"]
 
-WarningsTuple: TypeAlias = tuple[tuple[tuple[int | str, ...], str], ...]
+type WarningsTuple = tuple[tuple[tuple[int | str, ...], str], ...]
 
-DiscoveryEntity: TypeAlias = Literal["phenopacket", "individual", "biosample", "experiment", "experiment_result"]
+type DiscoveryEntity = Literal["phenopacket", "individual", "biosample", "experiment", "experiment_result"]

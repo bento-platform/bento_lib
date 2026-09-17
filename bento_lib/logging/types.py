@@ -1,6 +1,7 @@
 from logging import Logger
-from structlog.stdlib import BoundLogger
 from typing import Literal
+
+from structlog.stdlib import BoundLogger
 
 __all__ = [
     "LogLevelLiteral",
@@ -8,5 +9,5 @@ __all__ = [
 ]
 
 
-LogLevelLiteral = Literal["debug", "info", "warning", "error"]
-StdOrBoundLogger = Logger | BoundLogger
+type LogLevelLiteral = Literal["debug", "info", "warning", "error"]
+type StdOrBoundLogger = Logger | BoundLogger

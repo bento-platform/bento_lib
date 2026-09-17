@@ -1,6 +1,10 @@
 import re
-from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
 from typing import Annotated, Literal, Self, get_args
+
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
+
+from bento_lib.ontologies.models import OntologyClass
+
 from ..types import DiscoveryEntity
 from ._internal import NoAdditionalProperties
 
@@ -17,11 +21,14 @@ __all__ = [
     # date
     "DateFieldConfig",
     "DateFieldDefinition",
+    # ontology-class
+    "OntologyClassConfig",
+    "OntologyClassFieldDefinition",
     # sum type:
     "FieldDefinition",
 ]
 
-DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity)
+DISCOVERY_ENTITIES: tuple[str, ...] = get_args(DiscoveryEntity.__value__)  # __value__ accesses inner Literal[...] type
 DISCOVERY_MAPPING_START_PATTERN: re.Pattern = re.compile(rf"^(({'|'.join(DISCOVERY_ENTITIES)})/)[a-zA-Z_]")
 DISCOVERY_MAPPING_FIELD_PART_PATTERN: re.Pattern = re.compile("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
@@ -66,7 +73,23 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
     title: str = Field(..., title="Title", description="Field title")
     # TODO: make optional and pull from Bento schema if not set:
     description: str = Field(..., title="Description", description="Field description")
-    datatype: Literal["string", "number", "date"] = DataTypeField
+    datatype: Literal["string", "number", "date", "ontology-class"] = DataTypeField
+
+    # Somewhat of a display control; doesn't provide any "bool" level because we don't generally have boolean charts.
+    # Controls whether the field will be available for charts/search in a given scope context; useful for specific types
+    # of data (e.g., geolocation data) which may be too sensitive to show publically even in a censored manner.
+    #  - e.g., if this is set to "data", this search filter/chart would only show up if the user has the Bento
+    #    query:data permission.
+    #  - if this is set to "counts" (the default value), and the user has only these permissions, then:
+    #     - in a project-scoped context, this chart would always show up.
+    #     - with only project-level counts permissions in a dataset-scoped context, this search filter/chart *would not*
+    #       show up.
+    minimum_permissions: Literal["counts", "data"] = Field(
+        default="counts",
+        title="Minimum permissions",
+        description="Minimum permissions needed to make the field available in charts / filtering.",
+    )
+
     # --- The below fields are currently valid, but need to be reworked for new search ---------------------------------
     mapping_for_search_filter: str | None = Field(
         default=None,
@@ -123,6 +146,11 @@ class StringFieldConfig(BaseModel, NoAdditionalProperties):
             "auto-populated from data service(s), excluding values which have counts below or at the threshold set in "
             "the discovery rules."
         ),
+    )
+    labels: dict[str, str] | None = Field(
+        default=None,
+        title="Labels",
+        description="Human-readable labels for enum values. Structure is {<enum value>: <label>}.",
     )
 
 
@@ -202,16 +230,16 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     """
     Configuration for a number field with automatically-generated bins.
 
-    There are two broad cases for a lower or upper boundary of the bin range, depending on the value of the
-    lowest/highest bin and taper_left/right. For instance, the following cases apply to the lower boundary:
+    Behaviour is similar to manually configured bins. For instance, the following cases apply to the lower boundary:
 
         If minimum == taper_left, bins are generated from taper_left to taper_right:
             so given {"minimum": 5, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
                 [5, 15)   [15, 25)   [25, 35)   ...
-        If minimum < taper_left, an "everything below taper_left" bin is added for values within [minumum, taper_left):
+        If minimum < taper_left, an "everything below taper_left" bin is added for values within [minimum, taper_left):
             so given {"minimum": 0, "taper_left": 5, "bin_size": 10, ...}, the generated bins are:
                 <5*  [5, 15)   [15, 25)   [25, 35)   ...
                 *but only includes values in [0, 5)
+        If minimum is None, the same "everything below taper_left" bin is added, but is unbounded from below.
 
     Note: limited to operations on integer values for simplicity.
     A word of caution: when implementing handling of floating point values, be aware of string format (might need to
@@ -225,21 +253,21 @@ class AutoBinsNumberFieldConfig(BaseNumberFieldConfig, NoAdditionalProperties):
     taper_right: int = Field(
         ..., title="Taper right", description="Lower limit (inclusive) of largest bin, unless maximum = taper_right."
     )
-    minimum: int = Field(..., title="Minimum", description="Minimum value to include in binned data")
-    maximum: int = Field(..., title="Maximum", description="Maximum value to include in binned data")
+    minimum: int | None = Field(None, title="Minimum", description="Minimum value to include in binned data")
+    maximum: int | None = Field(None, title="Maximum", description="Maximum value to include in binned data")
 
     @model_validator(mode="after")
     def check_bin_config(self) -> Self:
-        if self.maximum < self.minimum:
+        if self.maximum is not None and self.minimum is not None and self.maximum < self.minimum:
             raise ValueError("maximum cannot be less than minimum")
 
         if self.taper_right < self.taper_left:
             raise ValueError("taper_right cannot be less than taper_left")
 
-        if self.minimum > self.taper_left:
+        if self.minimum is not None and self.minimum > self.taper_left:
             raise ValueError("taper_left cannot be less than minimum")
 
-        if self.taper_right > self.maximum:
+        if self.maximum is not None and self.taper_right > self.maximum:
             raise ValueError("taper_right cannot be greater than maximum")
 
         if (self.taper_right - self.taper_left) % self.bin_size:
@@ -279,8 +307,7 @@ class NumberFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
 
 
 class DateFieldConfig(BaseModel, NoAdditionalProperties):
-    # Currently only binning by month is implemented:
-    bin_by: Literal["month"] = Field(
+    bin_by: Literal["year", "month"] = Field(
         ...,
         title="Bin by",
         description="Specifies how to bin the date field for filtering and chart rendering.",
@@ -296,12 +323,39 @@ class DateFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
     config: DateFieldConfig = Field(..., title="Config", description="Additional configuration for the date field.")
 
 
+class OntologyClassConfig(BaseModel, NoAdditionalProperties):
+    enum: list[str | OntologyClass] | None = Field(
+        ...,
+        title="Enum",
+        description=(
+            "Possible IDs or ontology class objects for this ontology class field which can be used for filtering. "
+            "If null, these will be auto-populated from data service(s), excluding values which have counts below or "
+            "at the threshold set in the discovery rules."
+        ),
+    )
+
+
+class OntologyClassFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
+    """
+    Defines an ontology class field (Phenopackets-style; see bento_lib.ontologies.models.OntologyClass). Roughly similar
+    to a string, but for this specific object format. Search queries should be done via ontology class ID; the label is
+    to be used for user interface rendering.
+    """
+
+    datatype: Literal["ontology-class"] = DataTypeField
+    config: OntologyClassConfig = Field(
+        ..., title="Config", description="Additional configuration for the ontology class field."
+    )
+
+
 class FieldDefinition(RootModel):
     """
     Field definition model - discriminated union of data/number/string fields, based on datatype property.
     """
 
-    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition = Field(..., discriminator="datatype")
+    root: DateFieldDefinition | NumberFieldDefinition | StringFieldDefinition | OntologyClassFieldDefinition = Field(
+        ..., discriminator="datatype"
+    )
 
     def __getattr__(self, item):
         return getattr(self.root, item)

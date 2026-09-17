@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+
 from ._internal import NoAdditionalProperties
 
 __all__ = ["SearchSection"]

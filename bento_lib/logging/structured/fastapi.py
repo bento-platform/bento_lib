@@ -1,9 +1,10 @@
-import structlog
 import time
+
+import structlog
 from fastapi import Request, Response, status
 from uvicorn.protocols.utils import get_path_with_query_string
 
-from .common import LogHTTPInfo, LogNetworkInfo, LogNetworkClientInfo, log_access
+from .common import LogHTTPInfo, LogNetworkClientInfo, LogNetworkInfo, log_access
 
 __all__ = [
     "build_structlog_fastapi_middleware",
@@ -30,11 +31,12 @@ def build_structlog_fastapi_middleware(service_kind: str):
 
         try:
             response = await call_next(request)
-        except Exception as e:  # pragma: no cover
+        except Exception as e:  # pragma: no cover  # noqa: BLE001
             await service_logger.aexception("uncaught exception", exc_info=e)
         finally:
             # When the response has finished or errored out, write the access log message:
             # noinspection PyTypeChecker
+            client = request.client
             await log_access(
                 access_logger,
                 start_time,
@@ -45,10 +47,12 @@ def build_structlog_fastapi_middleware(service_kind: str):
                     version=request.scope["http_version"],
                 ),
                 network_info=LogNetworkInfo(
-                    client=LogNetworkClientInfo(host=request.client.host, port=request.client.port)
+                    client=LogNetworkClientInfo(
+                        host=client.host if client else None, port=client.port if client else None
+                    )
                 ),
             )
 
-            return response
+            return response  # noqa: B012
 
     return access_log_middleware

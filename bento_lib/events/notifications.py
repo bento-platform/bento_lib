@@ -1,10 +1,7 @@
-# TODO: Python 3.9: lowercase dict typing
-from typing import Dict
-
 __all__ = ["format_notification"]
 
 
-def format_notification(title: str, description: str, notification_type: str, action_target: str) -> Dict[str, str]:
+def format_notification(title: str, description: str, notification_type: str, action_target: str) -> dict[str, str]:
     """
     Takes in all parameters needed to construct a notification and returns a
     dictionary in the correct format.

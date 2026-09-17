@@ -1,7 +1,9 @@
+from datetime import UTC, datetime
+
 import psycopg2.sql
-from bento_lib.search import build_search_response, data_structure, operations, postgres, queries
-from datetime import datetime
 from pytest import mark, raises
+
+from bento_lib.search import build_search_response, data_structure, operations, postgres, queries
 
 NUMBER_SEARCH = {
     "operations": [
@@ -364,7 +366,7 @@ TEST_INVALID_EXPRESSION_SYNTAX = (
     *TEST_INVALID_FUNCTIONS,
 )
 
-TEST_INVALID_LITERALS = (dict(), tuple(), set(), lambda x: x)
+TEST_INVALID_LITERALS = ({}, (), set(), lambda x: x)
 
 REDUCE_NOT_1 = [queries.FUNCTION_NOT, [queries.FUNCTION_NOT, True]]
 REDUCE_NOT_2 = [queries.FUNCTION_NOT, REDUCE_NOT_1]
@@ -811,7 +813,7 @@ POSTGRES_TYPES = ("TEXT", "INTEGER", "DOUBLE PRECISION", "JSON", "JSON", "BOOLEA
 
 
 def test_build_search_response():
-    test_response = build_search_response({"some": "result"}, datetime.now())
+    test_response = build_search_response({"some": "result"}, datetime.now(UTC))
 
     assert isinstance(test_response, dict)
     assert tuple(sorted(test_response.keys())) == ("results", "time")
@@ -973,7 +975,7 @@ def test_data_structure_search_1(e, i, v, ic):
 @mark.parametrize("query", TEST_QUERIES)
 def test_data_structure_search_2(query):
     q = query["query"]
-    i, v, ni, nm = query["ds"]
+    i, v, _ni, nm = query["ds"]
 
     # These are all valid, so we should be able to try out the different options with no negative effects
     assert (
@@ -1026,7 +1028,7 @@ def test_data_structure_search_2(query):
 @mark.parametrize("query", TEST_QUERIES)
 def test_data_structure_search_3(query):
     q = query["query"]
-    i, v, ni, nm = query["ds"]
+    _i, _v, ni, nm = query["ds"]
 
     als = data_structure._collect_array_lengths(
         queries.convert_query_to_ast(q), TEST_DATA_1, TEST_SCHEMA, resolve_checks=True

@@ -1,7 +1,7 @@
 import re
+from pathlib import Path
 
 from bento_lib import workflows
-from pathlib import Path
 
 __all__ = [
     "authz_test_include_patterns",

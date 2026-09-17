@@ -1,6 +1,5 @@
 from ._utils import load_json_schema
 
-
 __all__ = ["SERVICE_INFO_SCHEMA"]
 
 

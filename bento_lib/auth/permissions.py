@@ -1,4 +1,7 @@
-from typing import Iterable, NewType
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import NewType
 
 
 class PermissionDefinitionError(Exception):
@@ -24,8 +27,8 @@ PermissionVerb = NewType("PermissionVerb", str)
 PermissionNoun = NewType("PermissionNoun", str)
 
 
-PERMISSIONS: list["Permission"] = []
-PERMISSIONS_BY_STRING: dict[str, "Permission"] = {}
+PERMISSIONS: list[Permission] = []
+PERMISSIONS_BY_STRING: dict[str, Permission] = {}
 
 
 class Permission(str):
@@ -35,7 +38,7 @@ class Permission(str):
         noun: PermissionNoun,
         min_level_required: Level = LEVEL_DATASET,
         supports_data_type_narrowing: bool | None = None,
-        gives: Iterable["Permission"] = (),
+        gives: Iterable[Permission] = (),
     ):
         super().__init__()
 
@@ -50,10 +53,10 @@ class Permission(str):
 
         # Create full set using nested gives
         base_gives = set(gives)  # in case our iterable is a generator, consume it only once
-        full_gives: set["Permission"] = set(base_gives)  # copy base_gives as a starting point
+        full_gives: set[Permission] = set(base_gives)  # copy base_gives as a starting point
         for g in base_gives:
             full_gives |= g.gives
-        self._gives: frozenset["Permission"] = frozenset(full_gives)
+        self._gives: frozenset[Permission] = frozenset(full_gives)
 
         str_rep = str(self)
 
@@ -69,7 +72,7 @@ class Permission(str):
         noun: PermissionNoun,
         min_level_required: Level = LEVEL_DATASET,
         supports_data_type_narrowing: bool | None = None,
-        gives: Iterable["Permission"] = (),
+        gives: Iterable[Permission] = (),
     ):
         return super().__new__(cls, cls._str_form(verb, noun))
 
@@ -78,7 +81,7 @@ class Permission(str):
         return f"{verb}:{noun}"
 
     def __repr__(self):
-        return f"Permission({str(self)})"
+        return f"Permission({self!s})"
 
     @property
     def verb(self) -> PermissionVerb:
@@ -89,7 +92,7 @@ class Permission(str):
         return self._noun
 
     @property
-    def gives(self) -> frozenset["Permission"]:
+    def gives(self) -> frozenset[Permission]:
         return self._gives
 
     @property

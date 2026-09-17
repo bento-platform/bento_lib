@@ -1,14 +1,13 @@
 import traceback
+from collections.abc import Callable
+from functools import partial
 
 from flask import jsonify, request
-from functools import partial
-from typing import Callable
 
 from .._internal import internal_logger
 from ..auth.types import MarkAuthzDoneType
 from ..logging.types import StdOrBoundLogger
 from ..responses import errors
-
 
 __all__ = [
     "flask_error_wrap_with_traceback",

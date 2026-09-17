@@ -17,8 +17,6 @@ class StreamingException(Exception):
     Generic streaming exception / base class for other bento_lib.streaming exceptions.
     """
 
-    pass
-
 
 RangeNotSatisfiableReason = Literal["start>=length", "end>=length", "inverted", "overlap", "proxied"]
 
@@ -34,7 +32,7 @@ class StreamingRangeNotSatisfiable(StreamingException):
         return self._reason
 
     @property
-    def n_bytes(self) -> int:
+    def n_bytes(self) -> int | None:
         return self._n_bytes
 
 

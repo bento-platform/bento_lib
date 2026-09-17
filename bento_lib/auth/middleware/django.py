@@ -1,13 +1,13 @@
 import logging
+from collections.abc import Awaitable, Callable
 
 from asgiref.sync import iscoroutinefunction, markcoroutinefunction
-from django.http import JsonResponse, HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from rest_framework.request import Request as DrfRequest
-from typing import Awaitable, Callable
 
-from bento_lib.responses.errors import http_error
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.base import BaseAuthMiddleware
+from bento_lib.responses.errors import http_error
 
 __all__ = [
     "DjangoAuthMiddleware",

@@ -1,9 +1,9 @@
 import json
+from typing import Any
 
 from pydantic import Field
 from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, EnvSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
-from typing import Any
 
 from bento_lib.logging import LogLevelLiteral
 from bento_lib.service_info.constants import SERVICE_ORGANIZATION_C3G_PYDANTIC

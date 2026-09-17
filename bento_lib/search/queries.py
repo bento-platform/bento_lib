@@ -1,7 +1,8 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: I001
 
 from abc import ABC
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from ._types import JSONSchema
 from .operations import (
@@ -154,12 +155,12 @@ FUNCTION_SEARCH_OP_MAP = {
 # given field for example 20, in a query for age greater than 20.
 # In the AST they are distinct from Expressions
 literal_types = str, int, float, bool  # TODO: How to handle dict in practical cases?
-LiteralValue = Union[str, int, float, bool]
+type LiteralValue = str | int | float | bool
 
-FunctionName = str
+type FunctionName = str
 
 
-Query = Union[list, LiteralValue]
+type Query = list | LiteralValue
 
 
 # TODO: Prevent nested resolves
@@ -167,7 +168,7 @@ Query = Union[list, LiteralValue]
 
 
 # AST = Union["Expression", "Literal"]
-Args = Tuple["AST", ...]
+type Args = tuple[AST, ...]
 
 
 class AST(ABC):
@@ -257,17 +258,17 @@ def convert_query_to_ast(query: Query) -> AST:
     """
     if isinstance(query, list):
         if len(query) == 0 or not isinstance(query[0], str) or query[0] not in VALID_FUNCTIONS:
-            raise SyntaxError("Invalid expression: {}".format(query))
+            raise SyntaxError(f"Invalid expression: {query}")
 
         try:
             return Expression(query[0], tuple(convert_query_to_ast(q) for q in query[1:]))
         except AssertionError:
-            raise SyntaxError("Invalid number of arguments for function {}: {}".format(query[0], len(query[1:])))
+            raise SyntaxError(f"Invalid number of arguments for function {query[0]}: {len(query[1:])}")
 
     elif any(isinstance(query, t) for t in literal_types):
         return Literal(query)
 
-    raise ValueError("Invalid literal: {}".format(query))
+    raise ValueError(f"Invalid literal: {query}")
 
 
 def simplify_nots(ast: AST) -> AST:
@@ -287,27 +288,27 @@ def convert_query_to_ast_and_preprocess(query: Query) -> AST:
     return simplify_nots(ast)
 
 
-def ast_to_and_asts(ast: AST) -> Tuple[AST, ...]:
+def ast_to_and_asts(ast: AST) -> tuple[AST, ...]:
     # (and e1 e2) => <e1, e2>
     # (and (and e1 e2) e3) => <e1, e2, e3>
     # (and e1 (and e2 e3)) => <e1, e2, e3>
     # (and (and e1 e2) (and e3 e4)) => <e1, e2, e3, e4>
     # etc.
 
-    if not ast.type == "e" or ast.fn != FUNCTION_AND:
+    if ast.type != "e" or ast.fn != FUNCTION_AND:
         return (ast,)
 
-    return (*ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1]))
+    return *ast_to_and_asts(ast.args[0]), *ast_to_and_asts(ast.args[1])
 
 
-def _and_asts_to_ast_rec(asts: Tuple[AST, ...]) -> AST:
+def _and_asts_to_ast_rec(asts: tuple[AST, ...]) -> AST:
     if len(asts) == 1:  # Base case
         return asts[0]
 
     return Expression(FUNCTION_AND, [asts[0], _and_asts_to_ast_rec(asts[1:])])
 
 
-def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
+def and_asts_to_ast(asts: tuple[AST, ...]) -> AST | None:
     # ()               => None
     # (e1, e2, e3, e4) => (and e1 (and e2 (and e3 e4)))
 
@@ -320,7 +321,7 @@ def and_asts_to_ast(asts: Tuple[AST, ...]) -> Optional[AST]:
 def check_operation_permissions(
     ast: AST,
     schema: JSONSchema,
-    search_getter: Callable[[Tuple[Literal, ...], dict], dict],
+    search_getter: Callable[[tuple[Literal, ...], dict], dict],
     internal: bool = False,
 ):
     if ast.type == "l":

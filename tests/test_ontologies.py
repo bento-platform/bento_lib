@@ -1,7 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from bento_lib.ontologies import common_resources as cr, common_classes as ct, models as m
+from bento_lib.ontologies import common_classes as ct
+from bento_lib.ontologies import common_resources as cr
+from bento_lib.ontologies import models as m
 
 
 def test_ontology_resources():
@@ -38,6 +40,10 @@ def test_ontology_classes():
         "id": "NCBITaxon:9606",
         "label": "Homo sapiens",
     }
+
+
+def test_ontology_classes_hashable():
+    assert hash(ct.NCBI_TAXON_HOMO_SAPIENS)  # should be hashable via pydantic frozen config
 
 
 def test_ontology_class_validation():

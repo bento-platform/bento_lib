@@ -1,11 +1,12 @@
 import asyncio
 import copy
+from typing import cast
 
 from bento_lib.config.pydantic import BentoBaseConfig
 from bento_lib.logging.types import StdOrBoundLogger
-from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD, SERVICE_GROUP_BENTO
-from .types import BentoExtraServiceInfo, GA4GHServiceType, GA4GHServiceOrganization, GA4GHServiceInfo
 
+from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD, SERVICE_GROUP_BENTO
+from .types import BentoExtraServiceInfo, GA4GHServiceInfo, GA4GHServiceOrganization, GA4GHServiceType
 
 __all__ = [
     "build_service_info",
@@ -55,10 +56,11 @@ async def build_service_info(
             # noinspection PyTypeChecker
             service_info_dict["bento"]["gitCommit"] = res_commit
 
-    except Exception as e:  # pragma: no cover
+    except Exception as e:  # pragma: no cover  # noqa: BLE001
+        # TODO: catch more specific exceptions
         except_name = type(e).__name__
         # TODO: If we port to just structlog, this should be an async call (aerror) instead.
-        logger.error(f"Error retrieving git information: {str(except_name)}")
+        logger.error(f"Error retrieving git information: {except_name!s}")
 
     return service_info_dict  # updated service info with the git info
 
@@ -72,22 +74,19 @@ async def build_service_info_from_pydantic_config(
     service_type: GA4GHServiceType,
     version: str,
 ) -> GA4GHServiceInfo:
-    desc = config.service_description
-    service_org: GA4GHServiceOrganization = config.service_organization.model_dump(mode="json")
+    base_service_info: GA4GHServiceInfo = {
+        "id": config.service_id,
+        "name": config.service_name,
+        "type": service_type,
+        "organization": cast(GA4GHServiceOrganization, config.service_organization.model_dump(mode="json")),
+        "contactUrl": config.service_contact_url,
+        "version": version,
+        "bento": bento_service_info,
+    }
+    if desc := config.service_description:
+        base_service_info["description"] = desc
     return await build_service_info(
-        {
-            "id": config.service_id,
-            "name": config.service_name,
-            "type": service_type,
-            **({"description": desc} if desc else {}),
-            "organization": service_org,
-            "contactUrl": config.service_contact_url,
-            "version": version,
-            "bento": bento_service_info,
-        },
-        debug=config.bento_debug,
-        local=config.bento_container_local,
-        logger=logger,
+        base_service_info, debug=config.bento_debug, local=config.bento_container_local, logger=logger
     )
 
 
