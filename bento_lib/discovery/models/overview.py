@@ -3,6 +3,8 @@ from typing import Any, Literal
 from geojson_pydantic import Feature, FeatureCollection, Polygon
 from pydantic import BaseModel, Field, NonNegativeInt, RootModel, conlist
 
+from bento_lib.i18n.typing import TranslatedString
+
 from ._internal import NoAdditionalProperties
 
 __all__ = [
@@ -106,7 +108,7 @@ class OverviewSection(BaseModel, NoAdditionalProperties):
     Groups charts into a section with a title, e.g., {"section_title": "Demographics", "charts": [{...}, {...}]}
     """
 
-    section_title: str = Field(
+    section_title: TranslatedString = Field(
         ...,
         title="Section title",
         description="Chart section title, for an overview dashboard or chart management sectioning.",

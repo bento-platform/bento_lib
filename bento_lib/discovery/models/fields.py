@@ -3,6 +3,7 @@ from typing import Annotated, Literal, Self, get_args
 
 from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
 
+from bento_lib.i18n.typing import TranslatedString
 from bento_lib.ontologies.models import OntologyClass
 
 from ..types import DiscoveryEntity
@@ -70,9 +71,9 @@ class BaseFieldDefinition(BaseModel, NoAdditionalProperties):
         pattern=DISCOVERY_MAPPING_START_PATTERN,
     )
     # TODO: make optional and pull from Bento schema if not set:
-    title: str = Field(..., title="Title", description="Field title")
+    title: TranslatedString = Field(..., title="Title", description="Field title")
     # TODO: make optional and pull from Bento schema if not set:
-    description: str = Field(..., title="Description", description="Field description")
+    description: TranslatedString = Field(..., title="Description", description="Field description")
     datatype: Literal["string", "number", "date", "ontology-class"] = DataTypeField
 
     # Somewhat of a display control; doesn't provide any "bool" level because we don't generally have boolean charts.
@@ -147,10 +148,12 @@ class StringFieldConfig(BaseModel, NoAdditionalProperties):
             "the discovery rules."
         ),
     )
-    labels: dict[str, str] | None = Field(
+    labels: dict[str, TranslatedString] | None = Field(
         default=None,
         title="Labels",
-        description="Human-readable labels for enum values. Structure is {<enum value>: <label>}.",
+        description=(
+            "Human-readable labels for enum values. Structure is {<enum value>: <label (optionally translated)>}."
+        ),
     )
 
 
@@ -164,7 +167,7 @@ class StringFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
 
 
 class BaseNumberFieldConfig(BaseModel, NoAdditionalProperties):
-    units: str | None = Field(
+    units: TranslatedString | None = Field(
         default=None,
         title="Units",
         description=(
