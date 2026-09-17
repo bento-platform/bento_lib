@@ -252,3 +252,35 @@ def test_funding_source_all_null_invalid():
     """FundingSource rejects a completely empty initialization."""
     with pytest.raises(ValidationError):
         FundingSource(funder=None, grant_numbers=None)
+
+
+def test_dataset_model_duo_codes_resource_validation(dataset_minimal):
+    """DUO code OntologyClass entries must have a matching resource by namespace_prefix."""
+    ds_dict = dataset_minimal.model_dump()
+    del ds_dict["identifier"]
+
+    DUO_RESOURCE = {
+        "id": "duo",
+        "version": "2021-02-23",
+        "namespace_prefix": "DUO",
+        "iri_prefix": "http://purl.obolibrary.org/obo/DUO_",
+        "url": "http://purl.obolibrary.org/obo/duo.owl",
+        "name": "Data Use Ontology",
+    }
+    ds_dict["duo_codes"] = [{"id": "DUO:0000007", "label": "disease specific research"}]
+
+    # DUO resource missing — should fail
+    ds_dict["resources"] = None
+    with pytest.raises(Exception, match="no matching resource"):
+        DatasetModelBase.model_validate(ds_dict)
+
+    # DUO resource present — should pass
+    ds_dict["resources"] = [DUO_RESOURCE]
+    ds = DatasetModelBase.model_validate(ds_dict)
+    assert ds.duo_codes is not None
+    assert ds.duo_codes[0].id == "DUO:0000007"
+
+    # duo_codes=None always passes
+    ds_dict["duo_codes"] = None
+    ds_dict["resources"] = None
+    DatasetModelBase.model_validate(ds_dict)  # no error
