@@ -62,7 +62,7 @@ def test_dataset_model_minimal(dataset_minimal):
     assert ds.last_modified is None
     assert ds.domain is None
     assert isinstance(ds.stakeholders[0], Person)
-    assert ds.study_status == "ONGOING"
+    assert ds.study_status == "Ongoing"
 
 
 def test_dataset_model_translation(dataset_full):
