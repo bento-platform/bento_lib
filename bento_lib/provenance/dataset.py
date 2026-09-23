@@ -482,7 +482,7 @@ class DatasetModelBase(TranslatableModel):
     @model_validator(mode="after")
     def check_duplicate_publications(self) -> Self:
         pub_urls: set[str] = set()
-        for pub in (self.publications or ()):
+        for pub in self.publications or ():
             if (purl := str(pub.url)) in pub_urls:
                 raise ValueError("publication URLs must be unique")
             pub_urls.add(purl)
