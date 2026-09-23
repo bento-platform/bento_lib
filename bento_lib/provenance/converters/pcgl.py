@@ -126,8 +126,8 @@ def pcgl_study_to_dataset(
         release_date=release_date,
         last_modified=last_modified,
         participant_criteria=_parse_participant_criteria(study.participant_criteria),
-        study_status=study.status.capitalize(),
-        study_context=study.context.capitalize(),
+        study_status=study.status,
+        study_context=study.context,
         domain=list(study.domain),  # Convert list[StudyDomain] to list[str]
         program_name=study.program_name,
         pcgl_dac_id=study.dac_id,

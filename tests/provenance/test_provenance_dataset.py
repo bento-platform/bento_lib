@@ -252,3 +252,16 @@ def test_funding_source_all_null_invalid():
     """FundingSource rejects a completely empty initialization."""
     with pytest.raises(ValidationError):
         FundingSource(funder=None, grant_numbers=None)
+
+
+def test_study_status_context_case_insensitive(dataset_minimal):
+    data = dataset_minimal.model_dump()
+    data.update(study_status="ONGOING", study_context="research")
+    ds = DatasetModel(**data)
+    assert ds.study_status == "Ongoing"
+    assert ds.study_context == "Research"
+
+    data.update(study_status="EN COURS", study_context="RECHERCHE")
+    ds = DatasetModel(**data)
+    assert ds.study_status == "Ongoing"
+    assert ds.study_context == "Research"

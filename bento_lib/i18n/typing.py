@@ -30,10 +30,11 @@ class TranslatedLiteral:
         )
     """
 
-    def __init__(self, *langs: LanguageAlpha2):
+    def __init__(self, *langs: LanguageAlpha2, case_insensitive: bool = False):
         if not langs or langs[0] != EN:
             raise ValueError("First language must be 'en' (canonical)")
         self.langs = langs
+        self.case_insensitive = case_insensitive
 
     def __call__(self, *terms: tuple[str, ...]) -> TranslatedLiteral:
         """Bind term tuples to the language sequence. Returns self for chaining."""
@@ -55,6 +56,9 @@ class TranslatedLiteral:
             for val in t:
                 self.to_en[val] = t[0]
 
+        # Casefolded lookup: any value, ignoring case -> English key
+        self._to_en_folded: dict[str, str] = {val.casefold(): en for val, en in self.to_en.items()}
+
         return self
 
     def translate(self, value: str, lang: LanguageAlpha2) -> str:
@@ -73,6 +77,8 @@ class TranslatedLiteral:
             return value
         if value in self.to_en:
             return self.to_en[value]
+        if self.case_insensitive and (en := self._to_en_folded.get(value.casefold())) is not None:
+            return en
         raise ValueError(f"Invalid value '{value}'. Accepted values: {sorted(self.to_en.keys())}")
 
     def _serialize(self, v: str, info: SerializationInfo) -> Any:

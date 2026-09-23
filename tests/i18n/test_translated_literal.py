@@ -109,6 +109,23 @@ class TestValidate:
             access_level._validate("Nope")
 
 
+class TestCaseInsensitive:
+    def test_default_is_case_sensitive(self, access_level):
+        with pytest.raises(ValueError, match="Invalid value 'OPEN'"):
+            access_level._validate("OPEN")
+
+    def test_opt_in_matches_any_case_and_returns_canonical(self):
+        tl = TranslatedLiteral(EN, FR, case_insensitive=True)(("Ongoing", "En cours"))
+        assert tl._validate("ONGOING") == "Ongoing"
+        assert tl._validate("ongoing") == "Ongoing"
+        assert tl._validate("EN COURS") == "Ongoing"
+
+    def test_opt_in_still_rejects_invalid(self):
+        tl = TranslatedLiteral(EN, FR, case_insensitive=True)(("Ongoing", "En cours"))
+        with pytest.raises(ValueError, match="Invalid value 'Nope'"):
+            tl._validate("Nope")
+
+
 # ── Pydantic integration ─────────────────────────────────────────────────
 
 

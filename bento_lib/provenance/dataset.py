@@ -195,13 +195,13 @@ LinkType = TranslatedLiteral(EN, FR)(
 )
 LinkTypeAnnotated = Annotated[str, LinkType]
 
-StudyStatus = TranslatedLiteral(EN, FR)(
+StudyStatus = TranslatedLiteral(EN, FR, case_insensitive=True)(
     ("Ongoing",    "En cours"),
     ("Completed",  "Terminé"),
 )
 StudyStatusAnnotated = Annotated[str, StudyStatus]
 
-StudyContext = TranslatedLiteral(EN, FR)(
+StudyContext = TranslatedLiteral(EN, FR, case_insensitive=True)(
     ("Clinical",  "Clinique"),
     ("Research",  "Recherche"),
 )
