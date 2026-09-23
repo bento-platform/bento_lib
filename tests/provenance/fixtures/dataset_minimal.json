@@ -26,6 +26,6 @@
       "type": "Schema"
     }
   ],
-  "study_status": "ONGOING",
-  "study_context": "RESEARCH"
+  "study_status": "Ongoing",
+  "study_context": "Research"
 }

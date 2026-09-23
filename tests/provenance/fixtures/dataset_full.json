@@ -182,8 +182,8 @@
       "description": "Participants with prior treatment within 6 months"
     }
   ],
-  "study_status": "ONGOING",
-  "study_context": "RESEARCH",
+  "study_status": "Ongoing",
+  "study_context": "Research",
   "domain": ["Genomics", "Cancer Research"],
   "program_name": "National Cancer Genomics Program",
   "dac_id": "DAC000010",
