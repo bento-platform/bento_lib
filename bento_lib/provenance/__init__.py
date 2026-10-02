@@ -24,6 +24,7 @@ from .dataset import (
     SpatialCoverageFeature,
     SpatialCoverageProperties,
 )
+from .project import ProjectModelBase, ProjectModel
 
 __all__ = [
     "DatasetModel",
@@ -43,6 +44,8 @@ __all__ = [
     "Person",
     "PersonOrOrganization",
     "Phone",
+    "ProjectModel",
+    "ProjectModelBase",
     "Publication",
     "PublicationVenue",
     "PublicationType",
