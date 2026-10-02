@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 from datetime import date
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 from uuid import UUID
 
 from geojson_pydantic import Feature as GeoJSONFeature
@@ -446,7 +446,7 @@ class DatasetModelBase(TranslatableModel):
     )
 
     @model_validator(mode="after")
-    def check_keyword_resources(self) -> "DatasetModelBase":
+    def check_keyword_resources(self) -> Self:
         resource_prefixes = {r.namespace_prefix for r in self.resources} if self.resources else set()
 
         if self.keywords:
@@ -468,6 +468,24 @@ class DatasetModelBase(TranslatableModel):
             if missing_roles:
                 raise ValueError(f"stakeholder persons must have at least one role: {missing_roles}")
 
+        return self
+
+    @model_validator(mode="after")
+    def check_duplicate_counts(self) -> Self:
+        count_entities: set[str] = set()
+        for count in self.counts or ():
+            if (ce := count.count_entity) in count_entities:
+                raise ValueError("count entities must be unique")
+            count_entities.add(ce)
+        return self
+
+    @model_validator(mode="after")
+    def check_duplicate_publications(self) -> Self:
+        pub_urls: set[str] = set()
+        for pub in self.publications or ():
+            if (purl := str(pub.url)) in pub_urls:
+                raise ValueError("publication URLs must be unique")
+            pub_urls.add(purl)
         return self
 
 
