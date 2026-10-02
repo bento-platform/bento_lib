@@ -1,5 +1,6 @@
-from pydantic import AnyUrl, BaseModel, Field
 from typing import Literal
+
+from pydantic import AnyUrl, BaseModel, Field
 
 __all__ = ["Logo"]
 

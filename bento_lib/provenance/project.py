@@ -1,5 +1,6 @@
-from pydantic import Field
 from typing import Literal
+
+from pydantic import Field
 
 from bento_lib.discovery import DiscoveryConfig
 from bento_lib.i18n import TranslatableModel
