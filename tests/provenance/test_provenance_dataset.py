@@ -139,6 +139,16 @@ def test_contact_at_least_one_field():
         Contact()
 
 
+def test_duplicate_count_entities(dataset_full):
+    """Count entities cannot be duplicated"""
+    ds_dict = dataset_full.model_dump()
+
+    ds_dict["counts"].append(ds_dict["counts"][0])
+
+    with pytest.raises(Exception, match="count entities must be unique"):
+        DatasetModelBase.model_validate(ds_dict)
+
+
 def test_dataset_model_keyword_resource_validation(dataset_full):
     """OntologyClass keywords must have a matching resource by namespace_prefix."""
     ds_dict = dataset_full.model_dump()
@@ -233,6 +243,15 @@ def test_publication_author_without_roles():
     )
     assert isinstance(pub.authors[0], Person)
     assert pub.authors[0].roles == []
+
+
+def test_publication_duplicates(dataset_full):
+    """Dataset publications cannot have duplicate URLs (ensures a natural key for front-ends)."""
+    ds_dict = dataset_full.model_dump()
+    ds_dict["publications"].append(ds_dict["publications"][0])
+
+    with pytest.raises(ValidationError, match="publication URLs must be unique"):
+        DatasetModelBase.model_validate(ds_dict)
 
 
 def test_funding_source_funder_empty_string_invalid():
