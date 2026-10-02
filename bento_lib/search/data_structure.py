@@ -1,17 +1,16 @@
 import json
 import re
+from collections.abc import Callable, Iterable
+from functools import partial
+from itertools import chain, product, starmap
+from operator import and_, contains, eq, ge, gt, le, lt, not_, or_
 
 import jsonschema
 
-from functools import partial
-from itertools import chain, product, starmap
-from operator import and_, or_, not_, lt, le, eq, gt, ge, contains
-from typing import Callable, Iterable
-
 from bento_lib.utils.operators import is_not_none
+
 from . import queries as q
 from ._types import JSONSchema
-
 
 __all__ = ["check_ast_against_data_structure"]
 
@@ -543,7 +542,7 @@ def _resolve_properties_and_check(
         _resolve_checks(current_resolve_value, r_schema)
         if current_resolve_value == "[item]" and (index_combination is None or path not in index_combination):
             # TODO: Specific exception class
-            raise Exception(f"Index combination not provided for path {path}")
+            raise Exception(f"Index combination not provided for path {path}")  # noqa: TRY002
 
         r_schema = r_schema["items"] if r_schema["type"] == "array" else r_schema["properties"][current_resolve_value]
         path = f"{path}.{current_resolve_value}"
@@ -599,7 +598,7 @@ def _list(
     :param literals: an iterable containing all the literals to check upon.
     :return: a set containing all the values
     """
-    return set(literal.value for literal in literals)
+    return {literal.value for literal in literals}
 
 
 QUERY_CHECK_SWITCH: dict[

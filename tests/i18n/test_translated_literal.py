@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+
 import pytest
 from pydantic import BaseModel, ValidationError
 from pydantic_extra_types.language_code import LanguageAlpha2
@@ -11,7 +12,6 @@ from bento_lib.i18n import (
     FR,
     TranslatedLiteral,
 )
-
 
 # ── TranslatedLiteral.__init__ ───────────────────────────────────────────
 

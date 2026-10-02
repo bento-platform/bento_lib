@@ -1,7 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from bento_lib.ontologies import common_resources as cr, common_classes as ct, models as m
+from bento_lib.ontologies import common_classes as ct
+from bento_lib.ontologies import common_resources as cr
+from bento_lib.ontologies import models as m
 
 
 def test_ontology_resources():

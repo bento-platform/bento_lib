@@ -1,11 +1,11 @@
-from datetime import datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from functools import partial
-from typing import Callable
+
 from werkzeug.http import HTTP_STATUS_CODES
 
 from bento_lib._internal import internal_logger
 from bento_lib.logging.types import StdOrBoundLogger
-
 
 __all__ = [
     "http_error",
@@ -65,7 +65,7 @@ def http_error(
     return {
         "code": code,
         "message": message,
-        "timestamp": datetime.now(timezone.utc).isoformat("T").split("+")[0] + "Z",
+        "timestamp": datetime.now(UTC).isoformat("T").split("+")[0] + "Z",
         **({"errors": [_error_message(e) for e in errors]} if errors else {}),
         # The DRS spec has a slightly different error specification - if a
         # compatibility flag is passed in, extra fields are tacked on here.

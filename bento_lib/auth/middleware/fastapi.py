@@ -1,9 +1,9 @@
 import logging
 import re
+from collections.abc import Awaitable, Callable
 
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
-from typing import Awaitable, Callable
 
 from bento_lib.auth.exceptions import BentoAuthException
 from bento_lib.auth.middleware.base import BaseAuthMiddleware

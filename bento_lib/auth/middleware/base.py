@@ -1,15 +1,17 @@
-import aiohttp
 import re
-import requests
-
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Iterable
+from collections.abc import Callable, Iterable
+from typing import Any
+
+import aiohttp
+import requests
 
 from bento_lib.config.pydantic import BentoBaseConfig
 from bento_lib.logging.types import StdOrBoundLogger
+
 from ..exceptions import BentoAuthException
 from ..permissions import Permission
-from ..types import EvaluationResultMatrix, EvaluationResultDict
+from ..types import EvaluationResultDict, EvaluationResultMatrix
 from .mark_authz_done_mixin import MarkAuthzDoneMixin
 
 __all__ = ["BaseAuthMiddleware"]
@@ -101,9 +103,8 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
 
     @staticmethod
     def check_require_token(require_token: bool, token: str | None) -> None:
-        if require_token:
-            if token is None:
-                raise BentoAuthException("No token provided")
+        if require_token and token is None:
+            raise BentoAuthException("No token provided")
 
     def mk_authz_url(self, path: str) -> str:
         return f"{self._bento_authz_service_url.rstrip('/')}{path}"
@@ -220,17 +221,19 @@ class BaseAuthMiddleware(ABC, MarkAuthzDoneMixin):
         require_token: bool = False,
         headers_getter: Callable[[Any], dict[str, str]] | None = None,
     ) -> dict:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(
                 self.mk_authz_url(path),
                 json=body,
                 headers=self._extract_token_and_build_headers(request, require_token, headers_getter),
                 ssl=(None if self._verify_ssl else False),
-            ) as res:
-                if res.status != 200:  # Invalid authorization service response
-                    raise self._gen_exc_non_200_error_from_authz(res.status, await res.content.read())
+            ) as res,
+        ):
+            if res.status != 200:  # Invalid authorization service response
+                raise self._gen_exc_non_200_error_from_authz(res.status, await res.content.read())
 
-                return await res.json()
+            return await res.json()
 
     async def async_evaluate(
         self,

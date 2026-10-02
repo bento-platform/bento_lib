@@ -1,7 +1,10 @@
 import re
-from bento_lib.ontologies.models import OntologyClass
-from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
 from typing import Annotated, Literal, Self, get_args
+
+from pydantic import BaseModel, Discriminator, Field, RootModel, Tag, field_validator, model_validator
+
+from bento_lib.ontologies.models import OntologyClass
+
 from ..types import DiscoveryEntity
 from ._internal import NoAdditionalProperties
 
@@ -143,6 +146,11 @@ class StringFieldConfig(BaseModel, NoAdditionalProperties):
             "auto-populated from data service(s), excluding values which have counts below or at the threshold set in "
             "the discovery rules."
         ),
+    )
+    labels: dict[str, str] | None = Field(
+        default=None,
+        title="Labels",
+        description="Human-readable labels for enum values. Structure is {<enum value>: <label>}.",
     )
 
 
@@ -299,8 +307,7 @@ class NumberFieldDefinition(BaseFieldDefinition, NoAdditionalProperties):
 
 
 class DateFieldConfig(BaseModel, NoAdditionalProperties):
-    # Currently only binning by month is implemented:
-    bin_by: Literal["month"] = Field(
+    bin_by: Literal["year", "month"] = Field(
         ...,
         title="Bin by",
         description="Specifies how to bin the date field for filtering and chart rendering.",

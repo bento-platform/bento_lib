@@ -1,4 +1,4 @@
-from .common.logo import Logo
+from .common.logo import Logo  # noqa: I001
 from .common.long_description import LongDescription
 from .dataset import (
     DatasetModel,

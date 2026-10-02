@@ -1,13 +1,12 @@
-from pydantic import BaseModel, ConfigDict, field_serializer
 from typing import Literal
 
+from pydantic import BaseModel, ConfigDict, field_serializer
 
 __all__ = [
     # Input base modles
     "WorkflowBaseInput",
     "WorkflowInjectedInput",
     # Input models
-    "WorkflowStringInput",
     "WorkflowStringInput",
     "WorkflowStringArrayInput",
     "WorkflowNumberInput",
@@ -118,7 +117,7 @@ class WorkflowSecretInput(WorkflowInjectedInput):
     key: str
 
 
-WorkflowInput = (
+type WorkflowInput = (
     WorkflowStringInput
     | WorkflowStringArrayInput
     | WorkflowNumberInput

@@ -1,7 +1,10 @@
+import aiofiles
 import pytest
-from typing import Type
 
-from bento_lib.streaming import exceptions as s, file as f, range as r
+from bento_lib.streaming import exceptions as s
+from bento_lib.streaming import file as f
+from bento_lib.streaming import range as r
+
 from .common import SARS_COV_2_FASTA_PATH
 
 DUMMY_CONTENT_LENGTH = 10000
@@ -15,7 +18,7 @@ def test_streaming_exceptions():
 
 
 validate_interval_params: list[
-    tuple[tuple[int, int], bool, bool | None, Type[Exception], s.RangeNotSatisfiableReason | None]
+    tuple[tuple[int, int], bool, bool | None, type[Exception], s.RangeNotSatisfiableReason | None]
 ] = [
     ((100, 0), False, None, s.StreamingRangeNotSatisfiable, "inverted"),  # inverted range
     ((100, 0), False, True, s.StreamingRangeNotSatisfiable, "inverted"),  # inverted range
@@ -33,7 +36,7 @@ def test_validate_interval_errors(
     interval: tuple[int, int],
     refget_mode: bool,
     enforce_interval_order: bool | None,
-    exc: Type[Exception],
+    exc: type[s.StreamingException],
     reason: s.RangeNotSatisfiableReason | None,
 ):
     with pytest.raises(exc) as e:
@@ -65,7 +68,7 @@ def test_validate_interval_errors(
         ("bytes=0-100000", True, s.StreamingBadRange),  # past end of file
     ],
 )
-def test_parse_range_header_errors(range_header: str, refget_mode: bool, exc: Type[Exception]):
+def test_parse_range_header_errors(range_header: str, refget_mode: bool, exc: type[Exception]):
     with pytest.raises(exc):
         r.parse_range_header(range_header, DUMMY_CONTENT_LENGTH, refget_mode=refget_mode)
 
@@ -104,8 +107,8 @@ async def test_file_streaming():
     async for chunk in stream:
         stream_contents += chunk
 
-    with open(SARS_COV_2_FASTA_PATH, "rb") as fh:
-        fc = fh.read()
+    async with aiofiles.open(SARS_COV_2_FASTA_PATH, "rb") as fh:
+        fc = await fh.read()
 
     assert fc == stream_contents
     file_length = len(fc)
@@ -156,17 +159,17 @@ async def test_file_streaming_range_errors():
     with pytest.raises(s.StreamingRangeNotSatisfiable) as e:
         stream = f.stream_file(SARS_COV_2_FASTA_PATH, (1000000000, 1000000010), TEST_CHUNK_SIZE)  # past EOF
         await anext(stream)
-        assert getattr(e, "reason") == "start>=length"
+        assert e.value.reason == "start>=length"
 
     with pytest.raises(s.StreamingRangeNotSatisfiable):
         stream = f.stream_file(SARS_COV_2_FASTA_PATH, (0, 10000000000), TEST_CHUNK_SIZE)  # past EOF
         await anext(stream)
-        assert getattr(e, "reason") == "end>=length"
+        assert e.value.reason == "end>=length"
 
     with pytest.raises(s.StreamingRangeNotSatisfiable):
         stream = f.stream_file(SARS_COV_2_FASTA_PATH, (10000, 5000), TEST_CHUNK_SIZE)  # start > end
         await anext(stream)
-        assert getattr(e, "reason") == "inverted"
+        assert e.value.reason == "inverted"
 
     # Refget mode:
 

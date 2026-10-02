@@ -1,10 +1,10 @@
 import asyncio
+import contextlib
+from collections.abc import AsyncIterator
+from pathlib import Path
 
 import aiofiles
 import asyncpg
-import contextlib
-from pathlib import Path
-from typing import AsyncIterator
 
 __all__ = [
     "PgAsyncDatabaseException",
@@ -39,9 +39,8 @@ class PgAsyncDatabase:
                     # script. Don't use our own self.connect() method, since that'll end up in a circular task await.
                     async with aiofiles.open(self._schema_path, "r") as sf:
                         conn: asyncpg.Connection
-                        async with pool.acquire() as conn:
-                            async with conn.transaction():
-                                await conn.execute(await sf.read())
+                        async with pool.acquire() as conn, conn.transaction():
+                            await conn.execute(await sf.read())
 
                     self._pool = pool
                     self._pool_init_task = None

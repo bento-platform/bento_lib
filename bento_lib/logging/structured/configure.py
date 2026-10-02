@@ -1,11 +1,12 @@
 import logging
-import structlog.processors
 import sys
+
+import structlog.processors
 from structlog.types import EventDict, Processor
 
 from bento_lib.config.pydantic import BentoBaseConfig
-from .. import log_level_from_str, LogLevelLiteral
 
+from .. import LogLevelLiteral, log_level_from_str
 
 __all__ = [
     "drop_color_message_key",

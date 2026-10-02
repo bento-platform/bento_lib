@@ -46,7 +46,7 @@ NCBI_TAXON = models.OntologyResource(
     iri_prefix=HttpUrl("http://purl.obolibrary.org/obo/NCBITaxon_"),
     url=HttpUrl("https://purl.obolibrary.org/obo/ncbitaxon.owl"),
     repository_url=HttpUrl("https://github.com/obophenotype/ncbitaxon"),
-) 
+)
 
 NCBI_TAXON.make_class("NCBITaxon:9606", "Homo sapiens")
 

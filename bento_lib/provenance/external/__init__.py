@@ -1,4 +1,4 @@
-from .pcgl import (
+from .pcgl import (  # noqa: I001
     Study,
     PrincipalInvestigator,
     Collaborator,

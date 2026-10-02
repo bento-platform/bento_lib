@@ -1,6 +1,8 @@
-import bento_lib.service_info as bsi
 import logging
+
 import pytest
+
+import bento_lib.service_info as bsi
 
 logger = logging.getLogger(__name__)
 

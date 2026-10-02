@@ -1,11 +1,15 @@
+import asyncio
 import json
-import pytest
-import responses
 import time
 
+import pytest
+import responses
 from aiointercept import aiointercept
+
+from bento_lib.drs import exceptions as drs_exceptions
+from bento_lib.drs import resolver as drs_resolver
+from bento_lib.drs import utils as drs_utils
 from bento_lib.responses import errors
-from bento_lib.drs import exceptions as drs_exceptions, resolver as drs_resolver, utils as drs_utils
 
 TEST_DRS_ID = "dd11912c-3433-4a0a-8a01-3c0699288bef"
 
@@ -149,6 +153,6 @@ async def test_drs_resolver_class_async(aio: aiointercept):
     rec2 = await r.fetch_drs_record_by_uri_async(uri)
     assert rec1 == rec2
 
-    time.sleep(1.1)
+    await asyncio.sleep(1.1)
 
     await r.fetch_drs_record_by_uri_async(uri)  # should refetch

@@ -1,7 +1,5 @@
-from . import notifications
-from . import types
+from . import notifications, types
 from ._event_bus import EventBus
-
 
 __all__ = [
     "ALL_SERVICE_EVENTS",

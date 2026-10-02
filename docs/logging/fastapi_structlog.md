@@ -31,7 +31,6 @@ def get_logger(config: ConfigDependency) -> structlog.stdlib.BoundLogger:
 
 
 LoggerDependency = Annotated[structlog.stdlib.BoundLogger, Depends(get_logger)]
-
 ```
 
 **If you type-hint the logger object elsewhere in your service, make sure to change these type hints from 
@@ -44,6 +43,7 @@ In the application `main.py` or equivalent:
 
 ```python
 from bento_lib.apps.fastapi import BentoFastAPI
+
 # ...
 app = BentoFastAPI(
     # ...

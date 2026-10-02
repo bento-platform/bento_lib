@@ -1,11 +1,11 @@
 import traceback
+from collections.abc import Callable
 
 from fastapi import status
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from starlette.responses import Response
-from typing import Callable
 
 from ..auth.exceptions import BentoAuthException
 from ..auth.types import MarkAuthzDoneType

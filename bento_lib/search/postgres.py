@@ -1,12 +1,12 @@
 import functools
 import re
+from collections.abc import Callable
+from typing import Literal
 
 from psycopg2 import sql
-from typing import Callable, Literal
 
 from . import queries as q
 from ._types import JSONSchema
-
 
 # Search Rules:
 #  - If an object or query doesn't match the schema, it's an error.
@@ -73,9 +73,7 @@ def json_schema_to_postgres_type(schema: JSONSchema, structure_type: Literal["js
         return "INTEGER"
     elif schema["type"] == "number":
         return "DOUBLE PRECISION"
-    elif schema["type"] == "object":
-        return structure_type.upper()
-    elif schema["type"] == "array":
+    elif schema["type"] == "object" or schema["type"] == "array":
         return structure_type.upper()
     elif schema["type"] == "boolean":
         return "BOOLEAN"
@@ -282,7 +280,7 @@ def collect_join_tables(ast: q.AST, terms: tuple, schema: JSONSchema) -> tuple[J
         collected_joins = collect_resolve_join_tables((QUERY_ROOT, *ast.args), schema)
 
         for j in collected_joins:
-            existing_aliases = set(t.current_alias_str for t in terms_list if t is not None)
+            existing_aliases = {t.current_alias_str for t in terms_list if t is not None}
             if j.current_alias_str is not None and j.current_alias_str not in existing_aliases:
                 terms_list.append(j)
 

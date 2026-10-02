@@ -1,6 +1,6 @@
 import re
 
-from .exceptions import StreamingRangeNotSatisfiable, StreamingBadRange
+from .exceptions import StreamingBadRange, StreamingRangeNotSatisfiable
 
 __all__ = ["validate_interval", "parse_range_header"]
 
@@ -100,7 +100,7 @@ def parse_range_header(
         _, int1_end = int1
         if i < n_intervals - 1:
             int2 = intervals[i + 1]
-            int2_start, int2_end = int2
+            int2_start, _int2_end = int2
 
             if int1_end >= int2_start:
                 raise StreamingRangeNotSatisfiable(f"intervals overlap: {int1}, {int2}", "overlap", content_length)

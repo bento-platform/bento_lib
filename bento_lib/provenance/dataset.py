@@ -3,6 +3,10 @@ __all__ = [
     "RoleAnnotated",
     "PublicationType",
     "PublicationVenueType",
+    "StudyStatus",
+    "StudyStatusAnnotated",
+    "StudyContext",
+    "StudyContextAnnotated",
     "Other",
     "Phone",
     "Contact",
@@ -25,26 +29,26 @@ __all__ = [
     "ProjectScopedDatasetModel",
 ]
 
-from typing import Annotated, Literal
 from datetime import date
+from typing import Annotated, Literal
 from uuid import UUID
+
+from geojson_pydantic import Feature as GeoJSONFeature
 from pydantic import (
     AnyUrl,
     BaseModel,
     BeforeValidator,
+    ConfigDict,
     EmailStr,
     Field,
     HttpUrl,
-    ConfigDict,
     StringConstraints,
     model_validator,
 )
 
-from geojson_pydantic import Feature as GeoJSONFeature
-
 from bento_lib.discovery import DiscoveryConfig
+from bento_lib.i18n import EN, FR, TranslatableModel, TranslatedLiteral
 from bento_lib.ontologies.models import OntologyClass, VersionedOntologyResource
-from bento_lib.i18n import TranslatableModel, TranslatedLiteral, EN, FR
 
 from .common.logo import Logo
 from .common.long_description import LongDescription
@@ -150,6 +154,11 @@ PublicationType = TranslatedLiteral(EN, FR)(
     ("Dataset",                "Jeu de données"),
     ("Software",               "Logiciel"),
     ("Software Paper",         "Article sur un logiciel"),
+    # Multimedia
+    ("Audio",                  "Audio"),
+    ("Documentary",            "Documentaire"),
+    ("Podcast",                "Balado"),
+    ("Video",                  "Vidéo"),
     # Reviews and other
     ("Survey",                 "Enquête"),
     ("Review Article",         "Article de synthèse"),
@@ -160,13 +169,14 @@ PublicationType = TranslatedLiteral(EN, FR)(
 PublicationTypeAnnotated = Annotated[str, PublicationType]
 
 PublicationVenueType = TranslatedLiteral(EN, FR)(
-    ("Journal",          "Revue"),
-    ("Conference",       "Conférence"),
-    ("Workshop",         "Atelier"),
-    ("Repository",       "Dépôt"),
-    ("Publisher",        "Éditeur"),
-    ("University",       "Université"),
-    ("Data Repository",  "Dépôt de données"),
+    ("Journal",             "Revue"),
+    ("Conference",          "Conférence"),
+    ("Workshop",            "Atelier"),
+    ("Repository",          "Dépôt"),
+    ("Publisher",           "Éditeur"),
+    ("University",          "Université"),
+    ("Data Repository",     "Dépôt de données"),
+    ("Preprint Repository", "Dépôt de prépublications"),
 )
 PublicationVenueTypeAnnotated = Annotated[str, PublicationVenueType]
 
@@ -186,6 +196,18 @@ LinkType = TranslatedLiteral(EN, FR)(
     ("Data Request Form",      "Formulaire de demande de données"),
 )
 LinkTypeAnnotated = Annotated[str, LinkType]
+
+StudyStatus = TranslatedLiteral(EN, FR)(
+    ("ONGOING",    "EN COURS"),
+    ("COMPLETED",  "TERMINÉ"),
+)
+StudyStatusAnnotated = Annotated[str, StudyStatus]
+
+StudyContext = TranslatedLiteral(EN, FR)(
+    ("CLINICAL",  "CLINIQUE"),
+    ("RESEARCH",  "RECHERCHE"),
+)
+StudyContextAnnotated = Annotated[str, StudyContext]
 # fmt: on
 
 
@@ -374,8 +396,8 @@ class DatasetModelBase(TranslatableModel):
     last_modified: date | None = None
     participant_criteria: list[ParticipantCriteria] | None = Field(default=None, min_length=1)
 
-    study_status: Literal["ONGOING", "COMPLETED"] | None = None
-    study_context: Literal["CLINICAL", "RESEARCH"] | None = None
+    study_status: StudyStatusAnnotated | None = None
+    study_context: StudyContextAnnotated | None = None
 
     # Derived from the PCGL study model
     domain: list[str] | None = Field(

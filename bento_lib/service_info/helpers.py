@@ -1,13 +1,12 @@
 import asyncio
 import copy
-
 from typing import cast
 
 from bento_lib.config.pydantic import BentoBaseConfig
 from bento_lib.logging.types import StdOrBoundLogger
-from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD, SERVICE_GROUP_BENTO
-from .types import BentoExtraServiceInfo, GA4GHServiceType, GA4GHServiceOrganization, GA4GHServiceInfo
 
+from .constants import SERVICE_ENVIRONMENT_DEV, SERVICE_ENVIRONMENT_PROD, SERVICE_GROUP_BENTO
+from .types import BentoExtraServiceInfo, GA4GHServiceInfo, GA4GHServiceOrganization, GA4GHServiceType
 
 __all__ = [
     "build_service_info",
@@ -57,10 +56,11 @@ async def build_service_info(
             # noinspection PyTypeChecker
             service_info_dict["bento"]["gitCommit"] = res_commit
 
-    except Exception as e:  # pragma: no cover
+    except Exception as e:  # pragma: no cover  # noqa: BLE001
+        # TODO: catch more specific exceptions
         except_name = type(e).__name__
         # TODO: If we port to just structlog, this should be an async call (aerror) instead.
-        logger.error(f"Error retrieving git information: {str(except_name)}")
+        logger.error(f"Error retrieving git information: {except_name!s}")
 
     return service_info_dict  # updated service info with the git info
 

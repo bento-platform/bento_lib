@@ -1,28 +1,27 @@
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 from pydantic import ValidationError
-from typing import Type
 
 from bento_lib.discovery import (
-    load_discovery_config_from_dict,
-    load_discovery_config,
     FieldDefinition,
     NumberFieldDefinition,
     OverviewChart,
     OverviewSection,
+    load_discovery_config,
+    load_discovery_config_from_dict,
 )
 
 from .common import (
-    DISCOVERY_CONFIG_PATH,
     DISCOVERY_CONFIG_INVALID_1_PATH,
     DISCOVERY_CONFIG_INVALID_2_PATH,
     DISCOVERY_CONFIG_INVALID_3_PATH,
     DISCOVERY_CONFIG_INVALID_4_PATH,
     DISCOVERY_CONFIG_INVALID_5_PATH,
+    DISCOVERY_CONFIG_PATH,
     DISCOVERY_CONFIG_WARNING_PATH,
 )
-
 
 AGE_HISTOGRAM_BASIC_DICT = {
     "field": "age",
@@ -206,7 +205,7 @@ overview
         ),
     ],
 )
-def test_load_invalid_discovery_configs(path: Path, exc: Type[Exception], exc_str: str):
+def test_load_invalid_discovery_configs(path: Path, exc: type[Exception], exc_str: str):
     with pytest.raises(exc) as e:
         load_discovery_config(path)
     assert exc_str in str(e.value)

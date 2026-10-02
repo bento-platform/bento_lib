@@ -8,7 +8,6 @@ import pytest
 from bento_lib.provenance import DatasetModel, Person
 from bento_lib.provenance.external.pcgl import Study
 
-
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
