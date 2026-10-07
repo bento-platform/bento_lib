@@ -1,7 +1,7 @@
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from geojson_pydantic import Feature, FeatureCollection, Polygon
-from pydantic import BaseModel, Field, NonNegativeInt, RootModel, conlist
+from pydantic import AfterValidator, BaseModel, Field, NonNegativeInt, RootModel, conlist
 
 from ._internal import NoAdditionalProperties
 
@@ -53,10 +53,29 @@ class PieChart(BaseOverviewChart):
     chart_type: Literal["pie"] = "pie"
 
 
+class ColorModeStep(BaseModel):
+    step: float = Field(..., ge=0.0, le=0.0)
+    color: str
+
+
 class ChoroplethColorModeContinuous(BaseModel, NoAdditionalProperties):
     mode: Literal["continuous"] = "continuous"
     min_color: str
     max_color: str
+
+
+def _steps_validator(value: list[ColorModeStep]) -> list[ColorModeStep]:
+    last_step: float | None = None
+    for v in value:
+        if last_step is not None and v.step <= last_step:
+            raise ValueError("color mode steps must be strictly increasing")
+        last_step = v.step
+    return value
+
+
+class ChoroplethColorModeContinuousSteps(BaseModel, NoAdditionalProperties):
+    mode: Literal["continuous_steps"] = "continuous_steps"
+    steps: Annotated[list[ColorModeStep], AfterValidator(_steps_validator)] = Field(..., min_length=1)
 
 
 # class ChoroplethColorModeDiscrete:
@@ -66,7 +85,7 @@ class ChoroplethColorModeContinuous(BaseModel, NoAdditionalProperties):
 
 class ChoroplethChart(BaseOverviewChart):
     chart_type: Literal["choropleth"] = "choropleth"
-    color_mode: ChoroplethColorModeContinuous = Field(
+    color_mode: ChoroplethColorModeContinuous | ChoroplethColorModeContinuousSteps = Field(
         discriminator="mode",
         title="Color mode",
         description=(
