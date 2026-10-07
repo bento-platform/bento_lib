@@ -1,4 +1,6 @@
-from .dataset import (  # noqa: I001
+from .common.logo import Logo  # noqa: I001
+from .common.long_description import LongDescription
+from .dataset import (
     DatasetModel,
     DatasetModelBase,
     ProjectScopedDatasetModel,
@@ -8,8 +10,6 @@ from .dataset import (  # noqa: I001
     License,
     Link,
     TypedLink,
-    Logo,
-    LongDescription,
     Organization,
     Other,
     ParticipantCriteria,
@@ -24,6 +24,7 @@ from .dataset import (  # noqa: I001
     SpatialCoverageFeature,
     SpatialCoverageProperties,
 )
+from .project import ProjectModelBase, ProjectModel
 
 __all__ = [
     "DatasetModel",
@@ -43,6 +44,8 @@ __all__ = [
     "Person",
     "PersonOrOrganization",
     "Phone",
+    "ProjectModel",
+    "ProjectModelBase",
     "Publication",
     "PublicationVenue",
     "PublicationType",
