@@ -4,19 +4,15 @@ from typing import cast
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
+from .patterns import CURIE_PATTERN, NC_NAME_PATTERN
 from .types import PhenoV2OntologyClassDict, PhenoV2Resource
 
 __all__ = [
-    "NC_NAME_PATTERN",
-    "CURIE_PATTERN",
     "OntologyResource",
     "VersionedOntologyResource",
     "OntologyClass",
     "ResourceOntologyClass",
 ]
-
-NC_NAME_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9.\-_]*$"
-CURIE_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9.\-_]*:[a-zA-Z0-9.\-_]+$"
 
 
 class OntologyResource(BaseModel):
@@ -104,7 +100,7 @@ class OntologyClass(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     id: str = Field(..., pattern=CURIE_PATTERN, title="ID", description="CURIE-formatted ontology class ID")
-    label: str = Field(..., title="Label", description="Human-readable label for the ontology class")
+    label: str = Field(..., title="Label", description="Human-readable label for the ontology class", min_length=1)
 
     def to_phenopackets_repr(self) -> PhenoV2OntologyClassDict:
         return cast(PhenoV2OntologyClassDict, self.model_dump(mode="json", include={"id", "label"}))
