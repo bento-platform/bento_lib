@@ -10,7 +10,7 @@ from html import escape
 from pathlib import Path
 from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from pydantic.fields import FieldInfo
 
 from bento_lib.i18n import TranslatedLiteral
@@ -37,6 +37,31 @@ td.field b{display:block}td.field span{color:var(--muted)}
 .pill.req{background:var(--accent);color:var(--bg)}
 .vals b{margin-right:6px}details{display:inline}summary{cursor:pointer;color:var(--accent);display:inline}
 a{color:var(--accent)}
+td.field code{display:block;color:var(--muted);font-size:12px}
+td.child{padding:0 0 0 20px;border-right:0;background:var(--soft)}
+td.child>details{display:block;border-left:3px solid var(--accent)}
+td.child>details>summary{display:block;padding:6px 10px;font-weight:600}
+td.child table{background:var(--bg)}
+nav details{display:block}nav summary{display:block;color:var(--fg)}
+nav details>div{margin-left:12px;border-left:1px solid var(--line);padding-left:8px}
+.intro{max-width:70ch;margin-bottom:16px}.intro p{margin:0 0 8px}.intro ul{margin:0;padding-left:20px}
+tr:target>td,details:target>summary{outline:2px solid var(--accent)}
+"""
+
+INTRO = """
+<div class="intro">
+<p>This page documents the metadata schema used to describe a dataset in Bento: every field a dataset record
+can contain, whether it is required, the type of value it takes, and the values it permits. It is generated
+directly from the <code>bento_lib</code> dataset models, so it always matches the code.</p>
+<ul>
+<li><b>Required</b> fields must be present for a record to be valid; <b>Optional</b> fields may be omitted.</li>
+<li>A field whose type is another model (for example <i>Person</i> or <i>License</i>) has an expandable block
+beneath it listing that model's own fields. Blocks nest as deeply as the schema does.</li>
+<li><i>ARRAY OF</i> means the field takes a list of values. A path such as <code>stakeholders[] › contact</code>
+reads as "the <i>contact</i> of each item in <i>stakeholders</i>".</li>
+<li>Use the sidebar to jump to a nested model, and the filter to show only required or optional fields.</li>
+</ul>
+</div>
 """
 
 JS = """
@@ -44,6 +69,16 @@ const sel = document.getElementById('attr');
 sel.onchange = () => document.querySelectorAll('tr[data-attr]').forEach(
   r => r.hidden = sel.value && r.dataset.attr !== sel.value);
 document.getElementById('reset').onclick = () => { sel.value = ''; sel.onchange(); };
+const setAll = open => document.querySelectorAll('td.child details').forEach(d => d.open = open);
+document.getElementById('expand').onclick = () => setAll(true);
+document.getElementById('collapse').onclick = () => setAll(false);
+const reveal = () => {
+  const el = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  for (let d = el; d; d = d.parentElement) if (d.tagName === 'DETAILS') d.open = true;
+  if (el) el.scrollIntoView();
+};
+addEventListener('hashchange', reveal);
+reveal();
 """
 
 
@@ -55,6 +90,9 @@ def _walk(annotation: Any) -> list[Any]:
         return [*_walk(base), *meta]
     if origin in (Union, types.UnionType, list, dict):
         return [leaf for arg in get_args(annotation) for leaf in _walk(arg)]
+    if isinstance(annotation, type) and issubclass(annotation, RootModel):
+        # Transparent wrapper (e.g. a discriminated union): document what it wraps, not a lone "root" field
+        return _walk(annotation.model_fields["root"].annotation)
     return [annotation]
 
 
@@ -69,7 +107,7 @@ def _type_label(annotation: Any) -> str:
         if leaf in SCALARS:
             labels.append(SCALARS[leaf])
         elif isinstance(leaf, type) and issubclass(leaf, BaseModel):
-            labels.append(f'<a href="#{leaf.__name__}">{leaf.__name__}</a>')
+            labels.append(leaf.__name__)
         elif get_origin(leaf) is Literal:
             labels.append("TEXT")
         elif isinstance(leaf, type):
@@ -105,54 +143,96 @@ def _notes(field: FieldInfo) -> str:
     return escape("; ".join(notes))
 
 
-def _row(name: str, field: FieldInfo) -> str:
+def _is_list(annotation: Any) -> bool:
+    return get_origin(annotation) is list or any(get_origin(a) is list for a in get_args(annotation))
+
+
+def _path_id(path: str) -> str:
+    return "f-" + path.replace("[]", "").replace(".", "-")
+
+
+def _model_table(model: type[BaseModel], path: str, ancestors: tuple[type[BaseModel], ...]) -> str:
+    rows = "".join(_row(n, f, f"{path}.{n}" if path else n, (*ancestors, model)) for n, f in model.model_fields.items())
+    return (
+        "<table><thead><tr><th>Field and description</th><th>Attributes</th><th>Type</th>"
+        f"<th>Permitted values</th><th>Notes</th></tr></thead><tbody>{rows}</tbody></table>"
+    )
+
+
+def _row(name: str, field: FieldInfo, path: str, ancestors: tuple[type[BaseModel], ...]) -> str:
+    """One field row, followed by an expandable sub-table for each nested model the field can hold."""
     attr = "Required" if field.is_required() else "Optional"
     cls = "pill req" if field.is_required() else "pill"
-    return (
-        f'<tr data-attr="{attr}"><td class="field"><b>{escape(name)}</b>'
-        f"<span>{escape(field.description or '')}</span></td>"
+    suffix = "[]" if _is_list(field.annotation) else ""
+    path_label = escape(path.replace(".", " › ") + suffix)
+    row = (
+        f'<tr id="{_path_id(path)}" data-attr="{attr}"><td class="field"><b>{escape(name)}</b>'
+        f"<code>{path_label}</code><span>{escape(field.description or '')}</span></td>"
         f'<td><span class="{cls}">{attr}</span></td>'
         f"<td>{_type_label(field.annotation)}</td>"
         f"<td>{_values_html(_permitted_values(field.annotation))}</td>"
         f"<td>{_notes(field)}</td></tr>"
     )
+    for nested in dict.fromkeys(_nested_models(field.annotation)):
+        child_path = path + suffix
+        if nested in ancestors:
+            body = f'<p class="desc">↩ recursive reference to {nested.__name__}</p>'
+        else:
+            body = _model_table(nested, child_path, ancestors)
+        row += (
+            f'<tr><td class="child" colspan="5"><details id="{_path_id(child_path)}-{nested.__name__}"{" open" if len(ancestors) == 1 else ""}>'
+            f"<summary>{nested.__name__} · {len(nested.model_fields)} fields</summary>{body}</details></td></tr>"
+        )
+    return row
 
 
-def _collect_models(root: type[BaseModel]) -> list[type[BaseModel]]:
-    seen: dict[type[BaseModel], None] = {}
-    stack = [root]
-    while stack:
-        model = stack.pop(0)
-        if model in seen:
+def _nav_tree(model: type[BaseModel], path: str, ancestors: tuple[type[BaseModel], ...]) -> str:
+    """Sidebar tree: each field holding nested models lists those models (and their own nested fields) beneath it."""
+    ancestors = (*ancestors, model)
+    out = []
+    for name, field in model.model_fields.items():
+        nested = [n for n in dict.fromkeys(_nested_models(field.annotation)) if n not in ancestors]
+        if not nested:
             continue
-        seen[model] = None
-        for field in model.model_fields.values():
-            stack.extend(_nested_models(field.annotation))
-    return list(seen)
+        field_path = f"{path}.{name}" if path else name
+        child_path = field_path + ("[]" if _is_list(field.annotation) else "")
+        items = []
+        for n in nested:
+            link = f'<a href="#{_path_id(child_path)}-{n.__name__}">{n.__name__}</a>'
+            inner = _nav_tree(n, child_path, ancestors)
+            items.append(
+                f"<details><summary>{link}</summary><div>{inner}</div></details>" if inner else f"<div>{link}</div>"
+            )
+        link = f'<a href="#{_path_id(field_path)}">{escape(name)}</a>'
+        out.append(f"<details><summary>{link}</summary><div>{''.join(items)}</div></details>")
+    return "".join(out)
+
+
+def _count_fields(model: type[BaseModel]) -> int:
+    seen: set[type[BaseModel]] = set()
+    stack = [model]
+    while stack:
+        m = stack.pop()
+        if m not in seen:
+            seen.add(m)
+            stack.extend(n for f in m.model_fields.values() for n in _nested_models(f.annotation))
+    return len(seen)
 
 
 def model_to_dictionary_html(root: type[BaseModel]) -> str:
-    models = _collect_models(root)
-    total = sum(len(m.model_fields) for m in models)
-    nav = "".join(f'<a href="#{m.__name__}">{m.__name__}</a>' for m in models)
-    sections = "".join(
-        f'<section id="{m.__name__}"><h2>{m.__name__} <small>{len(m.model_fields)} fields</small></h2>'
-        f'<p class="desc">{escape((m.__doc__ or "").strip().splitlines()[0] if m.__doc__ else "")}</p>'
-        "<table><thead><tr><th>Field and description</th><th>Attributes</th><th>Type</th>"
-        "<th>Permitted values</th><th>Notes</th></tr></thead><tbody>"
-        + "".join(_row(n, f) for n, f in m.model_fields.items())
-        + "</tbody></table></section>"
-        for m in models
-    )
     return (
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         f"<title>{root.__name__} data dictionary</title><style>{CSS}</style></head><body>"
-        f"<nav>{nav}</nav><main><h1>Data dictionary: {root.__name__}</h1>"
-        f"<div class='toolbar'><span>{len(models)} models with {total} fields</span>"
+        f"<nav><b>{root.__name__}</b>{_nav_tree(root, '', ())}</nav><main>"
+        f"<h1>Data dictionary: {root.__name__}</h1>{INTRO}"
+        f"<div class='toolbar'><span>{len(root.model_fields)} top-level fields, "
+        f"{_count_fields(root) - 1} nested models</span>"
         "<select id='attr'><option value=''>Attributes: all</option>"
         "<option>Required</option><option>Optional</option></select>"
-        f"<button id='reset'>Reset</button></div>{sections}<script>{JS}</script></main></body></html>"
+        "<button id='reset'>Reset</button><button id='expand'>Expand all</button>"
+        "<button id='collapse'>Collapse all</button></div>"
+        f"{_model_table(root, '', ())}<script>{JS}</script></main></body></html>"
     )
 
 
