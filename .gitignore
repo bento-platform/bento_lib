@@ -16,3 +16,6 @@ __pycache__
 *.egg-info
 .claude/
 CLAUDE.md
+
+# Generated dataset dictionary
+/site/
