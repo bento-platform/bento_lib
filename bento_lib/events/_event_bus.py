@@ -65,8 +65,8 @@ class EventBus:
         self._ps_handlers: dict[str, Callable[[dict], None]] = {}
         self._event_thread: PubSubWorkerThread | None = None
 
-        self._service_event_types: dict[str, dict] = {}
-        self._data_type_event_types: dict[str, dict] = {}
+        self._service_event_types: dict[str, Draft7Validator] = {}
+        self._data_type_event_types: dict[str, Draft7Validator] = {}
 
     @staticmethod
     def _callback_deserialize(callback: Callable[[dict], None]) -> Callable[[dict], None]:
@@ -147,7 +147,7 @@ class EventBus:
         )
 
     @staticmethod
-    def _add_schema(event_types: dict, event_type: str, event_schema: dict) -> bool:
+    def _add_schema(event_types: dict[str, Draft7Validator], event_type: str, event_schema: dict) -> bool:
         event_type = event_type.lower()
 
         if event_type in event_types:
@@ -158,7 +158,7 @@ class EventBus:
         except SchemaError:
             return False
 
-        event_types[event_type] = event_schema
+        event_types[event_type] = Draft7Validator(event_schema)
         return True
 
     def register_service_event_type(self, event_type: str, event_schema: dict) -> bool:
@@ -193,7 +193,7 @@ class EventBus:
 
     def _publish_event(
         self,
-        event_types: dict[str, dict],
+        event_types: dict[str, Draft7Validator],
         channel: str,
         event_type: str,
         event_data: Serializable,
@@ -204,7 +204,7 @@ class EventBus:
         if event_type not in event_types:
             return False
 
-        if not Draft7Validator(event_types[event_type]).is_valid(event_data):
+        if not event_types[event_type].is_valid(event_data):
             return False
 
         if self._rc is None:
