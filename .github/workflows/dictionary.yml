@@ -1,0 +1,41 @@
+name: Dataset dictionary
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        name: Set up Python
+        with:
+          python-version: '3.14'
+      - name: Set up Poetry
+        run: python -m pip install poetry
+      - name: Install dependencies
+        run: python -m poetry install
+      - name: Build dictionary
+        run: poetry run python scripts/build_dataset_dictionary.py --out site/index.html
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    # Only publish from master; PRs just verify that the page builds.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
