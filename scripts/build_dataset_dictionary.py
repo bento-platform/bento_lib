@@ -1,14 +1,17 @@
 """
-Render DatasetModelBase as a static data-dictionary page (in the style of https://dict.cqdg.ca/en/).
+Render DatasetModelBase as a static data-dictionary page.
 
 Usage: python scripts/build_dataset_dictionary.py [--out site/index.html]
 """
 
 import argparse
 import types
+from collections.abc import Iterable
+from dataclasses import dataclass
+from enum import Enum
 from html import escape
 from pathlib import Path
-from typing import Annotated, Any, Literal, Union, get_args, get_origin
+from typing import Annotated, Any, Literal, TypeVar, Union, get_args, get_origin
 
 from pydantic import BaseModel, RootModel
 from pydantic.fields import FieldInfo
@@ -82,48 +85,103 @@ reveal();
 """
 
 
-def _walk(annotation: Any) -> list[Any]:
-    """Flatten unions/lists/Annotated into the leaf types and metadata they contain."""
+CONSTRAINTS = ("min_length", "max_length", "pattern", "ge", "le", "gt", "lt")
+
+
+@dataclass(frozen=True)
+class Variant:
+    """One branch of a (possibly union) annotation, with the container and constraints that apply to it."""
+
+    leaf: Any
+    container: str | None = None  # "ARRAY OF" / "MAP OF"
+    constraints: tuple[tuple[str, Any], ...] = ()
+    translated: TranslatedLiteral | None = None
+
+
+def _constraints(items: Iterable[Any]) -> tuple[tuple[str, Any], ...]:
+    found: dict[str, Any] = {}
+    for item in items:
+        if isinstance(item, FieldInfo):  # e.g. Annotated[str, Field(min_length=1)]
+            found.update(_constraints(item.metadata))
+        else:
+            found.update({k: getattr(item, k) for k in CONSTRAINTS if hasattr(item, k)})
+    return tuple(found.items())
+
+
+def _variants(
+    annotation: Any,
+    container: str | None = None,
+    constraints: tuple[tuple[str, Any], ...] = (),
+    translated: TranslatedLiteral | None = None,
+) -> list[Variant]:
+    """
+    Flatten an annotation into its union branches. Raises on anything it cannot document faithfully, so that
+    the generated page never silently misstates the schema (and CI fails instead).
+    """
     origin = get_origin(annotation)
     if origin is Annotated:
         base, *meta = get_args(annotation)
-        return [*_walk(base), *meta]
-    if origin in (Union, types.UnionType, list, dict):
-        return [leaf for arg in get_args(annotation) for leaf in _walk(arg)]
+        tl = next((m for m in meta if isinstance(m, TranslatedLiteral)), translated)
+        return _variants(base, container, (*constraints, *_constraints(meta)), tl)
+    if origin in (Union, types.UnionType):
+        return [v for arg in get_args(annotation) for v in _variants(arg, container, constraints, translated)]
+    if origin is list:
+        return _variants(get_args(annotation)[0], "ARRAY OF", constraints, translated)
+    if origin is tuple:
+        args = get_args(annotation)
+        if len(args) == 2 and args[1] is Ellipsis:
+            return _variants(args[0], "ARRAY OF", constraints, translated)
+        if args and len(set(args)) == 1:  # fixed-length, homogeneous (e.g. a GeoJSON bbox)
+            return _variants(args[0], "ARRAY OF", (*constraints, ("length", len(args))), translated)
+        raise TypeError(f"Unsupported type in data dictionary: {annotation!r}")
+    if origin is dict:
+        return _variants(get_args(annotation)[1], "MAP OF", constraints, translated)
+    if annotation is type(None):
+        return []
+    if isinstance(annotation, TypeVar):  # unparametrized generic model: pydantic validates against the bound
+        if annotation.__bound__ is not None:
+            return _variants(annotation.__bound__, container, constraints, translated)
+        if annotation.__constraints__:
+            return [v for c in annotation.__constraints__ for v in _variants(c, container, constraints, translated)]
     if isinstance(annotation, type) and issubclass(annotation, RootModel):
         # Transparent wrapper (e.g. a discriminated union): document what it wraps, not a lone "root" field
-        return _walk(annotation.model_fields["root"].annotation)
-    return [annotation]
+        return _variants(annotation.model_fields["root"].annotation, container, constraints, translated)
+    if origin is Literal or (origin is None and isinstance(annotation, type)):
+        return [Variant(annotation, container, constraints, translated)]
+    raise TypeError(f"Unsupported type in data dictionary: {annotation!r}")
 
 
 def _nested_models(annotation: Any) -> list[type[BaseModel]]:
-    return [x for x in _walk(annotation) if isinstance(x, type) and issubclass(x, BaseModel)]
+    return [v.leaf for v in _variants(annotation) if isinstance(v.leaf, type) and issubclass(v.leaf, BaseModel)]
+
+
+def _leaf_label(leaf: Any) -> str:
+    if leaf in SCALARS:
+        return SCALARS[leaf]
+    if get_origin(leaf) is Literal:
+        return "TEXT"
+    if issubclass(leaf, BaseModel):
+        return leaf.__name__
+    return leaf.__name__.upper()
+
+
+def _variant_label(v: Variant) -> str:
+    return (f"{v.container} " if v.container else "") + _leaf_label(v.leaf)
 
 
 def _type_label(annotation: Any) -> str:
-    leaves = [leaf for leaf in _walk(annotation) if leaf is not type(None)]
-    labels = []
-    for leaf in leaves:
-        if leaf in SCALARS:
-            labels.append(SCALARS[leaf])
-        elif isinstance(leaf, type) and issubclass(leaf, BaseModel):
-            labels.append(leaf.__name__)
-        elif get_origin(leaf) is Literal:
-            labels.append("TEXT")
-        elif isinstance(leaf, type):
-            labels.append(leaf.__name__.upper())
-    labels = list(dict.fromkeys(labels))
-    is_list = get_origin(annotation) is list or any(get_origin(a) is list for a in get_args(annotation))
-    return escape("ARRAY OF ") * is_list + " | ".join(labels)  # labels already escaped
+    return escape(" | ".join(dict.fromkeys(_variant_label(v) for v in _variants(annotation))))
 
 
 def _permitted_values(annotation: Any) -> list[str]:
     values: list[str] = []
-    for leaf in _walk(annotation):
-        if get_origin(leaf) is Literal:
-            values.extend(str(v) for v in get_args(leaf))
-        elif isinstance(leaf, TranslatedLiteral):
-            values.extend(sorted(leaf.en_values))
+    for v in _variants(annotation):
+        if get_origin(v.leaf) is Literal:
+            values.extend(str(x) for x in get_args(v.leaf))
+        elif isinstance(v.leaf, type) and issubclass(v.leaf, Enum):
+            values.extend(str(m.value) for m in v.leaf)
+        elif v.translated is not None:
+            values.extend(sorted(v.translated.en_values))
     return values
 
 
@@ -137,14 +195,16 @@ def _values_html(values: list[str]) -> str:
 
 
 def _notes(field: FieldInfo) -> str:
-    notes = []
-    for m in field.metadata:
-        notes += [f"{k}: {getattr(m, k)}" for k in ("min_length", "max_length", "pattern", "ge", "le") if hasattr(m, k)]
-    return escape("; ".join(notes))
+    notes = [f"{k}: {v}" for k, v in _constraints(field.metadata)]
+    variants = _variants(field.annotation)
+    for v in variants:
+        prefix = f"{_variant_label(v)} " if len(variants) > 1 else ""
+        notes += [f"{prefix}{k}: {val}" for k, val in v.constraints]
+    return escape("; ".join(dict.fromkeys(notes)))
 
 
 def _is_list(annotation: Any) -> bool:
-    return get_origin(annotation) is list or any(get_origin(a) is list for a in get_args(annotation))
+    return any(v.container == "ARRAY OF" for v in _variants(annotation))
 
 
 def _path_id(path: str) -> str:
