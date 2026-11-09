@@ -125,6 +125,7 @@ PROJECT_LEVEL_COUNTS = PermissionNoun("project_level_counts")
 DATASET_LEVEL_COUNTS = PermissionNoun("dataset_level_counts")
 
 DATA = PermissionNoun("data")
+METADATA = PermissionNoun("metadata")
 DROP_BOX = PermissionNoun("drop_box")
 RUNS = PermissionNoun("runs")
 
@@ -151,6 +152,14 @@ P_QUERY_PROJECT_LEVEL_COUNTS = Permission(
 P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, gives=(P_QUERY_DATASET_LEVEL_BOOLEAN,))
 
 # Data-level: interacting with data inside of data services... and triggering workflows
+
+#  - Download metadata for a dataset (e.g. PCGL file manifest)
+#   - Meant to better differentiate authz models like "data downloads" (e.g. VCF bytes from DRS)
+#     from "metadata exports in file formats" (PCGL file manifest, CSV/Excel pheno exports, ...).
+#   - Part of an effort to detangle "download:data" and "query:data" in Bento in general, initiated by the
+#     PCGL need for manifest download without record level access (not having to give "query:data" to users).
+#   - Gives nothing
+P_DOWNLOAD_METADATA = Permission(DOWNLOAD_VERB, METADATA)
 
 P_QUERY_DATA = Permission(
     QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS)
