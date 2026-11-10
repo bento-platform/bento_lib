@@ -53,9 +53,9 @@ def test_permissions_gives():
 
     assert P_QUERY_DATA not in P_QUERY_PROJECT_LEVEL_COUNTS.gives
 
-    # download:metadata is independent: not given by query:data or download:data, and gives nothing
+    # download:metadata is given by query:data (not download:data), and gives nothing
     assert P_DOWNLOAD_METADATA == "download:metadata"
-    assert P_DOWNLOAD_METADATA not in P_QUERY_DATA.gives
+    assert P_DOWNLOAD_METADATA in P_QUERY_DATA.gives
     assert P_DOWNLOAD_METADATA not in P_DOWNLOAD_DATA.gives
     assert P_DOWNLOAD_METADATA not in P_QUERY_PROJECT_LEVEL_COUNTS.gives
     assert P_DOWNLOAD_METADATA.gives == frozenset()

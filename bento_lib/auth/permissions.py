@@ -159,10 +159,11 @@ P_QUERY_DATASET_LEVEL_COUNTS = Permission(QUERY_VERB, DATASET_LEVEL_COUNTS, give
 #   - Part of an effort to detangle "download:data" and "query:data" in Bento in general, initiated by the
 #     PCGL need for manifest download without record level access (not having to give "query:data" to users).
 #   - Gives nothing
+#   - Given by P_QUERY_DATA, so users who can query data keep manifest access
 P_DOWNLOAD_METADATA = Permission(DOWNLOAD_VERB, METADATA)
 
 P_QUERY_DATA = Permission(
-    QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS)
+    QUERY_VERB, DATA, gives=(P_QUERY_PROJECT_LEVEL_COUNTS, P_QUERY_DATASET_LEVEL_COUNTS, P_DOWNLOAD_METADATA)
 )  # query at full access
 P_DOWNLOAD_DATA = Permission(DOWNLOAD_VERB, DATA)  # download CSVs, associated DRS objects
 P_DELETE_DATA = Permission(DELETE_VERB, DATA)  # clear data from a specific data type
