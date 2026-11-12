@@ -8,6 +8,8 @@ from bento_lib.auth.permissions import (
     LEVEL_INSTANCE,
     P_DELETE_DATA,
     P_DELETE_DATASET,
+    P_DOWNLOAD_DATA,
+    P_DOWNLOAD_METADATA,
     P_QUERY_DATA,
     P_QUERY_PROJECT_LEVEL_BOOLEAN,
     P_QUERY_PROJECT_LEVEL_COUNTS,
@@ -51,6 +53,13 @@ def test_permissions_gives():
 
     assert P_QUERY_DATA not in P_QUERY_PROJECT_LEVEL_COUNTS.gives
 
+    # download:metadata is given by query:data (not download:data), and gives nothing
+    assert P_DOWNLOAD_METADATA == "download:metadata"
+    assert P_DOWNLOAD_METADATA in P_QUERY_DATA.gives
+    assert P_DOWNLOAD_METADATA not in P_DOWNLOAD_DATA.gives
+    assert P_DOWNLOAD_METADATA not in P_QUERY_PROJECT_LEVEL_COUNTS.gives
+    assert P_DOWNLOAD_METADATA.gives == frozenset()
+
 
 def test_build_resource():
     assert build_resource() == RESOURCE_EVERYTHING
@@ -84,6 +93,12 @@ def test_permissions_valid_for_resource():
 
     # data type narrowing
     assert not permission_valid_for_resource(P_DELETE_DATASET, {"project": "aaa", "data_type": "phenopacket"})
+
+    # download:metadata: dataset level, data type narrowing allowed
+    assert permission_valid_for_resource(P_DOWNLOAD_METADATA, {"project": "aaa", "dataset": "bbb"})
+    assert permission_valid_for_resource(
+        P_DOWNLOAD_METADATA, {"project": "aaa", "dataset": "bbb", "data_type": "experiment"}
+    )
 
 
 def test_all_valid_permissions_for_resource():
