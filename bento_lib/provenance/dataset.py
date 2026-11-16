@@ -28,6 +28,7 @@ __all__ = [
     "DatasetModelBase",
     "DatasetModel",
     "ProjectScopedDatasetModel",
+    "DATASET_ID_PATTERN"
 ]
 
 import re
@@ -496,15 +497,15 @@ class DatasetModelBase(TranslatableModel):
 #  - no ":", which separates the IDs in "<project id>:<dataset id>" workflow inputs (see chord/workflows/wdls);
 #  - no ".", which separates the format suffix in API routes (/api/datasets/<id>.json).
 DATASET_ID_REGEX = r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
-DATASET_ID_PATTERN = re.compile(DATASET_ID_REGEX)
+DATASET_ID_PATTERN = re.compile(DATASET_ID_REGEX)   # Exported for datava
 
 
 class DatasetModel(DatasetModelBase):
     """Dataset model with required identifier field."""
 
     identifier: str = Field(
-        min_length=1, max_length=128
-    )  # if from pcgl, directly inherited, otherwise created in katsu
+        min_length=1, max_length=128, pattern=rf"^{DATASET_ID_REGEX}$"
+    ) # if from pcgl, directly inherited, otherwise created in katsu
 
     @classmethod
     def from_base(cls, base: DatasetModelBase, identifier: str) -> "DatasetModel":
