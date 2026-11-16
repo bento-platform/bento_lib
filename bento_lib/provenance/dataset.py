@@ -28,8 +28,10 @@ __all__ = [
     "DatasetModelBase",
     "DatasetModel",
     "ProjectScopedDatasetModel",
+    "DATASET_ID_PATTERN",
 ]
 
+import re
 from datetime import date
 from typing import Annotated, Literal, Self
 from uuid import UUID
@@ -489,11 +491,20 @@ class DatasetModelBase(TranslatableModel):
         return self
 
 
+# Dataset IDs may be UUIDs (created in katsu) or external IDs such as PCGL study IDs (e.g. STUDY0002).
+# Restricted to a safe charset so IDs can be used in URLs and logged; length (1-128) matches Dataset.identifier.
+# Letters, digits, "_" and "-" only, starting with a letter or digit. In particular:
+#  - no ":", which separates the IDs in "<project id>:<dataset id>" workflow inputs (see chord/workflows/wdls);
+#  - no ".", which separates the format suffix in API routes (/api/datasets/<id>.json).
+DATASET_ID_REGEX = r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}"
+DATASET_ID_PATTERN = re.compile(DATASET_ID_REGEX)
+
+
 class DatasetModel(DatasetModelBase):
     """Dataset model with required identifier field."""
 
     identifier: str = Field(
-        min_length=1, max_length=128
+        min_length=1, max_length=128, pattern=rf"^{DATASET_ID_REGEX}$"
     )  # if from pcgl, directly inherited, otherwise created in katsu
 
     @classmethod
