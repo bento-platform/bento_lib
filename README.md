@@ -93,6 +93,11 @@ additional code to set up error handling and basic Bento service boilerplate.
 
 `auth` provides Python service middleware for dealing with the Bento authorization service.
 
+### `data_dictionary`
+
+`data_dictionary` contains Pydantic models used to define data dictionaries, useful for controlling so-called 
+"extra properties" on clinical/phenotypic/experimental entities.
+
 ### `db`
 
 `db` contains common base classes for setting up database managers.
