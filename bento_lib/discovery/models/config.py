@@ -23,6 +23,16 @@ FIELD_ALREADY_SEEN = "field already seen"
 
 
 class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
+    count_rounding: int = Field(
+        default=0,
+        ge=0,
+        title="Count rounding",
+        description=(
+            "If a user has count access, every reported count (including totals) is rounded independently to the "
+            "nearest multiple of this value. This prevents exact counts of censored values from being recovered by "
+            "subtracting visible counts from a total. 0 or 1 means no rounding."
+        ),
+    )
     count_threshold: int = Field(
         ...,
         title="Count threshold",
@@ -38,28 +48,18 @@ class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
             "searching for counts."
         ),
     )
-    count_rounding: int = Field(
-        default=0,
-        ge=0,
-        title="Count rounding",
-        description=(
-            "If a user has count access, every reported count (including totals) is rounded independently to the "
-            "nearest multiple of this value. This prevents exact counts of censored values from being recovered by "
-            "subtracting visible counts from a total. 0 or 1 means no rounding."
-        ),
-    )
 
 
 RULES_NO_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
-    max_query_parameters=0,  # default to no query parameters allowed
-    count_threshold=sys.maxsize,  # default to MAXINT count threshold (i.e., no counts can be seen)
     count_rounding=0,  # irrelevant: everything is already censored
+    count_threshold=sys.maxsize,  # default to MAXINT count threshold (i.e., no counts can be seen)
+    max_query_parameters=0,  # default to no query parameters allowed
 )
 
 RULES_FULL_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
-    max_query_parameters=sys.maxsize,
-    count_threshold=0,
     count_rounding=0,
+    count_threshold=0,
+    max_query_parameters=sys.maxsize,
 )
 
 
