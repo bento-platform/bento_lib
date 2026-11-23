@@ -2,7 +2,9 @@
 
 The Bento discovery configuration format is used for Bento implementers to specify which fields of their instance (or a
 project or dataset) are viewable as charts or searchable, and the rules for count search result censorship, i.e.,
-how many filters can be queried for counts queries, and what the minimum count is before counts are censored to 0.
+how many filters can be queried for counts queries, and what the minimum count is before counts are censored to 0. Reported counts can also be rounded (`rules.count_rounding`,
+default `0`; `0` or `1` means no rounding) so that a single censored value cannot be recovered by subtracting visible
+counts from a total.
 
 For more information on the goals of discovery configuration files and how to upload them to Bento, see the
 [public data discovery configuration](https://github.com/bento-platform/bento/blob/main/docs/public_discovery.md)

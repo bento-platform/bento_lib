@@ -158,6 +158,7 @@ def test_load_discovery_config_dict_blank():
     assert cfg.fields == {}
     assert cfg.rules.max_query_parameters == 0
     assert cfg.rules.count_threshold == sys.maxsize
+    assert cfg.rules.count_rounding == 0
     assert len(warnings) == 0
 
 
@@ -412,3 +413,12 @@ def test_invalid_overview_section_2():
     assert e.value.error_count() == 2
     assert "Input should be a valid list" in str(e.value)
     assert "Input should be greater than or equal to 0" in str(e.value)
+
+
+def test_count_rounding_schema_and_default():
+    from bento_lib.discovery.models.config import DiscoveryConfigRules, RULES_FULL_PERMISSIONS, RULES_NO_PERMISSIONS
+
+    assert DiscoveryConfigRules(count_threshold=5, max_query_parameters=2).count_rounding == 0
+    assert RULES_FULL_PERMISSIONS.count_rounding == 0
+    assert RULES_NO_PERMISSIONS.count_rounding == 0
+    assert "count_rounding" in DiscoveryConfigRules.model_json_schema()["properties"]
