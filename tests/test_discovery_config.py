@@ -422,3 +422,20 @@ def test_count_rounding_schema_and_default():
     assert RULES_FULL_PERMISSIONS.count_rounding == 0
     assert RULES_NO_PERMISSIONS.count_rounding == 0
     assert "count_rounding" in DiscoveryConfigRules.model_json_schema()["properties"]
+
+
+def test_threshold_not_above_rounding_warning():
+    cfg, warnings = load_discovery_config_from_dict({"rules": {"count_threshold": 5, "max_query_parameters": 2}})
+    assert warnings == ()
+
+    cfg, warnings = load_discovery_config_from_dict(
+        {"rules": {"count_threshold": 5, "max_query_parameters": 2, "count_rounding": 5}}
+    )
+    assert cfg.rules.count_rounding == 5
+    assert len(warnings) == 1
+    assert warnings[0][0] == ("rules", "count_threshold")
+
+    _, warnings = load_discovery_config_from_dict(
+        {"rules": {"count_threshold": 6, "max_query_parameters": 2, "count_rounding": 5}}
+    )
+    assert warnings == ()

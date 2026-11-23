@@ -39,6 +39,32 @@ def _warn_for_unreferenced_fields(cfg: DiscoveryConfig, logger: BoundLogger) -> 
     return tuple(warnings)
 
 
+def _warn_for_threshold_not_above_rounding(cfg: DiscoveryConfig, logger: BoundLogger) -> WarningsTuple:
+    """
+    Issue a warning if count rounding is enabled but the count threshold is not greater than the rounding value.
+    :param cfg: A DiscoveryConfig instance to check.
+    :param logger: BoundLogger object.
+    :return: A tuple of warning tuples, which are of the shape (index or path to warning location, warning message).
+    """
+
+    rules = cfg.rules
+    if rules.count_rounding > 1 and rules.count_threshold <= rules.count_rounding:
+        logger.warning(
+            "count threshold should be greater than count rounding",
+            count_threshold=rules.count_threshold,
+            count_rounding=rules.count_rounding,
+        )
+        return (
+            (
+                ("rules", "count_threshold"),
+                "count threshold should be greater than count rounding "
+                f"(count_threshold={rules.count_threshold}, count_rounding={rules.count_rounding})",
+            ),
+        )
+
+    return ()
+
+
 def load_discovery_config_from_dict(
     config_data: dict, logger: BoundLogger | None = None
 ) -> tuple[DiscoveryConfig, WarningsTuple]:
@@ -57,7 +83,10 @@ def load_discovery_config_from_dict(
 
     # 2. validate the config's internal references and overview chart/search field entries
     #  - issue and collect warnings if any fields are defined that the config doesn't reference anywhere
-    warnings = _warn_for_unreferenced_fields(cfg, logger or internal_logger)
+    #  - issue and collect a warning if the count threshold is not greater than the count rounding value
+    warnings = _warn_for_unreferenced_fields(cfg, logger or internal_logger) + _warn_for_threshold_not_above_rounding(
+        cfg, logger or internal_logger
+    )
 
     # TODO: injectable function to validate mapping exists?
 
