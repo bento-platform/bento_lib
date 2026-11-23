@@ -2,6 +2,11 @@ name: Release PyPI Package
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref (e.g. the release tag) to build and publish'
+        required: false
+        type: string
   release:
     types: [published]
 
@@ -14,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: actions/setup-python@v7
         with:

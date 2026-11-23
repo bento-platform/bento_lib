@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version, e.g. 18.5.0 (must match pyproject.toml)'
+        description: 'Release version, e.g. 18.5.0 (pyproject.toml is updated to this)'
         required: true
         type: string
 
@@ -30,12 +30,7 @@ jobs:
             echo "Invalid version: ${INPUT_VERSION}" >&2
             exit 1
           fi
-          # The published package version comes from pyproject.toml, so they must agree.
-          pyproject_version=$(grep -m1 '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
-          if [[ "${version}" != "${pyproject_version}" ]]; then
-            echo "Input version ${version} does not match pyproject.toml version ${pyproject_version}." >&2
-            exit 1
-          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "tag=v${version}" >> "$GITHUB_OUTPUT"
 
       - name: Fail if tag already exists
@@ -47,13 +42,30 @@ jobs:
             exit 1
           fi
 
+      - name: Update version in pyproject.toml and commit
+        id: bump
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          perl -0pi -e 's/^version = ".*"/version = "$ENV{VERSION}"/m' pyproject.toml
+          if git diff --quiet pyproject.toml; then
+            echo "pyproject.toml already at ${VERSION}; no bump commit needed."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore: bump version to ${VERSION}" pyproject.toml
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Create tag and GitHub release with generated notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}
+          SHA: ${{ steps.bump.outputs.sha }}
         run: |
           gh release create "${TAG}" \
-            --target "${GITHUB_SHA}" \
+            --target "${SHA}" \
             --title "${TAG}" \
             --generate-notes
 
@@ -62,4 +74,6 @@ jobs:
   publish:
     needs: tag-and-release
     uses: ./.github/workflows/release.yml
+    with:
+      ref: ${{ needs.tag-and-release.outputs.tag }}
     secrets: inherit
