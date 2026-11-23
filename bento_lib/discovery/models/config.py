@@ -37,7 +37,8 @@ class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
         ...,
         title="Count threshold",
         description=(
-            "If a user has count access and a count is less than or equal to this threshold, it will be censored to 0."
+            "If a user has count access and a count is less than or equal to this threshold, it will be censored to 0. "
+            "This should be greater than the count rounding value."
         ),
     )
     max_query_parameters: int = Field(
