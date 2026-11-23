@@ -50,14 +50,16 @@ def _warn_for_threshold_not_above_rounding(cfg: DiscoveryConfig, logger: BoundLo
     rules = cfg.rules
     if rules.count_rounding > 1 and rules.count_threshold <= rules.count_rounding:
         logger.warning(
-            "count threshold should be greater than count rounding",
+            "count threshold should be greater than count rounding; otherwise rounding and censoring can overlap",
             count_threshold=rules.count_threshold,
             count_rounding=rules.count_rounding,
         )
         return (
             (
                 ("rules", "count_threshold"),
-                "count threshold should be greater than count rounding "
+                "count threshold should be greater than count rounding, otherwise rounding and censoring can overlap: "
+                "a count just above the threshold may round to a value at or below it, so small counts are not "
+                "reliably protected "
                 f"(count_threshold={rules.count_threshold}, count_rounding={rules.count_rounding})",
             ),
         )
