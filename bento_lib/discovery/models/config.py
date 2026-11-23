@@ -4,6 +4,8 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from bento_lib._internal import internal_logger
+
 from ..exceptions import DiscoveryValidationError
 from ._internal import NoAdditionalProperties
 from .fields import FieldDefinition
@@ -23,11 +25,22 @@ FIELD_ALREADY_SEEN = "field already seen"
 
 
 class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
+    count_rounding: int = Field(
+        default=0,
+        ge=0,
+        title="Count rounding",
+        description=(
+            "If a user has count access, every reported count (including totals) is rounded independently to the "
+            "nearest multiple of this value. This prevents exact counts of censored values from being recovered by "
+            "subtracting visible counts from a total. 0 or 1 means no rounding."
+        ),
+    )
     count_threshold: int = Field(
         ...,
         title="Count threshold",
         description=(
-            "If a user has count access and a count is less than or equal to this threshold, it will be censored to 0."
+            "If a user has count access and a count is less than or equal to this threshold, it will be censored to 0. "
+            "This should be greater than the count rounding value."
         ),
     )
     max_query_parameters: int = Field(
@@ -39,15 +52,33 @@ class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
         ),
     )
 
+    @model_validator(mode="after")
+    def warn_threshold_not_above_rounding(self) -> Self:
+        """
+        Log a non-fatal warning (never an error) if count rounding is enabled but the count threshold is not greater
+        than the rounding value.
+        """
+        if self.count_rounding > 1 and self.count_threshold <= self.count_rounding:
+            internal_logger.warning(
+                "count threshold should be greater than count rounding, otherwise rounding and censoring can "
+                "overlap: a count just above the threshold may round to a value at or below it, so small counts are "
+                "not reliably protected",
+                count_threshold=self.count_threshold,
+                count_rounding=self.count_rounding,
+            )
+        return self
+
 
 RULES_NO_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
-    max_query_parameters=0,  # default to no query parameters allowed
+    count_rounding=0,  # irrelevant: everything is already censored
     count_threshold=sys.maxsize,  # default to MAXINT count threshold (i.e., no counts can be seen)
+    max_query_parameters=0,  # default to no query parameters allowed
 )
 
 RULES_FULL_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(
-    max_query_parameters=sys.maxsize,
+    count_rounding=0,
     count_threshold=0,
+    max_query_parameters=sys.maxsize,
 )
 
 
