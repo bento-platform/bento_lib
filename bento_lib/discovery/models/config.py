@@ -4,6 +4,8 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from bento_lib._internal import internal_logger
+
 from ..exceptions import DiscoveryValidationError
 from ._internal import NoAdditionalProperties
 from .fields import FieldDefinition
@@ -49,6 +51,22 @@ class DiscoveryConfigRules(BaseModel, NoAdditionalProperties):
             "searching for counts."
         ),
     )
+
+    @model_validator(mode="after")
+    def warn_threshold_not_above_rounding(self) -> Self:
+        """
+        Log a non-fatal warning (never an error) if count rounding is enabled but the count threshold is not greater
+        than the rounding value.
+        """
+        if self.count_rounding > 1 and self.count_threshold <= self.count_rounding:
+            internal_logger.warning(
+                "count threshold should be greater than count rounding, otherwise rounding and censoring can "
+                "overlap: a count just above the threshold may round to a value at or below it, so small counts are "
+                "not reliably protected",
+                count_threshold=self.count_threshold,
+                count_rounding=self.count_rounding,
+            )
+        return self
 
 
 RULES_NO_PERMISSIONS: DiscoveryConfigRules = DiscoveryConfigRules(

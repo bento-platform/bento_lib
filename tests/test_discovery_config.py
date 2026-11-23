@@ -425,17 +425,17 @@ def test_count_rounding_schema_and_default():
 
 
 def test_threshold_not_above_rounding_warning():
-    cfg, warnings = load_discovery_config_from_dict({"rules": {"count_threshold": 5, "max_query_parameters": 2}})
-    assert warnings == ()
+    from structlog.testing import capture_logs
 
-    cfg, warnings = load_discovery_config_from_dict(
-        {"rules": {"count_threshold": 5, "max_query_parameters": 2, "count_rounding": 5}}
-    )
-    assert cfg.rules.count_rounding == 5
-    assert len(warnings) == 1
-    assert warnings[0][0] == ("rules", "count_threshold")
+    from bento_lib.discovery.models.config import DiscoveryConfigRules
 
-    _, warnings = load_discovery_config_from_dict(
-        {"rules": {"count_threshold": 6, "max_query_parameters": 2, "count_rounding": 5}}
-    )
-    assert warnings == ()
+    with capture_logs() as logs:
+        DiscoveryConfigRules(count_threshold=5, max_query_parameters=2)
+        DiscoveryConfigRules(count_threshold=6, max_query_parameters=2, count_rounding=5)
+    assert logs == []
+
+    with capture_logs() as logs:
+        rules = DiscoveryConfigRules(count_threshold=5, max_query_parameters=2, count_rounding=5)  # no error raised
+    assert rules.count_rounding == 5
+    assert len(logs) == 1
+    assert logs[0]["log_level"] == "warning"
