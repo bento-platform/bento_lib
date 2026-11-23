@@ -416,7 +416,7 @@ def test_invalid_overview_section_2():
 
 
 def test_count_rounding_schema_and_default():
-    from bento_lib.discovery.models.config import DiscoveryConfigRules, RULES_FULL_PERMISSIONS, RULES_NO_PERMISSIONS
+    from bento_lib.discovery.models.config import RULES_FULL_PERMISSIONS, RULES_NO_PERMISSIONS, DiscoveryConfigRules
 
     assert DiscoveryConfigRules(count_threshold=5, max_query_parameters=2).count_rounding == 0
     assert RULES_FULL_PERMISSIONS.count_rounding == 0
