@@ -149,10 +149,10 @@ especially in the context of classes which must be eventually ingested into
 ### `provenance`
 
 `provenance` contains Pydantic models for dataset provenance metadata, used
-for describing datasets with rich contextual information including stakeholders,
-funding sources, publications, licenses, and spatial coverage. The main model,
-`DatasetModel`, provides a standardized schema for dataset metadata used in
-[Katsu](https://github.com/bento-platform/katsu).
+for describing datasets with rich contextual information including 
+interest-holders, funding sources, publications, licenses, and spatial coverage.
+The main model, `DatasetModel`, provides a standardized schema for dataset
+metadata used in [Katsu](https://github.com/bento-platform/katsu).
 
 The module also includes converters for transforming external dataset formats
 (e.g., PCGL) into the Bento dataset model.

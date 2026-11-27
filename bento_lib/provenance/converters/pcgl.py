@@ -46,8 +46,8 @@ def pcgl_study_to_dataset(
     """Convert PCGL Study to DatasetModel. Requires additional metadata not in PCGL."""
     keywords: list[str | OntologyClass] = list(study.keywords)
 
-    stakeholders: list[PersonOrOrganization] = []
-    stakeholders.extend(
+    interest_holders: list[PersonOrOrganization] = []
+    interest_holders.extend(
         Person(
             type="person",
             name=pi.name,
@@ -59,7 +59,7 @@ def pcgl_study_to_dataset(
         for pi in study.principal_investigators
     )
 
-    stakeholders.extend(
+    interest_holders.extend(
         Organization(
             type="organization",
             name=org_name,
@@ -70,7 +70,7 @@ def pcgl_study_to_dataset(
         for org_name in study.lead_organizations
     )
 
-    stakeholders.extend(
+    interest_holders.extend(
         Organization(
             type="organization",
             name=c.name,
@@ -113,7 +113,7 @@ def pcgl_study_to_dataset(
         description=study.study_description,
         identifier=study.study_id,
         keywords=keywords,
-        stakeholders=stakeholders,
+        interest_holders=interest_holders,
         funding_sources=funding_sources,
         spatial_coverage=spatial_coverage,
         version=version,

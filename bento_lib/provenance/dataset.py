@@ -38,6 +38,7 @@ from uuid import UUID
 
 from geojson_pydantic import Feature as GeoJSONFeature
 from pydantic import (
+    AliasChoices,
     AnyUrl,
     BaseModel,
     BeforeValidator,
@@ -122,7 +123,7 @@ Role = TranslatedLiteral(EN, FR)(
     ("Data Custodian",            "Gardien des données"),
     ("Data Manager",              "Gestionnaire de données"),  # DataCite: DataManager
     ("Data Producer",             "Producteur de données"),
-    # External stakeholders
+    # External interest-holders
     ("Partner",                   "Partenaire"),
     ("Stakeholder",               "Partie prenante"),
     ("Community Representative",  "Représentant communautaire"),
@@ -402,7 +403,9 @@ class DatasetModelBase(TranslatableModel):
         min_length=1,
         description="Ontology resources needed to resolve CURIEs in keywords and clinical/phenotypic data",
     )
-    stakeholders: list[PersonOrOrganization] | None = Field(default=None, min_length=1)
+    interest_holders: list[PersonOrOrganization] | None = Field(
+        default=None, min_length=1, validation_alias=AliasChoices("interest_holders", "stakeholders")
+    )
     funding_sources: list[FundingSource | Link] | Annotated[str, Field(min_length=1)] | None = None
 
     spatial_coverage: Annotated[str, Field(min_length=1)] | SpatialCoverageFeature | None = None
@@ -465,10 +468,10 @@ class DatasetModelBase(TranslatableModel):
             if missing:
                 raise ValueError(f"taxa contains OntologyClass CURIEs with no matching resource: {missing}")
 
-        if self.stakeholders:
-            missing_roles = [s.name for s in self.stakeholders if isinstance(s, Person) and not s.roles]
+        if self.interest_holders:
+            missing_roles = [s.name for s in self.interest_holders if isinstance(s, Person) and not s.roles]
             if missing_roles:
-                raise ValueError(f"stakeholder persons must have at least one role: {missing_roles}")
+                raise ValueError(f"interest-holder persons must have at least one role: {missing_roles}")
 
         return self
 
