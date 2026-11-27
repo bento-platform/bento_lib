@@ -48,17 +48,17 @@ def test_pcgl_study_to_dataset(pcgl_study_full, basic_pi):
     assert len(dataset.participant_criteria) == 1
     assert dataset.participant_criteria[0].description == "Inclusion: Adults 18+; Exclusion: Pregnant individuals"
 
-    # Check stakeholders (1 PI, 2 institutions, 2 collaborators = 5 total)
-    assert dataset.stakeholders is not None
-    assert len(dataset.stakeholders) == 5
+    # Check interest_holders (1 PI, 2 institutions, 2 collaborators = 5 total)
+    assert dataset.interest_holders is not None
+    assert len(dataset.interest_holders) == 5
 
     # Find PI (parsed from "Jane Smith")
-    pis = [s for s in dataset.stakeholders if isinstance(s, Person) and "Principal Investigator" in s.roles]
+    pis = [s for s in dataset.interest_holders if isinstance(s, Person) and "Principal Investigator" in s.roles]
     assert len(pis) == 1
     assert pis[0].name == "Jane Smith"
 
     # Find institutions
-    institutions = [s for s in dataset.stakeholders if isinstance(s, Organization) and "Institution" in s.roles]
+    institutions = [s for s in dataset.interest_holders if isinstance(s, Organization) and "Institution" in s.roles]
     assert len(institutions) == 2
     assert {inst.name for inst in institutions} == {"Test University", "Research Hospital"}
 

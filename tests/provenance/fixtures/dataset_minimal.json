@@ -3,7 +3,7 @@
   "schema_version": "1.0",
   "title": "Test Dataset from JSON",
   "description": "A dataset loaded from JSON fixture",
-  "stakeholders": [
+  "interest_holders": [
     {
       "type": "person",
       "name": "Jane Doe",

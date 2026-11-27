@@ -60,8 +60,8 @@ directly from the <code>bento_lib</code> dataset models, so it always matches th
 <li><b>Required</b> fields must be present for a record to be valid; <b>Optional</b> fields may be omitted.</li>
 <li>A field whose type is another model (for example <i>Person</i> or <i>License</i>) has an expandable block
 beneath it listing that model's own fields. Blocks nest as deeply as the schema does.</li>
-<li><i>ARRAY OF</i> means the field takes a list of values. A path such as <code>stakeholders[] › contact</code>
-reads as "the <i>contact</i> of each item in <i>stakeholders</i>".</li>
+<li><i>ARRAY OF</i> means the field takes a list of values. A path such as <code>interest_holders[] › contact</code>
+reads as "the <i>contact</i> of each item in <i>interest_holders</i>".</li>
 <li>Use the sidebar to jump to a nested model, and the filter to show only required or optional fields.</li>
 </ul>
 </div>

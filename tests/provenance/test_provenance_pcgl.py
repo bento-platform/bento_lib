@@ -261,19 +261,19 @@ def test_pcgl_study_to_dataset_full(full_pcgl_study, basic_primary_contact):
     assert len(dataset.keywords) == 2
     assert "cancer" in dataset.keywords
 
-    # Check stakeholders (2 PIs + 2 lead orgs + 2 collaborators = 6)
-    assert len(dataset.stakeholders) == 6
+    # Check interest_holders (2 PIs + 2 lead orgs + 2 collaborators = 6)
+    assert len(dataset.interest_holders) == 6
 
     # Check PI conversion
-    pi_stakeholders = [s for s in dataset.stakeholders if isinstance(s, Person)]
-    assert len(pi_stakeholders) == 2
-    assert pi_stakeholders[0].name == "Jane Smith"
-    assert pi_stakeholders[0].affiliations == ["Test University"]
-    assert pi_stakeholders[1].affiliations is None  # No affiliation
+    pi_interest_holders = [s for s in dataset.interest_holders if isinstance(s, Person)]
+    assert len(pi_interest_holders) == 2
+    assert pi_interest_holders[0].name == "Jane Smith"
+    assert pi_interest_holders[0].affiliations == ["Test University"]
+    assert pi_interest_holders[1].affiliations is None  # No affiliation
 
     # Check organization conversion
-    org_stakeholders = [s for s in dataset.stakeholders if isinstance(s, Organization)]
-    assert len(org_stakeholders) == 4
+    org_interest_holders = [s for s in dataset.interest_holders if isinstance(s, Organization)]
+    assert len(org_interest_holders) == 4
 
     # Check funding sources
     assert len(dataset.funding_sources) == 1
@@ -357,7 +357,7 @@ def test_pcgl_study_to_dataset_collaborator_without_role(basic_primary_contact):
     )
 
     # Find the collaborator organization
-    collab_org = next(s for s in dataset.stakeholders if isinstance(s, Organization) and s.name == "Partner")
+    collab_org = next(s for s in dataset.interest_holders if isinstance(s, Organization) and s.name == "Partner")
     assert collab_org.roles == ["Collaborating Organization"]
 
 
